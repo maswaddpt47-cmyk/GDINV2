@@ -1311,17 +1311,20 @@ function renderEvolution(){
         };
       });
     } else if(evolModeVal==='conum'){
-      // One stack per year, subdivided by conseiller
-      const conums=[...new Set(DATA.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE'));
+      // One stack per year, subdivided by conseiller — couleur par année, opacité par conum
+      const conums=[...new Set(dataForEvol.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE'));
+      const alphas=['dd','bb','88','66','44'];
       years.forEach(yr=>{
-        conums.forEach(cn=>{
+        const yrCol=yearColor(yr);
+        conums.forEach((cn,ci)=>{
+          const alpha=alphas[ci%alphas.length];
           const vals=Array(12).fill(0);
           dataForEvol.filter(r=>r.date_demande.startsWith(yr)&&r.conum===cn)
             .forEach(r=>{vals[parseInt(r.date_demande.slice(5,7))-1]++;});
           datasets.push({
             label:`${cn.split(' ')[0]} ${yr}`,
             data:vals,
-            backgroundColor:conumColor(cn)+'88',borderColor:conumColor(cn),
+            backgroundColor:yrCol+alpha,borderColor:yrCol,
             borderWidth:1,borderRadius:0,borderSkipped:false,
             stack:`yr_${yr}`
           });
@@ -1360,6 +1363,15 @@ function renderEvolution(){
               filter:(item,chartData)=>{
                 const ds=chartData.datasets[item.datasetIndex];
                 if(!ds||!ds.data.some(v=>v>0))return false;
+                if(evolModeVal==='conum'){
+                  // Afficher une entrée par année (couleur) seulement
+                  const yr=ds.label.match(/\d{4}$/)?.[0];
+                  if(!yr)return false;
+                  const firstIdx=chartData.datasets.findIndex(d=>d.label.endsWith(yr)&&d.data.some(v=>v>0));
+                  if(firstIdx!==item.datasetIndex)return false;
+                  item.text=yr;
+                  return true;
+                }
                 const name=ds.label.replace(/ \d{4}$/,'');
                 const firstIdx=chartData.datasets.findIndex(d=>d.label.replace(/ \d{4}$/,'')=== name&&d.data.some(v=>v>0));
                 if(firstIdx!==item.datasetIndex)return false;
