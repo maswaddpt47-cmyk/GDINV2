@@ -1570,7 +1570,10 @@ function renderCms(){
   const data=getFiltered().filter(r=>r.cms===cms),allData=getFiltered();
   const noA=data.filter(r=>!r.date_action).length,conums=count(data,'conum'),topCN=Object.keys(conums)[0]||'—';
   const oriCount=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
-  const prisesContact=data.filter(r=>(r.type_action||[]).some(t=>t.toLowerCase().includes('prise de contact'))).length;
+  const _f=document.getElementById('dFrom').value,_t=document.getElementById('dTo').value;
+  let _rawCms=DATA.filter(r=>r.cms===cms&&r.date_demande>=_f&&r.date_demande<=_t);
+  if(activeYears.size!==ALL_YEARS.length)_rawCms=_rawCms.filter(r=>activeYears.has(r.date_demande.slice(0,4)));
+  const prisesContact=_rawCms.filter(r=>(r.type_action||[]).some(t=>t.toLowerCase().includes('prise de contact'))).length;
   document.getElementById('kpi-cms').innerHTML=`
     <div class="kpi blue"><div class="kpi-label">Demandes</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">${pct(data.length,allData.length)}% de l'activité totale des CMS</div></div>
     <div class="kpi green"><div class="kpi-label">Complétion</div><div class="kpi-value">${pct(data.length-noA,data.length)}%</div><div class="kpi-sub">${data.length-noA} traitées</div></div>
