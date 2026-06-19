@@ -1266,7 +1266,10 @@ function renderEvolution(){
 
   // Populate CMS select in evolution
   const evolCmsSel=document.getElementById('sel-evol-cms');
-  const evolCmsCur=evolCmsSel.value;
+  const isCmsMode=evolModeVal==='cms';
+  if(isCmsMode){evolCmsSel.value='';evolCmsSel.disabled=true;evolCmsSel.style.opacity='.35';evolCmsSel.title='Non disponible en vue Par CMS';}
+  else{evolCmsSel.disabled=false;evolCmsSel.style.opacity='';evolCmsSel.title='';}
+  const evolCmsCur=isCmsMode?'':evolCmsSel.value;
   const allCms=Object.keys(count(getFiltered(),'cms')).sort();
   evolCmsSel.innerHTML='<option value="">Tous</option>';
   allCms.forEach(c2=>{const o=document.createElement('option');o.value=c2;o.textContent=c2.replace('Centre Médico-Social ','CMS ').replace('Centre Médico-Social de ','CMS ');evolCmsSel.appendChild(o);});
@@ -1279,7 +1282,7 @@ function renderEvolution(){
   if(evolCmsFilter){
     document.getElementById('evol-cms-note').textContent=`${dataForEvol.length} accompagnements`;
   } else {
-    document.getElementById('evol-cms-note').textContent='';
+    document.getElementById('evol-cms-note').textContent=isCmsMode?'Filtre désactivé en vue Par CMS':'';
   }
 
   if(nnModeVal){
