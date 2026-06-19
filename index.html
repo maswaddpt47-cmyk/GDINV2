@@ -1331,12 +1331,12 @@ function renderEvolution(){
         });
       });
     } else {
-      // Par CMS: one stack per year, subdivided by CMS
+      // Par CMS: one stack per year, subdivided by CMS — utilise data complet (filtre CMS ignoré en vue par CMS)
       const top5=CMS_MAIN.slice(0,5);
       years.forEach(yr=>{
         top5.forEach((cms2,ci)=>{
           const vals=Array(12).fill(0);
-          dataForEvol.filter(r=>r.date_demande.startsWith(yr)&&r.cms===cms2)
+          data.filter(r=>r.date_demande.startsWith(yr)&&r.cms===cms2)
             .forEach(r=>{vals[parseInt(r.date_demande.slice(5,7))-1]++;});
           const shortLabel=cms2;
           datasets.push({
@@ -1417,7 +1417,7 @@ function renderEvolution(){
       const conums=[...new Set(dataForEvol.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE'));
       datasets=conums.map(cn=>({label:cn.split(' ')[0],data:mKeys.map(k=>dataForEvol.filter(r=>r.conum===cn&&r.date_demande.startsWith(k)).length),backgroundColor:conumColor(cn)+'88',borderColor:conumColor(cn),borderWidth:1.5,borderRadius:4,borderSkipped:false,type:'bar',stack:'s'}));
     } else {
-      datasets=CMS_MAIN.slice(0,6).map((cms,i)=>({label:cms,data:mKeys.map(k=>dataForEvol.filter(r=>r.cms===cms&&r.date_demande.startsWith(k)).length),backgroundColor:PALETTE[i]+'88',borderColor:PALETTE[i],borderWidth:1.5,borderRadius:4,borderSkipped:false,type:'bar',stack:'s'}));
+      datasets=CMS_MAIN.slice(0,6).map((cms,i)=>({label:cms,data:mKeys.map(k=>data.filter(r=>r.cms===cms&&r.date_demande.startsWith(k)).length),backgroundColor:PALETTE[i]+'88',borderColor:PALETTE[i],borderWidth:1.5,borderRadius:4,borderSkipped:false,type:'bar',stack:'s'}));
     }
     destroyChart('ch-evol');
     charts['ch-evol']=new Chart(document.getElementById('ch-evol'),{type:'bar',data:{labels:mKeys.map(monthLabel),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:evolModeVal!=='total',labels:{color:legendColor(),font:{size:10},padding:8,boxWidth:8}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0'}},y:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'},stacked:evolModeVal!=='total'}}}});
