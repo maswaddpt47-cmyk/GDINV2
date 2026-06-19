@@ -888,8 +888,21 @@ function deriveActionsFromData(){
   });
   if(recs.length){ACTIONS_DATA=recs;ACTIONS_DERIVED=true;}
 }
-// Attribution des conum vides par CMS (accord : champs vides Marmande/Fumel -> ASWAD Michel)
-const CONUM_ATTRIB={'CMS Marmande':'ASWAD Michel','CMS Fumel':'ASWAD Michel','CMS Marmande (St-Pardoux)':'ASWAD Michel','Permanence Castillonnès':'ASWAD Michel'};
+// Attribution des conum vides par CMS
+const CONUM_ATTRIB={
+  'CMS Agen Montanou':'PINEAU Cynthia',
+  'CMS Agen Louis Vivent':'PINEAU Cynthia',
+  'CMS Agen Tapie':'TUAL Corentin',
+  'CMS Villeneuve/Lot':'TUAL Corentin',
+  'CMS Tonneins':'CAPELLE Eva',
+  'CMS Nérac':'CAPELLE Eva',
+  'CMS Antenne Aiguillon':'CAPELLE Eva',
+  'CMS Casteljaloux':'CAPELLE Eva',
+  'CMS Marmande':'ASWAD Michel',
+  'CMS Marmande (St-Pardoux)':'ASWAD Michel',
+  'CMS Fumel':'ASWAD Michel',
+  'Permanence Castillonnès':'ASWAD Michel',
+};
 function applyConumAttrib(arr){(arr||[]).forEach(r=>{const c=(r.conum||'').trim();if((!c||c==='?')&&CONUM_ATTRIB[r.cms])r.conum=CONUM_ATTRIB[r.cms];
   if(r.delai==null&&r.date_demande&&r.date_action){const t=Math.round((new Date(r.date_action)-new Date(r.date_demande))/86400000);r.delai=(isNaN(t)||t<0)?null:t;}else if(r.delai===undefined)r.delai=null;});return arr;}
 const ORI_EXCL=new Set(['ASWAD Michel','TUAL Corentin','PINEAU Cynthia','MONTOUX PARTHENAY Caroline','CHIBANE-TARASCON THIBAUD','CAPELLE Eva']);
