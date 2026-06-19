@@ -1569,7 +1569,7 @@ function renderCms(){
   const noA=data.filter(r=>!r.date_action).length,conums=count(data,'conum'),topCN=Object.keys(conums)[0]||'—';
   const oriCount=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
   document.getElementById('kpi-cms').innerHTML=`
-    <div class="kpi blue"><div class="kpi-label">Demandes</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">${pct(data.length,allData.length)}% du total</div></div>
+    <div class="kpi blue"><div class="kpi-label">Demandes</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">${pct(data.length,allData.length)}% de l'activité totale des CMS</div></div>
     <div class="kpi green"><div class="kpi-label">Complétion</div><div class="kpi-value">${pct(data.length-noA,data.length)}%</div><div class="kpi-sub">${data.length-noA} traitées</div></div>
     <div class="kpi orange"><div class="kpi-label">CN principal</div><div class="kpi-value" style="font-size:13px;line-height:1.4">${topCN}</div><div class="kpi-sub">${conums[topCN]||0} accompagnements</div></div>
     <div class="kpi purple"><div class="kpi-label">Orienteurs actifs</div><div class="kpi-value">${oriCount}</div><div class="kpi-sub">TS</div></div>
@@ -1605,7 +1605,7 @@ function renderConum(){
   const allYears=[...new Set(DATA.filter(r=>r.conum===conum).map(r=>r.date_demande.slice(0,4)))].sort();
   const evolByYear=allYears.map(y=>({y,n:data.filter(r=>r.date_demande.startsWith(y)).length}));
   document.getElementById('kpi-conum').innerHTML=`
-    <div class="kpi blue"><div class="kpi-label">Accompagnements</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">${pct(data.length,allData.length)}% du total</div></div>
+    <div class="kpi blue"><div class="kpi-label">Accompagnements</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">${pct(data.length,allData.length)}% de l'activité totale</div></div>
     <div class="kpi green"><div class="kpi-label">Orientations TS</div><div class="kpi-value">${hasAct?totalOri:'—'}</div><div class="kpi-sub">${hasAct?'tous CMS confondus':'import requis'}</div></div>
     <div class="kpi orange"><div class="kpi-label">CMS couverts</div><div class="kpi-value">${cmsCount}</div><div class="kpi-sub">structures actives</div></div>
     <div class="kpi purple"><div class="kpi-label">Orienteurs distincts</div><div class="kpi-value">${new Set(data.map(r=>r.orienteur).filter(Boolean)).size}</div><div class="kpi-sub">TS</div></div>
