@@ -69,8 +69,9 @@ select:focus{border-color:var(--blue)}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}
 .g5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:14px}
-@media(max-width:1100px){.g4,.g5{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr 1fr}}
-@media(max-width:700px){.g2,.g3,.g4,.g5{grid-template-columns:1fr}}
+.g6{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:14px}
+@media(max-width:1100px){.g4,.g5,.g6{grid-template-columns:repeat(3,1fr)}.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.g2,.g3,.g4,.g5,.g6{grid-template-columns:1fr}}
 .card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
 .card-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .card-title .ct-action{margin-left:auto;font-size:10px;font-weight:500;text-transform:none;letter-spacing:0}
@@ -82,11 +83,12 @@ select:focus{border-color:var(--blue)}
 .kpi.green::after{background:linear-gradient(90deg,var(--green),var(--cyan))}
 .kpi.purple::after{background:linear-gradient(90deg,var(--purple),var(--blue))}
 .kpi.cyan::after{background:linear-gradient(90deg,var(--cyan),var(--green))}
+.kpi.red::after{background:linear-gradient(90deg,var(--red),var(--orange))}
 .kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;font-weight:500}
 .kpi-value{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:500;line-height:1;margin-bottom:4px}
 .kpi.blue .kpi-value{color:var(--blue)}.kpi.orange .kpi-value{color:var(--orange)}
 .kpi.green .kpi-value{color:var(--green)}.kpi.purple .kpi-value{color:var(--purple)}
-.kpi.cyan .kpi-value{color:var(--cyan)}
+.kpi.cyan .kpi-value{color:var(--cyan)}.kpi.red .kpi-value{color:var(--red)}
 .kpi-sub{font-size:10px;color:var(--muted);line-height:1.4}
 .bar-list{display:flex;flex-direction:column;gap:8px}
 .bar-item .bi-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
@@ -170,7 +172,7 @@ canvas{display:block;width:100%!important;max-height:240px}
   .tabs{font-size:11px}
   .tab{padding:7px 10px;font-size:11px}
   .container{padding:10px 10px}
-  .g5{grid-template-columns:1fr 1fr!important}
+  .g5,.g6{grid-template-columns:1fr 1fr!important}
   .g4{grid-template-columns:1fr 1fr!important}
   .g3{grid-template-columns:1fr!important}
   .g2{grid-template-columns:1fr!important}
@@ -503,7 +505,7 @@ body.pres-mode .tbl th{font-size:11px}
   <!-- PAR CMS -->
   <div id="panel-par-cms" class="panel">
     <div class="frow"><label>CMS :</label><select id="sel-cms" onchange="renderCms()"></select><div class="year-chips" id="year-chips-cms" style="margin-left:auto"></div></div>
-    <div id="kpi-cms" class="g5"></div>
+    <div id="kpi-cms" class="g6"></div>
     <div class="g2">
       <div class="card"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Conseillers intervenants</div><div id="bar-cms-conum" class="bar-list"></div></div>
       <div class="card"><div class="card-title"><span class="dot" style="background:var(--orange)"></span>Thématiques</div><div id="bar-cms-thema" class="bar-list"></div></div>
@@ -1568,12 +1570,14 @@ function renderCms(){
   const data=getFiltered().filter(r=>r.cms===cms),allData=getFiltered();
   const noA=data.filter(r=>!r.date_action).length,conums=count(data,'conum'),topCN=Object.keys(conums)[0]||'—';
   const oriCount=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
+  const prisesContact=data.filter(r=>(r.type_action||[]).some(t=>t.toLowerCase().includes('prise de contact'))).length;
   document.getElementById('kpi-cms').innerHTML=`
     <div class="kpi blue"><div class="kpi-label">Demandes</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">${pct(data.length,allData.length)}% de l'activité totale des CMS</div></div>
     <div class="kpi green"><div class="kpi-label">Complétion</div><div class="kpi-value">${pct(data.length-noA,data.length)}%</div><div class="kpi-sub">${data.length-noA} traitées</div></div>
     <div class="kpi orange"><div class="kpi-label">CN principal</div><div class="kpi-value" style="font-size:13px;line-height:1.4">${topCN}</div><div class="kpi-sub">${conums[topCN]||0} accompagnements</div></div>
     <div class="kpi purple"><div class="kpi-label">Orienteurs actifs</div><div class="kpi-value">${oriCount}</div><div class="kpi-sub">TS</div></div>
-    <div class="kpi cyan"><div class="kpi-label">Thématique principale</div><div class="kpi-value" style="font-size:13px;line-height:1.5;padding-top:4px">${Object.keys(countThemas(data))[0]||'—'}</div><div class="kpi-sub">${Object.values(countThemas(data))[0]||0} demandes</div></div>`;
+    <div class="kpi cyan"><div class="kpi-label">Thématique principale</div><div class="kpi-value" style="font-size:13px;line-height:1.5;padding-top:4px">${Object.keys(countThemas(data))[0]||'—'}</div><div class="kpi-sub">${Object.values(countThemas(data))[0]||0} demandes</div></div>
+    <div class="kpi red"><div class="kpi-label">Prises de contact</div><div class="kpi-value">${prisesContact}</div><div class="kpi-sub">${pct(prisesContact,data.length)}% des demandes</div></div>`;
   makeBarList(document.getElementById('bar-cms-conum'),conums,'blue');
   makeBarList(document.getElementById('bar-cms-thema'),countThemas(data),'orange');
   const mKeys=[...new Set(getFiltered().map(r=>r.date_demande.slice(0,7)))].sort();
