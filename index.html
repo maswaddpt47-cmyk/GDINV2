@@ -4077,22 +4077,22 @@ function drSlideBilan(c,data,allDataConum){
   // Détecter si le trimestre récent est incomplet (< 3 mois de données)
   const recentMonthsCount=recentMsDR.filter(m=>data.some(r=>r.date_demande.startsWith(m))).length;
   const trendIncomplete=recentMonthsCount<3;
-  // N vs N-1 — DATA brut sans filtre d'années, mais même filtre type_action que data
+  // N vs N-1 — allDataCms applique la même plage de dates et le même filtre type_action
+  // que getFiltered(), MAIS sans activeYears pour accéder à l'historique complet (N-1, N-2…)
   const cmNormYoY=normCms(drCms)||drCms;
+  const _f=document.getElementById('dFrom').value,_t=document.getElementById('dTo').value;
   const _tyYoY=document.getElementById('typeFilter').value;
   const _ntYoY=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim().replace(/s$/,'');
-  let allDataCms=DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormYoY));
+  let allDataCms=DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormYoY)&&r.date_demande>=_f&&r.date_demande<=_t);
   if(_tyYoY){const _ntyYoY=_ntYoY(_tyYoY);allDataCms=allDataCms.filter(r=>(r.type_action||[]).some(x=>_ntYoY(x).startsWith(_ntyYoY)));}
   const allYearsTotal=[...new Set(allDataCms.map(r=>r.date_demande.slice(0,4)))].sort();
   const allYears=[...new Set(data.map(r=>r.date_demande.slice(0,4)))].sort();
   const yCur=allYears[allYears.length-1];
-  // yPrev = année précédant yCur dans l'historique complet
+  // yPrev = année précédant yCur dans l'historique complet (indépendant de drYears)
   const yCurIdx=allYearsTotal.indexOf(yCur);
   const yPrev=yCurIdx>0?allYearsTotal[yCurIdx-1]:null;
   const nCur=data.filter(r=>r.date_demande.startsWith(yCur)).length;
-  // Utiliser data pour nPrev si yPrev est dans la sélection (garantit la même base de filtrage)
-  const nPrevFromData=yPrev?data.filter(r=>r.date_demande.startsWith(yPrev)).length:null;
-  const nPrev=nPrevFromData>0?nPrevFromData:(yPrev?allDataCms.filter(r=>r.date_demande.startsWith(yPrev)).length:null);
+  const nPrev=yPrev?allDataCms.filter(r=>r.date_demande.startsWith(yPrev)).length:null;
   const deltaYoY=nPrev?Math.round((nCur-nPrev)/nPrev*100):null;
   const trendYoY=deltaYoY!==null?(deltaYoY>=0?`+${deltaYoY}%`:`${deltaYoY}%`):'—';
   const trendYoYColor=deltaYoY===null?'var(--muted)':deltaYoY>=0?'var(--green)':'var(--orange)';
@@ -4175,9 +4175,7 @@ function drSlideBilan(c,data,allDataConum){
   if(yPrev){
     const MONTH_LABELS=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
     const curVals=MONTH_LABELS.map((_,mi)=>data.filter(r=>r.date_demande.slice(0,4)===yCur&&parseInt(r.date_demande.slice(5,7))-1===mi).length);
-    // Même source que nPrev : data si yPrev dans la sélection, sinon allDataCms
-    const _prevSrc=nPrevFromData>0?data:allDataCms;
-    const prevVals=MONTH_LABELS.map((_,mi)=>_prevSrc.filter(r=>r.date_demande.slice(0,4)===yPrev&&parseInt(r.date_demande.slice(5,7))-1===mi).length);
+    const prevVals=MONTH_LABELS.map((_,mi)=>allDataCms.filter(r=>r.date_demande.slice(0,4)===yPrev&&parseInt(r.date_demande.slice(5,7))-1===mi).length);
     const colCur='#3b82f6', colPrev='#6b7fa0';
     const chartEl=document.getElementById('dr-ch-yoy-bilan');
     if(chartEl){
