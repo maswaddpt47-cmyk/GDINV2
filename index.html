@@ -540,6 +540,10 @@ body.pres-mode .tbl th{font-size:11px}
       <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Charge mensuelle — tous conseillers <span style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">intensité par volume</span></div>
       <div class="heatmap-wrap"><div id="heatmap-conum-container"></div></div>
     </div>
+    <div class="card g1" id="card-heatmap-cms-conum">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Charge mensuelle par CMS <span id="heatmap-cms-conum-label" style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">intensité par volume</span></div>
+      <div class="heatmap-wrap"><div id="heatmap-cms-conum-container"></div></div>
+    </div>
   </div>
 
   <!-- ORIENTEURS -->
@@ -1653,6 +1657,7 @@ function renderConum(){
   });
   document.getElementById('tbl-conum-all').innerHTML=rows;
   renderHeatmapConum();
+  renderHeatmapCmsByConum(conum);
 }
 
 // ORIENTEURS
@@ -3505,6 +3510,65 @@ function renderHeatmapConum(){
   });
   tbl+=`</tbody></table></div>`;
   container.innerHTML=tbl;
+}
+
+function renderHeatmapCmsByConum(conum){
+  const container=document.getElementById('heatmap-cms-conum-container');
+  if(!container)return;
+  if(!conum){container.innerHTML='';return;}
+  const allYears=[...new Set(DATA.map(r=>r.date_demande.slice(0,4)))].sort();
+  const conumData=DATA.filter(r=>r.conum===conum);
+  const cmsList=[...new Set(conumData.map(r=>r.cms).filter(Boolean))].sort((a,b)=>{
+    const sa=conumData.filter(r=>r.cms===a).length,sb=conumData.filter(r=>r.cms===b).length;
+    return sb-sa;
+  });
+  if(!cmsList.length){container.innerHTML='<div style="color:var(--muted);font-size:11px;padding:10px">Aucune donnée</div>';return;}
+  const vol={};
+  cmsList.forEach(cms=>{vol[cms]={};allYears.forEach(yr=>{vol[cms][yr]=Array(12).fill(0);});});
+  conumData.forEach(r=>{
+    if(!vol[r.cms])return;
+    const yr=r.date_demande.slice(0,4),mo=parseInt(r.date_demande.slice(5,7))-1;
+    if(vol[r.cms][yr]&&mo>=0&&mo<12)vol[r.cms][yr][mo]++;
+  });
+  let maxVal=1;
+  cmsList.forEach(cms=>allYears.forEach(yr=>vol[cms][yr].forEach(v=>{if(v>maxVal)maxVal=v;})));
+  function cellColor(v,hex){
+    if(!v)return'var(--s2)';
+    const op=Math.max(0.12,Math.min(0.85,v/maxVal));
+    const r2=parseInt(hex.slice(1,3),16),g2=parseInt(hex.slice(3,5),16),b2=parseInt(hex.slice(5,7),16);
+    return`rgba(${r2},${g2},${b2},${op.toFixed(2)})`;
+  }
+  const col=conumColor(conum)||'#3b82f6';
+  const displayYearsRev=[...allYears].reverse();
+  let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Nombre de demandes par mois et par CMS · ← années précédentes à droite</div>`;
+  tbl+=`<div style="overflow-x:auto"><table class="heatmap-table"><thead><tr><th></th>`;
+  displayYearsRev.forEach((yr,yi)=>{
+    tbl+=`<th colspan="12" style="text-align:center;color:var(--text);font-size:10px;font-weight:700;padding-bottom:4px;letter-spacing:.5px">${yr}</th>`;
+    if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
+  });
+  tbl+=`</tr><tr><th></th>`;
+  displayYearsRev.forEach((yr,yi)=>{
+    MONTH_FR.forEach(m=>{tbl+=`<th title="${m} ${yr}">${m.slice(0,1)}</th>`;});
+    if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
+  });
+  tbl+=`</tr></thead><tbody>`;
+  cmsList.forEach(cms=>{
+    const shortCms=cms.replace(/^CMS /,'').replace(/^Permanence /,'');
+    tbl+=`<tr><td class="hm-label" title="${cms}" style="min-width:110px">${shortCms}</td>`;
+    displayYearsRev.forEach((yr,yi)=>{
+      const vals=vol[cms][yr]||Array(12).fill(0);
+      vals.forEach((v,mi)=>{
+        const bg=cellColor(v,col);
+        tbl+=`<td class="hm-cell" style="background:${bg}" title="${cms}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
+      });
+      if(yi<displayYearsRev.length-1)tbl+=`<td style="width:10px"></td>`;
+    });
+    tbl+=`</tr>`;
+  });
+  tbl+=`</tbody></table></div>`;
+  container.innerHTML=tbl;
+  const lbl=document.getElementById('heatmap-cms-conum-label');
+  if(lbl)lbl.textContent=`— ${conum}`;
 }
 
 // ── RAPPORT QUALITÉ à l'import ──
