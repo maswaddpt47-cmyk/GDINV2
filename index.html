@@ -623,7 +623,7 @@ body.pres-mode .tbl th{font-size:11px}
       </div>
     </div>
     <div id="rpt-content" style="display:none">
-      <div id="kpi-rpt" class="g3"></div>
+      <div id="kpi-rpt" class="g4"></div>
       <div class="g2">
         <div class="card"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Évolution mensuelle</div><canvas id="ch-rpt-evol"></canvas></div>
         <div class="card"><div class="card-title"><span class="dot" style="background:var(--orange)"></span>Thématiques</div><canvas id="ch-rpt-thema"></canvas></div>
@@ -1801,16 +1801,11 @@ function renderRapport(){
   }
   const moyR2=delR2.length?Math.round(delR2.reduce((a,b)=>a+b,0)/delR2.length):null;
   const hasAct=delR2.length>0;
-  const noAction=data.filter(r=>!r.date_action).length;
-  const txCompl=pct(data.length-noAction,data.length);
-  const prisesRpt=data.filter(r=>(r.type_action||[]).some(t=>t.toLowerCase().includes('prise de contact'))).length;
   const communesRpt=new Set(data.map(r=>r.commune).filter(Boolean)).size;
   document.getElementById('kpi-rpt').innerHTML=`
     <div class="kpi blue"><div class="kpi-label">Accompagnements</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">${pct(data.length,dataConum.length)}% activité CN</div></div>
     <div class="kpi orange"><div class="kpi-label">Orienteurs actifs</div><div class="kpi-value">${oriCount}</div><div class="kpi-sub">TS</div></div>
     <div class="kpi cyan"><div class="kpi-label">Délai total</div><div class="kpi-value">${hasAct&&moyR2!=null?moyR2+'j':'—'}</div><div class="kpi-sub">orientation→réalisation</div></div>
-    <div class="kpi green"><div class="kpi-label">Taux de complétion</div><div class="kpi-value">${txCompl}%</div><div class="kpi-sub">${data.length-noAction} traitées</div></div>
-    <div class="kpi red"><div class="kpi-label">Prises de contact</div><div class="kpi-value">${prisesRpt}</div><div class="kpi-sub">${pct(prisesRpt,data.length)}% des demandes</div></div>
     <div class="kpi purple"><div class="kpi-label">Communes couvertes</div><div class="kpi-value">${communesRpt}</div><div class="kpi-sub">sur ce CMS</div></div>`;
   const mKeys=[...new Set(allData.map(r=>r.date_demande.slice(0,7)))].sort();
   destroyChart('ch-rpt-evol');
@@ -1819,9 +1814,14 @@ function renderRapport(){
   destroyChart('ch-rpt-thema');
   charts['ch-rpt-thema']=new Chart(document.getElementById('ch-rpt-thema'),{type:'doughnut',data:{labels:themas.map(t=>t[0]),datasets:[{data:themas.map(t=>t[1]),backgroundColor:PALETTE,borderWidth:2,borderColor:'#111827',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:8,color:legendColor()}}}}});
   const _oriRpt=Object.fromEntries(Object.entries(count(data,'orienteur')).filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())));makeBarList(document.getElementById('bar-rpt-ori'),_oriRpt,'green');
-  const allCmsCounts=Object.entries(count(allData,'cms')).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  {const cmsEntries=Object.entries(count(allData,'cms')).sort((a,b)=>b[1]-a[1]);
+  const hasSel=cmsEntries.some(([c])=>c===cms);
+  if(!hasSel){const v=(count(allData,'cms')[cms]||0);cmsEntries.push([cms,v]);}
+  const shortLbl=c=>c.replace(/^CMS /,'').replace(/^Permanence /,'Perm. ').replace(/\(St-Pardoux\)/,'(St-P.)');
   destroyChart('ch-rpt-comp');
-  charts['ch-rpt-comp']=new Chart(document.getElementById('ch-rpt-comp'),{type:'bar',data:{labels:allCmsCounts.map(([c])=>c.replace('Centre Médico-Social ','CMS ').replace('Centre Médico-Social de ','CMS ')),datasets:[{data:allCmsCounts.map(([,v])=>v),backgroundColor:allCmsCounts.map(([c])=>c===cms?'rgba(59,130,246,.75)':'rgba(59,130,246,.15)'),borderColor:allCmsCounts.map(([c])=>c===cms?'#3b82f6':'#253047'),borderRadius:5,borderSkipped:false,borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}},y:{grid:{display:false},ticks:{color:legendColor(),font:{size:10}}}}}});
+  const ch=document.getElementById('ch-rpt-comp');
+  ch.style.maxHeight=Math.max(200,cmsEntries.length*28)+'px';
+  charts['ch-rpt-comp']=new Chart(ch,{type:'bar',data:{labels:cmsEntries.map(([c])=>shortLbl(c)),datasets:[{data:cmsEntries.map(([,v])=>v),backgroundColor:cmsEntries.map(([c])=>c===cms?'rgba(59,130,246,.75)':'rgba(59,130,246,.15)'),borderColor:cmsEntries.map(([c])=>c===cms?'#3b82f6':'#253047'),borderRadius:5,borderSkipped:false,borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}},y:{grid:{display:false},ticks:{color:legendColor(),font:{size:10}}}}}});}
   // ── États actions pour ce conum × CMS ──
   const actSec=document.getElementById('rpt-actions-section');
   const actMiss=document.getElementById('rpt-actions-missing');
