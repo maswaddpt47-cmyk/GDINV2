@@ -4175,7 +4175,9 @@ function drSlideBilan(c,data,allDataConum){
   if(yPrev){
     const MONTH_LABELS=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
     const curVals=MONTH_LABELS.map((_,mi)=>data.filter(r=>r.date_demande.slice(0,4)===yCur&&parseInt(r.date_demande.slice(5,7))-1===mi).length);
-    const prevVals=MONTH_LABELS.map((_,mi)=>allDataCms.filter(r=>r.date_demande.slice(0,4)===yPrev&&parseInt(r.date_demande.slice(5,7))-1===mi).length);
+    // Même source que nPrev : data si yPrev dans la sélection, sinon allDataCms
+    const _prevSrc=nPrevFromData>0?data:allDataCms;
+    const prevVals=MONTH_LABELS.map((_,mi)=>_prevSrc.filter(r=>r.date_demande.slice(0,4)===yPrev&&parseInt(r.date_demande.slice(5,7))-1===mi).length);
     const colCur='#3b82f6', colPrev='#6b7fa0';
     const chartEl=document.getElementById('dr-ch-yoy-bilan');
     if(chartEl){
