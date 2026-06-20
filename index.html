@@ -69,8 +69,9 @@ select:focus{border-color:var(--blue)}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}
 .g5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:14px}
-@media(max-width:1100px){.g4,.g5{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr 1fr}}
-@media(max-width:700px){.g2,.g3,.g4,.g5{grid-template-columns:1fr}}
+.g6{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:14px}
+@media(max-width:1100px){.g4,.g5,.g6{grid-template-columns:repeat(3,1fr)}.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.g2,.g3,.g4,.g5,.g6{grid-template-columns:1fr}}
 .card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
 .card-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .card-title .ct-action{margin-left:auto;font-size:10px;font-weight:500;text-transform:none;letter-spacing:0}
@@ -82,11 +83,12 @@ select:focus{border-color:var(--blue)}
 .kpi.green::after{background:linear-gradient(90deg,var(--green),var(--cyan))}
 .kpi.purple::after{background:linear-gradient(90deg,var(--purple),var(--blue))}
 .kpi.cyan::after{background:linear-gradient(90deg,var(--cyan),var(--green))}
+.kpi.red::after{background:linear-gradient(90deg,var(--red),var(--orange))}
 .kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;font-weight:500}
 .kpi-value{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:500;line-height:1;margin-bottom:4px}
 .kpi.blue .kpi-value{color:var(--blue)}.kpi.orange .kpi-value{color:var(--orange)}
 .kpi.green .kpi-value{color:var(--green)}.kpi.purple .kpi-value{color:var(--purple)}
-.kpi.cyan .kpi-value{color:var(--cyan)}
+.kpi.cyan .kpi-value{color:var(--cyan)}.kpi.red .kpi-value{color:var(--red)}
 .kpi-sub{font-size:10px;color:var(--muted);line-height:1.4}
 .bar-list{display:flex;flex-direction:column;gap:8px}
 .bar-item .bi-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
@@ -170,7 +172,7 @@ canvas{display:block;width:100%!important;max-height:240px}
   .tabs{font-size:11px}
   .tab{padding:7px 10px;font-size:11px}
   .container{padding:10px 10px}
-  .g5{grid-template-columns:1fr 1fr!important}
+  .g5,.g6{grid-template-columns:1fr 1fr!important}
   .g4{grid-template-columns:1fr 1fr!important}
   .g3{grid-template-columns:1fr!important}
   .g2{grid-template-columns:1fr!important}
@@ -503,14 +505,14 @@ body.pres-mode .tbl th{font-size:11px}
   <!-- PAR CMS -->
   <div id="panel-par-cms" class="panel">
     <div class="frow"><label>CMS :</label><select id="sel-cms" onchange="renderCms()"></select><div class="year-chips" id="year-chips-cms" style="margin-left:auto"></div></div>
-    <div id="kpi-cms" class="g5"></div>
+    <div id="kpi-cms" class="g6"></div>
     <div class="g2">
       <div class="card"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Conseillers intervenants</div><div id="bar-cms-conum" class="bar-list"></div></div>
       <div class="card"><div class="card-title"><span class="dot" style="background:var(--orange)"></span>Thématiques</div><div id="bar-cms-thema" class="bar-list"></div></div>
     </div>
     <div class="g2">
       <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Évolution mensuelle (ce CMS)</div><canvas id="ch-cms-evol"></canvas></div>
-      <div class="card"><div class="card-title"><span class="dot" style="background:var(--purple)"></span>Types d'action (hors Réservation)</div><canvas id="ch-cms-types"></canvas></div>
+      <div class="card"><div class="card-title"><span class="dot" style="background:var(--purple)"></span>Calendrier N / N-1</div><canvas id="ch-cms-cal" style="max-height:240px"></canvas></div>
     </div>
     <div class="card"><div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Top orienteurs</div>
       <table class="tbl"><thead><tr><th>#</th><th>Orienteur</th><th>Demandes</th><th>% CMS</th><th>Conseiller principal</th></tr></thead>
@@ -537,6 +539,10 @@ body.pres-mode .tbl th{font-size:11px}
     <div class="card g1" id="card-heatmap-conum">
       <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Charge mensuelle — tous conseillers <span style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">intensité par volume</span></div>
       <div class="heatmap-wrap"><div id="heatmap-conum-container"></div></div>
+    </div>
+    <div class="card g1" id="card-heatmap-cms-conum">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Charge mensuelle par CMS <span id="heatmap-cms-conum-label" style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">intensité par volume</span></div>
+      <div class="heatmap-wrap"><div id="heatmap-cms-conum-container"></div></div>
     </div>
   </div>
 
@@ -617,7 +623,7 @@ body.pres-mode .tbl th{font-size:11px}
       </div>
     </div>
     <div id="rpt-content" style="display:none">
-      <div id="kpi-rpt" class="g5"></div>
+      <div id="kpi-rpt" class="g4"></div>
       <div class="g2">
         <div class="card"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Évolution mensuelle</div><canvas id="ch-rpt-evol"></canvas></div>
         <div class="card"><div class="card-title"><span class="dot" style="background:var(--orange)"></span>Thématiques</div><canvas id="ch-rpt-thema"></canvas></div>
@@ -661,6 +667,7 @@ body.pres-mode .tbl th{font-size:11px}
       <div class="card g1" id="rpt-bilan-card">
         <div class="card-title"><span class="dot" style="background:var(--green)"></span>Bilan &amp; perspectives</div>
         <div id="rpt-bilan-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px"></div>
+        <div id="rpt-bilan-evol" style="margin-bottom:16px"></div>
         <div id="rpt-bilan-text" style="line-height:1.8;font-size:13px;color:var(--text)"></div>
       </div>
     </div>
@@ -888,9 +895,22 @@ function deriveActionsFromData(){
   });
   if(recs.length){ACTIONS_DATA=recs;ACTIONS_DERIVED=true;}
 }
-// Attribution des conum vides par CMS (accord : champs vides Marmande/Fumel -> ASWAD Michel)
-const CONUM_ATTRIB={'CMS Marmande':'ASWAD Michel','CMS Fumel':'ASWAD Michel','CMS Marmande (St-Pardoux)':'ASWAD Michel','Permanence Castillonnès':'ASWAD Michel'};
-function applyConumAttrib(arr){(arr||[]).forEach(r=>{const c=(r.conum||'').trim();if((!c||c==='?')&&CONUM_ATTRIB[r.cms])r.conum=CONUM_ATTRIB[r.cms];
+// Attribution des conum vides par CMS
+const CONUM_ATTRIB={
+  'CMS Agen Montanou':'PINEAU Cynthia',
+  'CMS Agen Louis Vivent':'PINEAU Cynthia',
+  'CMS Agen Tapie':'TUAL Corentin',
+  'CMS Villeneuve/Lot':'TUAL Corentin',
+  'CMS Tonneins':'CAPELLE Eva',
+  'CMS Nérac':'CAPELLE Eva',
+  'CMS Antenne Aiguillon':'CAPELLE Eva',
+  'CMS Casteljaloux':'CAPELLE Eva',
+  'CMS Marmande':'ASWAD Michel',
+  'CMS Marmande (St-Pardoux)':'ASWAD Michel',
+  'CMS Fumel':'ASWAD Michel',
+  'Permanence Castillonnès':'ASWAD Michel',
+};
+function applyConumAttrib(arr){(arr||[]).forEach(r=>{const c=(r.conum||'').trim();if(!c||c==='?'){if(r.cms==='DSIAN'&&r.orienteur)r.conum=r.orienteur;else if(CONUM_ATTRIB[r.cms])r.conum=CONUM_ATTRIB[r.cms];}
   if(r.delai==null&&r.date_demande&&r.date_action){const t=Math.round((new Date(r.date_action)-new Date(r.date_demande))/86400000);r.delai=(isNaN(t)||t<0)?null:t;}else if(r.delai===undefined)r.delai=null;});return arr;}
 const ORI_EXCL=new Set(['ASWAD Michel','TUAL Corentin','PINEAU Cynthia','MONTOUX PARTHENAY Caroline','CHIBANE-TARASCON THIBAUD','CAPELLE Eva']);
 const TYPE_EXCL=new Set(['Reservation','Reservation ']);
@@ -1237,7 +1257,7 @@ function renderGlobal(){
 
   const conumData=Object.entries(count(data,'conum')).filter(([n])=>n&&n!=='?'&&n.trim()!=='');
   destroyChart('ch-conum');
-  charts['ch-conum']=new Chart(document.getElementById('ch-conum'),{type:'doughnut',data:{labels:conumData.map(c=>c[0].split(' ')[0]),datasets:[{data:conumData.map(c=>c[1]),backgroundColor:conumData.map(c=>conumColor(c[0])),borderWidth:2,borderColor:'#111827',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:8,color:legendColor()}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${pct(ctx.parsed,conumData.reduce((s,c)=>s+c[1],0))}%)`}}}}});
+  charts['ch-conum']=new Chart(document.getElementById('ch-conum'),{type:'doughnut',data:{labels:conumData.map(c=>c[0].split(' ').pop()),datasets:[{data:conumData.map(c=>c[1]),backgroundColor:conumData.map(c=>conumColor(c[0])),borderWidth:2,borderColor:'#111827',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:8,color:legendColor()}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${pct(ctx.parsed,conumData.reduce((s,c)=>s+c[1],0))}%)`}}}}});
 
   makeBarList(document.getElementById('bar-cms-global'),Object.fromEntries(Object.entries(count(noDsian,'cms')).slice(0,9)),'blue');
 
@@ -1253,11 +1273,14 @@ function renderEvolution(){
 
   // Populate CMS select in evolution
   const evolCmsSel=document.getElementById('sel-evol-cms');
-  const evolCmsCur=evolCmsSel.value;
+  const isCmsMode=evolModeVal==='cms';
+  const evolCmsCur=isCmsMode?'':evolCmsSel.value;
   const allCms=Object.keys(count(getFiltered(),'cms')).sort();
   evolCmsSel.innerHTML='<option value="">Tous</option>';
   allCms.forEach(c2=>{const o=document.createElement('option');o.value=c2;o.textContent=c2.replace('Centre Médico-Social ','CMS ').replace('Centre Médico-Social de ','CMS ');evolCmsSel.appendChild(o);});
-  if(evolCmsCur)evolCmsSel.value=evolCmsCur;
+  // Appliquer reset APRÈS reconstruction des options pour éviter la restauration navigateur
+  if(isCmsMode){evolCmsSel.value='';evolCmsSel.disabled=true;evolCmsSel.style.opacity='.35';evolCmsSel.title='Non disponible en vue Par CMS';}
+  else{if(evolCmsCur)evolCmsSel.value=evolCmsCur;evolCmsSel.disabled=false;evolCmsSel.style.opacity='';evolCmsSel.title='';}
   const evolCmsFilter=evolCmsSel.value;
   const dataForEvol=evolCmsFilter?data.filter(r=>r.cms===evolCmsFilter):data;
 
@@ -1266,7 +1289,7 @@ function renderEvolution(){
   if(evolCmsFilter){
     document.getElementById('evol-cms-note').textContent=`${dataForEvol.length} accompagnements`;
   } else {
-    document.getElementById('evol-cms-note').textContent='';
+    document.getElementById('evol-cms-note').textContent=isCmsMode?'Filtre désactivé en vue Par CMS':'';
   }
 
   if(nnModeVal){
@@ -1298,29 +1321,32 @@ function renderEvolution(){
         };
       });
     } else if(evolModeVal==='conum'){
-      // One stack per year, subdivided by conseiller
-      const conums=[...new Set(DATA.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE'));
+      // One stack per year, subdivided by conseiller — couleur par année, opacité par conum
+      const conums=[...new Set(dataForEvol.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE'));
+      const alphas=['dd','bb','88','66','44'];
       years.forEach(yr=>{
-        conums.forEach(cn=>{
+        const yrCol=yearColor(yr);
+        conums.forEach((cn,ci)=>{
+          const alpha=alphas[ci%alphas.length];
           const vals=Array(12).fill(0);
           dataForEvol.filter(r=>r.date_demande.startsWith(yr)&&r.conum===cn)
             .forEach(r=>{vals[parseInt(r.date_demande.slice(5,7))-1]++;});
           datasets.push({
-            label:`${cn.split(' ')[0]} ${yr}`,
+            label:`${cn.split(' ').pop()} ${yr}`,
             data:vals,
-            backgroundColor:conumColor(cn)+'88',borderColor:conumColor(cn),
+            backgroundColor:yrCol+alpha,borderColor:yrCol,
             borderWidth:1,borderRadius:0,borderSkipped:false,
             stack:`yr_${yr}`
           });
         });
       });
     } else {
-      // Par CMS: one stack per year, subdivided by CMS
+      // Par CMS: one stack per year, subdivided by CMS — utilise data complet (filtre CMS ignoré en vue par CMS)
       const top5=CMS_MAIN.slice(0,5);
       years.forEach(yr=>{
         top5.forEach((cms2,ci)=>{
           const vals=Array(12).fill(0);
-          dataForEvol.filter(r=>r.date_demande.startsWith(yr)&&r.cms===cms2)
+          data.filter(r=>r.date_demande.startsWith(yr)&&r.cms===cms2)
             .forEach(r=>{vals[parseInt(r.date_demande.slice(5,7))-1]++;});
           const shortLabel=cms2;
           datasets.push({
@@ -1347,6 +1373,15 @@ function renderEvolution(){
               filter:(item,chartData)=>{
                 const ds=chartData.datasets[item.datasetIndex];
                 if(!ds||!ds.data.some(v=>v>0))return false;
+                if(evolModeVal==='conum'){
+                  // Afficher une entrée par année (couleur) seulement
+                  const yr=ds.label.match(/\d{4}$/)?.[0];
+                  if(!yr)return false;
+                  const firstIdx=chartData.datasets.findIndex(d=>d.label.endsWith(yr)&&d.data.some(v=>v>0));
+                  if(firstIdx!==item.datasetIndex)return false;
+                  item.text=yr;
+                  return true;
+                }
                 const name=ds.label.replace(/ \d{4}$/,'');
                 const firstIdx=chartData.datasets.findIndex(d=>d.label.replace(/ \d{4}$/,'')=== name&&d.data.some(v=>v>0));
                 if(firstIdx!==item.datasetIndex)return false;
@@ -1382,15 +1417,15 @@ function renderEvolution(){
     renderYoYByCms(dataForEvol,years);
   } else {
     note.style.display='none';yoySection.style.display='none';document.getElementById('yoy-cms-section').style.display='none';
-    const mKeys=[...new Set(data.map(r=>r.date_demande.slice(0,7)))].sort();
+    const mKeys=[...new Set(dataForEvol.map(r=>r.date_demande.slice(0,7)))].sort();
     let datasets=[];
     if(evolModeVal==='total'){
-      const mc={};data.forEach(r=>{const k=r.date_demande.slice(0,7);mc[k]=(mc[k]||0)+1;});
+      const mc={};dataForEvol.forEach(r=>{const k=r.date_demande.slice(0,7);mc[k]=(mc[k]||0)+1;});
       const vals=mKeys.map(k=>mc[k]||0),maxV=Math.max(...vals);
       datasets=[{label:'Demandes',data:vals,backgroundColor:mKeys.map(k=>(mc[k]||0)===maxV?'rgba(59,130,246,.7)':'rgba(59,130,246,.3)'),borderColor:'#3b82f6',borderRadius:6,borderSkipped:false,borderWidth:1,type:'bar'},{label:'Tendance',data:vals,type:'line',borderColor:'#22d3ee',borderWidth:2,pointRadius:4,pointBackgroundColor:'#22d3ee',tension:.35,fill:false}];
     } else if(evolModeVal==='conum'){
-      const conums=[...new Set(DATA.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE'));
-      datasets=conums.map(cn=>({label:cn.split(' ')[0],data:mKeys.map(k=>data.filter(r=>r.conum===cn&&r.date_demande.startsWith(k)).length),backgroundColor:conumColor(cn)+'88',borderColor:conumColor(cn),borderWidth:1.5,borderRadius:4,borderSkipped:false,type:'bar',stack:'s'}));
+      const conums=[...new Set(dataForEvol.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE'));
+      datasets=conums.map(cn=>({label:cn.split(' ').pop(),data:mKeys.map(k=>dataForEvol.filter(r=>r.conum===cn&&r.date_demande.startsWith(k)).length),backgroundColor:conumColor(cn)+'88',borderColor:conumColor(cn),borderWidth:1.5,borderRadius:4,borderSkipped:false,type:'bar',stack:'s'}));
     } else {
       datasets=CMS_MAIN.slice(0,6).map((cms,i)=>({label:cms,data:mKeys.map(k=>data.filter(r=>r.cms===cms&&r.date_demande.startsWith(k)).length),backgroundColor:PALETTE[i]+'88',borderColor:PALETTE[i],borderWidth:1.5,borderRadius:4,borderSkipped:false,type:'bar',stack:'s'}));
     }
@@ -1448,7 +1483,7 @@ function renderEvolution(){
   // Tableau mensuel
   const conumNames=[...new Set(DATA.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE'));
   let thead=`<thead><tr><th>Mois</th><th>Année</th><th>Total</th><th>Complétion</th>`;
-  conumNames.forEach(cn=>{thead+=`<th class="${conumClass(cn)}">${cn.split(' ')[0]}</th>`;});
+  conumNames.forEach(cn=>{thead+=`<th class="${conumClass(cn)}">${cn}</th>`;});
   thead+=`</tr></thead>`;
   let tbody='<tbody>';
   mAll.forEach(k=>{
@@ -1540,24 +1575,42 @@ function renderCms(){
   const data=getFiltered().filter(r=>r.cms===cms),allData=getFiltered();
   const noA=data.filter(r=>!r.date_action).length,conums=count(data,'conum'),topCN=Object.keys(conums)[0]||'—';
   const oriCount=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
+  const _f=document.getElementById('dFrom').value,_t=document.getElementById('dTo').value;
+  let _rawCms=DATA.filter(r=>r.cms===cms&&r.date_demande>=_f&&r.date_demande<=_t);
+  if(activeYears.size!==ALL_YEARS.length)_rawCms=_rawCms.filter(r=>activeYears.has(r.date_demande.slice(0,4)));
+  const prisesContact=_rawCms.filter(r=>(r.type_action||[]).some(t=>t.toLowerCase().includes('prise de contact'))).length;
   document.getElementById('kpi-cms').innerHTML=`
-    <div class="kpi blue"><div class="kpi-label">Demandes</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">${pct(data.length,allData.length)}% du total</div></div>
+    <div class="kpi blue"><div class="kpi-label">Demandes</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">${pct(data.length,allData.length)}% de l'activité totale des CMS</div></div>
     <div class="kpi green"><div class="kpi-label">Complétion</div><div class="kpi-value">${pct(data.length-noA,data.length)}%</div><div class="kpi-sub">${data.length-noA} traitées</div></div>
-    <div class="kpi orange"><div class="kpi-label">CN principal</div><div class="kpi-value" style="font-size:15px;line-height:1.4">${topCN.split(' ')[0]}</div><div class="kpi-sub">${conums[topCN]||0} accompagnements</div></div>
+    <div class="kpi orange"><div class="kpi-label">CN principal</div><div class="kpi-value" style="font-size:13px;line-height:1.4">${topCN}</div><div class="kpi-sub">${conums[topCN]||0} accompagnements</div></div>
     <div class="kpi purple"><div class="kpi-label">Orienteurs actifs</div><div class="kpi-value">${oriCount}</div><div class="kpi-sub">TS</div></div>
-    <div class="kpi cyan"><div class="kpi-label">Thématique principale</div><div class="kpi-value" style="font-size:13px;line-height:1.5;padding-top:4px">${Object.keys(countThemas(data))[0]||'—'}</div><div class="kpi-sub">${Object.values(countThemas(data))[0]||0} demandes</div></div>`;
+    <div class="kpi cyan"><div class="kpi-label">Thématique principale</div><div class="kpi-value" style="font-size:13px;line-height:1.5;padding-top:4px">${Object.keys(countThemas(data))[0]||'—'}</div><div class="kpi-sub">${Object.values(countThemas(data))[0]||0} demandes</div></div>
+    <div class="kpi red"><div class="kpi-label">Prises de contact</div><div class="kpi-value">${prisesContact}</div><div class="kpi-sub">${pct(prisesContact,data.length)}% des demandes</div></div>`;
   makeBarList(document.getElementById('bar-cms-conum'),conums,'blue');
   makeBarList(document.getElementById('bar-cms-thema'),countThemas(data),'orange');
   const mKeys=[...new Set(getFiltered().map(r=>r.date_demande.slice(0,7)))].sort();
   destroyChart('ch-cms-evol');
   charts['ch-cms-evol']=new Chart(document.getElementById('ch-cms-evol'),{type:'bar',data:{labels:mKeys.map(monthLabel),datasets:[{data:mKeys.map(k=>data.filter(r=>r.date_demande.startsWith(k)).length),backgroundColor:'rgba(59,130,246,.45)',borderColor:'#3b82f6',borderRadius:5,borderSkipped:false,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}});
-  const types=countTypes(data);
-  destroyChart('ch-cms-types');
-  renderTypeChart('ch-cms-types',data);
+  destroyChart('ch-cms-cal');
+  {const yearsForCal=[...(activeYears.size?activeYears:new Set(ALL_YEARS))].map(String).sort();
+  const ty=document.getElementById('typeFilter').value;
+  const _nt=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim().replace(/s$/,'');
+  let cmsBase=DATA.filter(r=>r.cms===cms);
+  if(ty){const nty=_nt(ty);cmsBase=cmsBase.filter(r=>(r.type_action||[]).some(x=>_nt(x).startsWith(nty)));}
+  const months=['01','02','03','04','05','06','07','08','09','10','11','12'];
+  const labM=months.map(m=>{const d=new Date(`2000-${m}-01`);return d.toLocaleDateString('fr-FR',{month:'short'});});
+  const maxYr=Math.max(...yearsForCal.map(Number));
+  const datasets=yearsForCal.map(yr=>{
+    const col=yearColor(yr);
+    const diff=maxYr-Number(yr);
+    const lbl=diff===0?`${yr} (N)`:diff===1?`${yr} (N-1)`:`${yr} (N-${diff})`;
+    return{label:lbl,data:months.map(m=>cmsBase.filter(r=>r.date_demande.startsWith(`${yr}-${m}`)).length),backgroundColor:col+'99',borderColor:col,borderRadius:3,borderSkipped:false,borderWidth:1};
+  });
+  charts['ch-cms-cal']=new Chart(document.getElementById('ch-cms-cal'),{type:'bar',data:{labels:labM,datasets},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:true,labels:{color:'#8899b0',font:{size:10},boxWidth:10,padding:6}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}});}
   let rows='';
   Object.entries(count(data,'orienteur')).filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())).slice(0,15).forEach(([name,n],i)=>{
     const od=data.filter(r=>r.orienteur===name),topCN2=(Object.keys(count(od,'conum'))[0]||'—');
-    rows+=`<tr><td class="mono">${i+1}</td><td>${name}</td><td class="mono">${n}</td><td class="mono">${pct(n,data.length)}%</td><td class="${conumClass(topCN2)}">${topCN2.split(' ')[0]}</td></tr>`;
+    rows+=`<tr><td class="mono">${i+1}</td><td>${name}</td><td class="mono">${n}</td><td class="mono">${pct(n,data.length)}%</td><td class="${conumClass(topCN2)}">${topCN2}</td></tr>`;
   });
   document.getElementById('tbl-cms-ori').innerHTML=rows;
 }
@@ -1577,7 +1630,7 @@ function renderConum(){
   const allYears=[...new Set(DATA.filter(r=>r.conum===conum).map(r=>r.date_demande.slice(0,4)))].sort();
   const evolByYear=allYears.map(y=>({y,n:data.filter(r=>r.date_demande.startsWith(y)).length}));
   document.getElementById('kpi-conum').innerHTML=`
-    <div class="kpi blue"><div class="kpi-label">Accompagnements</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">${pct(data.length,allData.length)}% du total</div></div>
+    <div class="kpi blue"><div class="kpi-label">Accompagnements</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">${pct(data.length,allData.length)}% de l'activité totale</div></div>
     <div class="kpi green"><div class="kpi-label">Orientations TS</div><div class="kpi-value">${hasAct?totalOri:'—'}</div><div class="kpi-sub">${hasAct?'tous CMS confondus':'import requis'}</div></div>
     <div class="kpi orange"><div class="kpi-label">CMS couverts</div><div class="kpi-value">${cmsCount}</div><div class="kpi-sub">structures actives</div></div>
     <div class="kpi purple"><div class="kpi-label">Orienteurs distincts</div><div class="kpi-value">${new Set(data.map(r=>r.orienteur).filter(Boolean)).size}</div><div class="kpi-sub">TS</div></div>
@@ -1605,6 +1658,7 @@ function renderConum(){
   });
   document.getElementById('tbl-conum-all').innerHTML=rows;
   renderHeatmapConum();
+  renderHeatmapCmsByConum(conum);
 }
 
 // ORIENTEURS
@@ -1683,7 +1737,7 @@ function renderOrienteurs(){
     const struct=(Object.keys(count(od,'cms'))[0]||'—');
     const topCN=(Object.keys(count(od,'conum'))[0]||'—');
     const topT=Object.keys(countThemas(od))[0]||'—';
-    rows+=`<tr><td>${name}</td><td>${struct}</td><td class="mono" data-val="${n}">${n}</td><td class="${conumClass(topCN)}">${topCN.split(' ')[0]}</td><td><span class="badge badge-blue">${topT}</span></td></tr>`;
+    rows+=`<tr><td>${name}</td><td>${struct}</td><td class="mono" data-val="${n}">${n}</td><td class="${conumClass(topCN)}">${topCN}</td><td><span class="badge badge-blue">${topT}</span></td></tr>`;
   });
   document.getElementById('tbl-ori').innerHTML=rows;
 }
@@ -1747,10 +1801,12 @@ function renderRapport(){
   }
   const moyR2=delR2.length?Math.round(delR2.reduce((a,b)=>a+b,0)/delR2.length):null;
   const hasAct=delR2.length>0;
+  const communesRpt=new Set(data.map(r=>r.commune).filter(Boolean)).size;
   document.getElementById('kpi-rpt').innerHTML=`
     <div class="kpi blue"><div class="kpi-label">Accompagnements</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">${pct(data.length,dataConum.length)}% activité CN</div></div>
     <div class="kpi orange"><div class="kpi-label">Orienteurs actifs</div><div class="kpi-value">${oriCount}</div><div class="kpi-sub">TS</div></div>
-    <div class="kpi cyan"><div class="kpi-label">Délai total</div><div class="kpi-value">${hasAct&&moyR2!=null?moyR2+'j':'—'}</div><div class="kpi-sub">orientation→réalisation</div></div>`;
+    <div class="kpi cyan"><div class="kpi-label">Délai total</div><div class="kpi-value">${hasAct&&moyR2!=null?moyR2+'j':'—'}</div><div class="kpi-sub">orientation→réalisation</div></div>
+    <div class="kpi purple"><div class="kpi-label">Communes couvertes</div><div class="kpi-value">${communesRpt}</div><div class="kpi-sub">sur ce CMS</div></div>`;
   const mKeys=[...new Set(allData.map(r=>r.date_demande.slice(0,7)))].sort();
   destroyChart('ch-rpt-evol');
   charts['ch-rpt-evol']=new Chart(document.getElementById('ch-rpt-evol'),{type:'bar',data:{labels:mKeys.map(monthLabel),datasets:[{data:mKeys.map(k=>data.filter(r=>r.date_demande.startsWith(k)).length),backgroundColor:'rgba(59,130,246,.45)',borderColor:'#3b82f6',borderRadius:5,borderSkipped:false,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}});
@@ -1758,9 +1814,16 @@ function renderRapport(){
   destroyChart('ch-rpt-thema');
   charts['ch-rpt-thema']=new Chart(document.getElementById('ch-rpt-thema'),{type:'doughnut',data:{labels:themas.map(t=>t[0]),datasets:[{data:themas.map(t=>t[1]),backgroundColor:PALETTE,borderWidth:2,borderColor:'#111827',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:8,color:legendColor()}}}}});
   const _oriRpt=Object.fromEntries(Object.entries(count(data,'orienteur')).filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())));makeBarList(document.getElementById('bar-rpt-ori'),_oriRpt,'green');
-  const top5cms=Object.entries(count(dataConum,'cms')).slice(0,5);
+  {const cmsEntries=Object.entries(count(allData,'cms')).sort((a,b)=>b[1]-a[1]);
+  const hasSel=cmsEntries.some(([c])=>c===cms);
+  if(!hasSel){const v=(count(allData,'cms')[cms]||0);cmsEntries.push([cms,v]);}
+  const shortLbl=c=>c.replace(/^CMS /,'').replace(/^Permanence /,'Perm. ').replace(/\(St-Pardoux\)/,'(St-P.)');
   destroyChart('ch-rpt-comp');
-  charts['ch-rpt-comp']=new Chart(document.getElementById('ch-rpt-comp'),{type:'bar',data:{labels:top5cms.map(([c])=>c.replace('Centre Médico-Social ','CMS ').replace('Centre Médico-Social de ','CMS ')),datasets:[{data:top5cms.map(([,v])=>v),backgroundColor:top5cms.map(([c])=>c===cms?'rgba(59,130,246,.7)':'rgba(59,130,246,.2)'),borderColor:top5cms.map(([c])=>c===cms?'#3b82f6':'#253047'),borderRadius:5,borderSkipped:false,borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}},y:{grid:{display:false},ticks:{color:legendColor(),font:{size:10}}}}}});
+  const ch=document.getElementById('ch-rpt-comp');
+  const w=ch.parentElement?.clientWidth||320;
+  const h=Math.max(200,cmsEntries.length*30);
+  ch.width=w;ch.height=h;ch.style.maxHeight='';
+  charts['ch-rpt-comp']=new Chart(ch,{type:'bar',data:{labels:cmsEntries.map(([c])=>shortLbl(c)),datasets:[{data:cmsEntries.map(([,v])=>v),backgroundColor:cmsEntries.map(([c])=>c===cms?'rgba(59,130,246,.75)':'rgba(59,130,246,.15)'),borderColor:cmsEntries.map(([c])=>c===cms?'#3b82f6':'#253047'),borderRadius:5,borderSkipped:false,borderWidth:1.5}]},options:{responsive:false,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}},y:{grid:{display:false},ticks:{color:legendColor(),font:{size:10}}}}}});}
   // ── États actions pour ce conum × CMS ──
   const actSec=document.getElementById('rpt-actions-section');
   const actMiss=document.getElementById('rpt-actions-missing');
@@ -1854,6 +1917,7 @@ function buildRptBilan(conum,cms,data,dataConum){
   const total=data.length;
   if(!total){
     document.getElementById('rpt-bilan-grid').innerHTML='';
+    document.getElementById('rpt-bilan-evol').innerHTML='';
     document.getElementById('rpt-bilan-text').innerHTML='<p style="color:var(--muted)">Aucun accompagnement sur cette combinaison pour la période sélectionnée.</p>';
     return;
   }
@@ -1868,17 +1932,20 @@ function buildRptBilan(conum,cms,data,dataConum){
   // Délai moyen (champ delai déjà calculé : demande → action)
   const delais=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
   const delaiMoy=delais.length?Math.round(delais.reduce((a,b)=>a+b,0)/delais.length):null;
-  // Tendance trimestrielle (3 derniers mois vs 3 précédents)
-  const months=[...new Set(data.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
-  const nRec=data.filter(r=>months.slice(0,3).includes(r.date_demande.slice(0,7))).length;
-  const nPre=data.filter(r=>months.slice(3,6).includes(r.date_demande.slice(0,7))).length;
-  const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):0;
-  const trend=delta>=0?`+${delta}%`:`${delta}%`;
-  const trendColor=delta>=0?'var(--green)':'var(--orange)';
-  // Thématique dominante
+  // Tendance trimestrielle — même trimestre N vs N-1
+  const allMonthsSorted=[...new Set(data.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
+  const recentMs=allMonthsSorted.slice(0,3);
+  const prevYrMs=recentMs.map(m=>`${parseInt(m.slice(0,4))-1}-${m.slice(5)}`);
+  const nRec=data.filter(r=>recentMs.includes(r.date_demande.slice(0,7))).length;
+  const nPre=data.filter(r=>prevYrMs.includes(r.date_demande.slice(0,7))).length;
+  const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):null;
+  const trend=delta===null?'—':delta>=0?`+${delta}%`:`${delta}%`;
+  const trendColor=delta===null?'var(--muted)':delta>=0?'var(--green)':'var(--orange)';
+  // Top 3 thématiques
   const themas=Object.entries(countThemas(data));
-  const topThema=themas[0]?.[0]||'—';
-  const topN=themas[0]?.[1]||0;
+  const top3Themas=themas.slice(0,3);
+  const topThema=top3Themas[0]?.[0]||'—';
+  const topN=top3Themas[0]?.[1]||0;
   const topThemaPct=pct(topN,total);
   // Réactivité 48h depuis ACTIONS_DATA filtré conum × cms
   const cmNorm=normCms(cms)||cms;
@@ -1891,15 +1958,34 @@ function buildRptBilan(conum,cms,data,dataConum){
   document.getElementById('rpt-bilan-grid').innerHTML=[
     [total,'Accompagnements','var(--blue)'],
     [txC+'%','Taux de complétion','var(--green)'],
-    [trend,'Évolution trimestrielle',trendColor],
+    [trend,'Évol. trim. N/N-1',trendColor],
     [communes,'Communes couvertes','var(--cyan)'],
     [orienteurs,'Orienteurs actifs','var(--purple)'],
     [delaiMoy!==null?delaiMoy+'j':'—',"Délai moyen d'action",'var(--orange)'],
   ].map(([v,l,col])=>`<div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}"><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:${col}">${v}</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div></div>`).join('');
 
+  // Évolution annuelle conum × cms — toujours sur DATA brut (indépendant du filtre années)
+  const rawCC=DATA.filter(r=>r.conum===conum&&r.cms===cms);
+  const evolYears=[...new Set(rawCC.map(r=>r.date_demande.slice(0,4)))].sort();
+  const evolCounts=evolYears.map(yr=>rawCC.filter(r=>r.date_demande.startsWith(yr)).length);
+  const evolItems=evolYears.map((yr,i)=>{
+    const n=evolCounts[i],prev=i>0?evolCounts[i-1]:null;
+    const diff=prev!==null&&prev>0?Math.round((n-prev)/prev*100):null;
+    const arrow=diff===null?'':(diff>=0?`<span style="color:var(--green);font-size:10px;margin-left:3px">▲${diff}%</span>`:`<span style="color:var(--red);font-size:10px;margin-left:3px">▼${Math.abs(diff)}%</span>`);
+    const col=yearColor(yr);
+    return`<div style="text-align:center;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;border-top:2px solid ${col}"><div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:${col}">${n}${arrow}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${yr}</div></div>`;
+  }).join('');
+  document.getElementById('rpt-bilan-evol').innerHTML=evolYears.length>1
+    ?`<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Évolution annuelle — ${cms}</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px">${evolItems}</div>`
+    :'';
+
   const p1=`Au sein de la structure <strong style="color:var(--blue)">${cms}</strong>, ${conumHtml} a accompagné <strong>${total} bénéficiaire${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
-  const p2=`La thématique dominante est <strong style="color:var(--orange)">${topThema}</strong> (${topN} demande${topN>1?'s':''} · ${topThemaPct}%). Le taux de complétion des dossiers atteint <strong>${txC}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):'moins d\'une semaine'}</strong>.`;
-  const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur le dernier trimestre, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
+  const themasStr=top3Themas.map(([t,n],i)=>{
+    const col=i===0?'var(--orange)':i===1?'var(--cyan)':'var(--purple)';
+    return`<strong style="color:${col}">${t}</strong> (${n} · ${pct(n,total)}%)`;
+  }).join(', ');
+  const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):'moins d\'une semaine'}</strong>.`;
+  const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur le même trimestre N/N-1, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
 
   document.getElementById('rpt-bilan-text').innerHTML=`<p style="margin-bottom:9px">${p1}</p><p style="margin-bottom:9px">${p2}</p><p>${p3}</p>`;
 }
@@ -2403,12 +2489,12 @@ function buildBilan(){
   let p1,p2,p3;
   if(diapoCms){
     const conumRef=topConum;
-    const autresConums=conums.filter(c=>c!==topConum).map(c=>c.split(' ')[0]).join(', ');
+    const autresConums=conums.filter(c=>c!==topConum).map(c=>c.split(' ').pop()).join(', ');
     p1=`Au sein de la structure <strong>${diapoCms}</strong>, le conseiller numérique référent <strong>${conumRef}</strong> a pris en charge <strong>${topConumPct}% des accompagnements</strong>, soit <strong>${topConumN} bénéficiaires</strong> sur un total de <strong>${total}</strong>.${autresConums?` Il est appuyé par ${autresConums}.`:''}`;
     p2=`La thématique dominante est <strong>${topThema}</strong>, illustrant les besoins prioritaires du public accompagné sur ce secteur. Le taux de complétion des dossiers atteint <strong>${txCompl}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):'moins d\'une semaine'}</strong>.`;
     p3=`Avec <strong>${orienteurs} TS orienteurs</strong> mobilisés et une présence sur <strong>${communes} communes</strong>, l'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> — témoignant d'un engagement <strong>${delta>=0?'croissant et reconnu':'solide et constant'}</strong> au service des publics fragiles. 🎯`;
   } else {
-    const conumsList=conums.map(c=>c.split(' ')[0]).join(', ');
+    const conumsList=conums.map(c=>c.split(' ').pop()).join(', ');
     p1=`Sur la période analysée, l'équipe des conseillers numériques du Lot-et-Garonne — <strong>${conumsList}</strong> — a accompagné <strong>${total} bénéficiaires</strong> répartis sur <strong>${communes} communes</strong>, avec un taux de complétion de <strong>${txCompl}%</strong>.`;
     p2=`La thématique la plus traitée est <strong>${topThema}</strong>. L'activité trimestrielle affiche une évolution de <strong style="color:${trendColor}">${trend}</strong>, témoignant d'une dynamique <strong>${delta>=0?'positive et croissante':'solide et constante'}</strong>.`;
     p3=`Avec <strong>${orienteurs} TS orienteurs</strong> mobilisés et un délai moyen de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):'moins d\'une semaine'}</strong>, le dispositif GDIN démontre son <strong>efficacité opérationnelle</strong> et sa capacité à répondre rapidement aux besoins numériques des publics fragiles. 🎯`;
@@ -3391,7 +3477,7 @@ function getCoordsGlobal(nom){
 // ── HEATMAP CHARGE CONSEILLERS ──
 function renderHeatmapConum(){
   const allData=getFiltered();
-  const allYears=[...new Set(DATA.map(r=>r.date_demande.slice(0,4)))].sort();
+  const allYears=[...new Set(DATA.map(r=>r.date_demande.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
   const allConums=[...new Set(DATA.map(r=>r.conum).filter(c=>c&&!c.includes('CHIBANE')))].sort();
   const container=document.getElementById('heatmap-conum-container');
   if(!container)return;
@@ -3429,6 +3515,11 @@ function renderHeatmapConum(){
   let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Nombre d'accompagnements par mois · couleur = intensité relative · ← années précédentes à droite</div>`;
   tbl+=`<div style="overflow-x:auto"><table class="heatmap-table"><thead><tr><th></th>`;
   displayYearsRev.forEach((yr,yi)=>{
+    tbl+=`<th colspan="12" style="text-align:center;color:var(--text);font-size:10px;font-weight:700;padding-bottom:4px;letter-spacing:.5px">${yr}</th>`;
+    if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
+  });
+  tbl+=`</tr><tr><th></th>`;
+  displayYearsRev.forEach((yr,yi)=>{
     MONTH_FR.forEach((m,mi)=>{ tbl+=`<th title="${m} ${yr}">${m.slice(0,1)}</th>`; });
     if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
   });
@@ -3437,7 +3528,7 @@ function renderHeatmapConum(){
     const hasVol=allYears.some(yr=>vol[cn]&&vol[cn][yr]&&vol[cn][yr].some(v=>v>0));
     if(!hasVol)return;
     const color=CONUM_COLORS[cn]||'#6b7fa0';
-    const shortName=cn.split(' ')[0];
+    const shortName=cn.split(' ').pop();
     tbl+=`<tr><td class="hm-label" title="${cn}">${shortName}</td>`;
     displayYearsRev.forEach((yr,yi)=>{
       const vals=vol[cn][yr]||Array(12).fill(0);
@@ -3452,6 +3543,65 @@ function renderHeatmapConum(){
   });
   tbl+=`</tbody></table></div>`;
   container.innerHTML=tbl;
+}
+
+function renderHeatmapCmsByConum(conum){
+  const container=document.getElementById('heatmap-cms-conum-container');
+  if(!container)return;
+  if(!conum){container.innerHTML='';return;}
+  const allYears=[...new Set(DATA.map(r=>r.date_demande.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
+  const conumData=DATA.filter(r=>r.conum===conum);
+  const cmsList=[...new Set(conumData.map(r=>r.cms).filter(Boolean))].sort((a,b)=>{
+    const sa=conumData.filter(r=>r.cms===a).length,sb=conumData.filter(r=>r.cms===b).length;
+    return sb-sa;
+  });
+  if(!cmsList.length){container.innerHTML='<div style="color:var(--muted);font-size:11px;padding:10px">Aucune donnée</div>';return;}
+  const vol={};
+  cmsList.forEach(cms=>{vol[cms]={};allYears.forEach(yr=>{vol[cms][yr]=Array(12).fill(0);});});
+  conumData.forEach(r=>{
+    if(!vol[r.cms])return;
+    const yr=r.date_demande.slice(0,4),mo=parseInt(r.date_demande.slice(5,7))-1;
+    if(vol[r.cms][yr]&&mo>=0&&mo<12)vol[r.cms][yr][mo]++;
+  });
+  let maxVal=1;
+  cmsList.forEach(cms=>allYears.forEach(yr=>vol[cms][yr].forEach(v=>{if(v>maxVal)maxVal=v;})));
+  function cellColor(v,hex){
+    if(!v)return'var(--s2)';
+    const op=Math.max(0.12,Math.min(0.85,v/maxVal));
+    const r2=parseInt(hex.slice(1,3),16),g2=parseInt(hex.slice(3,5),16),b2=parseInt(hex.slice(5,7),16);
+    return`rgba(${r2},${g2},${b2},${op.toFixed(2)})`;
+  }
+  const col=conumColor(conum)||'#3b82f6';
+  const displayYearsRev=[...allYears].reverse();
+  let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Nombre de demandes par mois et par CMS · ← années précédentes à droite</div>`;
+  tbl+=`<div style="overflow-x:auto"><table class="heatmap-table"><thead><tr><th></th>`;
+  displayYearsRev.forEach((yr,yi)=>{
+    tbl+=`<th colspan="12" style="text-align:center;color:var(--text);font-size:10px;font-weight:700;padding-bottom:4px;letter-spacing:.5px">${yr}</th>`;
+    if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
+  });
+  tbl+=`</tr><tr><th></th>`;
+  displayYearsRev.forEach((yr,yi)=>{
+    MONTH_FR.forEach(m=>{tbl+=`<th title="${m} ${yr}">${m.slice(0,1)}</th>`;});
+    if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
+  });
+  tbl+=`</tr></thead><tbody>`;
+  cmsList.forEach(cms=>{
+    const shortCms=cms.replace(/^CMS /,'').replace(/^Permanence /,'');
+    tbl+=`<tr><td class="hm-label" title="${cms}" style="min-width:110px">${shortCms}</td>`;
+    displayYearsRev.forEach((yr,yi)=>{
+      const vals=vol[cms][yr]||Array(12).fill(0);
+      vals.forEach((v,mi)=>{
+        const bg=cellColor(v,col);
+        tbl+=`<td class="hm-cell" style="background:${bg}" title="${cms}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
+      });
+      if(yi<displayYearsRev.length-1)tbl+=`<td style="width:10px"></td>`;
+    });
+    tbl+=`</tr>`;
+  });
+  tbl+=`</tbody></table></div>`;
+  container.innerHTML=tbl;
+  const lbl=document.getElementById('heatmap-cms-conum-label');
+  if(lbl)lbl.textContent=`— ${conum}`;
 }
 
 // ── RAPPORT QUALITÉ à l'import ──
@@ -3915,17 +4065,19 @@ function drSlideBilan(c,data,allDataConum){
   const total=data.length;
   const communes=new Set(data.map(r=>r.commune).filter(Boolean)).size;
   const orienteurs=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
-  // Évolution trimestrielle
-  const months=[...new Set(data.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
-  const nRec=data.filter(r=>months.slice(0,3).includes(r.date_demande.slice(0,7))).length;
-  const nPre=data.filter(r=>months.slice(3,6).includes(r.date_demande.slice(0,7))).length;
-  const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):0;
-  const trend=delta>=0?`+${delta}%`:`${delta}%`;
-  const trendColor=delta>=0?'var(--green)':'var(--orange)';
+  // Évolution trimestrielle — même trimestre N vs N-1 (pas consécutif)
+  const allMonthsDR=[...new Set(data.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
+  const recentMsDR=allMonthsDR.slice(0,3);
+  const prevYrMsDR=recentMsDR.map(m=>`${parseInt(m.slice(0,4))-1}-${m.slice(5)}`);
+  const nRec=data.filter(r=>recentMsDR.includes(r.date_demande.slice(0,7))).length;
+  const nPre=data.filter(r=>prevYrMsDR.includes(r.date_demande.slice(0,7))).length;
+  const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):null;
+  const trend=delta===null?'—':delta>=0?`+${delta}%`:`${delta}%`;
+  const trendColor=delta===null?'var(--muted)':delta>=0?'var(--green)':'var(--orange)';
   // Détecter si le trimestre récent est incomplet (< 3 mois de données)
-  const recentMonthsCount=months.slice(0,3).filter(m=>data.some(r=>r.date_demande.startsWith(m))).length;
+  const recentMonthsCount=recentMsDR.filter(m=>data.some(r=>r.date_demande.startsWith(m))).length;
   const trendIncomplete=recentMonthsCount<3;
-  // N vs N-1 — utiliser DATA brut sans filtre d'années mais avec le même filtre type_action que data
+  // N vs N-1 — DATA brut sans filtre d'années, mais même filtre type_action que data
   const cmNormYoY=normCms(drCms)||drCms;
   const _tyYoY=document.getElementById('typeFilter').value;
   const _ntYoY=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim().replace(/s$/,'');
@@ -3938,7 +4090,9 @@ function drSlideBilan(c,data,allDataConum){
   const yCurIdx=allYearsTotal.indexOf(yCur);
   const yPrev=yCurIdx>0?allYearsTotal[yCurIdx-1]:null;
   const nCur=data.filter(r=>r.date_demande.startsWith(yCur)).length;
-  const nPrev=yPrev?allDataCms.filter(r=>r.date_demande.startsWith(yPrev)).length:null;
+  // Utiliser data pour nPrev si yPrev est dans la sélection (garantit la même base de filtrage)
+  const nPrevFromData=yPrev?data.filter(r=>r.date_demande.startsWith(yPrev)).length:null;
+  const nPrev=nPrevFromData>0?nPrevFromData:(yPrev?allDataCms.filter(r=>r.date_demande.startsWith(yPrev)).length:null);
   const deltaYoY=nPrev?Math.round((nCur-nPrev)/nPrev*100):null;
   const trendYoY=deltaYoY!==null?(deltaYoY>=0?`+${deltaYoY}%`:`${deltaYoY}%`):'—';
   const trendYoYColor=deltaYoY===null?'var(--muted)':deltaYoY>=0?'var(--green)':'var(--orange)';
@@ -3963,7 +4117,7 @@ function drSlideBilan(c,data,allDataConum){
   const kpis=[
     [total,'Accompagnements','var(--blue)'],
     [trend+(trendIncomplete?'<br><span style="font-size:9px;color:var(--muted)">⚠ période partielle</span>':''), trendIncomplete?'Évol. trimestrielle ⚠':'Évol. trimestrielle', trendColor],
-    [yPrev?trendYoY+'<br><span style=\"font-size:10px;color:var(--muted)\">'+yCur+' vs '+yPrev+'</span>':'—','N vs N-1',trendYoYColor],
+    [yPrev?trendYoY+'<br><span style=\"font-size:10px;color:var(--muted)\">'+nCur+' vs '+nPrev+'</span><br><span style=\"font-size:9px;color:var(--muted);opacity:.7\">'+yCur+' vs '+yPrev+'</span>':'—','N vs N-1',trendYoYColor],
     [communes,'Communes','var(--cyan)'],
     [orienteurs,'Orienteurs','var(--orange)'],
     [(()=>{const r48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0&&r.delai_reactivite<=2).length;const t48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0).length;return hasActBil&&t48>=20?Math.round(r48/t48*100)+'%':t48<20&&hasActBil?'<20 cas':'—';})(),'Réactivité 48h','var(--purple)'],
