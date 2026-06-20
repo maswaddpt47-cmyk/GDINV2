@@ -1587,20 +1587,21 @@ function renderCms(){
   destroyChart('ch-cms-evol');
   charts['ch-cms-evol']=new Chart(document.getElementById('ch-cms-evol'),{type:'bar',data:{labels:mKeys.map(monthLabel),datasets:[{data:mKeys.map(k=>data.filter(r=>r.date_demande.startsWith(k)).length),backgroundColor:'rgba(59,130,246,.45)',borderColor:'#3b82f6',borderRadius:5,borderSkipped:false,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}});
   destroyChart('ch-cms-cal');
-  {const sortedAct=[...(activeYears.size?activeYears:new Set(ALL_YEARS))].map(Number).sort((a,b)=>b-a);
-  const yearN=sortedAct[0],yearN1=yearN-1;
+  {const yearsForCal=[...(activeYears.size?activeYears:new Set(ALL_YEARS))].map(String).sort();
   const ty=document.getElementById('typeFilter').value;
   const _nt=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim().replace(/s$/,'');
   let cmsBase=DATA.filter(r=>r.cms===cms);
   if(ty){const nty=_nt(ty);cmsBase=cmsBase.filter(r=>(r.type_action||[]).some(x=>_nt(x).startsWith(nty)));}
   const months=['01','02','03','04','05','06','07','08','09','10','11','12'];
   const labM=months.map(m=>{const d=new Date(`2000-${m}-01`);return d.toLocaleDateString('fr-FR',{month:'short'});});
-  const dataN=months.map(m=>cmsBase.filter(r=>r.date_demande.startsWith(`${yearN}-${m}`)).length);
-  const dataN1=months.map(m=>cmsBase.filter(r=>r.date_demande.startsWith(`${yearN1}-${m}`)).length);
-  charts['ch-cms-cal']=new Chart(document.getElementById('ch-cms-cal'),{type:'bar',data:{labels:labM,datasets:[
-    {label:`${yearN} (N)`,data:dataN,backgroundColor:'rgba(59,130,246,.6)',borderColor:'#3b82f6',borderRadius:4,borderSkipped:false,borderWidth:1},
-    {label:`${yearN1} (N-1)`,data:dataN1,backgroundColor:'rgba(139,92,246,.4)',borderColor:'#8b5cf6',borderRadius:4,borderSkipped:false,borderWidth:1}
-  ]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:true,labels:{color:'#8899b0',font:{size:10},boxWidth:10,padding:6}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}});}
+  const maxYr=Math.max(...yearsForCal.map(Number));
+  const datasets=yearsForCal.map(yr=>{
+    const col=yearColor(yr);
+    const diff=maxYr-Number(yr);
+    const lbl=diff===0?`${yr} (N)`:diff===1?`${yr} (N-1)`:`${yr} (N-${diff})`;
+    return{label:lbl,data:months.map(m=>cmsBase.filter(r=>r.date_demande.startsWith(`${yr}-${m}`)).length),backgroundColor:col+'99',borderColor:col,borderRadius:3,borderSkipped:false,borderWidth:1};
+  });
+  charts['ch-cms-cal']=new Chart(document.getElementById('ch-cms-cal'),{type:'bar',data:{labels:labM,datasets},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:true,labels:{color:'#8899b0',font:{size:10},boxWidth:10,padding:6}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}});}
   let rows='';
   Object.entries(count(data,'orienteur')).filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())).slice(0,15).forEach(([name,n],i)=>{
     const od=data.filter(r=>r.orienteur===name),topCN2=(Object.keys(count(od,'conum'))[0]||'—');
