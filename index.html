@@ -4065,15 +4065,17 @@ function drSlideBilan(c,data,allDataConum){
   const total=data.length;
   const communes=new Set(data.map(r=>r.commune).filter(Boolean)).size;
   const orienteurs=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
-  // Évolution trimestrielle
-  const months=[...new Set(data.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
-  const nRec=data.filter(r=>months.slice(0,3).includes(r.date_demande.slice(0,7))).length;
-  const nPre=data.filter(r=>months.slice(3,6).includes(r.date_demande.slice(0,7))).length;
-  const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):0;
-  const trend=delta>=0?`+${delta}%`:`${delta}%`;
-  const trendColor=delta>=0?'var(--green)':'var(--orange)';
+  // Évolution trimestrielle — même trimestre N vs N-1 (pas consécutif)
+  const allMonthsDR=[...new Set(data.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
+  const recentMsDR=allMonthsDR.slice(0,3);
+  const prevYrMsDR=recentMsDR.map(m=>`${parseInt(m.slice(0,4))-1}-${m.slice(5)}`);
+  const nRec=data.filter(r=>recentMsDR.includes(r.date_demande.slice(0,7))).length;
+  const nPre=data.filter(r=>prevYrMsDR.includes(r.date_demande.slice(0,7))).length;
+  const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):null;
+  const trend=delta===null?'—':delta>=0?`+${delta}%`:`${delta}%`;
+  const trendColor=delta===null?'var(--muted)':delta>=0?'var(--green)':'var(--orange)';
   // Détecter si le trimestre récent est incomplet (< 3 mois de données)
-  const recentMonthsCount=months.slice(0,3).filter(m=>data.some(r=>r.date_demande.startsWith(m))).length;
+  const recentMonthsCount=recentMsDR.filter(m=>data.some(r=>r.date_demande.startsWith(m))).length;
   const trendIncomplete=recentMonthsCount<3;
   // N vs N-1 — utiliser DATA brut sans filtre d'années pour avoir l'historique complet
   const cmNormYoY=normCms(drCms)||drCms;
