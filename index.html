@@ -1955,9 +1955,10 @@ function buildRptBilan(conum,cms,data,dataConum){
     [delaiMoy!==null?delaiMoy+'j':'—',"Délai moyen d'action",'var(--orange)'],
   ].map(([v,l,col])=>`<div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}"><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:${col}">${v}</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div></div>`).join('');
 
-  // Évolution annuelle conum × cms
-  const evolYears=[...new Set(DATA.filter(r=>r.conum===conum&&r.cms===cms).map(r=>r.date_demande.slice(0,4)))].sort();
-  const evolCounts=evolYears.map(yr=>data.filter(r=>r.date_demande.startsWith(yr)).length);
+  // Évolution annuelle conum × cms — toujours sur DATA brut (indépendant du filtre années)
+  const rawCC=DATA.filter(r=>r.conum===conum&&r.cms===cms);
+  const evolYears=[...new Set(rawCC.map(r=>r.date_demande.slice(0,4)))].sort();
+  const evolCounts=evolYears.map(yr=>rawCC.filter(r=>r.date_demande.startsWith(yr)).length);
   const evolItems=evolYears.map((yr,i)=>{
     const n=evolCounts[i],prev=i>0?evolCounts[i-1]:null;
     const diff=prev!==null&&prev>0?Math.round((n-prev)/prev*100):null;
