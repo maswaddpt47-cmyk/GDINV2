@@ -1820,8 +1820,10 @@ function renderRapport(){
   const shortLbl=c=>c.replace(/^CMS /,'').replace(/^Permanence /,'Perm. ').replace(/\(St-Pardoux\)/,'(St-P.)');
   destroyChart('ch-rpt-comp');
   const ch=document.getElementById('ch-rpt-comp');
-  ch.style.maxHeight=Math.max(200,cmsEntries.length*28)+'px';
-  charts['ch-rpt-comp']=new Chart(ch,{type:'bar',data:{labels:cmsEntries.map(([c])=>shortLbl(c)),datasets:[{data:cmsEntries.map(([,v])=>v),backgroundColor:cmsEntries.map(([c])=>c===cms?'rgba(59,130,246,.75)':'rgba(59,130,246,.15)'),borderColor:cmsEntries.map(([c])=>c===cms?'#3b82f6':'#253047'),borderRadius:5,borderSkipped:false,borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}},y:{grid:{display:false},ticks:{color:legendColor(),font:{size:10}}}}}});}
+  const w=ch.parentElement?.clientWidth||320;
+  const h=Math.max(200,cmsEntries.length*30);
+  ch.width=w;ch.height=h;ch.style.maxHeight='';
+  charts['ch-rpt-comp']=new Chart(ch,{type:'bar',data:{labels:cmsEntries.map(([c])=>shortLbl(c)),datasets:[{data:cmsEntries.map(([,v])=>v),backgroundColor:cmsEntries.map(([c])=>c===cms?'rgba(59,130,246,.75)':'rgba(59,130,246,.15)'),borderColor:cmsEntries.map(([c])=>c===cms?'#3b82f6':'#253047'),borderRadius:5,borderSkipped:false,borderWidth:1.5}]},options:{responsive:false,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}},y:{grid:{display:false},ticks:{color:legendColor(),font:{size:10}}}}}});}
   // ── États actions pour ce conum × CMS ──
   const actSec=document.getElementById('rpt-actions-section');
   const actMiss=document.getElementById('rpt-actions-missing');
