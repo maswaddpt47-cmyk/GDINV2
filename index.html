@@ -667,6 +667,7 @@ body.pres-mode .tbl th{font-size:11px}
       <div class="card g1" id="rpt-bilan-card">
         <div class="card-title"><span class="dot" style="background:var(--green)"></span>Bilan &amp; perspectives</div>
         <div id="rpt-bilan-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px"></div>
+        <div id="rpt-bilan-evol" style="margin-bottom:16px"></div>
         <div id="rpt-bilan-text" style="line-height:1.8;font-size:13px;color:var(--text)"></div>
       </div>
     </div>
@@ -1907,6 +1908,7 @@ function buildRptBilan(conum,cms,data,dataConum){
   const total=data.length;
   if(!total){
     document.getElementById('rpt-bilan-grid').innerHTML='';
+    document.getElementById('rpt-bilan-evol').innerHTML='';
     document.getElementById('rpt-bilan-text').innerHTML='<p style="color:var(--muted)">Aucun accompagnement sur cette combinaison pour la période sélectionnée.</p>';
     return;
   }
@@ -1949,6 +1951,20 @@ function buildRptBilan(conum,cms,data,dataConum){
     [orienteurs,'Orienteurs actifs','var(--purple)'],
     [delaiMoy!==null?delaiMoy+'j':'—',"Délai moyen d'action",'var(--orange)'],
   ].map(([v,l,col])=>`<div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}"><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:${col}">${v}</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div></div>`).join('');
+
+  // Évolution annuelle conum × cms
+  const evolYears=[...new Set(DATA.filter(r=>r.conum===conum&&r.cms===cms).map(r=>r.date_demande.slice(0,4)))].sort();
+  const evolCounts=evolYears.map(yr=>data.filter(r=>r.date_demande.startsWith(yr)).length);
+  const evolItems=evolYears.map((yr,i)=>{
+    const n=evolCounts[i],prev=i>0?evolCounts[i-1]:null;
+    const diff=prev!==null&&prev>0?Math.round((n-prev)/prev*100):null;
+    const arrow=diff===null?'':(diff>=0?`<span style="color:var(--green);font-size:10px;margin-left:3px">▲${diff}%</span>`:`<span style="color:var(--red);font-size:10px;margin-left:3px">▼${Math.abs(diff)}%</span>`);
+    const col=yearColor(yr);
+    return`<div style="text-align:center;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;border-top:2px solid ${col}"><div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:${col}">${n}${arrow}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${yr}</div></div>`;
+  }).join('');
+  document.getElementById('rpt-bilan-evol').innerHTML=evolYears.length>1
+    ?`<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Évolution annuelle — ${cms}</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px">${evolItems}</div>`
+    :'';
 
   const p1=`Au sein de la structure <strong style="color:var(--blue)">${cms}</strong>, ${conumHtml} a accompagné <strong>${total} bénéficiaire${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
   const p2=`La thématique dominante est <strong style="color:var(--orange)">${topThema}</strong> (${topN} demande${topN>1?'s':''} · ${topThemaPct}%). Le taux de complétion des dossiers atteint <strong>${txC}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):'moins d\'une semaine'}</strong>.`;
