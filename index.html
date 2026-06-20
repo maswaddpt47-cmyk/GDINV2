@@ -3477,6 +3477,11 @@ function renderHeatmapConum(){
   let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Nombre d'accompagnements par mois · couleur = intensité relative · ← années précédentes à droite</div>`;
   tbl+=`<div style="overflow-x:auto"><table class="heatmap-table"><thead><tr><th></th>`;
   displayYearsRev.forEach((yr,yi)=>{
+    tbl+=`<th colspan="12" style="text-align:center;color:var(--text);font-size:10px;font-weight:700;padding-bottom:4px;letter-spacing:.5px">${yr}</th>`;
+    if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
+  });
+  tbl+=`</tr><tr><th></th>`;
+  displayYearsRev.forEach((yr,yi)=>{
     MONTH_FR.forEach((m,mi)=>{ tbl+=`<th title="${m} ${yr}">${m.slice(0,1)}</th>`; });
     if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
   });
