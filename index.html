@@ -1923,17 +1923,20 @@ function buildRptBilan(conum,cms,data,dataConum){
   // Délai moyen (champ delai déjà calculé : demande → action)
   const delais=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
   const delaiMoy=delais.length?Math.round(delais.reduce((a,b)=>a+b,0)/delais.length):null;
-  // Tendance trimestrielle (3 derniers mois vs 3 précédents)
-  const months=[...new Set(data.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
-  const nRec=data.filter(r=>months.slice(0,3).includes(r.date_demande.slice(0,7))).length;
-  const nPre=data.filter(r=>months.slice(3,6).includes(r.date_demande.slice(0,7))).length;
-  const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):0;
-  const trend=delta>=0?`+${delta}%`:`${delta}%`;
-  const trendColor=delta>=0?'var(--green)':'var(--orange)';
-  // Thématique dominante
+  // Tendance trimestrielle — même trimestre N vs N-1
+  const allMonthsSorted=[...new Set(data.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
+  const recentMs=allMonthsSorted.slice(0,3);
+  const prevYrMs=recentMs.map(m=>`${parseInt(m.slice(0,4))-1}-${m.slice(5)}`);
+  const nRec=data.filter(r=>recentMs.includes(r.date_demande.slice(0,7))).length;
+  const nPre=data.filter(r=>prevYrMs.includes(r.date_demande.slice(0,7))).length;
+  const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):null;
+  const trend=delta===null?'—':delta>=0?`+${delta}%`:`${delta}%`;
+  const trendColor=delta===null?'var(--muted)':delta>=0?'var(--green)':'var(--orange)';
+  // Top 3 thématiques
   const themas=Object.entries(countThemas(data));
-  const topThema=themas[0]?.[0]||'—';
-  const topN=themas[0]?.[1]||0;
+  const top3Themas=themas.slice(0,3);
+  const topThema=top3Themas[0]?.[0]||'—';
+  const topN=top3Themas[0]?.[1]||0;
   const topThemaPct=pct(topN,total);
   // Réactivité 48h depuis ACTIONS_DATA filtré conum × cms
   const cmNorm=normCms(cms)||cms;
@@ -1946,7 +1949,7 @@ function buildRptBilan(conum,cms,data,dataConum){
   document.getElementById('rpt-bilan-grid').innerHTML=[
     [total,'Accompagnements','var(--blue)'],
     [txC+'%','Taux de complétion','var(--green)'],
-    [trend,'Évolution trimestrielle',trendColor],
+    [trend,'Évol. trim. N/N-1',trendColor],
     [communes,'Communes couvertes','var(--cyan)'],
     [orienteurs,'Orienteurs actifs','var(--purple)'],
     [delaiMoy!==null?delaiMoy+'j':'—',"Délai moyen d'action",'var(--orange)'],
@@ -1967,8 +1970,12 @@ function buildRptBilan(conum,cms,data,dataConum){
     :'';
 
   const p1=`Au sein de la structure <strong style="color:var(--blue)">${cms}</strong>, ${conumHtml} a accompagné <strong>${total} bénéficiaire${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
-  const p2=`La thématique dominante est <strong style="color:var(--orange)">${topThema}</strong> (${topN} demande${topN>1?'s':''} · ${topThemaPct}%). Le taux de complétion des dossiers atteint <strong>${txC}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):'moins d\'une semaine'}</strong>.`;
-  const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur le dernier trimestre, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
+  const themasStr=top3Themas.map(([t,n],i)=>{
+    const col=i===0?'var(--orange)':i===1?'var(--cyan)':'var(--purple)';
+    return`<strong style="color:${col}">${t}</strong> (${n} · ${pct(n,total)}%)`;
+  }).join(', ');
+  const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):'moins d\'une semaine'}</strong>.`;
+  const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur le même trimestre N/N-1, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
 
   document.getElementById('rpt-bilan-text').innerHTML=`<p style="margin-bottom:9px">${p1}</p><p style="margin-bottom:9px">${p2}</p><p>${p3}</p>`;
 }
