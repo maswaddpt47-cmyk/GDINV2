@@ -369,7 +369,7 @@ body.pres-mode .tbl th{font-size:11px}
       <label>Type d'action</label>
       <select id="typeFilter" onchange="refreshAll()">
         <option value="">Tous</option>
-        <option value="Accompagnement">Accompagnement</option>
+        <option value="Accompagnement" selected>Accompagnement</option>
         <option value="Prise de contact">Prise de contact</option>
         <option value="Orientation vers un tiers">Orientation tiers</option>
         <option value="Atelier">Atelier</option>
@@ -401,7 +401,7 @@ body.pres-mode .tbl th{font-size:11px}
     <div class="drawer-row"><label>Type d'action</label>
       <select id="typeFilterM" onchange="syncMobileFilter('type',this.value)">
         <option value="">Tous</option>
-        <option value="Accompagnement">Accompagnement</option>
+        <option value="Accompagnement" selected>Accompagnement</option>
         <option value="Prise de contact">Prise de contact</option>
         <option value="Orientation vers un tiers">Orientation vers un tiers</option>
         <option value="Atelier">Atelier</option>
@@ -707,8 +707,8 @@ body.pres-mode .tbl th{font-size:11px}
       <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
         <span style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">Importer pour</span>
         <select id="import-conum-filter" style="flex:1;max-width:260px">
-          <option value="">— Tous les conseillers —</option>
-          <option value="ASWAD Michel" selected>ASWAD Michel</option>
+          <option value="" selected>— Tous les conseillers —</option>
+          <option value="ASWAD Michel">ASWAD Michel</option>
           <option value="CAPELLE Eva">CAPELLE Eva</option>
           <option value="PINEAU Cynthia">PINEAU Cynthia</option>
           <option value="TUAL Corentin">TUAL Corentin</option>
