@@ -3716,7 +3716,7 @@ function renderHeatmapCmsByConum(conum){
   if(!container)return;
   if(!conum){container.innerHTML='';return;}
   const allYears=[...new Set(DATA.map(r=>r.date_demande.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
-  const conumData=DATA.filter(r=>r.conum===conum);
+  const conumData=getFiltered().filter(r=>r.conum===conum);
   const cmsList=[...new Set(conumData.map(r=>r.cms).filter(Boolean))].sort((a,b)=>{
     const sa=conumData.filter(r=>r.cms===a).length,sb=conumData.filter(r=>r.cms===b).length;
     return sb-sa;
