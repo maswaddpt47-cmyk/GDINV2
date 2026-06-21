@@ -592,7 +592,7 @@ body.pres-mode .tbl th{font-size:11px}
 
   <!-- ATELIERS -->
   <div id="panel-ateliers" class="panel">
-    <div class="frow"><div class="year-chips" id="year-chips-atl" style="margin-left:auto"></div></div>
+    <div class="frow"><label>Conseiller :</label><select id="sel-atl-conum-global" onchange="renderAteliers()" style="background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 8px;font-size:12px;cursor:pointer"><option value="">— Tous les conseillers —</option></select><div class="year-chips" id="year-chips-atl" style="margin-left:auto"></div></div>
     <div class="g5" id="kpi-ateliers"></div>
     <div class="g2">
       <div class="card"><div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Évolution mensuelle des ateliers</div><canvas id="ch-atl-evol" style="max-height:260px"></canvas></div>
@@ -606,12 +606,7 @@ body.pres-mode .tbl th{font-size:11px}
       <tbody id="tbl-atl"></tbody></table>
     </div>
     <div class="card">
-      <div class="card-title">
-        <span class="dot" style="background:var(--cyan)"></span>Charge mensuelle par lieu · Ateliers
-        <select id="sel-atl-conum" onchange="renderHeatmapAteliers()" style="margin-left:auto;background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer">
-          <option value="">— Tous les conseillers —</option>
-        </select>
-      </div>
+      <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Charge mensuelle par lieu · Ateliers</div>
       <div id="heatmap-atl-container"></div>
     </div>
   </div>
@@ -1353,6 +1348,14 @@ function makeBarList(el,data,color='blue',n=9){
 
 // TABS
 function switchTab(id,btn){
+  const wasAtelier=document.getElementById('panel-ateliers').classList.contains('active');
+  if(id==='ateliers'&&!wasAtelier){
+    document.getElementById('typeFilter').value='Atelier';
+    try{document.getElementById('typeFilterM').value='Atelier';}catch(e){}
+  }else if(id!=='ateliers'&&wasAtelier){
+    document.getElementById('typeFilter').value='Accompagnement';
+    try{document.getElementById('typeFilterM').value='Accompagnement';}catch(e){}
+  }
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');btn.classList.add('active');
@@ -1362,7 +1365,7 @@ function switchTab(id,btn){
   if(id==='par-cms'){initCmsSelect();renderCms();}
   if(id==='par-conum'){initConumSelect();renderConum();renderHeatmapConum();}
   if(id==='orienteurs'){initOriCmsSelect();renderOrienteurs();}
-  if(id==='ateliers'){buildYearChips();renderAteliers();}
+  if(id==='ateliers'){buildYearChips();initAtlConumGlobalSelect();renderAteliers();}
   if(id==='territoire'){
     // Double requestAnimationFrame garantit que le DOM est peint avant Leaflet
     requestAnimationFrame(function(){requestAnimationFrame(function(){
@@ -3251,7 +3254,9 @@ const COMMUNE_COORDS={"AGEN": [44.2042, 0.6208], "AGEN CEDEX 9": [44.2042, 0.620
 
 // ── ATELIERS ──
 function renderAteliers(){
-  const data=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier'));
+  const conumAtl=document.getElementById('sel-atl-conum-global')?.value||'';
+  let data=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier'));
+  if(conumAtl)data=data.filter(r=>r.conum===conumAtl);
 
   // KPIs
   const total=data.length;
@@ -3351,16 +3356,16 @@ function renderAteliers(){
     const topThemaL=Object.entries(row.themasL).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
     return `<tr><td>${row.lieu}</td><td class="mono">${row.commune}</td><td class="mono">${row.n}</td><td>${conumNameHtml(topConum,conumColor(topConum))}</td><td>${topThemaL}</td></tr>`;
   }).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted)">Aucun atelier sur la période sélectionnée</td></tr>';
-  initAtlConumSelect();
+  initAtlConumGlobalSelect();
   renderHeatmapAteliers();
 }
 
 
-function initAtlConumSelect(){
-  const sel=document.getElementById('sel-atl-conum');
+function initAtlConumGlobalSelect(){
+  const sel=document.getElementById('sel-atl-conum-global');
   if(!sel)return;
   const cur=sel.value;
-  const atlData=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier'));
+  const atlData=DATA.filter(r=>(r.type_action||[]).includes('Atelier'));
   const conums=[...new Set(atlData.map(r=>r.conum).filter(Boolean))].sort();
   sel.innerHTML='<option value="">— Tous les conseillers —</option>'+conums.map(c=>`<option value="${c}">${c}</option>`).join('');
   if(cur&&conums.includes(cur))sel.value=cur;
@@ -3369,7 +3374,7 @@ function initAtlConumSelect(){
 function renderHeatmapAteliers(){
   const container=document.getElementById('heatmap-atl-container');
   if(!container)return;
-  const conum=document.getElementById('sel-atl-conum')?.value||'';
+  const conum=document.getElementById('sel-atl-conum-global')?.value||'';
   const allYears=[...new Set(DATA.filter(r=>r.date_action).map(r=>r.date_action.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
   let atlData=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier'));
   if(conum)atlData=atlData.filter(r=>r.conum===conum);
