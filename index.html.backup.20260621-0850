@@ -4193,71 +4193,141 @@ function drSlideBilan(c,data,allDataConum){
   const total=data.length;
   const communes=new Set(data.map(r=>r.commune).filter(Boolean)).size;
   const orienteurs=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
-  const partCN=pct(total,allDataConum.length);
-  const done=data.filter(r=>r.date_action).length;
-  const txC=pct(done,total);
-  const delais=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
-  const delaiMoy=delais.length?Math.round(delais.reduce((a,b)=>a+b,0)/delais.length):null;
-  // Évolution trimestrielle — même trimestre N vs N-1
+  // Évolution trimestrielle — même trimestre N vs N-1 (pas consécutif)
   const allMonthsDR=[...new Set(data.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
-  const recentMs=allMonthsDR.slice(0,3);
-  const prevYrMs=recentMs.map(m=>`${parseInt(m.slice(0,4))-1}-${m.slice(5)}`);
-  const nRec=data.filter(r=>recentMs.includes(r.date_demande.slice(0,7))).length;
-  const nPre=data.filter(r=>prevYrMs.includes(r.date_demande.slice(0,7))).length;
+  const recentMsDR=allMonthsDR.slice(0,3);
+  const prevYrMsDR=recentMsDR.map(m=>`${parseInt(m.slice(0,4))-1}-${m.slice(5)}`);
+  const nRec=data.filter(r=>recentMsDR.includes(r.date_demande.slice(0,7))).length;
+  const nPre=data.filter(r=>prevYrMsDR.includes(r.date_demande.slice(0,7))).length;
   const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):null;
   const trend=delta===null?'—':delta>=0?`+${delta}%`:`${delta}%`;
   const trendColor=delta===null?'var(--muted)':delta>=0?'var(--green)':'var(--orange)';
-  // Top 3 thématiques
+  // Détecter si le trimestre récent est incomplet (< 3 mois de données)
+  const recentMonthsCount=recentMsDR.filter(m=>data.some(r=>r.date_demande.startsWith(m))).length;
+  const trendIncomplete=recentMonthsCount<3;
+  // N vs N-1 — allDataCms applique la même plage de dates et le même filtre type_action
+  // que getFiltered(), MAIS sans activeYears pour accéder à l'historique complet (N-1, N-2…)
+  const cmNormYoY=normCms(drCms)||drCms;
+  const _f=document.getElementById('dFrom').value,_t=document.getElementById('dTo').value;
+  const _tyYoY=document.getElementById('typeFilter').value;
+  const _ntYoY=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim().replace(/s$/,'');
+  let allDataCms=DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormYoY)&&r.date_demande>=_f&&r.date_demande<=_t);
+  if(_tyYoY){const _ntyYoY=_ntYoY(_tyYoY);allDataCms=allDataCms.filter(r=>(r.type_action||[]).some(x=>_ntYoY(x).startsWith(_ntyYoY)));}
+  const allYearsTotal=[...new Set(allDataCms.map(r=>r.date_demande.slice(0,4)))].sort();
+  const allYears=[...new Set(data.map(r=>r.date_demande.slice(0,4)))].sort();
+  const yCur=allYears[allYears.length-1];
+  // yPrev = année précédant yCur dans l'historique complet (indépendant de drYears)
+  const yCurIdx=allYearsTotal.indexOf(yCur);
+  const yPrev=yCurIdx>0?allYearsTotal[yCurIdx-1]:null;
+  const nCur=data.filter(r=>r.date_demande.startsWith(yCur)).length;
+  const nPrev=yPrev?allDataCms.filter(r=>r.date_demande.startsWith(yPrev)).length:null;
+  const deltaYoY=nPrev?Math.round((nCur-nPrev)/nPrev*100):null;
+  const trendYoY=deltaYoY!==null?(deltaYoY>=0?`+${deltaYoY}%`:`${deltaYoY}%`):'—';
+  const trendYoYColor=deltaYoY===null?'var(--muted)':deltaYoY>=0?'var(--green)':'var(--orange)';
   const themas=Object.entries(countThemas(data));
-  const top3=themas.slice(0,3);
-  // Réactivité 48h depuis ACTIONS_DATA
-  const cmNormBil=normCms(drCms)||drCms;
-  const actBil=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormBil)&&r.etat==='Réalisée'&&(!drYears.size||drYears.has(r.year))):[];
-  const t48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0).length;
-  const r48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0&&r.delai_reactivite<=2).length;
-  const p48=t48>=20?Math.round(r48/t48*100):null;
-  const p48Color=p48===null?'var(--muted)':p48>=95?'var(--green)':p48>=85?'var(--orange)':'var(--red)';
-  // Évolution annuelle — sur DATA brut (indépendant du filtre années)
-  const rawCC=DATA.filter(r=>r.conum===drConum&&r.cms===drCms);
-  const evolYears=[...new Set(rawCC.map(r=>r.date_demande.slice(0,4)))].sort();
-  const evolCounts=evolYears.map(yr=>rawCC.filter(r=>r.date_demande.startsWith(yr)).length);
-  const evolItems=evolYears.map((yr,i)=>{
-    const n=evolCounts[i],prev=i>0?evolCounts[i-1]:null;
-    const diff=prev!==null&&prev>0?Math.round((n-prev)/prev*100):null;
-    const arrow=diff===null?'':(diff>=0?`<span style="color:var(--green);font-size:10px;margin-left:3px">▲${diff}%</span>`:`<span style="color:var(--red);font-size:10px;margin-left:3px">▼${Math.abs(diff)}%</span>`);
-    const col=yearColor(yr);
-    return`<div style="text-align:center;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;border-top:2px solid ${col}"><div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:${col}">${n}${arrow}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${yr}</div></div>`;
-  }).join('');
+  const topThema=themas[0]?.[0]||'—';
+  const topN=themas[0]?.[1]||0;
+  const topThemaPct=pct(topN,total);
+  const partCN=pct(total,allDataConum.length);
   const years=drYears.size?[...drYears].sort():[...new Set(data.map(r=>r.date_demande.slice(0,4)))].sort();
+  // Depuis ACTIONS_DATA : réactivité + non réalisés + taux réalisation réel
+  const cmNormBil=normCms(drCms)||drCms;
+  const actAllBil=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormBil)&&(!drYears.size||drYears.has(r.year))):[];
+  const actBil=actAllBil.filter(r=>r.etat==='Réalisée');
+  const actNonReal=actAllBil.filter(r=>r.etat==='Non réalisée');
+  const actTotal=actBil.length+actNonReal.length;
+  const txReel=actTotal>0?pct(actBil.length,actTotal):null;
+  const txNonReal=actTotal>0?pct(actNonReal.length,actTotal):null;
+  const hasActBil=ACTIONS_DATA&&ACTIONS_DATA.length>0;
+  const delaisBil=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
+  const delaiMoy=delaisBil.length?Math.round(delaisBil.reduce((a,b)=>a+b,0)/delaisBil.length):null;
+
+  const kpis=[
+    [total,'Accompagnements','var(--blue)'],
+    [trend+(trendIncomplete?'<br><span style="font-size:9px;color:var(--muted)">⚠ période partielle</span>':''), trendIncomplete?'Évol. trimestrielle ⚠':'Évol. trimestrielle', trendColor],
+    [yPrev?trendYoY+'<br><span style=\"font-size:10px;color:var(--muted)\">'+nCur+' vs '+nPrev+'</span><br><span style=\"font-size:9px;color:var(--muted);opacity:.7\">'+yCur+' vs '+yPrev+'</span>':'—','N vs N-1',trendYoYColor],
+    [communes,'Communes','var(--cyan)'],
+    [orienteurs,'Orienteurs','var(--orange)'],
+    [(()=>{const r48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0&&r.delai_reactivite<=2).length;const t48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0).length;return hasActBil&&t48>=20?Math.round(r48/t48*100)+'%':t48<20&&hasActBil?'<20 cas':'—';})(),'Réactivité 48h','var(--purple)'],
+  ];
+  if(hasActBil&&actTotal>0){
+    kpis.push([txNonReal+'%','Non réalisés','var(--red)']);
+    kpis.push([txReel!==null?txReel+'%':'—','Taux réalisation','var(--green)']);
+  }
+
+  const cn=formatConumName(drConum);
   const cnColor=conumColor(drConum);
-  // Textes conclusion
-  const themasStr=top3.map(([t,n],i)=>{
-    const col=i===0?'var(--orange)':i===1?'var(--cyan)':'var(--purple)';
-    return`<strong style="color:${col}">${t}</strong> (${n} · ${pct(n,total)}%)`;
-  }).join(', ');
-  const p1=`Au sein de la structure <strong style="color:var(--blue)">${drCms}</strong>, ${conumNameHtml(drConum,cnColor)} a accompagné <strong>${total} bénéficiaire${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
-  const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):"moins d'une semaine"}</strong>.`;
-  const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur le même trimestre N/N-1, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
 
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:2px">Bilan &amp; Perspectives</div>
-      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;font-family:'Space Grotesk',sans-serif;font-size:20px">${conumNameHtml(drConum,cnColor)}</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:16px">${drCms} · ${years.join(', ')}</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-        ${[[total,'Accompagnements','var(--blue)'],[txC+'%','Taux de complétion','var(--green)'],[trend,'Évol. trim. N/N-1',trendColor],[communes,'Communes couvertes','var(--cyan)'],[orienteurs,'Orienteurs actifs','var(--purple)'],[delaiMoy!==null?delaiMoy+'j':'—',"Délai moyen d'action",'var(--orange)']].map(([v,l,col])=>`
-          <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:${col}">${v}</div>
-            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div>
+      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;font-family:'Space Grotesk',sans-serif;font-size:20px">
+        ${conumNameHtml(drConum,cnColor)}
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:20px">${drCms} · ${years.join(', ')}</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px">
+        ${kpis.map(([v,l,col])=>`
+          <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;border-top:2px solid ${col}">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:500;color:${col};line-height:1.2">${v}</div>
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-top:6px">${l}</div>
           </div>`).join('')}
       </div>
-      ${evolYears.length>1?`<div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Évolution annuelle — ${drCms}</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px">${evolItems}</div></div>`:''}
-      <div style="background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(16,185,129,.06));border:1px solid rgba(59,130,246,.2);border-radius:14px;padding:18px 22px;line-height:1.8;font-size:13px;color:var(--text)">
-        <p style="margin-bottom:9px">${p1}</p>
-        <p style="margin-bottom:9px">${p2}</p>
-        <p>${p3}</p>
+      ${yPrev?`
+      <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:16px">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px">📊 Accompagnements — ${yCur} vs ${yPrev} par mois</div>
+        <canvas id="dr-ch-yoy-bilan" style="max-height:200px"></canvas>
+      </div>`:''}
+      <div style="background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(16,185,129,.06));border:1px solid rgba(59,130,246,.2);border-radius:14px;padding:22px 26px;line-height:1.9;font-size:13px;color:var(--text)">
+        <p style="margin-bottom:10px">
+          Au sein de la structure <strong style="color:var(--blue)">${drCms}</strong>, ${conumNameHtml(drConum,cnColor)} a accompagné
+          <strong>${total} bénéficiaires</strong> sur <strong>${communes} communes</strong> du territoire,
+          représentant <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur cette période.
+        </p>
+        <p style="margin-bottom:10px">
+          La thématique dominante est <strong style="color:var(--orange)">${topThema}</strong>
+          (${topN} demandes · ${topThemaPct}% du total).
+          ${hasActBil&&txReel!==null?`Le taux de réalisation atteint <strong style="color:var(--green)">${txReel}%</strong>${txNonReal>0?` avec <strong style="color:var(--red)">${txNonReal}% de non réalisés</strong> (lapins / excusés)`:''}.`:`Taux de complétion : <strong>${pct(data.filter(r=>r.date_action).length,total)}%</strong>.`}
+          Délai moyen : <strong>${delaiMoy!=null?delaiMoy+(delaiMoy>1?' jours':' jour'):"moins d'une semaine"}</strong>.
+        </p>
+        <p>
+          Évolution <strong style="color:${trendColor}">${trend}</strong> sur le dernier trimestre${trendIncomplete?' <span style="font-size:11px;color:var(--muted)">(⚠ trimestre en cours, données partielles)</span>':''}${deltaYoY!==null?` et <strong style="color:${trendYoYColor}">${trendYoY}</strong> vs ${yPrev}`:''}.
+          Avec <strong>${orienteurs} TS orienteurs</strong> mobilisés,
+          ${(()=>{const r48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0&&r.delai_reactivite<=2).length;const t48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0).length;const p48=hasActBil&&t48>=20?Math.round(r48/t48*100):null;return p48!==null?`réactivité 48h à <strong style="color:${p48>=95?'var(--green)':p48>=85?'var(--orange)':'var(--red)'}">${p48}%</strong> —`:'';})()}
+          l'<strong style="color:var(--green)">engagement remarquable</strong> de ${conumNameHtml(drConum,cnColor)}
+          et son rôle <strong>essentiel dans l'inclusion numérique des publics fragiles</strong> du Lot-et-Garonne. 🎯
+        </p>
       </div>
     </div>`;
+
+  // Graphe N vs N-1 si deux années disponibles
+  if(yPrev){
+    const MONTH_LABELS=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+    const curVals=MONTH_LABELS.map((_,mi)=>data.filter(r=>r.date_demande.slice(0,4)===yCur&&parseInt(r.date_demande.slice(5,7))-1===mi).length);
+    const prevVals=MONTH_LABELS.map((_,mi)=>allDataCms.filter(r=>r.date_demande.slice(0,4)===yPrev&&parseInt(r.date_demande.slice(5,7))-1===mi).length);
+    const colCur='#3b82f6', colPrev='#6b7fa0';
+    const chartEl=document.getElementById('dr-ch-yoy-bilan');
+    if(chartEl){
+      drCharts['yoy-bilan']=new Chart(chartEl,{
+        type:'bar',
+        data:{
+          labels:MONTH_LABELS,
+          datasets:[
+            {label:yCur,data:curVals,backgroundColor:colCur+'99',borderColor:colCur,borderWidth:1.5,borderRadius:4,borderSkipped:false},
+            {label:yPrev,data:prevVals,backgroundColor:colPrev+'55',borderColor:colPrev,borderWidth:1.5,borderRadius:4,borderSkipped:false},
+          ]
+        },
+        options:{
+          responsive:true,maintainAspectRatio:true,
+          interaction:{mode:'index',intersect:false},
+          plugins:{legend:{position:'bottom',labels:{color:legendColor(),font:{size:10},boxWidth:10,padding:10}}},
+          scales:{
+            x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},
+            y:{grid:{color:'rgba(37,48,71,.5)'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}}
+          }
+        }
+      });
+    }
+  }
 }
 
 // ── SLIDE COMPARAISON CMS ──
