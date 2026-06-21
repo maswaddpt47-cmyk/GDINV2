@@ -387,7 +387,7 @@ body.pres-mode .tbl th{font-size:11px}
     <button class="btn-csv" onclick="exportCSV()" title="Exporter les données filtrées en CSV" aria-label="Exporter CSV">↓ CSV</button>
     <button class="btn-filter-toggle" id="btn-filter-toggle" onclick="openFilterDrawer()" title="Filtres" aria-label="Ouvrir les filtres">⚙ Filtres</button>
     <button class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="Thème clair/sombre" aria-label="Basculer le thème">🌙</button>
-    <button class="btn-pres" id="btn-pres" onclick="startDiapo()" title="Mode diaporama" aria-label="Lancer le diaporama">▶ Diapo</button>
+    <button class="btn-pres" id="btn-pres" onclick="startDiapo()" title="Mode diaporama" aria-label="Lancer le diaporama">▶ Diapo Global</button>
     <span style="font-size:10px;color:var(--muted)">Lot-et-Garonne · GDIN</span>
   </div>
   <!-- Drawer mobile filtres -->
@@ -3762,14 +3762,15 @@ function applyChartTheme(){
 let drActive=false,drIdx=0,drConum='',drCms='',drYears=new Set(),drCharts={};
 
 const DR_SLIDES=[
-  {id:'cover',      title:'Couverture'},
-  {id:'kpis',       title:'Chiffres clés'},
-  {id:'evolution',  title:'Évolution mensuelle'},
-  {id:'themas',     title:'Thématiques'},
-  {id:'orienteurs', title:'Orienteurs'},
-  {id:'territoire', title:'Territoire'},
-  {id:'nonreal',    title:'Non réalisés'},
-  {id:'bilan',      title:'Bilan & Conclusion'},
+  {id:'cover',        title:'Couverture'},
+  {id:'kpis',         title:'Chiffres clés'},
+  {id:'evolution',    title:'Évolution mensuelle'},
+  {id:'themas',       title:'Thématiques'},
+  {id:'orienteurs',   title:'Orienteurs'},
+  {id:'territoire',   title:'Territoire'},
+  {id:'comparaison',  title:'Comparaison CMS'},
+  {id:'nonreal',      title:'Non réalisés'},
+  {id:'bilan',        title:'Bilan & Conclusion'},
 ];
 
 function drData(){
@@ -3816,6 +3817,7 @@ function drGoTo(idx){
   else if(slide.id==='themas') drSlideThemas(c,data,PALETTE_DR);
   else if(slide.id==='orienteurs') drSlideOrienteurs(c,data,PALETTE_DR);
   else if(slide.id==='territoire') drSlideTerritoire(c,data);
+  else if(slide.id==='comparaison') drSlideComparaison(c,data,allDataConum);
   else if(slide.id==='nonreal') drSlideNonReal(c,data);
   else if(slide.id==='bilan') drSlideBilan(c,data,allDataConum);
 }
@@ -4328,6 +4330,41 @@ function drSlideBilan(c,data,allDataConum){
   }
 }
 
+// ── SLIDE COMPARAISON CMS ──
+function drSlideComparaison(c,data,allDataConum){
+  const shortLbl=n=>n.replace(/^CMS /,'').replace(/^Permanence /,'Perm. ').replace(/\(St-Pardoux\)/,'(St-P.)');
+  const cmsMap={};
+  allDataConum.forEach(r=>{if(r.cms)cmsMap[r.cms]=(cmsMap[r.cms]||0)+1;});
+  const cmsEntries=Object.entries(cmsMap).sort((a,b)=>b[1]-a[1]);
+  const hasSel=cmsEntries.some(([n])=>n===drCms);
+  if(!hasSel)cmsEntries.push([drCms,data.length]);
+  const total=allDataConum.length;
+  const selCount=cmsEntries.find(([n])=>n===drCms)?.[1]||0;
+  const rank=cmsEntries.findIndex(([n])=>n===drCms)+1;
+  const chartId='ch-dr-comp';
+  const h=Math.max(200,cmsEntries.length*28);
+  c.innerHTML=`
+    <div style="padding:10px 0">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px">Comparaison CMS</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:20px">${drConum} · Activité par structure</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+        ${[[selCount,shortLbl(drCms),'var(--blue)'],[pct(selCount,total)+'%','Part dans le secteur','var(--purple)'],[rank+' / '+cmsEntries.length,'Rang du CMS','var(--green)']].map(([v,l,col])=>`
+          <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;border-top:2px solid ${col}">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:500;color:${col}">${v}</div>
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-top:6px">${l}</div>
+          </div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Activité CN — ce CMS vs autres structures</div>
+        <canvas id="${chartId}" style="width:100%;height:${h}px"></canvas>
+      </div>
+    </div>`;
+  const canvas=document.getElementById(chartId);
+  canvas.width=canvas.parentElement?.clientWidth||400;
+  canvas.height=h;
+  drCharts[chartId]=new Chart(canvas,{type:'bar',data:{labels:cmsEntries.map(([n])=>shortLbl(n)),datasets:[{data:cmsEntries.map(([,v])=>v),backgroundColor:cmsEntries.map(([n])=>n===drCms?'rgba(59,130,246,.75)':'rgba(59,130,246,.15)'),borderColor:cmsEntries.map(([n])=>n===drCms?'#3b82f6':'#253047'),borderRadius:5,borderSkipped:false,borderWidth:1.5}]},options:{responsive:false,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}},y:{grid:{display:false},ticks:{color:legendColor(),font:{size:10}}}}}});
+}
+
 // ── LANCEMENT / ARRÊT ──
 function startDiapoRapport(){
   drConum=document.getElementById('sel-rpt-conum').value;
@@ -4434,6 +4471,7 @@ async function exportDiapoPDF(){
     else if(slide.id==='evolution') drSlideEvol(c,data,PALETTE_DR);
     else if(slide.id==='themas') drSlideThemas(c,data,PALETTE_DR);
     else if(slide.id==='orienteurs') drSlideOrienteurs(c,data,PALETTE_DR);
+    else if(slide.id==='comparaison') drSlideComparaison(c,data,allDataConum);
     else if(slide.id==='nonreal') drSlideNonReal(c,data);
     else if(slide.id==='bilan') drSlideBilan(c,data,allDataConum);
 
