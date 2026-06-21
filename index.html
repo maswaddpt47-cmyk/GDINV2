@@ -605,6 +605,15 @@ body.pres-mode .tbl th{font-size:11px}
       <table class="tbl sortable" id="tbl-atl-wrap"><thead><tr><th>Lieu</th><th>Commune</th><th>Ateliers</th><th>Conseiller principal</th><th>Thématique principale</th></tr></thead>
       <tbody id="tbl-atl"></tbody></table>
     </div>
+    <div class="card">
+      <div class="card-title">
+        <span class="dot" style="background:var(--cyan)"></span>Charge mensuelle par lieu · Ateliers
+        <select id="sel-atl-conum" onchange="renderHeatmapAteliers()" style="margin-left:auto;background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer">
+          <option value="">— Tous les conseillers —</option>
+        </select>
+      </div>
+      <div id="heatmap-atl-container"></div>
+    </div>
   </div>
 
   <!-- RAPPORT -->
@@ -3342,8 +3351,76 @@ function renderAteliers(){
     const topThemaL=Object.entries(row.themasL).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
     return `<tr><td>${row.lieu}</td><td class="mono">${row.commune}</td><td class="mono">${row.n}</td><td>${conumNameHtml(topConum,conumColor(topConum))}</td><td>${topThemaL}</td></tr>`;
   }).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted)">Aucun atelier sur la période sélectionnée</td></tr>';
+  initAtlConumSelect();
+  renderHeatmapAteliers();
 }
 
+
+function initAtlConumSelect(){
+  const sel=document.getElementById('sel-atl-conum');
+  if(!sel)return;
+  const cur=sel.value;
+  const atlData=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier'));
+  const conums=[...new Set(atlData.map(r=>r.conum).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">— Tous les conseillers —</option>'+conums.map(c=>`<option value="${c}">${c}</option>`).join('');
+  if(cur&&conums.includes(cur))sel.value=cur;
+}
+
+function renderHeatmapAteliers(){
+  const container=document.getElementById('heatmap-atl-container');
+  if(!container)return;
+  const conum=document.getElementById('sel-atl-conum')?.value||'';
+  const allYears=[...new Set(DATA.map(r=>r.date_demande.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
+  let atlData=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier'));
+  if(conum)atlData=atlData.filter(r=>r.conum===conum);
+  if(!atlData.length){container.innerHTML='<div style="color:var(--muted);font-size:11px;padding:10px">Aucun atelier sur la période sélectionnée</div>';return;}
+  const lieuList=[...new Set(atlData.map(r=>r.cms).filter(Boolean))].sort((a,b)=>{
+    const sa=atlData.filter(r=>r.cms===a).length,sb=atlData.filter(r=>r.cms===b).length;
+    return sb-sa;
+  });
+  const vol={};
+  lieuList.forEach(l=>{vol[l]={};allYears.forEach(yr=>{vol[l][yr]=Array(12).fill(0);});});
+  atlData.forEach(r=>{
+    if(!vol[r.cms])return;
+    const yr=r.date_demande.slice(0,4),mo=parseInt(r.date_demande.slice(5,7))-1;
+    if(vol[r.cms][yr]&&mo>=0&&mo<12)vol[r.cms][yr][mo]++;
+  });
+  const activeLieux=lieuList.filter(l=>allYears.some(yr=>vol[l][yr]&&vol[l][yr].some(v=>v>0)));
+  let maxVal=1;
+  activeLieux.forEach(l=>allYears.forEach(yr=>vol[l][yr].forEach(v=>{if(v>maxVal)maxVal=v;})));
+  function cellColor(v){
+    if(!v)return'var(--s2)';
+    const op=Math.max(0.12,Math.min(0.85,v/maxVal));
+    return`rgba(34,211,238,${op.toFixed(2)})`;
+  }
+  const displayYearsRev=[...allYears].reverse();
+  let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Nombre d'ateliers par mois et par lieu · ← années précédentes à droite</div>`;
+  tbl+=`<div style="overflow-x:auto"><table class="heatmap-table"><thead><tr><th></th>`;
+  displayYearsRev.forEach((yr,yi)=>{
+    tbl+=`<th colspan="12" style="text-align:center;color:var(--text);font-size:10px;font-weight:700;padding-bottom:4px;letter-spacing:.5px">${yr}</th>`;
+    if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
+  });
+  tbl+=`</tr><tr><th></th>`;
+  displayYearsRev.forEach((yr,yi)=>{
+    MONTH_FR.forEach(m=>{tbl+=`<th title="${m} ${yr}">${m.slice(0,1)}</th>`;});
+    if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
+  });
+  tbl+=`</tr></thead><tbody>`;
+  activeLieux.forEach(lieu=>{
+    const shortL=lieu.replace(/^CMS /,'').replace(/^Permanence /,'').replace(/^Médiathèque /,'Méd. ').replace(/^Centre Médico-Social(?: de)? /,'CMS ');
+    tbl+=`<tr><td class="hm-label" title="${lieu}" style="min-width:130px">${shortL}</td>`;
+    displayYearsRev.forEach((yr,yi)=>{
+      const vals=vol[lieu][yr]||Array(12).fill(0);
+      vals.forEach((v,mi)=>{
+        tbl+=`<td class="hm-cell" style="background:${cellColor(v)}" title="${lieu}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
+      });
+      if(yi<displayYearsRev.length-1)tbl+=`<td style="width:10px"></td>`;
+    });
+    tbl+=`</tr>`;
+  });
+  tbl+=`</tbody></table></div>`;
+  container.innerHTML=tbl;
+}
 
 // Couleur par CMS dominant
 function cmsColor(cms){
