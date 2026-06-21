@@ -1153,7 +1153,7 @@ function parseXlsText(text){
   function normH(s){return String(s).toLowerCase().replace(/\s+/g,' ').trim().replace(/[éèê]/g,'e').replace(/[àâ]/g,'a').replace(/[ùû]/g,'u').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/['\u2019]/g,"'");}
   const hdrs=hdrsRaw.map(normH);
   function ci(...hints){return hdrs.findIndex(h=>hints.some(hint=>h.includes(normH(hint))));}
-  const iCommune=ci('commune'),iMotif=ci('motif'),iType=ci('type action',"type d'action"),iLieu=ci('lieu / cms','lieu/cms'),iDateAct=ci('date action'),iOrienteur=(()=>{const r=ci('referent');return r>=0?r:ci('orienteur','prescripteur');})(),iDateDem=ci('date demande'),iConum=ci('conseiller num'),iThemas=ci('thematique'),iBenef=ci('beneficiaire connu','benef connu'),iUrgence=ci('urgence'),iEtat=ci("libelle de l'etat","etat de l'action"),iDatePlanif=ci('date planif','date planifier'),iDateReal=ci('date de realisation','date reelle','date realisation');
+  const iCommune=ci('commune'),iMotif=ci('motif'),iType=ci('type action',"type d'action"),iLieu=ci('lieu / cms','lieu/cms'),iDateAct=ci('date action'),iOrienteur=(()=>{const r=ci('referent');return r>=0?r:ci('orienteur','prescripteur');})(),iDateDem=ci('date demande'),iConum=ci('conseiller num'),iThemas=ci('thematique'),iBenef=ci('beneficiaire connu','benef connu'),iUrgence=ci('urgence'),iEtat=ci("libelle de l'etat","etat de l'action"),iDatePlanif=ci('date planif','date planifier'),iDateReal=ci('date de realisation','date reelle','date realisation'),iNDem=ci('n° demande','numero demande','n demande','num demande');
   if(iDateDem<0)throw new Error(`Colonne "Date demande" introuvable. En-têtes : ${hdrsRaw.slice(0,8).join(' | ')}`);
   const EXCL=new Set(['Reservation']);
   const ETAT_MAP={'en cours':'En attente','en attente':'En attente','realisee':'Réalisée','réalisée':'Réalisée','non realisee':'Non réalisée','non réalisée':'Non réalisée','annulee':'Annulée','annulée':'Annulée'};
@@ -1172,7 +1172,7 @@ function parseXlsText(text){
     const etat=ETAT_MAP[etatRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')]||(etatRaw||null);
     const dp=iDatePlanif>=0?excelDate(cols[iDatePlanif])||null:null;
     const dr=iDateReal>=0?excelDate(cols[iDateReal])||null:null;
-    records.push({date_demande:dd,date_action:da,conum:(iConum>=0?cols[iConum]||'':'').trim(),cms,lieu_raw:lieuRaw,commune:(iCommune>=0?cols[iCommune]||'':'').trim(),themas,type_action:types,orienteur:(iOrienteur>=0?cols[iOrienteur]||'':'').trim(),motif:(iMotif>=0?cols[iMotif]||'':'').slice(0,120).trim(),benef_connu:(iBenef>=0?cols[iBenef]||'':'').trim().toLowerCase()==='oui',urgence:(iUrgence>=0?cols[iUrgence]||'':'').trim().toLowerCase()==='oui',etat,date_planifiee:dp,date_realisation:dr});
+    records.push({date_demande:dd,date_action:da,id_demande:(iNDem>=0?cols[iNDem]||'':'').trim(),conum:(iConum>=0?cols[iConum]||'':'').trim(),cms,lieu_raw:lieuRaw,commune:(iCommune>=0?cols[iCommune]||'':'').trim(),themas,type_action:types,orienteur:(iOrienteur>=0?cols[iOrienteur]||'':'').trim(),motif:(iMotif>=0?cols[iMotif]||'':'').slice(0,120).trim(),benef_connu:(iBenef>=0?cols[iBenef]||'':'').trim().toLowerCase()==='oui',urgence:(iUrgence>=0?cols[iUrgence]||'':'').trim().toLowerCase()==='oui',etat,date_planifiee:dp,date_realisation:dr});
   }
   if(!records.length)throw new Error('Aucun enregistrement valide. Vérifiez le format.');
   return{records,warnings};
@@ -2314,7 +2314,7 @@ function parseXlsxBinary(arraybuffer){
   function normH(s){return String(s).toLowerCase().replace(/\s+/g,' ').trim().replace(/[éèê]/g,'e').replace(/[àâ]/g,'a').replace(/[ùû]/g,'u').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/['\u2019]/g,"'");}
   const hdrs=rows[0].map(normH);
   function ci(...hints){return hdrs.findIndex(h=>hints.some(hint=>h.includes(normH(hint))));}
-  const iCommune=ci('commune'),iMotif=ci('motif'),iType=ci('type action',"type d'action"),iLieu=ci('lieu / cms','lieu/cms'),iDateAct=ci('date action'),iOrienteur=(()=>{const r=ci('referent');return r>=0?r:ci('orienteur','prescripteur');})(),iDateDem=ci('date demande'),iConum=ci('conseiller num'),iThemas=ci('thematique'),iBenef=ci('beneficiaire connu','benef connu'),iUrgence=ci('urgence'),iEtat=ci("libelle de l'etat","etat de l'action"),iDatePlanif=ci('date planif','date planifier'),iDateReal=ci('date de realisation','date reelle','date realisation');
+  const iCommune=ci('commune'),iMotif=ci('motif'),iType=ci('type action',"type d'action"),iLieu=ci('lieu / cms','lieu/cms'),iDateAct=ci('date action'),iOrienteur=(()=>{const r=ci('referent');return r>=0?r:ci('orienteur','prescripteur');})(),iDateDem=ci('date demande'),iConum=ci('conseiller num'),iThemas=ci('thematique'),iBenef=ci('beneficiaire connu','benef connu'),iUrgence=ci('urgence'),iEtat=ci("libelle de l'etat","etat de l'action"),iDatePlanif=ci('date planif','date planifier'),iDateReal=ci('date de realisation','date reelle','date realisation'),iNDem=ci('n° demande','numero demande','n demande','num demande');
   if(iDateDem<0)throw new Error(`Colonne "Date demande" introuvable. En-têtes : ${rows[0].slice(0,10).join(' | ')}`);
   const ETAT_MAP={'en cours':'En attente','en attente':'En attente','realisee':'Réalisée','réalisée':'Réalisée','non realisee':'Non réalisée','non réalisée':'Non réalisée','annulee':'Annulée','annulée':'Annulée'};
   for(let i=1;i<rows.length;i++){
@@ -2331,7 +2331,7 @@ function parseXlsxBinary(arraybuffer){
     const etat=ETAT_MAP[etatRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')]||(etatRaw||null);
     const dp=iDatePlanif>=0?xlDate(cols[iDatePlanif])||null:null;
     const dr=iDateReal>=0?xlDate(cols[iDateReal])||null:null;
-    records.push({date_demande:dd,date_action:da,conum:String(iConum>=0?cols[iConum]||'':'').trim(),cms,lieu_raw:lieuRaw,commune:String(iCommune>=0?cols[iCommune]||'':'').trim(),themas,type_action:types,orienteur:String(iOrienteur>=0?cols[iOrienteur]||'':'').trim(),motif:String(iMotif>=0?cols[iMotif]||'':'').slice(0,120).trim(),benef_connu:String(iBenef>=0?cols[iBenef]||'':'').trim().toLowerCase()==='oui',urgence:String(iUrgence>=0?cols[iUrgence]||'':'').trim().toLowerCase()==='oui',etat,date_planifiee:dp,date_realisation:dr});
+    records.push({date_demande:dd,date_action:da,id_demande:String(iNDem>=0?cols[iNDem]||'':'').trim(),conum:String(iConum>=0?cols[iConum]||'':'').trim(),cms,lieu_raw:lieuRaw,commune:String(iCommune>=0?cols[iCommune]||'':'').trim(),themas,type_action:types,orienteur:String(iOrienteur>=0?cols[iOrienteur]||'':'').trim(),motif:String(iMotif>=0?cols[iMotif]||'':'').slice(0,120).trim(),benef_connu:String(iBenef>=0?cols[iBenef]||'':'').trim().toLowerCase()==='oui',urgence:String(iUrgence>=0?cols[iUrgence]||'':'').trim().toLowerCase()==='oui',etat,date_planifiee:dp,date_realisation:dr});
   }
   if(!records.length)throw new Error('Aucun enregistrement valide');
   return{records,warnings};
@@ -2430,7 +2430,7 @@ function confirmImport(){
   // Clé de déduplication robuste : date + conum + cms + commune + orienteur + themas triés
   function makeKey(r){
     const types=(r.type_action||[]).slice().sort().join('+');
-    return `${r.date_demande}|${r.conum||''}|${r.cms||''}|${r.commune||''}|${r.orienteur||''}|${(r.themas||[]).slice().sort().join('/')}|${types}`;
+    return `${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.cms||''}|${r.commune||''}|${r.orienteur||''}|${(r.themas||[]).slice().sort().join('/')}|${types}`;
   }
   // Base : si déjà importé on fusionne, sinon on repart de zéro (pas des données intégrées)
   const base=dataSource==='imported'?DATA:[];
@@ -3781,10 +3781,13 @@ function buildAnomalyReport(records, rawLines){
   const noOri=records.filter(r=>!r.orienteur||r.orienteur==='?').length;
   if(noOri>0)items.push({label:'Dossiers sans orienteur identifié',val:noOri,color:'var(--muted)'});
   // 3. Doublons potentiels (même clé)
-  function makeKey2(r){return`${r.date_demande}|${r.conum}|${r.orienteur}|${(r.motif||'').slice(0,30)}`;}
+  function makeKey2(r){
+    if(r.id_demande&&r.date_action)return`id:${r.id_demande}|da:${r.date_action}|${(r.type_action||[]).slice().sort().join('+')}`;
+    return`${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.orienteur||''}|${(r.motif||'').slice(0,30)}`;
+  }
   const keys=records.map(makeKey2);
   const dupKeys=keys.filter((k,i)=>keys.indexOf(k)!==i);
-  if(dupKeys.length>0)items.push({label:'Doublons détectés (même jour/conum/orienteur/motif)',val:dupKeys.length,color:'var(--orange)'});
+  if(dupKeys.length>0)items.push({label:'Doublons détectés (même N°/date action/type)',val:dupKeys.length,color:'var(--orange)'});
   return items;
 }
 
