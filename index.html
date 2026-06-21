@@ -4377,12 +4377,14 @@ document.addEventListener('keydown',e=>{
 });
 
 // ── INSIGHTS ──
-function drShowInsight(e,txt){
+const _drIns={};let _drInsN=0;
+function drShowInsight(e,k){
+  const txt=_drIns[k]||'';
   const tip=document.getElementById('dr-insight-tip');
   if(!tip)return;
-  if(tip.style.display==='block'&&tip.dataset.src===txt){drHideInsight();return;}
-  tip.innerHTML=txt+'<div style="margin-top:8px;font-size:10px;color:var(--muted);text-align:right">Appuyer pour fermer</div>';
-  tip.dataset.src=txt;
+  if(tip.style.display==='block'&&tip.dataset.k===k){drHideInsight();return;}
+  tip.innerHTML=txt;
+  tip.dataset.k=k;
   tip.style.display='block';
   const rect=e.currentTarget.getBoundingClientRect();
   const tw=Math.min(290,window.innerWidth-20);
@@ -4390,20 +4392,18 @@ function drShowInsight(e,txt){
   let left=rect.left-tw/2;
   if(left<8)left=8;
   if(left+tw>window.innerWidth-8)left=window.innerWidth-tw-8;
-  const top=rect.bottom+8;
   tip.style.left=left+'px';
-  tip.style.top=top+'px';
+  tip.style.top=(rect.bottom+8)+'px';
   e.stopPropagation();
 }
 function drHideInsight(){
   const tip=document.getElementById('dr-insight-tip');
-  if(tip){tip.style.display='none';tip.dataset.src='';}
+  if(tip){tip.style.display='none';delete tip.dataset.k;}
 }
 document.addEventListener('click',e=>{
-  const tip=document.getElementById('dr-insight-tip');
-  if(tip&&tip.style.display==='block'&&!e.target.classList.contains('dr-q'))drHideInsight();
+  if(!e.target.classList.contains('dr-q'))drHideInsight();
 });
-function drQ(txt){return`<span class="dr-q" onclick="drShowInsight(event,${JSON.stringify(txt).replace(/'/g,'&#39;')})">?</span>`;}
+function drQ(txt){const k='i'+(++_drInsN);_drIns[k]=txt;return`<span class="dr-q" onclick="drShowInsight(event,'${k}')">?</span>`;}
 
 // ── THÈME ──
 function toggleTheme(){
