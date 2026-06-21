@@ -3729,8 +3729,9 @@ function renderHeatmapCmsByConum(conum){
     const yr=r.date_demande.slice(0,4),mo=parseInt(r.date_demande.slice(5,7))-1;
     if(vol[r.cms][yr]&&mo>=0&&mo<12)vol[r.cms][yr][mo]++;
   });
+  const activeCmsList=cmsList.filter(cms=>allYears.some(yr=>vol[cms][yr]&&vol[cms][yr].some(v=>v>0)));
   let maxVal=1;
-  cmsList.forEach(cms=>allYears.forEach(yr=>vol[cms][yr].forEach(v=>{if(v>maxVal)maxVal=v;})));
+  activeCmsList.forEach(cms=>allYears.forEach(yr=>vol[cms][yr].forEach(v=>{if(v>maxVal)maxVal=v;})));
   function cellColor(v,hex){
     if(!v)return'var(--s2)';
     const op=Math.max(0.12,Math.min(0.85,v/maxVal));
@@ -3751,7 +3752,7 @@ function renderHeatmapCmsByConum(conum){
     if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
   });
   tbl+=`</tr></thead><tbody>`;
-  cmsList.forEach(cms=>{
+  activeCmsList.forEach(cms=>{
     const shortCms=cms.replace(/^CMS /,'').replace(/^Permanence /,'');
     tbl+=`<tr><td class="hm-label" title="${cms}" style="min-width:110px">${shortCms}</td>`;
     displayYearsRev.forEach((yr,yi)=>{
