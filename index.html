@@ -1393,6 +1393,13 @@ function renderGlobal(){
   const types=countTypes(data);
   destroyChart('ch-types');
   renderTypeChart('ch-types',data);
+  {const theEnt=Object.entries(countThemas(data));
+  const top3Sh=theEnt.slice(0,3).reduce((s,[,v])=>s+v,0);
+  setInsightQ('ch-thema',theEnt[0]?`Thématique dominante : <strong>${theEnt[0][0]}</strong> (${theEnt[0][1]} dem.)<br>Top 3 concentrent <strong>${pct(top3Sh,data.length)}%</strong> du volume.`:'Aucune donnée');
+  const topCn=conumData[0];const top2Sh=(conumData[0]?.[1]||0)+(conumData[1]?.[1]||0);
+  setInsightQ('ch-conum',topCn?`Conseiller le plus actif : <strong>${topCn[0]}</strong> (${topCn[1]} accomp.)<br>Les 2 premiers : <strong>${pct(top2Sh,data.length)}%</strong> de l'activité.`:'Aucune donnée');
+  const topCmsG=Object.entries(count(noDsian,'cms')).sort((a,b)=>b[1]-a[1])[0];
+  setInsightQ('bar-cms-global',topCmsG?`CMS le plus actif (hors DSIAN) : <strong>${topCmsG[0].replace(/^Centre Médico-Social(?: de)? /,'CMS ')}</strong><br>${topCmsG[1]} accompagnements (${pct(topCmsG[1],noDsian.length)}% du total hors DSIAN).`:'Aucune donnée');}
 }
 
 // ÉVOLUTION
@@ -1631,6 +1638,13 @@ function renderEvolution(){
     tbody+=`</tr>`;
   });
   document.getElementById('tbl-monthly').innerHTML=thead+tbody+'</tbody>';
+  {const mKE=[...new Set(dataForEvol.map(r=>r.date_demande.slice(0,7)))].sort();
+  const mCE={};dataForEvol.forEach(r=>{const k=r.date_demande.slice(0,7);mCE[k]=(mCE[k]||0)+1;});
+  const peak=mKE.map(k=>[k,mCE[k]||0]).sort((a,b)=>b[1]-a[1])[0];
+  setInsightQ('ch-evol',peak?`Pic mensuel : <strong>${monthLabel(peak[0])}</strong> (${peak[1]} demandes)<br>Total : <strong>${dataForEvol.length}</strong> accompagnements sur la période.`:'Aucune donnée');
+  const cmsCE={};allF.forEach(r=>{if(r.cms)cmsCE[r.cms]=(cmsCE[r.cms]||0)+1;});
+  const topCmsE=Object.entries(cmsCE).sort((a,b)=>b[1]-a[1])[0];
+  setInsightQ('ch-cms-monthly',topCmsE?`CMS le plus actif sur la période : <strong>${topCmsE[0].replace(/^Centre Médico-Social(?: de)? /,'CMS ')}</strong><br>${topCmsE[1]} accompagnements (${pct(topCmsE[1],allF.length)}%).`:'Aucune donnée');}
 }
 
 function renderYoYTable(data,years){
@@ -1742,6 +1756,13 @@ function renderCms(){
     rows+=`<tr><td class="mono">${i+1}</td><td>${name}</td><td class="mono">${n}</td><td class="mono">${pct(n,data.length)}%</td><td class="${conumClass(topCN2)}">${topCN2}</td></tr>`;
   });
   document.getElementById('tbl-cms-ori').innerHTML=rows;
+  {const mKeysCms=[...new Set(getFiltered().map(r=>r.date_demande.slice(0,7)))].sort();
+  const mCntCms={};data.forEach(r=>{const k=r.date_demande.slice(0,7);mCntCms[k]=(mCntCms[k]||0)+1;});
+  const peakCms=mKeysCms.map(k=>[k,mCntCms[k]||0]).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1])[0];
+  const cmsShort=cms.replace(/^Centre Médico-Social(?: de)? /,'CMS ');
+  setInsightQ('ch-cms-evol',peakCms?`Pic mensuel <strong>${cmsShort}</strong> : <strong>${monthLabel(peakCms[0])}</strong> (${peakCms[1]} dem.)<br>Complétion globale : <strong>${pct(data.length-data.filter(r=>!r.date_action).length,data.length)}%</strong>.`:'Aucune donnée');
+  const topOriCms=Object.entries(count(data,'orienteur')).filter(([n])=>n&&n!=='?'&&!ORI_EXCL.has(n.trim())).sort((a,b)=>b[1]-a[1])[0];
+  setInsightQ('ch-cms-cal',topOriCms?`TS le plus orienteur vers ce CMS : <strong>${topOriCms[0]}</strong> (${topOriCms[1]} dem.)<br>Thématique principale : <strong>${Object.keys(countThemas(data))[0]||'—'}</strong>.`:'Aucune donnée');}
 }
 
 // PAR CONUM
@@ -1788,6 +1809,14 @@ function renderConum(){
   document.getElementById('tbl-conum-all').innerHTML=rows;
   renderHeatmapConum();
   renderHeatmapCmsByConum(conum);
+  {const mKC=[...new Set(allData.map(r=>r.date_demande.slice(0,7)))].sort();
+  const mCC={};data.forEach(r=>{const k=r.date_demande.slice(0,7);mCC[k]=(mCC[k]||0)+1;});
+  const peakC=mKC.map(k=>[k,mCC[k]||0]).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1])[0];
+  const topCmsC=Object.keys(count(data,'cms'))[0]||'—';
+  setInsightQ('ch-conum-evol',peakC?`Pic mensuel : <strong>${monthLabel(peakC[0])}</strong> (${peakC[1]} dem.)<br>CMS principal : <strong>${topCmsC.replace(/^Centre Médico-Social(?: de)? /,'CMS ')}</strong>.`:'Aucune donnée');
+  const topThemaC=Object.keys(countThemas(data))[0]||'—';
+  const shareTop=data.length?pct(countThemas(data)[topThemaC]||0,data.length):0;
+  setInsightQ('ch-conum-types',`Thématique principale : <strong>${topThemaC}</strong> (${countThemas(data)[topThemaC]||0} dem., ${shareTop}%)<br>Part de l'activité totale : <strong>${pct(data.length,allData.length)}%</strong>.`);}
 }
 
 // ORIENTEURS
@@ -1869,6 +1898,11 @@ function renderOrienteurs(){
     rows+=`<tr><td>${name}</td><td>${struct}</td><td class="mono" data-val="${n}">${n}</td><td class="${conumClass(topCN)}">${topCN}</td><td><span class="badge badge-blue">${topT}</span></td></tr>`;
   });
   document.getElementById('tbl-ori').innerHTML=rows;
+  {const topOri=oriEntries[0];
+  const top3ShOri=oriEntries.slice(0,3).reduce((s,[,v])=>s+v,0);
+  setInsightQ('ch-ori-bar',topOri?`TS le plus orienteur : <strong>${topOri[0]}</strong> (${topOri[1]} dem.)<br>Top 3 = <strong>${pct(top3ShOri,data.length)}%</strong> des orientations.`:'Aucune donnée');
+  const topThemaOri=Object.entries(countThemas(data)).sort((a,b)=>b[1]-a[1])[0];
+  setInsightQ('ch-ori-thema',topThemaOri?`Thématique la plus orientée : <strong>${topThemaOri[0]}</strong> (${topThemaOri[1]} dem., ${pct(topThemaOri[1],data.length)}%)<br>${oriEntries.length} orienteurs actifs sur la période.`:'Aucune donnée');}
 }
 
 // RAPPORT
@@ -3600,6 +3634,9 @@ function getCoordsGlobal(nom){
         tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${pct(ctx.parsed,topCommData.length)}%)`}}}
     }
   });
+  {const topComm=communes[0];
+  setInsightQ('ch-terr-bar',topComm?`Commune la plus active : <strong>${topComm[0]}</strong> (${topComm[1]} accompagnements)<br>${communes.length} communes représentées dans la sélection.`:'Aucune donnée');
+  setInsightQ('ch-terr-thema',thEntries[0]?`Thématique dominante sur le territoire : <strong>${thEntries[0][0]}</strong> (${thEntries[0][1]} dem., ${pct(thEntries[0][1],topCommData.length)}%)<br>Top 3 = ${pct(thEntries.slice(0,3).reduce((s,[,v])=>s+v,0),topCommData.length)}% du total.`:'Aucune donnée');}
 }
 
 
@@ -4404,6 +4441,12 @@ document.addEventListener('click',e=>{
   if(!e.target.classList.contains('dr-q'))drHideInsight();
 });
 function drQ(txt){const k='i'+(++_drInsN);_drIns[k]=txt;return`<span class="dr-q" onclick="drShowInsight(event,'${k}')">?</span>`;}
+function setInsightQ(elId,txt){
+  const el=document.getElementById(elId);if(!el)return;
+  const titleEl=el.closest('.card')?.querySelector('.card-title');if(!titleEl)return;
+  titleEl.querySelectorAll('.dr-q').forEach(q=>q.remove());
+  titleEl.insertAdjacentHTML('beforeend',drQ(txt));
+}
 
 // ── THÈME ──
 function toggleTheme(){
