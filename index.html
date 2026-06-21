@@ -3370,7 +3370,7 @@ function renderHeatmapAteliers(){
   const container=document.getElementById('heatmap-atl-container');
   if(!container)return;
   const conum=document.getElementById('sel-atl-conum')?.value||'';
-  const allYears=[...new Set(DATA.map(r=>r.date_demande.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
+  const allYears=[...new Set(DATA.filter(r=>r.date_action).map(r=>r.date_action.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
   let atlData=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier'));
   if(conum)atlData=atlData.filter(r=>r.conum===conum);
   if(!atlData.length){container.innerHTML='<div style="color:var(--muted);font-size:11px;padding:10px">Aucun atelier sur la période sélectionnée</div>';return;}
@@ -3381,8 +3381,8 @@ function renderHeatmapAteliers(){
   const vol={};
   lieuList.forEach(l=>{vol[l]={};allYears.forEach(yr=>{vol[l][yr]=Array(12).fill(0);});});
   atlData.forEach(r=>{
-    if(!vol[r.cms])return;
-    const yr=r.date_demande.slice(0,4),mo=parseInt(r.date_demande.slice(5,7))-1;
+    if(!r.date_action||!vol[r.cms])return;
+    const yr=r.date_action.slice(0,4),mo=parseInt(r.date_action.slice(5,7))-1;
     if(vol[r.cms][yr]&&mo>=0&&mo<12)vol[r.cms][yr][mo]++;
   });
   const activeLieux=lieuList.filter(l=>allYears.some(yr=>vol[l][yr]&&vol[l][yr].some(v=>v>0)));
@@ -3394,7 +3394,7 @@ function renderHeatmapAteliers(){
     return`rgba(34,211,238,${op.toFixed(2)})`;
   }
   const displayYearsRev=[...allYears].reverse();
-  let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Nombre d'ateliers par mois et par lieu · ← années précédentes à droite</div>`;
+  let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Ateliers réalisés par mois et par lieu (date de réalisation) · ← années précédentes à droite</div>`;
   tbl+=`<div style="overflow-x:auto"><table class="heatmap-table"><thead><tr><th></th>`;
   displayYearsRev.forEach((yr,yi)=>{
     tbl+=`<th colspan="12" style="text-align:center;color:var(--text);font-size:10px;font-weight:700;padding-bottom:4px;letter-spacing:.5px">${yr}</th>`;
@@ -3792,7 +3792,7 @@ function renderHeatmapCmsByConum(conum){
   const container=document.getElementById('heatmap-cms-conum-container');
   if(!container)return;
   if(!conum){container.innerHTML='';return;}
-  const allYears=[...new Set(DATA.map(r=>r.date_demande.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
+  const allYears=[...new Set(DATA.filter(r=>r.date_action).map(r=>r.date_action.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
   const conumData=getFiltered().filter(r=>r.conum===conum);
   const cmsList=[...new Set(conumData.map(r=>r.cms).filter(Boolean))].sort((a,b)=>{
     const sa=conumData.filter(r=>r.cms===a).length,sb=conumData.filter(r=>r.cms===b).length;
@@ -3802,8 +3802,8 @@ function renderHeatmapCmsByConum(conum){
   const vol={};
   cmsList.forEach(cms=>{vol[cms]={};allYears.forEach(yr=>{vol[cms][yr]=Array(12).fill(0);});});
   conumData.forEach(r=>{
-    if(!vol[r.cms])return;
-    const yr=r.date_demande.slice(0,4),mo=parseInt(r.date_demande.slice(5,7))-1;
+    if(!r.date_action||!vol[r.cms])return;
+    const yr=r.date_action.slice(0,4),mo=parseInt(r.date_action.slice(5,7))-1;
     if(vol[r.cms][yr]&&mo>=0&&mo<12)vol[r.cms][yr][mo]++;
   });
   const activeCmsList=cmsList.filter(cms=>allYears.some(yr=>vol[cms][yr]&&vol[cms][yr].some(v=>v>0)));
@@ -3817,7 +3817,7 @@ function renderHeatmapCmsByConum(conum){
   }
   const col=conumColor(conum)||'#3b82f6';
   const displayYearsRev=[...allYears].reverse();
-  let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Nombre de demandes par mois et par CMS · ← années précédentes à droite</div>`;
+  let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Accompagnements réalisés par mois et par CMS (date de réalisation) · ← années précédentes à droite</div>`;
   tbl+=`<div style="overflow-x:auto"><table class="heatmap-table"><thead><tr><th></th>`;
   displayYearsRev.forEach((yr,yi)=>{
     tbl+=`<th colspan="12" style="text-align:center;color:var(--text);font-size:10px;font-weight:700;padding-bottom:4px;letter-spacing:.5px">${yr}</th>`;
