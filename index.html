@@ -3379,16 +3379,18 @@ function renderHeatmapAteliers(){
   let atlData=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier'));
   if(conum)atlData=atlData.filter(r=>r.conum===conum);
   if(!atlData.length){container.innerHTML='<div style="color:var(--muted);font-size:11px;padding:10px">Aucun atelier sur la période sélectionnée</div>';return;}
-  const lieuList=[...new Set(atlData.map(r=>r.cms).filter(Boolean))].sort((a,b)=>{
-    const sa=atlData.filter(r=>r.cms===a).length,sb=atlData.filter(r=>r.cms===b).length;
+  function atlLieu(r){return(r.lieu_raw||'').split(';')[0].trim()||'Lieu non précisé';}
+  const lieuList=[...new Set(atlData.map(atlLieu))].sort((a,b)=>{
+    const sa=atlData.filter(r=>atlLieu(r)===a).length,sb=atlData.filter(r=>atlLieu(r)===b).length;
     return sb-sa;
   });
   const vol={};
   lieuList.forEach(l=>{vol[l]={};allYears.forEach(yr=>{vol[l][yr]=Array(12).fill(0);});});
   atlData.forEach(r=>{
-    if(!r.date_action||!vol[r.cms])return;
+    const lieu=atlLieu(r);
+    if(!r.date_action||!vol[lieu])return;
     const yr=r.date_action.slice(0,4),mo=parseInt(r.date_action.slice(5,7))-1;
-    if(vol[r.cms][yr]&&mo>=0&&mo<12)vol[r.cms][yr][mo]++;
+    if(vol[lieu][yr]&&mo>=0&&mo<12)vol[lieu][yr][mo]++;
   });
   const activeLieux=lieuList.filter(l=>allYears.some(yr=>vol[l][yr]&&vol[l][yr].some(v=>v>0)));
   let maxVal=1;
@@ -3399,7 +3401,7 @@ function renderHeatmapAteliers(){
     return`rgba(34,211,238,${op.toFixed(2)})`;
   }
   const displayYearsRev=[...allYears].reverse();
-  let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Ateliers réalisés par mois et par lieu (date de réalisation) · ← années précédentes à droite</div>`;
+  let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Ateliers réalisés par mois et par lieu réel (date de réalisation) · ← années précédentes à droite</div>`;
   tbl+=`<div style="overflow-x:auto"><table class="heatmap-table"><thead><tr><th></th>`;
   displayYearsRev.forEach((yr,yi)=>{
     tbl+=`<th colspan="12" style="text-align:center;color:var(--text);font-size:10px;font-weight:700;padding-bottom:4px;letter-spacing:.5px">${yr}</th>`;
@@ -3412,7 +3414,7 @@ function renderHeatmapAteliers(){
   });
   tbl+=`</tr></thead><tbody>`;
   activeLieux.forEach(lieu=>{
-    const shortL=lieu.replace(/^CMS /,'').replace(/^Permanence /,'').replace(/^Médiathèque /,'Méd. ').replace(/^Centre Médico-Social(?: de)? /,'CMS ');
+    const shortL=lieu.replace(/^Médiathèque(?:\s+municipale)?\s*/i,'Méd. ').replace(/^Permanence\s+/i,'Perm. ').replace(/^Centre\s+Socio-Culturel\s*/i,'CSC ');
     tbl+=`<tr><td class="hm-label" title="${lieu}" style="min-width:130px">${shortL}</td>`;
     displayYearsRev.forEach((yr,yi)=>{
       const vals=vol[lieu][yr]||Array(12).fill(0);
