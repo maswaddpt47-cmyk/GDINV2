@@ -351,9 +351,6 @@ body.pres-mode .tbl th{font-size:11px}
 /* ── Mémorisation onglet ── */
 /* (pas de CSS nécessaire, géré en JS) */
 
-.dr-q{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:rgba(107,127,160,.22);color:var(--muted);font-size:10px;font-weight:700;cursor:help;margin-left:7px;flex-shrink:0;transition:background .15s;vertical-align:middle}
-.dr-q:hover{background:rgba(59,130,246,.35);color:var(--blue)}
-#dr-insight-tip{position:fixed;z-index:9999;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 15px;font-size:12px;line-height:1.7;color:var(--text);max-width:290px;box-shadow:0 8px 28px rgba(0,0,0,.35);pointer-events:none;display:none}
 </style>
 </head>
 <body>
@@ -3915,21 +3912,11 @@ function drSlideEvol(c,data,palette){
   const allYearsTotal=[...new Set(allDataCmsEvol.map(r=>r.date_demande.slice(0,4)))].sort();
   const yCurIdx=allYearsTotal.indexOf(yCur);
   const yPrevEvol=years.length===1&&yCurIdx>0?allYearsTotal[yCurIdx-1]:null;
-  // Insight évolution
-  const allMonthVals=MONTH_FR.flatMap((_,mi)=>years.map(yr=>({m:mi,yr,v:data.filter(r=>r.date_demande.slice(0,4)===yr&&parseInt(r.date_demande.slice(5,7))-1===mi).length}))).filter(x=>x.v>0);
-  const peak=allMonthVals.length?allMonthVals.reduce((a,b)=>b.v>a.v?b:a):null;
-  const worst=allMonthVals.length?allMonthVals.reduce((a,b)=>b.v<a.v?b:a):null;
-  const recentMs3=data.map(r=>r.date_demande.slice(0,7)).sort().slice(-Math.ceil(data.length*.15));
-  const nLast=new Set(recentMs3).size;
-  const nFirst3=MONTH_FR.slice(0,3).reduce((s,_,mi)=>s+data.filter(r=>parseInt(r.date_demande.slice(5,7))-1===mi).length,0);
-  const nLast3=MONTH_FR.slice(9).reduce((s,_,mi)=>s+data.filter(r=>parseInt(r.date_demande.slice(5,7))-1===mi+9).length,0);
-  const evolDir=nLast3>nFirst3?'📈 Tendance haussière en fin d\'année':'📉 Tendance baissière en fin d\'année';
-  const insightEvol=`${peak?`🏆 Pic : <strong>${MONTH_FR[peak.m]} ${peak.yr}</strong> — ${peak.v} accomp.<br>`:''}${worst&&worst.v!==peak?.v?`⬇ Creux : <strong>${MONTH_FR[worst.m]} ${worst.yr}</strong> — ${worst.v} accomp.<br>`:''}${evolDir}`;
 
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">Évolution mensuelle</div>
-      <div style="display:flex;align-items:center;margin-bottom:24px"><span style="font-size:11px;color:var(--muted)">${drConum} · ${drCms}${yPrevEvol?' · '+yCur+' vs '+yPrevEvol:''}</span>${drQ(insightEvol)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:24px">${drConum} · ${drCms}${yPrevEvol?' · '+yCur+' vs '+yPrevEvol:''}</div>
       <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px">
         <canvas id="dr-ch-evol" style="max-height:380px"></canvas>
       </div>
@@ -3967,16 +3954,10 @@ function drSlideEvol(c,data,palette){
 
 // ── SLIDE THÉMATIQUES ──
 function drSlideThemas(c,data,palette){
-  const themasAll=Object.entries(countThemas(data));
-  const top1=themasAll[0],tot=data.length;
-  const top1Pct=top1?pct(top1[1],tot):0;
-  const top3Str=themasAll.slice(0,3).map(([t,n])=>`<strong>${t}</strong> (${pct(n,tot)}%)`).join(', ');
-  const concAlert=top1Pct>=50?`<br>⚠️ Concentration forte : 1 thématique = ${top1Pct}% des demandes`:'';
-  const insightThema=`📋 Top 3 : ${top3Str}${concAlert}`;
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">Thématiques traitées</div>
-      <div style="display:flex;align-items:center;margin-bottom:24px"><span style="font-size:11px;color:var(--muted)">${drConum} · ${drCms}</span>${drQ(insightThema)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:24px">${drConum} · ${drCms}</div>
       <div style="display:grid;grid-template-columns:1fr;gap:16px">
         <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px">
           <canvas id="dr-ch-thema-donut" style="max-height:300px"></canvas>
@@ -4007,15 +3988,10 @@ function drSlideThemas(c,data,palette){
 // ── SLIDE ORIENTEURS ──
 function drSlideOrienteurs(c,data,palette){
   const oriData=Object.entries(count(data,'orienteur')).filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())).slice(0,10);
-  const oriTotal=oriData.reduce((s,[,v])=>s+v,0);
-  const top1Ori=oriData[0];
-  const top1OriPct=top1Ori?pct(top1Ori[1],oriTotal):0;
-  const depAlert=top1OriPct>=50?`<br>⚠️ Forte dépendance : 1 TS = ${top1OriPct}% des envois`:'';
-  const insightOri=top1Ori?`🥇 Top TS : <strong>${top1Ori[0]}</strong> — ${top1Ori[1]} envois (${top1OriPct}%)<br>📊 Total TS actifs : <strong>${oriData.length}</strong>${depAlert}`:'Aucune donnée orienteur.';
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">TS orienteurs</div>
-      <div style="display:flex;align-items:center;margin-bottom:24px"><span style="font-size:11px;color:var(--muted)">${drConum} · ${drCms}</span>${drQ(insightOri)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:24px">${drConum} · ${drCms}</div>
       <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px">
         <canvas id="dr-ch-ori" style="max-height:380px"></canvas>
       </div>
@@ -4132,16 +4108,11 @@ function drSlideNonReal(c,data){
   const txNR=total>0?pct(nonReal,total):0;
   const txNRColor=txNR<=10?'var(--green)':txNR<=20?'var(--orange)':'var(--red)';
 
-  // Pire mois (non réalisés)
-  const nrByMonthAll=months.map((m,i)=>({m,v:nrByMonth[i]}));
-  const worstNR=nrByMonthAll.length?nrByMonthAll.reduce((a,b)=>b.v>a.v?b:a):null;
-  const alertNR=txNR>=20?'🔴 Taux élevé (>20%) — action corrective recommandée':txNR>=10?'🟠 Taux modéré (10–20%) — à surveiller':'🟢 Taux faible (<10%) — situation maîtrisée';
-  const insightNR=`${alertNR}<br>Non réalisés : <strong>${nonReal}</strong> / Réalisés : <strong>${real}</strong>${worstNR&&worstNR.v>0?`<br>⬆ Pire mois : <strong>${monthLabel(worstNR.m)}</strong> (${worstNR.v} non réalisés)`:''}`;
   const chartId='ch-dr-nonreal';
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px">Non réalisés</div>
-      <div style="display:flex;align-items:center;margin-bottom:20px"><span style="font-size:11px;color:var(--muted)">${drConum} · ${drCms} · Lapins & excusés</span>${drQ(insightNR)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:20px">${drConum} · ${drCms} · Lapins & excusés</div>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px">
         ${[
           [total,'Total accompagnements','var(--blue)'],
@@ -4268,15 +4239,11 @@ function drSlideBilan(c,data,allDataConum){
   const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):"moins d'une semaine"}</strong>.`;
   const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur le même trimestre N/N-1, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
 
-  const bestYearIdx=evolCounts.indexOf(Math.max(...evolCounts));
-  const bestYear=evolYears[bestYearIdx];
-  const bestYearN=evolCounts[bestYearIdx]||0;
-  const insightBilan=`📊 Total : <strong>${total}</strong> accomp. · <strong>${partCN}%</strong> activité CN<br>🏆 Meilleure année : <strong>${bestYear||'—'}</strong> (${bestYearN} accomp.)<br>📈 Évol. trim. : <strong>${trend}</strong>${p48!==null?`<br>⏱ Réactivité 48h : <strong>${p48}%</strong>`:''}`;
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:2px">Bilan &amp; Perspectives</div>
       <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;font-family:'Space Grotesk',sans-serif;font-size:20px">${conumNameHtml(drConum,cnColor)}</div>
-      <div style="display:flex;align-items:center;margin-bottom:16px"><span style="font-size:11px;color:var(--muted)">${drCms} · ${years.join(', ')}</span>${drQ(insightBilan)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:16px">${drCms} · ${years.join(', ')}</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
         ${[[total,'Accompagnements','var(--blue)'],[txC+'%','Taux de complétion','var(--green)'],[trend,'Évol. trim. N/N-1',trendColor],[communes,'Communes couvertes','var(--cyan)'],[orienteurs,'Orienteurs actifs','var(--purple)'],[delaiMoy!==null?delaiMoy+'j':'—',"Délai moyen d'action",'var(--orange)']].map(([v,l,col])=>`
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}">
@@ -4304,17 +4271,12 @@ function drSlideComparaison(c,data,allDataConum){
   const total=allDataConum.length;
   const selCount=cmsEntries.find(([n])=>n===drCms)?.[1]||0;
   const rank=cmsEntries.findIndex(([n])=>n===drCms)+1;
-  const leader=cmsEntries[0];
-  const gap=leader&&rank>1?leader[1]-selCount:0;
-  const shareComp=pct(selCount,total);
-  const rankAlert=rank===1?'🥇 Ce CMS est le plus actif du secteur pour ce conum.':rank<=3?`🥈 ${rank}ème CMS le plus actif — écart avec le 1er : <strong>${gap}</strong> accomp.`:`📊 Rang ${rank}/${cmsEntries.length} — écart avec le 1er : <strong>${gap}</strong> accomp.`;
-  const insightComp=`${rankAlert}<br>Part du conum sur ce CMS : <strong>${shareComp}%</strong> de son activité totale`;
   const chartId='ch-dr-comp';
   const h=Math.max(200,cmsEntries.length*28);
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px">Comparaison CMS</div>
-      <div style="display:flex;align-items:center;margin-bottom:20px"><span style="font-size:11px;color:var(--muted)">${drConum} · Activité par structure</span>${drQ(insightComp)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:20px">${drConum} · Activité par structure</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
         ${[[selCount,shortLbl(drCms),'var(--blue)'],[pct(selCount,total)+'%','Part dans le secteur','var(--purple)'],[rank+' / '+cmsEntries.length,'Rang du CMS','var(--green)']].map(([v,l,col])=>`
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;border-top:2px solid ${col}">
@@ -4376,22 +4338,6 @@ document.addEventListener('keydown',e=>{
   else if(e.key==='Escape')stopDiapoRapport();
 });
 
-// ── INSIGHTS ──
-function drShowInsight(e,txt){
-  const tip=document.getElementById('dr-insight-tip');
-  if(!tip)return;
-  tip.innerHTML=txt;
-  tip.style.display='block';
-  const tw=tip.offsetWidth||290,th=tip.offsetHeight||80;
-  tip.style.left=Math.min(e.clientX+14,window.innerWidth-tw-10)+'px';
-  tip.style.top=Math.max(e.clientY-th-10,10)+'px';
-}
-function drHideInsight(){
-  const tip=document.getElementById('dr-insight-tip');
-  if(tip)tip.style.display='none';
-}
-function drQ(txt){return`<span class="dr-q" onmouseenter="drShowInsight(event,${JSON.stringify(txt).replace(/'/g,'&#39;')})" onmouseleave="drHideInsight()">?</span>`;}
-
 // ── THÈME ──
 function toggleTheme(){
   const light=document.body.classList.toggle('light-mode');
@@ -4416,7 +4362,6 @@ function toggleTheme(){
   }catch(e){}
 })();
 </script>
-<div id="dr-insight-tip"></div>
 <div id="dr-print-container" style="display:none"></div>
 
 <script>
