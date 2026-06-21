@@ -37,61 +37,32 @@ git push origin main
 - **Un commit = une modification.** Ne jamais regrouper des changements non liés dans un seul commit.
 - Le backup est toujours commité et poussé **avant** de toucher le fichier.
 
+### Synchronisation CR ↔ Diapo Rapport — règle impérative
+
+Le panneau **CR (Compte Rendu)** — `renderRapport()` — et le **Diapo Rapport** — `DR_SLIDES` + fonctions `drSlide*()` — doivent **toujours afficher les mêmes informations**.
+
+> L'utilisateur consulte le CR pour préparer ses données, puis lance le Diapo Rapport pour les projeter. Si un élément est visible dans le CR mais absent du diapo, la projection est incomplète.
+
+**Règle :** tout graphe, KPI ou section ajouté dans `renderRapport()` doit avoir un slide équivalent dans `DR_SLIDES` + une fonction `drSlide*()` correspondante. Ne jamais modifier le CR sans mettre à jour le diapo rapport en même temps.
+
+Il existe deux diaporamas distincts dans l'application — **ne pas les confondre** :
+
+| | Diapo Global | Diapo Rapport |
+|---|---|---|
+| Bouton | `▶ Diapo Global` (`#btn-pres`) | `▶ Diapo rapport` (`#btn-diapo-rpt`) |
+| Overlay plein écran | `#diapo-overlay` | `#dr-overlay` |
+| Label en plein écran | `DIAPO GLOBAL` (topbar) | `CD47 · GDIN` (`#dr-logo`) |
+| Tableau de slides | `DIAPO_SLIDES` | `DR_SLIDES` |
+| Fonctions de rendu | `diapoNav()`, `diapoGoTo()` | `drNav()`, `drGoTo()`, `drSlide*()` |
+| Données | `getDiapoData()` (global) | `drData()` (conum × CMS) |
+| Charts | `charts{}` | `drCharts{}` |
+
 ### Convention de messages de commit
 | Préfixe | Usage |
 |---|---|
 | `feat:` | Ajout d'une nouvelle fonctionnalité |
 | `fix:` | Correction d'un bug |
 | `refactor:` | Réécriture sans changement de comportement |
-
----
-
-## Architecture du projet — `index.html` (fichier unique ~4 500 lignes)
-
-Toute la logique est dans un seul fichier HTML. Pas de build, pas de framework.
-
-### Données globales clés
-| Variable | Rôle |
-|---|---|
-| `DATA` | Toutes les lignes importées depuis l'Excel |
-| `ACTIONS_DATA` | Import optionnel du fichier Etat_Actions |
-| `getFiltered()` | Applique filtre date + années actives + typeFilter |
-| `CMS_MAP_RAW` | Whitelist des variantes connues de noms de CMS → nom canonique |
-| `KEEP_CMS` | Dérivé auto de `CMS_MAP_RAW` (valeurs canoniques) |
-| `CMS_MAIN` | Liste ordonnée des CMS pour dropdowns et graphes |
-| `CONUM_ATTRIB` | Attribution conum par CMS quand col 11 est vide |
-| `ORI_EXCL` | Set des noms conum exclus des comptages orienteurs |
-
-### Deux systèmes de diapo — NE PAS LES CONFONDRE
-
-Il existe **deux diaporamas indépendants** dans l'application. Ils se ressemblent visuellement mais n'ont rien à voir.
-
-#### 1. Diapo Global (`▶ Diapo Global`)
-- Bouton : `#btn-pres` → `startDiapo()`
-- Overlay : `#diapo-overlay` (topbar : `#diapo-topbar`, titre : `#diapo-title`)
-- Slides : tableau `DIAPO_SLIDES` (8 slides, stats globales toutes structures)
-- Données : `getDiapoData()` = `getFiltered()` sans filtre conum/CMS
-- Navigation : `diapoNav()`, `diapoGoTo()`
-- Fonctions de rendu : `renderDiapoSlide()` et les fonctions `slide*()`
-
-#### 2. Diapo Rapport (`▶ Diapo rapport`)
-- Bouton : `#btn-diapo-rpt` → `startDiapoRapport()`
-- Overlay : `#dr-overlay` (topbar : `#dr-topbar`, logo : `#dr-logo`)
-- Slides : tableau `DR_SLIDES` (9 slides, stats d'un conum × CMS spécifique)
-- Données : `drData()` = `getFiltered()` filtré par `drConum` + `drCms` + `drYears`
-- Variables d'état : `drConum`, `drCms`, `drYears`, `drIdx`, `drActive`
-- Navigation : `drNav()`, `drGoTo()`
-- Fonctions de rendu : `drSlide*()` (préfixe `dr`)
-- Charts stockés dans `drCharts{}` (pas dans `charts{}`)
-- Export PDF : `exportDiapoPDF()`
-
-**Règle** : toute modification d'un slide du Diapo Rapport touche une fonction `drSlide*()` et le tableau `DR_SLIDES`. Ne jamais modifier `DIAPO_SLIDES` par erreur.
-
-### Panneau CR (Compte Rendu)
-- Rendu par `renderRapport(conum, cms, data, allData)`
-- Sélecteurs : `#sel-rpt-conum`, `#sel-rpt-cms`
-- Éléments graphiques : `kpi-rpt`, `ch-rpt-evol`, `ch-rpt-thema`, `bar-rpt-ori`, `ch-rpt-comp`, `rpt-actions-section`
-- `ch-rpt-comp` = graphe barres horizontales CMS comparaison → miroir du slide `drSlideComparaison()`
 
 ---
 
