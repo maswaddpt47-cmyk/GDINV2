@@ -579,6 +579,7 @@ body.pres-mode .tbl th{font-size:11px}
       </div>
     </div>
     <div class="card g1" style="padding:0;overflow:hidden">
+      <div style="padding:6px 12px 4px;font-size:10px;color:var(--muted)" id="terr-data-subtitle"></div>
       <div class="map-fullscreen-wrap">
         <div id="map-territoire" style="height:420px;width:100%;border-radius:10px;background:#1a2235"></div>
         <button class="btn-map-fs" onclick="toggleMapFullscreen()" id="btn-map-fs" title="Plein écran">⤢</button>
@@ -3470,6 +3471,12 @@ function renderTerritoire(){
   if(topN>0)communes=communes.slice(0,topN);
   const commNames=new Set(communes.map(c=>c[0]));
 
+  // Référence absolue pour l'échelle des bulles : toutes données sans filtre année
+  // → permet de voir visuellement l'effet du filtre par année
+  const refCommAll={};
+  DATA.forEach(r=>{if(r.commune&&r.commune.trim()){const c=r.commune.trim().toUpperCase();refCommAll[c]=(refCommAll[c]||0)+1;}});
+  const maxVolRef=Math.max(1,...Object.values(refCommAll));
+
   // Couleur = CMS dominant de la commune (mode normal) / teinte neutre unique (mode Ateliers)
   function bubbleColor(nom){
     if(isAteliersMode)return '#eab308';
@@ -3531,8 +3538,7 @@ function getCoordsGlobal(nom){
       attribution:'© OpenStreetMap © CartoDB'
     }).addTo(map);
 
-    const maxVol=communes[0]?communes[0][1]:1;
-    function radius(n){return Math.max(7,Math.sqrt(n/maxVol)*42);}
+    function radius(n){return Math.max(4,Math.sqrt(n/maxVolRef)*42);}
 
     let placed=0;
     communes.forEach(([nom])=>{
@@ -3655,6 +3661,14 @@ function getCoordsGlobal(nom){
   }else{
     const cmsPresents=cmsFilter?[cmsFilter]:allCmsInData;
     buildTerrLegend(cmsPresents);
+  }
+
+  // Sous-titre dynamique : nombre d'enregistrements sur la période filtrée
+  const terrSubEl=document.getElementById('terr-data-subtitle');
+  if(terrSubEl){
+    const nbRec=dataFiltered.length;
+    const nbComm=Object.keys(commCount).length;
+    terrSubEl.textContent=`${nbRec.toLocaleString('fr-FR')} enregistrements · ${nbComm} communes`;
   }
 
   // Afficher indicateur pendant chargement carte
