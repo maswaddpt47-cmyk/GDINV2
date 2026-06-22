@@ -1367,6 +1367,7 @@ function switchTab(id,btn){
   if(id==='orienteurs'){initOriCmsSelect();renderOrienteurs();}
   if(id==='ateliers'){buildYearChips();initAtlConumGlobalSelect();renderAteliers();}
   if(id==='territoire'){
+    buildYearChips();
     // Double requestAnimationFrame garantit que le DOM est peint avant Leaflet
     requestAnimationFrame(function(){requestAnimationFrame(function(){
       renderTerritoire();
@@ -3514,6 +3515,7 @@ function getCoordsGlobal(nom){
     if(!mapEl)return;
     if(window._leafletMap){try{window._leafletMap.remove();}catch(e){}window._leafletMap=null;}
     mapEl.innerHTML='';
+    try{delete mapEl._leaflet_id;}catch(e){}
 
     if(typeof L==='undefined'){
       mapEl.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:440px;color:var(--muted);font-size:12px;flex-direction:column;gap:8px"><span>⚠ Leaflet non disponible</span><span style="font-size:10px">Vérifier la connexion internet</span></div>';
