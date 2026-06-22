@@ -632,10 +632,8 @@ body.pres-mode .tbl th{font-size:11px}
     </div>
     <div id="rpt-content" style="display:none">
       <div id="kpi-rpt" class="g4"></div>
-      <div class="g2">
-        <div class="card"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Évolution mensuelle</div><canvas id="ch-rpt-evol"></canvas></div>
-        <div class="card"><div class="card-title"><span class="dot" style="background:var(--orange)"></span>Thématiques</div><canvas id="ch-rpt-thema"></canvas></div>
-      </div>
+      <div class="card g1"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Évolution mensuelle</div><canvas id="ch-rpt-evol"></canvas></div>
+      <div class="card g1"><div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Accompagnements — N / N-1 / N-2 <span style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">par mois calendaire</span></div><canvas id="ch-rpt-yoy-main" style="max-height:220px"></canvas></div>
       <div class="g2">
         <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Orienteurs actifs dans ce CMS</div><div id="bar-rpt-ori" class="bar-list"></div></div>
         <div class="card"><div class="card-title"><span class="dot" style="background:var(--purple)"></span>Activité CN : ce CMS vs autres structures</div><canvas id="ch-rpt-comp"></canvas></div>
@@ -670,6 +668,11 @@ body.pres-mode .tbl th{font-size:11px}
       </div>
       <div id="rpt-actions-missing" style="display:none">
         <div class="info-box">ℹ Importe le fichier <strong>Etat_Actions</strong> pour afficher les graphes de réalisation dans ce rapport.</div>
+      </div>
+      <!-- Thématiques — toujours visible, après État des accompagnements -->
+      <div class="card g1">
+        <div class="card-title"><span class="dot" style="background:var(--orange)"></span>Thématiques</div>
+        <canvas id="ch-rpt-thema" style="max-height:220px"></canvas>
       </div>
       <!-- Bilan & perspectives (conum × cms) -->
       <div class="card g1" id="rpt-bilan-card">
@@ -1987,6 +1990,10 @@ function renderRapport(){
   const mKeys=[...new Set(allData.map(r=>r.date_demande.slice(0,7)))].sort();
   destroyChart('ch-rpt-evol');
   charts['ch-rpt-evol']=new Chart(document.getElementById('ch-rpt-evol'),{type:'bar',data:{labels:mKeys.map(monthLabel),datasets:[{data:mKeys.map(k=>data.filter(r=>r.date_demande.startsWith(k)).length),backgroundColor:'rgba(59,130,246,.45)',borderColor:'#3b82f6',borderRadius:5,borderSkipped:false,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}});
+  // Graphe calendaire N / N-1 / N-2
+  const yoyYears=[...new Set(data.map(r=>r.date_demande.slice(0,4)))].sort();
+  destroyChart('ch-rpt-yoy-main');
+  charts['ch-rpt-yoy-main']=new Chart(document.getElementById('ch-rpt-yoy-main'),{type:'bar',data:{labels:MONTH_FR,datasets:yoyYears.map((yr,i)=>{const col=YEAR_PALETTE[i%YEAR_PALETTE.length];const vals=Array(12).fill(0);data.filter(r=>r.date_demande.startsWith(yr)).forEach(r=>{const m=parseInt(r.date_demande.slice(5,7))-1;if(m>=0&&m<12)vals[m]++;});return{label:yrLabel(yr),data:vals,backgroundColor:col+'66',borderColor:col,borderWidth:1.5,borderRadius:3,borderSkipped:false};})},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:legendColor(),font:{size:10},boxWidth:7,padding:5}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}}}}});
   const themas=Object.entries(countThemas(data)).slice(0,8);
   destroyChart('ch-rpt-thema');
   charts['ch-rpt-thema']=new Chart(document.getElementById('ch-rpt-thema'),{type:'doughnut',data:{labels:themas.map(t=>t[0]),datasets:[{data:themas.map(t=>t[1]),backgroundColor:PALETTE,borderWidth:2,borderColor:'#111827',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:8,color:legendColor()}}}}});
@@ -3909,11 +3916,12 @@ const DR_SLIDES=[
   {id:'cover',        title:'Couverture'},
   {id:'kpis',         title:'Chiffres clés'},
   {id:'evolution',    title:'Évolution mensuelle'},
-  {id:'themas',       title:'Thématiques'},
+  {id:'yoy',          title:'N / N-1 / N-2'},
   {id:'orienteurs',   title:'Orienteurs'},
   {id:'territoire',   title:'Territoire'},
   {id:'comparaison',  title:'Comparaison CMS'},
   {id:'nonreal',      title:'Non réalisés'},
+  {id:'themas',       title:'Thématiques'},
   {id:'bilan',        title:'Bilan & Conclusion'},
 ];
 
@@ -3958,6 +3966,7 @@ function drGoTo(idx){
   if(slide.id==='cover') drSlideCover(c,data,allDataConum);
   else if(slide.id==='kpis') drSlideKpis(c,data,allDataConum);
   else if(slide.id==='evolution') drSlideEvol(c,data,PALETTE_DR);
+  else if(slide.id==='yoy') drSlideYoY(c,data,PALETTE_DR);
   else if(slide.id==='themas') drSlideThemas(c,data,PALETTE_DR);
   else if(slide.id==='orienteurs') drSlideOrienteurs(c,data,PALETTE_DR);
   else if(slide.id==='territoire') drSlideTerritoire(c,data);
@@ -4103,6 +4112,32 @@ function drSlideEvol(c,data,palette){
       plugins:{legend:{labels:{color:legendColor(),font:{size:11},boxWidth:10,padding:12}}},
       scales:{x:{grid:{color:'rgba(128,128,128,.1)'},ticks:{color:cssVar('--muted'),font:{size:11}}},
               y:{grid:{color:'rgba(128,128,128,.1)'},beginAtZero:true,ticks:{color:cssVar('--muted'),font:{size:11}}}}}
+  });
+}
+
+// ── SLIDE N / N-1 / N-2 ──
+function drSlideYoY(c,data,palette){
+  const yoyYears=[...new Set(data.map(r=>r.date_demande.slice(0,4)))].sort();
+  c.innerHTML=`
+    <div style="font-family:'Space Grotesk',sans-serif;padding:0">
+      <div style="font-size:22px;font-weight:700;margin-bottom:4px">Accompagnements — N / N-1 / N-2</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:20px">${drConum} · ${drCms} · volume par mois calendaire</div>
+      <canvas id="dr-ch-yoy" style="width:100%;max-height:360px"></canvas>
+    </div>`;
+  const ctx=document.getElementById('dr-ch-yoy');
+  if(!ctx||!yoyYears.length)return;
+  drCharts['yoy']=new Chart(ctx,{
+    type:'bar',
+    data:{labels:MONTH_FR,datasets:yoyYears.map((yr,i)=>{
+      const col=palette[i%palette.length];
+      const vals=Array(12).fill(0);
+      data.filter(r=>r.date_demande.startsWith(yr)).forEach(r=>{const m=parseInt(r.date_demande.slice(5,7))-1;if(m>=0&&m<12)vals[m]++;});
+      return{label:yrLabel(yr),data:vals,backgroundColor:col+'55',borderColor:col,borderWidth:2,borderRadius:4,borderSkipped:false};
+    })},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#e5e7eb',font:{size:12},boxWidth:10,padding:10}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#9ca3af',font:{size:11}}},
+              y:{grid:{color:'#1f2937'},beginAtZero:true,ticks:{precision:0,color:'#9ca3af',font:{size:11}}}}}
   });
 }
 
@@ -4614,6 +4649,7 @@ async function exportDiapoPDF(){
     if(slide.id==='cover') drSlideCover(c,data,allDataConum);
     else if(slide.id==='kpis') drSlideKpis(c,data,allDataConum);
     else if(slide.id==='evolution') drSlideEvol(c,data,PALETTE_DR);
+    else if(slide.id==='yoy') drSlideYoY(c,data,PALETTE_DR);
     else if(slide.id==='themas') drSlideThemas(c,data,PALETTE_DR);
     else if(slide.id==='orienteurs') drSlideOrienteurs(c,data,PALETTE_DR);
     else if(slide.id==='comparaison') drSlideComparaison(c,data,allDataConum);
