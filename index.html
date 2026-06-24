@@ -1973,34 +1973,35 @@ function renderOrienteurs(){
 
 // RAPPORT
 function initRptSelects(){const sc=document.getElementById('sel-rpt-conum');sc.innerHTML='<option value="">— Conseiller —</option>';[...new Set(DATA.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE')).sort().forEach(cn=>{const o=document.createElement('option');o.value=cn;o.textContent=cn;sc.appendChild(o);});}
-function onRptConumChange(){
-  const conum=document.getElementById('sel-rpt-conum').value;
+function buildRptCmsChips(conum,keepCms){
   const sel=document.getElementById('sel-rpt-cms');
   const chipsEl=document.getElementById('rpt-cms-chips');
   sel.innerHTML='<option value="">— Structure —</option>';
   chipsEl.innerHTML='';
   sel.value='';
-  if(!conum){renderRapport();return;}
-  const cmsOptions=Object.keys(count(getFiltered().filter(r=>r.conum===conum),'cms')).sort();
-  // Remplir le select caché (pour renderRapport qui lit sel-rpt-cms)
+  if(!conum)return;
+  const cmsOptions=Object.keys(count(getFiltered().filter(r=>r.conum===conum),'cms')).filter(c=>c&&c!=='?').sort();
   cmsOptions.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
-  // Générer les chips visuels
   cmsOptions.forEach(c=>{
     const chip=document.createElement('button');
     const shortName=c.replace('Centre Médico-Social de ','').replace('Centre Médico-Social ','').replace('Permanence - ','');
-    chip.textContent=shortName;
-    chip.title=c;
-    chip.className='year-chip';
+    chip.textContent=shortName;chip.title=c;chip.className='year-chip';
     chip.style.cssText='border-radius:8px;font-family:Space Grotesk,sans-serif;font-size:11px;white-space:nowrap';
     chip.onclick=()=>{
-      // Désélectionner tous
       chipsEl.querySelectorAll('button').forEach(b=>{b.style.background='var(--s2)';b.style.color='var(--muted)';b.style.borderColor='var(--border)';});
-      // Sélectionner ce chip
       chip.style.background='rgba(59,130,246,.2)';chip.style.color='#fff';chip.style.borderColor='var(--blue)';
       sel.value=c;renderRapport();
     };
+    if(c===keepCms){
+      chip.style.background='rgba(59,130,246,.2)';chip.style.color='#fff';chip.style.borderColor='var(--blue)';
+      sel.value=c;
+    }
     chipsEl.appendChild(chip);
   });
+}
+function onRptConumChange(){
+  const conum=document.getElementById('sel-rpt-conum').value;
+  buildRptCmsChips(conum,'');
   renderRapport();
 }
 function renderRapport(){
@@ -2609,7 +2610,12 @@ function refreshAll(){
   if(document.getElementById('panel-orienteurs').classList.contains('active'))renderOrienteurs();
   if(document.getElementById('panel-territoire').classList.contains('active'))renderTerritoire();
   if(document.getElementById('panel-ateliers').classList.contains('active'))renderAteliers();
-  if(document.getElementById('panel-rapport').classList.contains('active'))renderRapport();
+  if(document.getElementById('panel-rapport').classList.contains('active')){
+    const _rConum=document.getElementById('sel-rpt-conum').value;
+    const _rCms=document.getElementById('sel-rpt-cms').value;
+    if(_rConum)buildRptCmsChips(_rConum,_rCms);
+    renderRapport();
+  }
 }
 function exportCSV(){
   const d=getFiltered();
