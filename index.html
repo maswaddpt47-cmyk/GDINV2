@@ -2165,12 +2165,13 @@ function buildRptBilan(conum,cms,data,dataConum){
   // Délai moyen (champ delai déjà calculé : demande → action)
   const delais=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
   const delaiMoy=delais.length?Math.round(delais.reduce((a,b)=>a+b,0)/delais.length):null;
-  // Tendance trimestrielle — même trimestre N vs N-1
-  const allMonthsSorted=[...new Set(data.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
+  // Tendance trimestrielle — même trimestre N vs N-1 (données brutes, indépendant du filtre années)
+  const rawTrend=DATA.filter(r=>r.conum===conum&&r.cms===cms);
+  const allMonthsSorted=[...new Set(rawTrend.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
   const recentMs=allMonthsSorted.slice(0,3);
   const prevYrMs=recentMs.map(m=>`${parseInt(m.slice(0,4))-1}-${m.slice(5)}`);
-  const nRec=data.filter(r=>recentMs.includes(r.date_demande.slice(0,7))).length;
-  const nPre=data.filter(r=>prevYrMs.includes(r.date_demande.slice(0,7))).length;
+  const nRec=rawTrend.filter(r=>recentMs.includes(r.date_demande.slice(0,7))).length;
+  const nPre=rawTrend.filter(r=>prevYrMs.includes(r.date_demande.slice(0,7))).length;
   const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):null;
   const trend=delta===null?'—':delta>=0?`+${delta}%`:`${delta}%`;
   const trendColor=delta===null?'var(--muted)':delta>=0?'var(--green)':'var(--orange)';
@@ -4452,12 +4453,13 @@ function drSlideBilan(c,data,allDataConum){
   const txC=pct(done,total);
   const delais=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
   const delaiMoy=delais.length?Math.round(delais.reduce((a,b)=>a+b,0)/delais.length):null;
-  // Évolution trimestrielle — même trimestre N vs N-1
-  const allMonthsDR=[...new Set(data.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
+  // Évolution trimestrielle — même trimestre N vs N-1 (données brutes, indépendant du filtre années)
+  const rawTrendDR=DATA.filter(r=>r.conum===drConum&&r.cms===drCms);
+  const allMonthsDR=[...new Set(rawTrendDR.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
   const recentMs=allMonthsDR.slice(0,3);
   const prevYrMs=recentMs.map(m=>`${parseInt(m.slice(0,4))-1}-${m.slice(5)}`);
-  const nRec=data.filter(r=>recentMs.includes(r.date_demande.slice(0,7))).length;
-  const nPre=data.filter(r=>prevYrMs.includes(r.date_demande.slice(0,7))).length;
+  const nRec=rawTrendDR.filter(r=>recentMs.includes(r.date_demande.slice(0,7))).length;
+  const nPre=rawTrendDR.filter(r=>prevYrMs.includes(r.date_demande.slice(0,7))).length;
   const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):null;
   const trend=delta===null?'—':delta>=0?`+${delta}%`:`${delta}%`;
   const trendColor=delta===null?'var(--muted)':delta>=0?'var(--green)':'var(--orange)';
