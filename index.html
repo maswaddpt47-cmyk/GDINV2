@@ -2073,11 +2073,12 @@ function renderRapport(){
 
     // Donut
     destroyChart('ch-rpt-act-donut');
+    {const _all=[['Réalisée',aReal,'#10b981'],['Non réalisée',aNon,'#ef4444'],['En cours',aEnc,'#f97316']].filter(([,v])=>v>0);
     charts['ch-rpt-act-donut']=new Chart(document.getElementById('ch-rpt-act-donut'),{
       type:'doughnut',
-      data:{labels:['Réalisée','Non réalisée','En cours'],datasets:[{data:[aReal,aNon,aEnc],backgroundColor:['#10b981','#ef4444','#f97316'],borderWidth:2,borderColor:'#111827',hoverOffset:6}]},
+      data:{labels:_all.map(([l])=>l),datasets:[{data:_all.map(([,v])=>v),backgroundColor:_all.map(([,,c])=>c),borderWidth:2,borderColor:'#111827',hoverOffset:6}]},
       options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{color:legendColor(),font:{size:10},padding:8,boxWidth:8}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${pct(ctx.parsed,aTot)}%)`}}}}
-    });
+    });}
 
     // Monthly non réalisés
     const mKeys=[...new Set(allData.map(r=>r.date_demande.slice(0,7)))].sort();
