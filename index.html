@@ -400,7 +400,7 @@ body.pres-mode .tbl th{font-size:11px}
     Des <strong>modifications, corrections et nouvelles fonctionnalités</strong><br>
     sont régulièrement déployées.
   </p>
-  <button class="lo-btn" onclick="try{sessionStorage.setItem('gdin_landed','1');}catch(e){}document.getElementById('landing-overlay').style.display='none'">
+  <button class="lo-btn" onclick="document.getElementById('landing-overlay').style.display='none'">
     Accéder au tableau de bord <span class="lo-arrow">→</span>
   </button>
   <div class="lo-footer">GDIN · CD47 · Dashboard Activité Conum</div>
@@ -4649,13 +4649,6 @@ function toggleTheme(){
 
 // ── BOOT ──
 (function(){
-  // Masquer l'overlay si déjà vu
-  try{
-    if(sessionStorage.getItem('gdin_landed')==='1'){
-      const lo=document.getElementById('landing-overlay');
-      if(lo)lo.style.display='none';
-    }
-  }catch(e){}
   injectConumCss();
   applyChartTheme();
   initData();initCmsSelect();initConumSelect();initOriCmsSelect();initRptSelects();renderGlobal();
