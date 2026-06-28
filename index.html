@@ -715,9 +715,7 @@ body.pres-mode .tbl th{font-size:11px}
           </table>
         </div>
       </div>
-      <div id="rpt-actions-missing" style="display:none">
-        <div class="info-box">ℹ Importe le fichier <strong>Etat_Actions</strong> pour afficher les graphes de réalisation dans ce rapport.</div>
-      </div>
+      <div id="rpt-actions-missing" style="display:none"></div>
       <!-- Thématiques — toujours visible, après État des accompagnements -->
       <div class="card g1">
         <div class="card-title"><span class="dot" style="background:var(--orange)"></span>Thématiques</div>
@@ -736,7 +734,7 @@ body.pres-mode .tbl th{font-size:11px}
 
   <!-- IMPORT -->
   <div id="panel-import" class="panel">
-    <div class="import-hero"><h2>Import de données</h2><p>Dépose un fichier — le type est détecté automatiquement (GDIN ou Etat_Actions).</p></div>
+    <div class="import-hero"><h2>Import de données</h2><p>Dépose le fichier GDIN — le format est détecté automatiquement.</p></div>
     <div style="max-width:860px;margin:0 auto">
 
       <!-- Statuts des deux sources -->
@@ -744,10 +742,6 @@ body.pres-mode .tbl th{font-size:11px}
         <div class="current-source" id="current-source-info" style="margin:0">
           <div class="cs-info"><div class="cs-dot" id="cs-dot" style="background:var(--muted)"></div><span id="cs-label">Chargement…</span></div>
           <button class="btn-reset-data" id="btn-reset" onclick="resetToEmbedded()">🗑 Réinitialiser</button>
-        </div>
-        <div class="current-source" id="act-source-info" style="margin:0">
-          <div class="cs-info"><div class="cs-dot" id="act-dot" style="background:var(--muted)"></div><span id="act-label">Aucun Etat_Actions chargé</span></div>
-          <button class="btn-reset-data" id="act-btn-reset" onclick="resetActions()">🗑 Effacer</button>
         </div>
       </div>
 
@@ -778,7 +772,7 @@ body.pres-mode .tbl th{font-size:11px}
         <input type="file" id="file-input" accept=".xls,.xlsx,.txt,.csv,.json" onchange="handleAutoImport(this.files[0])">
         <div class="drop-icon">📂</div>
         <div class="drop-label">Glisse n'importe quel fichier ici</div>
-        <div class="drop-sub">GDIN (.xls / texte tabulé) ou Etat_Actions (.xlsx) — détection automatique</div>
+        <div class="drop-sub">Fichier GDIN (.xls / texte tabulé) — détection automatique</div>
         <span class="drop-formats">.xls · .xlsx · texte tabulé</span>
       </div>
 
@@ -798,7 +792,7 @@ body.pres-mode .tbl th{font-size:11px}
         <button class="btn-sm" onclick="document.getElementById('import-error').style.display='none'">Réessayer</button>
       </div>
 
-      <!-- Dashboard Etat_Actions (anciennement panel-actions) -->
+      <!-- Dashboard Actions -->
       <div id="act-progress-box" style="display:none">
         <div class="parse-progress"><div class="parse-bar" id="act-parse-bar"></div></div>
         <div style="font-size:11px;color:var(--muted);text-align:center" id="act-parse-msg">Lecture…</div>
@@ -928,9 +922,8 @@ const CMS_MAIN=['CMS Agen Montanou','CMS Agen Louis Vivent','CMS Tonneins','CMS 
 const MONTH_FR=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
 const TYPE_KEYS=['Accompagnement','Prise de contact','Orientation vers un tiers'];
 let ACTIONS_DERIVED=false;
-// Dérive ACTIONS_DATA depuis DATA (le XLS GDIN contient état + dates planifiée/réalisation) — rend l'import Etat_Actions facultatif
+// Dérive ACTIONS_DATA depuis DATA (le XLS GDIN contient état + dates planifiée/réalisation)
 function deriveActionsFromData(){
-  if(ACTIONS_DATA&&ACTIONS_DATA.length&&!ACTIONS_DERIVED)return; // un vrai import Etat_Actions prime
   const today=new Date();today.setHours(23,59,59,999);
   const pd=v=>{if(!v)return null;const d=new Date(v);return isNaN(d)?null:d;};
   const reactMap={};
@@ -940,7 +933,7 @@ function deriveActionsFromData(){
     const dR=pd(r.date_realisation),dP=pd(r.date_planifiee);
     let dContact=null;if(dR&&dR<=today)dContact=dR;else if(dP&&dP<=today)dContact=dP;
     if(!dContact)return;
-    const dl=dayDiff(dC,dContact);if(dl===null||dl<0)return;
+    const dl=bizDays(dC,dContact);if(dl===null||dl<0)return;
     const key=`${r.conum}|${r.cms}|${r.date_demande}`;
     if(!(key in reactMap)||dl<reactMap[key])reactMap[key]=dl;
   });
@@ -951,9 +944,9 @@ function deriveActionsFromData(){
     const dC=pd(r.date_demande),dR=pd(r.date_realisation);
     const date=r.date_demande?r.date_demande.slice(0,7):null,year=date?date.slice(0,4):null;
     const key=`${r.conum}|${r.cms}|${r.date_demande}`;
-    recs.push({etat:r.etat||'',cms:r.cms,conum:r.conum,date,year,lieu:r.cms,delai_reactivite:key in reactMap?reactMap[key]:null,delai_total:dayDiff(dC,dR)});
+    recs.push({etat:r.etat||'',cms:r.cms,conum:r.conum,date,year,lieu:r.cms,delai_reactivite:key in reactMap?reactMap[key]:null,delai_total:bizDays(dC,dR)});
   });
-  if(recs.length){ACTIONS_DATA=recs;ACTIONS_DERIVED=true;}
+  if(recs.length){ACTIONS_DATA=recs;ACTIONS_DERIVED=true;try{updateActionsUI('');}catch(e){}}
 }
 // Attribution des conum vides par CMS
 const CONUM_ATTRIB={
@@ -971,7 +964,7 @@ const CONUM_ATTRIB={
   'Permanence Castillonnès':'ASWAD Michel',
 };
 function applyConumAttrib(arr){(arr||[]).forEach(r=>{const c=(r.conum||'').trim();if(!c||c==='?'){if(r.cms==='DSIAN'&&r.orienteur)r.conum=r.orienteur;else if(CONUM_ATTRIB[r.cms])r.conum=CONUM_ATTRIB[r.cms];else if(r.orienteur&&ORI_EXCL.has(r.orienteur))r.conum=r.orienteur;}
-  if(r.delai==null&&r.date_demande&&r.date_action){const t=Math.round((new Date(r.date_action)-new Date(r.date_demande))/86400000);r.delai=(isNaN(t)||t<0)?null:t;}else if(r.delai===undefined)r.delai=null;});return arr;}
+  if(r.delai==null&&r.date_demande&&r.date_action){const t=bizDays(new Date(r.date_demande),new Date(r.date_action));r.delai=(t===null||t<0)?null:t;}else if(r.delai===undefined)r.delai=null;});return arr;}
 const ORI_EXCL=new Set(['ASWAD Michel','TUAL Corentin','PINEAU Cynthia','MONTOUX PARTHENAY Caroline','CHIBANE-TARASCON THIBAUD','CAPELLE Eva']);
 const TYPE_EXCL=new Set(['Reservation','Reservation ']);
 // Retourne tous les types présents dans un dataset (hors exclus), triés par fréquence
@@ -2273,49 +2266,8 @@ async function handleAutoImport(file){
     bar.style.width='40%';msg.textContent='Détection du type…';
     setTimeout(()=>{
       try{
-        // Détection par nom de fichier en priorité, analyse en fallback
-        function normHdr(s){return String(s).toLowerCase().replace(/[éèêè]/g,'e').replace(/[àâ]/g,'a').replace(/[ùû]/g,'u').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/[']/g,' ');}
-        const fname=file.name.toLowerCase().replace(/[^a-z0-9]/g,'');
-        // GDIN en priorité absolue — ne jamais analyser les en-têtes si le nom le trahit
-        const isGdinByName=fname.includes('gdin')||fname.includes('accompagnement') && !fname.includes('etat');
-        let isActions=!isGdinByName&&(fname.includes('etataction')||fname.includes('etat_action')||fname.includes('actions'));
-        // Si nom ambigu ET pas clairement GDIN, analyser les en-têtes
-        if(!isActions&&!isGdinByName&&isExcel){
-          try{
-            const wb=XLSX.read(e.target.result,{type:'array',cellDates:false,sheetRows:5});
-            const ws=wb.Sheets[wb.SheetNames[0]];
-            const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-            // Chercher dans les 5 premières lignes (cas fichier avec ligne de titre)
-            for(let ri=0;ri<Math.min(5,rows.length);ri++){
-              const hdrsStr=rows[ri].map(normHdr).join('|');
-              if((hdrsStr.includes('libelle de l etat')||hdrsStr.includes('libelle de letat'))&&
-                 (hdrsStr.includes('libelle du type')||hdrsStr.includes('type d action'))){
-                isActions=true;break;
-              }
-            }
-          }catch(e2){}
-        }
-
         bar.style.width='60%';
-        if(isActions){
-          msg.textContent='Fichier Etat_Actions détecté…';
-          // Réutiliser handleActionsFile logic inline
-          try{
-            const records=parseActionsXlsx(e.target.result);
-            bar.style.width='100%';msg.textContent=`${records.length} actions chargées`;
-            setTimeout(()=>{
-              prog.style.display='none';
-              ACTIONS_DATA=records;ACTIONS_DERIVED=false;
-              saveActionsToStorage(records);
-              updateActionsUI(file.name);
-              renderActions();
-            },300);
-          }catch(err){
-            prog.style.display='none';
-            showImportError(`Etat_Actions : ${err.message}`);
-          }
-        } else {
-          msg.textContent='Fichier GDIN détecté…';
+        msg.textContent='Fichier GDIN détecté…';
           try{
             let result;
             if(isExcel){
@@ -2338,7 +2290,6 @@ async function handleAutoImport(file){
             prog.style.display='none';
             showImportError(`GDIN : ${err.message}`);
           }
-        }
       }catch(err){
         prog.style.display='none';
         showImportError(err.message);
@@ -2856,24 +2807,7 @@ function printRapport(){
 
 // ÉTATS ACTIONS
 let ACTIONS_DATA = null; // raw parsed records
-const ACT_LS_KEY = 'gdin_actions_v1';
 
-function loadActionsFromStorage(){
-  try{const r=localStorage.getItem(ACT_LS_KEY);if(r)return JSON.parse(r);}catch(e){}return null;
-}
-function saveActionsToStorage(data){
-  try{localStorage.setItem(ACT_LS_KEY,JSON.stringify(data));return true;}catch(e){return false;}
-}
-function resetActions(){
-  if(!confirm('Supprimer les données actions ?'))return;
-  localStorage.removeItem(ACT_LS_KEY);
-  ACTIONS_DATA=null;
-  document.getElementById('act-source-info').style.display='flex';
-  document.getElementById('act-dashboard').style.display='none';
-  document.getElementById('act-dot').style.background='var(--muted)';
-  document.getElementById('act-label').textContent='Aucune donnée chargée';
-  // btn always visible
-}
 
 // ── Date helpers for actions parsing ──
 function parseDt(v){
@@ -2893,8 +2827,9 @@ function parseDt(v){
   }catch(e){return null;}
 }
 function dayDiff(d1,d2){if(!d1||!d2)return null;const ms=d2.getTime()-d1.getTime();return ms<0?null:Math.round(ms/86400000);}
+function bizDays(d1,d2){if(!d1||!d2)return null;const s=new Date(d1);s.setHours(0,0,0,0);const e=new Date(d2);e.setHours(0,0,0,0);if(e<s)return null;let n=0,cur=new Date(s);while(cur<e){const d=cur.getDay();if(d!==0&&d!==6)n++;cur.setDate(cur.getDate()+1);}return n;}
 
-function parseActionsXlsx(arraybuffer){
+function _parseActionsXlsx_UNUSED(arraybuffer){
   const wb=XLSX.read(arraybuffer,{type:'array',cellDates:true});
   const ws=wb.Sheets[wb.SheetNames[0]];
   const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
@@ -2974,35 +2909,6 @@ function parseActionsXlsx(arraybuffer){
   return records;
 }
 
-function handleActionsFile(file){
-  if(!file)return;
-  document.getElementById('act-error').style.display='none';
-  const prog=document.getElementById('act-progress-box'),bar=document.getElementById('act-parse-bar'),msg=document.getElementById('act-parse-msg');
-  prog.style.display='block';bar.style.width='10%';msg.textContent=`Lecture de ${file.name}…`;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    bar.style.width='50%';msg.textContent='Analyse…';
-    setTimeout(()=>{
-      try{
-        const records=parseActionsXlsx(e.target.result);
-        bar.style.width='100%';msg.textContent=`${records.length} accompagnements`;
-        setTimeout(()=>{
-          prog.style.display='none';
-          ACTIONS_DATA=records;ACTIONS_DERIVED=false;
-          saveActionsToStorage(records);
-          updateActionsUI(file.name);
-          renderActions();
-        },300);
-      }catch(err){
-        prog.style.display='none';
-        document.getElementById('act-error').style.display='block';
-        document.getElementById('act-error').textContent=`Erreur : ${err.message}`;
-      }
-    },300);
-  };
-  reader.onerror=()=>{prog.style.display='none';document.getElementById('act-error').textContent='Impossible de lire le fichier.';};
-  reader.readAsArrayBuffer(file);
-}
 
 function updateActionsUI(filename){
   if(!ACTIONS_DATA)return;
@@ -3027,10 +2933,6 @@ function updateActionsUI(filename){
   cSel.innerHTML='<option value="">Tous</option>';
   conums.forEach(cn=>{const o=document.createElement('option');o.value=cn;o.textContent=cn;cSel.appendChild(o);});
   if(cCur&&conums.includes(cCur))cSel.value=cCur;
-  // Badge
-  document.getElementById('act-dot').style.background='var(--orange)';
-  document.getElementById('act-label').innerHTML=`<strong style="color:var(--orange)">${esc(filename||'Données chargées')}</strong> — ${ACTIONS_DATA.length} accompagnements · ${years.join(', ')}`;
-  // btn always visible
   // Reset active years so new import always shows all years
   window.actActiveYears=null; window.actYearsInit=false;
   document.getElementById('act-dashboard').style.display='block';
@@ -3221,11 +3123,6 @@ function renderActYoY(){
   });
 }
 
-// Init actions from localStorage on load
-(function initActions(){
-  const stored=loadActionsFromStorage();
-  if(stored){ACTIONS_DATA=stored;ACTIONS_DERIVED=false;updateActionsUI('Données sauvegardées');}
-})();
 
 // SORTABLE TABLES
 const actSortState={cms:{col:-1,asc:true},conum:{col:-1,asc:true}};
@@ -4355,7 +4252,7 @@ function drSlideNonReal(c,data){
     c.innerHTML=`<div style="padding:40px;text-align:center;color:var(--muted)">
       <div style="font-size:40px;margin-bottom:16px">📊</div>
       <div style="font-size:16px;font-weight:600;margin-bottom:8px">Données non disponibles</div>
-      <div style="font-size:12px">Importe le fichier Etat_Actions pour afficher les non réalisés.</div>
+      <div style="font-size:12px">Aucune donnée de non réalisés disponible pour cette sélection.</div>
     </div>`;
     return;
   }
