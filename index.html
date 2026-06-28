@@ -1360,7 +1360,7 @@ function switchTab(id,btn){
       renderTerritoire();
     });});
   }
-  if(id==='import')updateCurrentSourceInfo();
+  if(id==='import'){updateCurrentSourceInfo();if(ACTIONS_DATA&&document.getElementById('act-dashboard').style.display==='block')try{renderActions();}catch(e){}}
   if(id==='actions'){if(ACTIONS_DATA)renderActions();}
 }
 function setEvolMode(mode,btn){evolModeVal=mode;document.querySelectorAll('#evolMode .toggle-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderEvolution();}
@@ -3141,10 +3141,16 @@ function renderActYoY(){
   });
 }
 
-// Init actions from localStorage on load
+// Init actions from localStorage on load — badge uniquement, pas de dashboard auto
 (function initActions(){
   const stored=loadActionsFromStorage();
-  if(stored){ACTIONS_DATA=stored;ACTIONS_DERIVED=false;updateActionsUI('Données sauvegardées');}
+  if(!stored)return;
+  ACTIONS_DATA=stored;ACTIONS_DERIVED=false;
+  const years=[...new Set(stored.map(r=>r.year).filter(Boolean))].sort();
+  try{
+    document.getElementById('act-dot').style.background='var(--orange)';
+    document.getElementById('act-label').innerHTML=`<strong style="color:var(--orange)">Données sauvegardées</strong> — ${stored.length} accompagnements · ${years.join(', ')}`;
+  }catch(e){}
 })();
 
 // SORTABLE TABLES
