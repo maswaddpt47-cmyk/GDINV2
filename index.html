@@ -1264,7 +1264,7 @@ function updateAllYears(){
 }
 function updateDateRange(){const dates=DATA.map(r=>r.date_demande).sort();const dmin=dates[0]||'2025-01-01',dmax=dates[dates.length-1]||'2026-12-31';document.getElementById('dFrom').value=dmin;document.getElementById('dTo').value=dmax;}
 function updateSourceBadge(imp,meta){const b=document.getElementById('data-source-badge');if(imp&&meta){b.className='data-source imported';b.textContent=`📂 ${meta.filename} — ${meta.count} enregistrements`;}else{b.className='data-source embedded';b.textContent='données intégrées';}}
-function updateCurrentSourceInfo(){const dot=document.getElementById('cs-dot'),label=document.getElementById('cs-label');if(dataSource==='imported'&&importMeta){const fromCache=loadFromStorage()!=null;dot.style.background='var(--green)';label.innerHTML=`<strong style="color:var(--green)">${esc(importMeta.filename)}</strong> — ${importMeta.count} enregistrements · ${importMeta.years.join(', ')} · importé le ${importMeta.date}${fromCache?' · <span style="color:var(--cyan);font-size:10px">💾 local</span>':''}`;}else{dot.style.background='var(--muted)';label.innerHTML=`<span style="color:var(--muted)">Données intégrées (${EMBEDDED.length} enregistrements, partiel)</span>`;}}
+function updateCurrentSourceInfo(){const dot=document.getElementById('cs-dot'),label=document.getElementById('cs-label');if(dataSource==='imported'&&importMeta){dot.style.background='var(--green)';label.innerHTML=`<strong style="color:var(--green)">${esc(importMeta.filename)}</strong> — ${importMeta.count} enregistrements · ${importMeta.years.join(', ')} · importé le ${importMeta.date}`;}else{dot.style.background='var(--muted)';label.innerHTML=`<span style="color:var(--muted)">Données intégrées (${EMBEDDED.length} enregistrements, partiel)</span>`;}}
 
 // YEAR CHIPS
 function yrLabel(yr){
@@ -4570,11 +4570,6 @@ function toggleTheme(){
   applyChartTheme();
   await initData();
   initCmsSelect();initConumSelect();initOriCmsSelect();initRptSelects();renderGlobal();
-  // Masquer la landing si données en cache
-  if(dataSource==='imported'){
-    const lo=document.getElementById('landing-overlay');
-    if(lo)lo.style.display='none';
-  }
   // Restaurer l'onglet actif
   try{
     const saved=sessionStorage.getItem('gdin_tab');
