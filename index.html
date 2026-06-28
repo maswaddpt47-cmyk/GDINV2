@@ -1242,10 +1242,16 @@ async function _idbDel(...keys){try{const db=await _idbOpen();const tx=db.transa
 async function saveToStorage(records,meta){
   let lsOk=false;
   try{localStorage.setItem(LS_KEY,JSON.stringify(records));localStorage.setItem(LS_META,JSON.stringify(meta));lsOk=true;}
-  catch(e){console.warn('[GDIN] localStorage quota — bascule IndexedDB');}
-  // IDB en parallèle — si LS a échoué, on attend la confirmation IDB
+  catch(e){
+    console.warn('[GDIN] localStorage quota — bascule IndexedDB');
+    // Nettoyer l'ancienne entrée LS pour éviter qu'elle masque les données IDB au prochain chargement
+    try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_META);}catch(_){}
+  }
   if(lsOk){_idbPut(LS_KEY,records).then(()=>_idbPut(LS_META,meta)).catch(()=>{});return true;}
-  return _idbPut(LS_KEY,records).then(()=>_idbPut(LS_META,meta)).then(()=>true).catch(()=>false);
+  // LS a échoué : sauvegarder dans IDB et vérifier que les deux puts réussissent
+  const r=await _idbPut(LS_KEY,records);
+  const m=await _idbPut(LS_META,meta);
+  return r&&m;
 }
 function loadFromStorage(){try{const r=localStorage.getItem(LS_KEY),m=localStorage.getItem(LS_META);if(r&&m)return{records:JSON.parse(r),meta:JSON.parse(m)};}catch(e){}return null;}
 async function loadFromIDB(){const r=await _idbGet(LS_KEY),m=await _idbGet(LS_META);return(r&&m)?{records:r,meta:m}:null;}
