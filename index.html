@@ -699,7 +699,7 @@ body.pres-mode .tbl th{font-size:11px}
             <canvas id="ch-rpt-act-monthly" style="max-height:200px"></canvas>
           </div>
           <div class="card">
-            <div class="card-title"><span class="dot" style="background:var(--purple)"></span>Non réalisés — N vs N-1</div>
+            <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Taux de réalisation mensuel — N vs N-1</div>
             <canvas id="ch-rpt-act-yoy" style="max-height:200px"></canvas>
           </div>
         </div>
@@ -2098,18 +2098,25 @@ function renderRapport(){
       options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:legendColor(),font:{size:9},boxWidth:7,padding:5}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:9}}},y:{grid:{color:'#1a2235'},beginAtZero:true,stacked:true,ticks:{color:'#6b7fa0',font:{size:9}}}}}
     });
 
-    // YoY non réalisés par mois calendaire
+    // Taux de réalisation mensuel N vs N-1
     const actYears=[...new Set(actData.map(r=>r.year).filter(Boolean))].sort();
     destroyChart('ch-rpt-act-yoy');
     charts['ch-rpt-act-yoy']=new Chart(document.getElementById('ch-rpt-act-yoy'),{
-      type:'bar',
+      type:'line',
       data:{labels:MONTH_FR,datasets:actYears.map((yr,i)=>{
         const col=YEAR_PALETTE[i%YEAR_PALETTE.length];
-        const vals=Array(12).fill(0);
-        actData.filter(r=>r.year===yr&&r.etat==='Non réalisée').forEach(r=>{if(r.date){const m=parseInt(r.date.slice(5,7))-1;if(m>=0)vals[m]++;}});
-        return{label:yrLabel(yr),data:vals,backgroundColor:col+'66',borderColor:col,borderWidth:1.5,borderRadius:3,borderSkipped:false};
+        const vals=Array(12).fill(null);
+        for(let m=0;m<12;m++){
+          const mRecs=actData.filter(r=>r.year===yr&&r.date&&parseInt(r.date.slice(5,7))-1===m);
+          if(mRecs.length>=3){const real=mRecs.filter(r=>r.etat==='Réalisée').length;vals[m]=Math.round(real/mRecs.length*100);}
+        }
+        return{label:yrLabel(yr),data:vals,borderColor:col,backgroundColor:col+'22',borderWidth:2,pointRadius:3,pointHoverRadius:5,tension:0.3,spanGaps:false};
       })},
-      options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:legendColor(),font:{size:9},boxWidth:7,padding:5}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:9}}},y:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:9}}}}}
+      options:{responsive:true,maintainAspectRatio:true,
+        plugins:{legend:{labels:{color:legendColor(),font:{size:9},boxWidth:7,padding:5}},
+          tooltip:{callbacks:{label:ctx=>ctx.parsed.y!==null?`${ctx.dataset.label} : ${ctx.parsed.y}%`:null}}},
+        scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:9}}},
+                y:{grid:{color:'#1a2235'},beginAtZero:true,max:100,ticks:{color:'#6b7fa0',font:{size:9},callback:v=>v+'%'}}}}
     });
 
     // Réalisés vs Non réalisés — N vs N-1 (mois calendaires, empilé par année)
