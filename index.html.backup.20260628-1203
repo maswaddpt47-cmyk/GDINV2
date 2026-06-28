@@ -354,58 +354,9 @@ body.pres-mode .tbl th{font-size:11px}
 .dr-q{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:rgba(107,127,160,.22);color:var(--muted);font-size:10px;font-weight:700;cursor:help;margin-left:7px;flex-shrink:0;transition:background .15s;vertical-align:middle}
 .dr-q:hover{background:rgba(59,130,246,.35);color:var(--blue)}
 #dr-insight-tip{position:fixed;z-index:9999;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 15px;font-size:12px;line-height:1.7;color:var(--text);max-width:290px;box-shadow:0 8px 28px rgba(0,0,0,.35);pointer-events:none;display:none}
-/* ── Landing overlay bêta ── */
-@keyframes lo-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
-@keyframes lo-blink{0%,49%{opacity:1}50%,100%{opacity:0}}
-#landing-overlay{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:99999;background:#0b0f19;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;font-family:'Space Grotesk',sans-serif;overflow:hidden}
-#landing-overlay .lo-bg-grid{position:absolute;top:0;left:0;right:0;bottom:0;background-image:linear-gradient(rgba(59,130,246,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.04) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
-#landing-overlay .lo-bg-glow{position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 60% 50% at 30% 40%,rgba(59,130,246,.08) 0%,transparent 70%),radial-gradient(ellipse 50% 40% at 75% 65%,rgba(16,185,129,.06) 0%,transparent 70%);pointer-events:none}
-#landing-overlay .lo-chip{display:inline-flex;align-items:center;gap:6px;background:#1a2235;border:1px solid #1e2d45;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:600;color:#3b82f6;letter-spacing:1px;text-transform:uppercase;margin-bottom:28px;position:relative}
-#landing-overlay .lo-chip::before{content:'';width:6px;height:6px;border-radius:50%;background:#3b82f6;box-shadow:0 0 6px #3b82f6;animation:lo-pulse 2s ease-in-out infinite}
-#landing-overlay .lo-logo{font-size:clamp(52px,12vw,92px);font-weight:700;letter-spacing:-2px;line-height:1;background:linear-gradient(135deg,#e5e7eb 30%,#3b82f6 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;position:relative}
-#landing-overlay .lo-sub{font-size:clamp(13px,2.5vw,17px);color:#6b7fa0;letter-spacing:.3px;margin-bottom:32px;position:relative}
-#landing-overlay .lo-div{width:64px;height:1px;background:linear-gradient(90deg,transparent,#1e2d45,transparent);margin:0 auto 28px;position:relative}
-#landing-overlay .lo-badges{display:flex;align-items:center;gap:12px;margin-bottom:16px;position:relative;flex-wrap:wrap;justify-content:center}
-#landing-overlay .lo-badge-beta{display:inline-flex;align-items:center;gap:7px;background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.5);color:#fca5a5;border-radius:8px;padding:6px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;animation:lo-blink 1.4s step-end infinite}
-#landing-overlay .lo-badge-wip{display:inline-flex;align-items:center;gap:7px;background:rgba(234,179,8,.10);border:1.5px solid rgba(234,179,8,.4);color:#fde047;border-radius:8px;padding:6px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;letter-spacing:1px;animation:lo-blink 1.4s step-end infinite;animation-delay:.7s}
-#landing-overlay .lo-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-#landing-overlay .lo-dot-red{background:#ef4444;box-shadow:0 0 8px #ef4444}
-#landing-overlay .lo-dot-yellow{background:#eab308;box-shadow:0 0 8px #eab308}
-#landing-overlay .lo-info{font-size:13px;color:#6b7fa0;line-height:1.7;text-align:center;max-width:460px;margin-bottom:40px;position:relative}
-#landing-overlay .lo-info strong{color:#e5e7eb;font-weight:500}
-#landing-overlay .lo-btn{display:inline-flex;align-items:center;gap:10px;background:#3b82f6;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;letter-spacing:.3px;border:none;border-radius:10px;padding:14px 32px;cursor:pointer;transition:background .18s,transform .15s,box-shadow .18s;position:relative;overflow:hidden}
-#landing-overlay .lo-btn::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,rgba(255,255,255,.10) 0%,transparent 60%)}
-#landing-overlay .lo-btn:hover{background:#2563eb;transform:translateY(-2px);box-shadow:0 8px 24px rgba(59,130,246,.35)}
-#landing-overlay .lo-arrow{font-size:18px;transition:transform .2s;display:inline-block}
-#landing-overlay .lo-btn:hover .lo-arrow{transform:translateX(4px)}
-#landing-overlay .lo-footer{position:absolute;bottom:20px;font-size:10px;color:#6b7fa0;letter-spacing:.5px;opacity:.4}
 </style>
 </head>
 <body>
-
-<!-- ── LANDING OVERLAY BÊTA ── -->
-<div id="landing-overlay">
-  <div class="lo-bg-grid"></div>
-  <div class="lo-bg-glow"></div>
-  <div class="lo-chip">Conseil Départemental 47</div>
-  <div class="lo-logo">GDIN</div>
-  <div class="lo-sub">Dashboard Activité Conum</div>
-  <div class="lo-div"></div>
-  <div class="lo-badges">
-    <div class="lo-badge-beta"><span class="lo-dot lo-dot-red"></span>Version Bêta</div>
-    <div class="lo-badge-wip"><span class="lo-dot lo-dot-yellow"></span>Work in Progress</div>
-  </div>
-  <p class="lo-info">
-    Cette application est en cours de développement.<br>
-    Des <strong>modifications, corrections et nouvelles fonctionnalités</strong><br>
-    sont régulièrement déployées.
-  </p>
-  <button class="lo-btn" onclick="document.getElementById('landing-overlay').style.display='none'">
-    Accéder au tableau de bord <span class="lo-arrow">→</span>
-  </button>
-  <div class="lo-footer">GDIN · CD47 · Dashboard Activité Conum</div>
-</div>
-<!-- ── FIN LANDING OVERLAY ── -->
 
 <header>
   <div class="logo">
@@ -418,7 +369,7 @@ body.pres-mode .tbl th{font-size:11px}
       <label>Type d'action</label>
       <select id="typeFilter" onchange="refreshAll()">
         <option value="">Tous</option>
-        <option value="Accompagnement" selected>Accompagnement</option>
+        <option value="Accompagnement">Accompagnement</option>
         <option value="Prise de contact">Prise de contact</option>
         <option value="Orientation vers un tiers">Orientation tiers</option>
         <option value="Atelier">Atelier</option>
@@ -450,7 +401,7 @@ body.pres-mode .tbl th{font-size:11px}
     <div class="drawer-row"><label>Type d'action</label>
       <select id="typeFilterM" onchange="syncMobileFilter('type',this.value)">
         <option value="">Tous</option>
-        <option value="Accompagnement" selected>Accompagnement</option>
+        <option value="Accompagnement">Accompagnement</option>
         <option value="Prise de contact">Prise de contact</option>
         <option value="Orientation vers un tiers">Orientation vers un tiers</option>
         <option value="Atelier">Atelier</option>
@@ -628,7 +579,6 @@ body.pres-mode .tbl th{font-size:11px}
       </div>
     </div>
     <div class="card g1" style="padding:0;overflow:hidden">
-      <div style="padding:6px 12px 4px;font-size:10px;color:var(--muted)" id="terr-data-subtitle"></div>
       <div class="map-fullscreen-wrap">
         <div id="map-territoire" style="height:420px;width:100%;border-radius:10px;background:#1a2235"></div>
         <button class="btn-map-fs" onclick="toggleMapFullscreen()" id="btn-map-fs" title="Plein écran">⤢</button>
@@ -642,7 +592,7 @@ body.pres-mode .tbl th{font-size:11px}
 
   <!-- ATELIERS -->
   <div id="panel-ateliers" class="panel">
-    <div class="frow"><label>Conseiller :</label><select id="sel-atl-conum-global" onchange="renderAteliers()" style="background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 8px;font-size:12px;cursor:pointer"><option value="">— Tous les conseillers —</option></select><div class="year-chips" id="year-chips-atl" style="margin-left:auto"></div></div>
+    <div class="frow"><div class="year-chips" id="year-chips-atl" style="margin-left:auto"></div></div>
     <div class="g5" id="kpi-ateliers"></div>
     <div class="g2">
       <div class="card"><div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Évolution mensuelle des ateliers</div><canvas id="ch-atl-evol" style="max-height:260px"></canvas></div>
@@ -654,10 +604,6 @@ body.pres-mode .tbl th{font-size:11px}
       <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Top 15 lieux d'ateliers</div>
       <table class="tbl sortable" id="tbl-atl-wrap"><thead><tr><th>Lieu</th><th>Commune</th><th>Ateliers</th><th>Conseiller principal</th><th>Thématique principale</th></tr></thead>
       <tbody id="tbl-atl"></tbody></table>
-    </div>
-    <div class="card">
-      <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Charge mensuelle par lieu · Ateliers</div>
-      <div id="heatmap-atl-container"></div>
     </div>
   </div>
 
@@ -681,8 +627,10 @@ body.pres-mode .tbl th{font-size:11px}
     </div>
     <div id="rpt-content" style="display:none">
       <div id="kpi-rpt" class="g4"></div>
-      <div class="card g1"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Évolution mensuelle</div><canvas id="ch-rpt-evol"></canvas></div>
-      <div class="card g1"><div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Accompagnements — N / N-1 / N-2 <span style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">par mois calendaire</span></div><canvas id="ch-rpt-yoy-main" style="max-height:220px"></canvas></div>
+      <div class="g2">
+        <div class="card"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Évolution mensuelle</div><canvas id="ch-rpt-evol"></canvas></div>
+        <div class="card"><div class="card-title"><span class="dot" style="background:var(--orange)"></span>Thématiques</div><canvas id="ch-rpt-thema"></canvas></div>
+      </div>
       <div class="g2">
         <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Orienteurs actifs dans ce CMS</div><div id="bar-rpt-ori" class="bar-list"></div></div>
         <div class="card"><div class="card-title"><span class="dot" style="background:var(--purple)"></span>Activité CN : ce CMS vs autres structures</div><canvas id="ch-rpt-comp"></canvas></div>
@@ -715,11 +663,8 @@ body.pres-mode .tbl th{font-size:11px}
           </table>
         </div>
       </div>
-      <div id="rpt-actions-missing" style="display:none"></div>
-      <!-- Thématiques — toujours visible, après État des accompagnements -->
-      <div class="card g1">
-        <div class="card-title"><span class="dot" style="background:var(--orange)"></span>Thématiques</div>
-        <canvas id="ch-rpt-thema" style="max-height:220px"></canvas>
+      <div id="rpt-actions-missing" style="display:none">
+        <div class="info-box">ℹ Importe le fichier <strong>Etat_Actions</strong> pour afficher les graphes de réalisation dans ce rapport.</div>
       </div>
       <!-- Bilan & perspectives (conum × cms) -->
       <div class="card g1" id="rpt-bilan-card">
@@ -734,7 +679,7 @@ body.pres-mode .tbl th{font-size:11px}
 
   <!-- IMPORT -->
   <div id="panel-import" class="panel">
-    <div class="import-hero"><h2>Import de données</h2><p>Dépose le fichier GDIN — le format est détecté automatiquement.</p></div>
+    <div class="import-hero"><h2>Import de données</h2><p>Dépose un fichier — le type est détecté automatiquement (GDIN ou Etat_Actions).</p></div>
     <div style="max-width:860px;margin:0 auto">
 
       <!-- Statuts des deux sources -->
@@ -742,6 +687,10 @@ body.pres-mode .tbl th{font-size:11px}
         <div class="current-source" id="current-source-info" style="margin:0">
           <div class="cs-info"><div class="cs-dot" id="cs-dot" style="background:var(--muted)"></div><span id="cs-label">Chargement…</span></div>
           <button class="btn-reset-data" id="btn-reset" onclick="resetToEmbedded()">🗑 Réinitialiser</button>
+        </div>
+        <div class="current-source" id="act-source-info" style="margin:0">
+          <div class="cs-info"><div class="cs-dot" id="act-dot" style="background:var(--muted)"></div><span id="act-label">Aucun Etat_Actions chargé</span></div>
+          <button class="btn-reset-data" id="act-btn-reset" onclick="resetActions()">🗑 Effacer</button>
         </div>
       </div>
 
@@ -758,8 +707,8 @@ body.pres-mode .tbl th{font-size:11px}
       <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
         <span style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">Importer pour</span>
         <select id="import-conum-filter" style="flex:1;max-width:260px">
-          <option value="" selected>— Tous les conseillers —</option>
-          <option value="ASWAD Michel">ASWAD Michel</option>
+          <option value="">— Tous les conseillers —</option>
+          <option value="ASWAD Michel" selected>ASWAD Michel</option>
           <option value="CAPELLE Eva">CAPELLE Eva</option>
           <option value="PINEAU Cynthia">PINEAU Cynthia</option>
           <option value="TUAL Corentin">TUAL Corentin</option>
@@ -772,12 +721,8 @@ body.pres-mode .tbl th{font-size:11px}
         <input type="file" id="file-input" accept=".xls,.xlsx,.txt,.csv,.json" onchange="handleAutoImport(this.files[0])">
         <div class="drop-icon">📂</div>
         <div class="drop-label">Glisse n'importe quel fichier ici</div>
-        <div class="drop-sub">Fichier GDIN (.xls / texte tabulé) — détection automatique</div>
+        <div class="drop-sub">GDIN (.xls / texte tabulé) ou Etat_Actions (.xlsx) — détection automatique</div>
         <span class="drop-formats">.xls · .xlsx · texte tabulé</span>
-      </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:8px">
-        <input type="file" id="reset-file-input" accept=".xls,.xlsx,.txt,.csv,.json" style="display:none" onchange="handleResetAndImport(this.files[0]);this.value=''">
-        <button class="btn-sm" onclick="document.getElementById('reset-file-input').click()" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4);color:#fca5a5" title="Efface toutes les données existantes puis importe le nouveau fichier">🗑 Réinitialiser et importer</button>
       </div>
 
       <div id="parse-progress-box" style="display:none">
@@ -796,7 +741,7 @@ body.pres-mode .tbl th{font-size:11px}
         <button class="btn-sm" onclick="document.getElementById('import-error').style.display='none'">Réessayer</button>
       </div>
 
-      <!-- Dashboard Actions -->
+      <!-- Dashboard Etat_Actions (anciennement panel-actions) -->
       <div id="act-progress-box" style="display:none">
         <div class="parse-progress"><div class="parse-bar" id="act-parse-bar"></div></div>
         <div style="font-size:11px;color:var(--muted);text-align:center" id="act-parse-msg">Lecture…</div>
@@ -926,8 +871,9 @@ const CMS_MAIN=['CMS Agen Montanou','CMS Agen Louis Vivent','CMS Tonneins','CMS 
 const MONTH_FR=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
 const TYPE_KEYS=['Accompagnement','Prise de contact','Orientation vers un tiers'];
 let ACTIONS_DERIVED=false;
-// Dérive ACTIONS_DATA depuis DATA (le XLS GDIN contient état + dates planifiée/réalisation)
+// Dérive ACTIONS_DATA depuis DATA (le XLS GDIN contient état + dates planifiée/réalisation) — rend l'import Etat_Actions facultatif
 function deriveActionsFromData(){
+  if(ACTIONS_DATA&&ACTIONS_DATA.length&&!ACTIONS_DERIVED)return; // un vrai import Etat_Actions prime
   const today=new Date();today.setHours(23,59,59,999);
   const pd=v=>{if(!v)return null;const d=new Date(v);return isNaN(d)?null:d;};
   const reactMap={};
@@ -937,7 +883,7 @@ function deriveActionsFromData(){
     const dR=pd(r.date_realisation),dP=pd(r.date_planifiee);
     let dContact=null;if(dR&&dR<=today)dContact=dR;else if(dP&&dP<=today)dContact=dP;
     if(!dContact)return;
-    const dl=bizDays(dC,dContact);if(dl===null||dl<0)return;
+    const dl=dayDiff(dC,dContact);if(dl===null||dl<0)return;
     const key=`${r.conum}|${r.cms}|${r.date_demande}`;
     if(!(key in reactMap)||dl<reactMap[key])reactMap[key]=dl;
   });
@@ -948,9 +894,9 @@ function deriveActionsFromData(){
     const dC=pd(r.date_demande),dR=pd(r.date_realisation);
     const date=r.date_demande?r.date_demande.slice(0,7):null,year=date?date.slice(0,4):null;
     const key=`${r.conum}|${r.cms}|${r.date_demande}`;
-    recs.push({etat:r.etat||'',cms:r.cms,conum:r.conum,date,year,lieu:r.cms,delai_reactivite:key in reactMap?reactMap[key]:null,delai_total:bizDays(dC,dR)});
+    recs.push({etat:r.etat||'',cms:r.cms,conum:r.conum,date,year,lieu:r.cms,delai_reactivite:key in reactMap?reactMap[key]:null,delai_total:dayDiff(dC,dR)});
   });
-  if(recs.length){ACTIONS_DATA=recs;ACTIONS_DERIVED=true;try{updateActionsUI('');}catch(e){}}
+  if(recs.length){ACTIONS_DATA=recs;ACTIONS_DERIVED=true;}
 }
 // Attribution des conum vides par CMS
 const CONUM_ATTRIB={
@@ -968,7 +914,7 @@ const CONUM_ATTRIB={
   'Permanence Castillonnès':'ASWAD Michel',
 };
 function applyConumAttrib(arr){(arr||[]).forEach(r=>{const c=(r.conum||'').trim();if(!c||c==='?'){if(r.cms==='DSIAN'&&r.orienteur)r.conum=r.orienteur;else if(CONUM_ATTRIB[r.cms])r.conum=CONUM_ATTRIB[r.cms];else if(r.orienteur&&ORI_EXCL.has(r.orienteur))r.conum=r.orienteur;}
-  if(r.date_demande&&r.date_action){const t=bizDays(new Date(r.date_demande),new Date(r.date_action));r.delai=(t===null||t<0)?null:t;}else r.delai=null;});return arr;}
+  if(r.delai==null&&r.date_demande&&r.date_action){const t=Math.round((new Date(r.date_action)-new Date(r.date_demande))/86400000);r.delai=(isNaN(t)||t<0)?null:t;}else if(r.delai===undefined)r.delai=null;});return arr;}
 const ORI_EXCL=new Set(['ASWAD Michel','TUAL Corentin','PINEAU Cynthia','MONTOUX PARTHENAY Caroline','CHIBANE-TARASCON THIBAUD','CAPELLE Eva']);
 const TYPE_EXCL=new Set(['Reservation','Reservation ']);
 // Retourne tous les types présents dans un dataset (hors exclus), triés par fréquence
@@ -1191,7 +1137,7 @@ function normCms(lieu){
 }
 
 let charts={}, evolModeVal='total', nnModeVal=false;
-let activeYears=new Set(), ALL_YEARS=[], pendingData=null, _pendingReset=false;
+let activeYears=new Set(), ALL_YEARS=[], pendingData=null;
 let DATA=[], dataSource='embedded', importMeta=null;
 
 // EXCEL DATE
@@ -1207,7 +1153,7 @@ function parseXlsText(text){
   function normH(s){return String(s).toLowerCase().replace(/\s+/g,' ').trim().replace(/[éèê]/g,'e').replace(/[àâ]/g,'a').replace(/[ùû]/g,'u').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/['\u2019]/g,"'");}
   const hdrs=hdrsRaw.map(normH);
   function ci(...hints){return hdrs.findIndex(h=>hints.some(hint=>h.includes(normH(hint))));}
-  const iCommune=ci('commune'),iMotif=ci('motif'),iType=ci('type action',"type d'action"),iLieu=ci('lieu / cms','lieu/cms'),iDateAct=ci('date action'),iOrienteur=(()=>{const r=ci('referent');return r>=0?r:ci('orienteur','prescripteur');})(),iDateDem=ci('date demande'),iConum=ci('conseiller num'),iThemas=ci('thematique'),iBenef=ci('beneficiaire connu','benef connu'),iUrgence=ci('urgence'),iEtat=ci("libelle de l'etat","etat de l'action"),iDatePlanif=ci('date planif','date planifier'),iDateReal=ci('date de realisation','date reelle','date realisation'),iNDem=ci('n° demande','numero demande','n demande','num demande');
+  const iCommune=ci('commune'),iMotif=ci('motif'),iType=ci('type action',"type d'action"),iLieu=ci('lieu / cms','lieu/cms'),iDateAct=ci('date action'),iOrienteur=(()=>{const r=ci('referent');return r>=0?r:ci('orienteur','prescripteur');})(),iDateDem=ci('date demande'),iConum=ci('conseiller num'),iThemas=ci('thematique'),iBenef=ci('beneficiaire connu','benef connu'),iUrgence=ci('urgence'),iEtat=ci("libelle de l'etat","etat de l'action"),iDatePlanif=ci('date planif','date planifier'),iDateReal=ci('date de realisation','date reelle','date realisation');
   if(iDateDem<0)throw new Error(`Colonne "Date demande" introuvable. En-têtes : ${hdrsRaw.slice(0,8).join(' | ')}`);
   const EXCL=new Set(['Reservation']);
   const ETAT_MAP={'en cours':'En attente','en attente':'En attente','realisee':'Réalisée','réalisée':'Réalisée','non realisee':'Non réalisée','non réalisée':'Non réalisée','annulee':'Annulée','annulée':'Annulée'};
@@ -1226,35 +1172,33 @@ function parseXlsText(text){
     const etat=ETAT_MAP[etatRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')]||(etatRaw||null);
     const dp=iDatePlanif>=0?excelDate(cols[iDatePlanif])||null:null;
     const dr=iDateReal>=0?excelDate(cols[iDateReal])||null:null;
-    records.push({date_demande:dd,date_action:da,id_demande:(iNDem>=0?cols[iNDem]||'':'').trim(),conum:(iConum>=0?cols[iConum]||'':'').trim(),cms,lieu_raw:lieuRaw,commune:(iCommune>=0?cols[iCommune]||'':'').trim(),themas,type_action:types,orienteur:(iOrienteur>=0?cols[iOrienteur]||'':'').trim(),motif:(iMotif>=0?cols[iMotif]||'':'').slice(0,120).trim(),benef_connu:(iBenef>=0?cols[iBenef]||'':'').trim().toLowerCase()==='oui',urgence:(iUrgence>=0?cols[iUrgence]||'':'').trim().toLowerCase()==='oui',etat,date_planifiee:dp,date_realisation:dr});
+    records.push({date_demande:dd,date_action:da,conum:(iConum>=0?cols[iConum]||'':'').trim(),cms,lieu_raw:lieuRaw,commune:(iCommune>=0?cols[iCommune]||'':'').trim(),themas,type_action:types,orienteur:(iOrienteur>=0?cols[iOrienteur]||'':'').trim(),motif:(iMotif>=0?cols[iMotif]||'':'').slice(0,120).trim(),benef_connu:(iBenef>=0?cols[iBenef]||'':'').trim().toLowerCase()==='oui',urgence:(iUrgence>=0?cols[iUrgence]||'':'').trim().toLowerCase()==='oui',etat,date_planifiee:dp,date_realisation:dr});
   }
   if(!records.length)throw new Error('Aucun enregistrement valide. Vérifiez le format.');
   return{records,warnings};
 }
 
-// STOCKAGE — localStorage + IndexedDB (fallback pour gros volumes)
+// LOCALSTORAGE
 const LS_KEY='gdin_data_v3', LS_META='gdin_meta_v3';
-const IDB_NAME='gdin_idb_v1';
-function _idbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains('kv'))db.createObjectStore('kv');};r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});}
-async function _idbPut(key,val){try{const db=await _idbOpen();await new Promise((res,rej)=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(val,key);tx.oncomplete=res;tx.onerror=rej;});return true;}catch(e){return false;}}
-async function _idbGet(key){try{const db=await _idbOpen();return new Promise(res=>{const tx=db.transaction('kv','readonly');const r=tx.objectStore('kv').get(key);r.onsuccess=()=>res(r.result??null);r.onerror=()=>res(null);});}catch(e){return null;}}
-async function _idbDel(...keys){try{const db=await _idbOpen();const tx=db.transaction('kv','readwrite');keys.forEach(k=>tx.objectStore('kv').delete(k));}catch(e){}}
-async function saveToStorage(records,meta){
-  let lsOk=false;
-  try{localStorage.setItem(LS_KEY,JSON.stringify(records));localStorage.setItem(LS_META,JSON.stringify(meta));lsOk=true;}
-  catch(e){console.warn('[GDIN] localStorage quota — bascule IndexedDB');}
-  // IDB en parallèle — si LS a échoué, on attend la confirmation IDB
-  if(lsOk){_idbPut(LS_KEY,records).then(()=>_idbPut(LS_META,meta)).catch(()=>{});return true;}
-  return _idbPut(LS_KEY,records).then(()=>_idbPut(LS_META,meta)).then(()=>true).catch(()=>false);
+function saveToStorage(records,meta){
+  try{
+    localStorage.setItem(LS_KEY,JSON.stringify(records));
+    localStorage.setItem(LS_META,JSON.stringify(meta));
+    return true;
+  }catch(e){
+    if(e.name==='QuotaExceededError'||e.code===22){
+      console.warn('[GDIN] localStorage quota dépassé — session sans persistance');
+    }
+    return false;
+  }
 }
 function loadFromStorage(){try{const r=localStorage.getItem(LS_KEY),m=localStorage.getItem(LS_META);if(r&&m)return{records:JSON.parse(r),meta:JSON.parse(m)};}catch(e){}return null;}
-async function loadFromIDB(){const r=await _idbGet(LS_KEY),m=await _idbGet(LS_META);return(r&&m)?{records:r,meta:m}:null;}
-function clearStorage(){localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_META);_idbDel(LS_KEY,LS_META);}
+function clearStorage(){localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_META);}
 
 // INIT
-async function initData(){
-  let stored=loadFromStorage();
-  if(!stored){stored=await loadFromIDB();}
+function initData(){
+  // Also filter Reservation from embedded data at init
+  const stored=loadFromStorage();
   if(stored){DATA=stored.records;dataSource='imported';importMeta=stored.meta;updateSourceBadge(true,stored.meta);}
   else{const EXCL=new Set(['Reservation']);DATA=EMBEDDED.map(r=>({...r,cms:normCms(r.cms),type_action:(r.type_action||[]).filter(t=>!EXCL.has(t))}))
     .filter(r=>r.cms!==null);dataSource='embedded';updateSourceBadge(false,null);}
@@ -1400,14 +1344,6 @@ function makeBarList(el,data,color='blue',n=9){
 
 // TABS
 function switchTab(id,btn){
-  const wasAtelier=document.getElementById('panel-ateliers').classList.contains('active');
-  if(id==='ateliers'&&!wasAtelier){
-    document.getElementById('typeFilter').value='Atelier';
-    try{document.getElementById('typeFilterM').value='Atelier';}catch(e){}
-  }else if(id!=='ateliers'&&wasAtelier){
-    document.getElementById('typeFilter').value='Accompagnement';
-    try{document.getElementById('typeFilterM').value='Accompagnement';}catch(e){}
-  }
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');btn.classList.add('active');
@@ -1417,15 +1353,14 @@ function switchTab(id,btn){
   if(id==='par-cms'){initCmsSelect();renderCms();}
   if(id==='par-conum'){initConumSelect();renderConum();renderHeatmapConum();}
   if(id==='orienteurs'){initOriCmsSelect();renderOrienteurs();}
-  if(id==='ateliers'){buildYearChips();initAtlConumGlobalSelect();renderAteliers();}
+  if(id==='ateliers'){buildYearChips();renderAteliers();}
   if(id==='territoire'){
-    buildYearChips();
     // Double requestAnimationFrame garantit que le DOM est peint avant Leaflet
     requestAnimationFrame(function(){requestAnimationFrame(function(){
       renderTerritoire();
     });});
   }
-  if(id==='import'){updateCurrentSourceInfo();if(ACTIONS_DATA&&document.getElementById('act-dashboard').style.display==='block')try{renderActions();}catch(e){}}
+  if(id==='import')updateCurrentSourceInfo();
   if(id==='actions'){if(ACTIONS_DATA)renderActions();}
 }
 function setEvolMode(mode,btn){evolModeVal=mode;document.querySelectorAll('#evolMode .toggle-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderEvolution();}
@@ -1972,35 +1907,34 @@ function renderOrienteurs(){
 
 // RAPPORT
 function initRptSelects(){const sc=document.getElementById('sel-rpt-conum');sc.innerHTML='<option value="">— Conseiller —</option>';[...new Set(DATA.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE')).sort().forEach(cn=>{const o=document.createElement('option');o.value=cn;o.textContent=cn;sc.appendChild(o);});}
-function buildRptCmsChips(conum,keepCms){
+function onRptConumChange(){
+  const conum=document.getElementById('sel-rpt-conum').value;
   const sel=document.getElementById('sel-rpt-cms');
   const chipsEl=document.getElementById('rpt-cms-chips');
   sel.innerHTML='<option value="">— Structure —</option>';
   chipsEl.innerHTML='';
   sel.value='';
-  if(!conum)return;
-  const cmsOptions=Object.keys(count(getFiltered().filter(r=>r.conum===conum),'cms')).filter(c=>c&&c!=='?').sort();
+  if(!conum){renderRapport();return;}
+  const cmsOptions=Object.keys(count(getFiltered().filter(r=>r.conum===conum),'cms')).sort();
+  // Remplir le select caché (pour renderRapport qui lit sel-rpt-cms)
   cmsOptions.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
+  // Générer les chips visuels
   cmsOptions.forEach(c=>{
     const chip=document.createElement('button');
     const shortName=c.replace('Centre Médico-Social de ','').replace('Centre Médico-Social ','').replace('Permanence - ','');
-    chip.textContent=shortName;chip.title=c;chip.className='year-chip';
+    chip.textContent=shortName;
+    chip.title=c;
+    chip.className='year-chip';
     chip.style.cssText='border-radius:8px;font-family:Space Grotesk,sans-serif;font-size:11px;white-space:nowrap';
     chip.onclick=()=>{
+      // Désélectionner tous
       chipsEl.querySelectorAll('button').forEach(b=>{b.style.background='var(--s2)';b.style.color='var(--muted)';b.style.borderColor='var(--border)';});
+      // Sélectionner ce chip
       chip.style.background='rgba(59,130,246,.2)';chip.style.color='#fff';chip.style.borderColor='var(--blue)';
       sel.value=c;renderRapport();
     };
-    if(c===keepCms){
-      chip.style.background='rgba(59,130,246,.2)';chip.style.color='#fff';chip.style.borderColor='var(--blue)';
-      sel.value=c;
-    }
     chipsEl.appendChild(chip);
   });
-}
-function onRptConumChange(){
-  const conum=document.getElementById('sel-rpt-conum').value;
-  buildRptCmsChips(conum,'');
   renderRapport();
 }
 function renderRapport(){
@@ -2039,10 +1973,6 @@ function renderRapport(){
   const mKeys=[...new Set(allData.map(r=>r.date_demande.slice(0,7)))].sort();
   destroyChart('ch-rpt-evol');
   charts['ch-rpt-evol']=new Chart(document.getElementById('ch-rpt-evol'),{type:'bar',data:{labels:mKeys.map(monthLabel),datasets:[{data:mKeys.map(k=>data.filter(r=>r.date_demande.startsWith(k)).length),backgroundColor:'rgba(59,130,246,.45)',borderColor:'#3b82f6',borderRadius:5,borderSkipped:false,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}});
-  // Graphe calendaire N / N-1 / N-2
-  const yoyYears=[...new Set(data.map(r=>r.date_demande.slice(0,4)))].sort();
-  destroyChart('ch-rpt-yoy-main');
-  charts['ch-rpt-yoy-main']=new Chart(document.getElementById('ch-rpt-yoy-main'),{type:'bar',data:{labels:MONTH_FR,datasets:yoyYears.map((yr,i)=>{const col=YEAR_PALETTE[i%YEAR_PALETTE.length];const vals=Array(12).fill(0);data.filter(r=>r.date_demande.startsWith(yr)).forEach(r=>{const m=parseInt(r.date_demande.slice(5,7))-1;if(m>=0&&m<12)vals[m]++;});return{label:yrLabel(yr),data:vals,backgroundColor:col+'66',borderColor:col,borderWidth:1.5,borderRadius:3,borderSkipped:false};})},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:legendColor(),font:{size:10},boxWidth:7,padding:5}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}}}}});
   const themas=Object.entries(countThemas(data)).slice(0,8);
   destroyChart('ch-rpt-thema');
   charts['ch-rpt-thema']=new Chart(document.getElementById('ch-rpt-thema'),{type:'doughnut',data:{labels:themas.map(t=>t[0]),datasets:[{data:themas.map(t=>t[1]),backgroundColor:PALETTE,borderWidth:2,borderColor:'#111827',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:8,color:legendColor()}}}}});
@@ -2073,12 +2003,11 @@ function renderRapport(){
 
     // Donut
     destroyChart('ch-rpt-act-donut');
-    {const _all=[['Réalisée',aReal,'#10b981'],['Non réalisée',aNon,'#ef4444'],['En cours',aEnc,'#f97316']].filter(([,v])=>v>0);
     charts['ch-rpt-act-donut']=new Chart(document.getElementById('ch-rpt-act-donut'),{
       type:'doughnut',
-      data:{labels:_all.map(([l])=>l),datasets:[{data:_all.map(([,v])=>v),backgroundColor:_all.map(([,,c])=>c),borderWidth:2,borderColor:'#111827',hoverOffset:6}]},
+      data:{labels:['Réalisée','Non réalisée','En cours'],datasets:[{data:[aReal,aNon,aEnc],backgroundColor:['#10b981','#ef4444','#f97316'],borderWidth:2,borderColor:'#111827',hoverOffset:6}]},
       options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{color:legendColor(),font:{size:10},padding:8,boxWidth:8}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${pct(ctx.parsed,aTot)}%)`}}}}
-    });}
+    });
 
     // Monthly non réalisés
     const mKeys=[...new Set(allData.map(r=>r.date_demande.slice(0,7)))].sort();
@@ -2163,14 +2092,15 @@ function buildRptBilan(conum,cms,data,dataConum){
   const communes=new Set(data.map(r=>r.commune).filter(Boolean)).size;
   const orienteurs=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
   const partCN=pct(total,dataConum.length);
-  // Évolution annuelle — année sélectionnée vs année sélectionnée-1
-  const rawTrend=DATA.filter(r=>r.conum===conum&&r.cms===cms);
-  const allYrsInData=[...new Set(rawTrend.map(r=>r.date_demande.slice(0,4)))].sort();
-  const selYrs=activeYears.size&&activeYears.size<ALL_YEARS.length?allYrsInData.filter(y=>activeYears.has(y)):allYrsInData;
-  const nYear=selYrs[selYrs.length-1]||'';
-  const nPrevYear=nYear?String(parseInt(nYear)-1):'';
-  const nRec=nYear?rawTrend.filter(r=>r.date_demande.startsWith(nYear)).length:0;
-  const nPre=nPrevYear?rawTrend.filter(r=>r.date_demande.startsWith(nPrevYear)).length:0;
+  // Délai moyen (champ delai déjà calculé : demande → action)
+  const delais=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
+  const delaiMoy=delais.length?Math.round(delais.reduce((a,b)=>a+b,0)/delais.length):null;
+  // Tendance trimestrielle — même trimestre N vs N-1
+  const allMonthsSorted=[...new Set(data.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
+  const recentMs=allMonthsSorted.slice(0,3);
+  const prevYrMs=recentMs.map(m=>`${parseInt(m.slice(0,4))-1}-${m.slice(5)}`);
+  const nRec=data.filter(r=>recentMs.includes(r.date_demande.slice(0,7))).length;
+  const nPre=data.filter(r=>prevYrMs.includes(r.date_demande.slice(0,7))).length;
   const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):null;
   const trend=delta===null?'—':delta>=0?`+${delta}%`:`${delta}%`;
   const trendColor=delta===null?'var(--muted)':delta>=0?'var(--green)':'var(--orange)';
@@ -2187,17 +2117,14 @@ function buildRptBilan(conum,cms,data,dataConum){
   const r48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0&&r.delai_reactivite<=2).length;
   const p48=(t48>=20)?Math.round(r48/t48*100):null;
   const p48Color=p48===null?'var(--muted)':p48>=95?'var(--green)':p48>=85?'var(--orange)':'var(--red)';
-  const nReal=data.filter(r=>r.etat==='Réalisée').length;
-  const txReal=pct(nReal,total);
-  const txRealColor=txReal>=80?'var(--green)':txReal>=60?'var(--orange)':'var(--red)';
 
   document.getElementById('rpt-bilan-grid').innerHTML=[
     [total,'Accompagnements','var(--blue)'],
     [txC+'%','Taux de complétion','var(--green)'],
-    [trend,`Évol. ${nYear} / ${nPrevYear}`,trendColor],
+    [trend,'Évol. trim. N/N-1',trendColor],
     [communes,'Communes couvertes','var(--cyan)'],
     [orienteurs,'Orienteurs actifs','var(--purple)'],
-    [txReal+'%','Taux de réalisation',txRealColor],
+    [delaiMoy!==null?delaiMoy+'j':'—',"Délai moyen d'action",'var(--orange)'],
   ].map(([v,l,col])=>`<div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}"><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:${col}">${v}</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div></div>`).join('');
 
   // Évolution annuelle conum × cms — toujours sur DATA brut (indépendant du filtre années)
@@ -2220,8 +2147,8 @@ function buildRptBilan(conum,cms,data,dataConum){
     const col=i===0?'var(--orange)':i===1?'var(--cyan)':'var(--purple)';
     return`<strong style="color:${col}">${t}</strong> (${n} · ${pct(n,total)}%)`;
   }).join(', ');
-  const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>.`;
-  const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur l'année ${nYear} vs ${nPrevYear}, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
+  const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):'moins d\'une semaine'}</strong>.`;
+  const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur le même trimestre N/N-1, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
 
   document.getElementById('rpt-bilan-text').innerHTML=`<p style="margin-bottom:9px">${p1}</p><p style="margin-bottom:9px">${p2}</p><p>${p3}</p>`;
 }
@@ -2272,8 +2199,49 @@ async function handleAutoImport(file){
     bar.style.width='40%';msg.textContent='Détection du type…';
     setTimeout(()=>{
       try{
+        // Détection par nom de fichier en priorité, analyse en fallback
+        function normHdr(s){return String(s).toLowerCase().replace(/[éèêè]/g,'e').replace(/[àâ]/g,'a').replace(/[ùû]/g,'u').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/[']/g,' ');}
+        const fname=file.name.toLowerCase().replace(/[^a-z0-9]/g,'');
+        // GDIN en priorité absolue — ne jamais analyser les en-têtes si le nom le trahit
+        const isGdinByName=fname.includes('gdin')||fname.includes('accompagnement') && !fname.includes('etat');
+        let isActions=!isGdinByName&&(fname.includes('etataction')||fname.includes('etat_action')||fname.includes('actions'));
+        // Si nom ambigu ET pas clairement GDIN, analyser les en-têtes
+        if(!isActions&&!isGdinByName&&isExcel){
+          try{
+            const wb=XLSX.read(e.target.result,{type:'array',cellDates:false,sheetRows:5});
+            const ws=wb.Sheets[wb.SheetNames[0]];
+            const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+            // Chercher dans les 5 premières lignes (cas fichier avec ligne de titre)
+            for(let ri=0;ri<Math.min(5,rows.length);ri++){
+              const hdrsStr=rows[ri].map(normHdr).join('|');
+              if((hdrsStr.includes('libelle de l etat')||hdrsStr.includes('libelle de letat'))&&
+                 (hdrsStr.includes('libelle du type')||hdrsStr.includes('type d action'))){
+                isActions=true;break;
+              }
+            }
+          }catch(e2){}
+        }
+
         bar.style.width='60%';
-        msg.textContent='Fichier GDIN détecté…';
+        if(isActions){
+          msg.textContent='Fichier Etat_Actions détecté…';
+          // Réutiliser handleActionsFile logic inline
+          try{
+            const records=parseActionsXlsx(e.target.result);
+            bar.style.width='100%';msg.textContent=`${records.length} actions chargées`;
+            setTimeout(()=>{
+              prog.style.display='none';
+              ACTIONS_DATA=records;ACTIONS_DERIVED=false;
+              saveActionsToStorage(records);
+              updateActionsUI(file.name);
+              renderActions();
+            },300);
+          }catch(err){
+            prog.style.display='none';
+            showImportError(`Etat_Actions : ${err.message}`);
+          }
+        } else {
+          msg.textContent='Fichier GDIN détecté…';
           try{
             let result;
             if(isExcel){
@@ -2296,6 +2264,7 @@ async function handleAutoImport(file){
             prog.style.display='none';
             showImportError(`GDIN : ${err.message}`);
           }
+        }
       }catch(err){
         prog.style.display='none';
         showImportError(err.message);
@@ -2345,7 +2314,7 @@ function parseXlsxBinary(arraybuffer){
   function normH(s){return String(s).toLowerCase().replace(/\s+/g,' ').trim().replace(/[éèê]/g,'e').replace(/[àâ]/g,'a').replace(/[ùû]/g,'u').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/['\u2019]/g,"'");}
   const hdrs=rows[0].map(normH);
   function ci(...hints){return hdrs.findIndex(h=>hints.some(hint=>h.includes(normH(hint))));}
-  const iCommune=ci('commune'),iMotif=ci('motif'),iType=ci('type action',"type d'action"),iLieu=ci('lieu / cms','lieu/cms'),iDateAct=ci('date action'),iOrienteur=(()=>{const r=ci('referent');return r>=0?r:ci('orienteur','prescripteur');})(),iDateDem=ci('date demande'),iConum=ci('conseiller num'),iThemas=ci('thematique'),iBenef=ci('beneficiaire connu','benef connu'),iUrgence=ci('urgence'),iEtat=ci("libelle de l'etat","etat de l'action"),iDatePlanif=ci('date planif','date planifier'),iDateReal=ci('date de realisation','date reelle','date realisation'),iNDem=ci('n° demande','numero demande','n demande','num demande');
+  const iCommune=ci('commune'),iMotif=ci('motif'),iType=ci('type action',"type d'action"),iLieu=ci('lieu / cms','lieu/cms'),iDateAct=ci('date action'),iOrienteur=(()=>{const r=ci('referent');return r>=0?r:ci('orienteur','prescripteur');})(),iDateDem=ci('date demande'),iConum=ci('conseiller num'),iThemas=ci('thematique'),iBenef=ci('beneficiaire connu','benef connu'),iUrgence=ci('urgence'),iEtat=ci("libelle de l'etat","etat de l'action"),iDatePlanif=ci('date planif','date planifier'),iDateReal=ci('date de realisation','date reelle','date realisation');
   if(iDateDem<0)throw new Error(`Colonne "Date demande" introuvable. En-têtes : ${rows[0].slice(0,10).join(' | ')}`);
   const ETAT_MAP={'en cours':'En attente','en attente':'En attente','realisee':'Réalisée','réalisée':'Réalisée','non realisee':'Non réalisée','non réalisée':'Non réalisée','annulee':'Annulée','annulée':'Annulée'};
   for(let i=1;i<rows.length;i++){
@@ -2362,7 +2331,7 @@ function parseXlsxBinary(arraybuffer){
     const etat=ETAT_MAP[etatRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')]||(etatRaw||null);
     const dp=iDatePlanif>=0?xlDate(cols[iDatePlanif])||null:null;
     const dr=iDateReal>=0?xlDate(cols[iDateReal])||null:null;
-    records.push({date_demande:dd,date_action:da,id_demande:String(iNDem>=0?cols[iNDem]||'':'').trim(),conum:String(iConum>=0?cols[iConum]||'':'').trim(),cms,lieu_raw:lieuRaw,commune:String(iCommune>=0?cols[iCommune]||'':'').trim(),themas,type_action:types,orienteur:String(iOrienteur>=0?cols[iOrienteur]||'':'').trim(),motif:String(iMotif>=0?cols[iMotif]||'':'').slice(0,120).trim(),benef_connu:String(iBenef>=0?cols[iBenef]||'':'').trim().toLowerCase()==='oui',urgence:String(iUrgence>=0?cols[iUrgence]||'':'').trim().toLowerCase()==='oui',etat,date_planifiee:dp,date_realisation:dr});
+    records.push({date_demande:dd,date_action:da,conum:String(iConum>=0?cols[iConum]||'':'').trim(),cms,lieu_raw:lieuRaw,commune:String(iCommune>=0?cols[iCommune]||'':'').trim(),themas,type_action:types,orienteur:String(iOrienteur>=0?cols[iOrienteur]||'':'').trim(),motif:String(iMotif>=0?cols[iMotif]||'':'').slice(0,120).trim(),benef_connu:String(iBenef>=0?cols[iBenef]||'':'').trim().toLowerCase()==='oui',urgence:String(iUrgence>=0?cols[iUrgence]||'':'').trim().toLowerCase()==='oui',etat,date_planifiee:dp,date_realisation:dr});
   }
   if(!records.length)throw new Error('Aucun enregistrement valide');
   return{records,warnings};
@@ -2449,7 +2418,7 @@ function showPreview(pd){
   }
 }
 
-async function confirmImport(){
+function confirmImport(){
   if(!pendingData)return;
   const{filename}=pendingData;
   let records=pendingData.records;
@@ -2461,10 +2430,8 @@ async function confirmImport(){
   // Clé de déduplication robuste : date + conum + cms + commune + orienteur + themas triés
   function makeKey(r){
     const types=(r.type_action||[]).slice().sort().join('+');
-    return `${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.cms||''}|${r.commune||''}|${r.orienteur||''}|${(r.themas||[]).slice().sort().join('/')}|${types}`;
+    return `${r.date_demande}|${r.conum||''}|${r.cms||''}|${r.commune||''}|${r.orienteur||''}|${(r.themas||[]).slice().sort().join('/')}|${types}`;
   }
-  // Réinitialisation demandée : effacer avant de merger
-  if(_pendingReset){clearStorage();DATA=[];dataSource='embedded';importMeta=null;_pendingReset=false;}
   // Base : si déjà importé on fusionne, sinon on repart de zéro (pas des données intégrées)
   const base=dataSource==='imported'?DATA:[];
   const existingKeys=new Set(base.map(makeKey));
@@ -2478,18 +2445,17 @@ async function confirmImport(){
   DATA=merged;applyConumAttrib(DATA);deriveActionsFromData();dataSource='imported';
   const years=[...new Set(merged.map(r=>r.date_demande.slice(0,4)))].sort();
   importMeta={filename,count:DATA.length,years,date:new Date().toLocaleDateString('fr-FR')};
-  const saved=await saveToStorage(merged,importMeta);
+  const saved=saveToStorage(merged,importMeta);
   updateSourceBadge(true,importMeta);updateAllYears();updateDateRange();updateCurrentSourceInfo();
   pendingData=null;document.getElementById('import-preview').style.display='none';document.getElementById('parse-progress-box').style.display='none';
   initCmsSelect();initConumSelect();initOriCmsSelect();initRptSelects();refreshAll();
   const dot=document.getElementById('cs-dot');dot.style.background='var(--green)';
   const dupMsg=(internalDups+crossDups)>0?` · <span style="color:var(--orange)">${internalDups+crossDups} doublon${internalDups+crossDups>1?'s':''} ignoré${internalDups+crossDups>1?'s':''}</span>`:'';
+  const savedMsg=saved?'':' · <span style="color:var(--red)">⚠ sauvegarde échouée</span>';
   const conumFilterLabel=conumFilter?` · filtre : <strong style="color:var(--cyan)">${conumFilter}</strong>`:'';
-  document.getElementById('cs-label').innerHTML=`<strong style="color:var(--green)">✓ Fusion réussie —</strong> ${newRecords.length} nouveaux · ${DATA.length} total (${years.join(', ')})${dupMsg}${conumFilterLabel}`;
-  if(!saved)showImportError('Sauvegarde locale impossible (quota dépassé). Les données seront perdues au prochain rechargement. Utilisez ⬇ Exporter pour sauvegarder manuellement.');
+  document.getElementById('cs-label').innerHTML=`<strong style="color:var(--green)">✓ Fusion réussie —</strong> ${newRecords.length} nouveaux · ${DATA.length} total (${years.join(', ')})${dupMsg}${savedMsg}${conumFilterLabel}`;
 }
 function cancelImport(){pendingData=null;['import-preview','import-error','parse-progress-box','import-anomalies'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('file-input').value='';}
-function handleResetAndImport(file){if(!file)return;_pendingReset=true;handleAutoImport(file);}
 function resetToEmbedded(){
   if(!confirm('Supprimer les données importées et revenir aux données intégrées ?'))return;
   clearStorage();const EXCL_RST=new Set(['Reservation']);DATA=EMBEDDED.map(r=>({...r,cms:normCms(r.cms),type_action:(r.type_action||[]).filter(t=>!EXCL_RST.has(t))}))
@@ -2571,12 +2537,7 @@ function refreshAll(){
   if(document.getElementById('panel-orienteurs').classList.contains('active'))renderOrienteurs();
   if(document.getElementById('panel-territoire').classList.contains('active'))renderTerritoire();
   if(document.getElementById('panel-ateliers').classList.contains('active'))renderAteliers();
-  if(document.getElementById('panel-rapport').classList.contains('active')){
-    const _rConum=document.getElementById('sel-rpt-conum').value;
-    const _rCms=document.getElementById('sel-rpt-cms').value;
-    if(_rConum)buildRptCmsChips(_rConum,_rCms);
-    renderRapport();
-  }
+  if(document.getElementById('panel-rapport').classList.contains('active'))renderRapport();
 }
 function exportCSV(){
   const d=getFiltered();
@@ -2661,15 +2622,9 @@ function buildBilan(){
   const topConumN=conumCount[topConum]||0;
   const topConumPct=Math.round(topConumN/total*100);
 
-  // Réactivité 48h
-  const actGlobal=ACTIONS_DATA?ACTIONS_DATA.filter(r=>(diapoCms?r.cms===diapoCms||r.cms===normCms(diapoCms):true)&&r.etat==='Réalisée'&&(!activeYears.size||activeYears.has(r.year))):[];
-  const t48=actGlobal.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0).length;
-  const r48=actGlobal.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0&&r.delai_reactivite<=2).length;
-  const p48=t48>=20?Math.round(r48/t48*100):null;
-  const p48Color=p48===null?'var(--muted)':p48>=95?'var(--green)':p48>=85?'var(--orange)':'var(--red)';
-  const nReal=data.filter(r=>r.etat==='Réalisée').length;
-  const txReal=pct(nReal,total);
-  const txRealColor=txReal>=80?'var(--green)':txReal>=60?'var(--orange)':'var(--red)';
+  // Délai moyen
+  const delais=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
+  const delaiMoy=delais.length?Math.round(delais.reduce((a,b)=>a+b,0)/delais.length):null;
 
   // Période
   const dates=data.map(r=>r.date_demande).sort();
@@ -2690,7 +2645,7 @@ function buildBilan(){
     <div class="bilan-stat"><div class="bs-val" style="color:${trendColor}">${trend}</div><div class="bs-label">Évolution trimestrielle</div></div>
     <div class="bilan-stat"><div class="bs-val" style="color:var(--orange)">${communes}</div><div class="bs-label">Communes couvertes</div></div>
     <div class="bilan-stat"><div class="bs-val" style="color:var(--purple)">${orienteurs}</div><div class="bs-label">Orienteurs actifs</div></div>
-    <div class="bilan-stat"><div class="bs-val" style="color:${txRealColor}">${txReal}%</div><div class="bs-label">Taux de réalisation</div></div>
+    <div class="bilan-stat"><div class="bs-val" style="color:var(--cyan)">${delaiMoy!==null?delaiMoy+'j':'—'}</div><div class="bs-label">Délai moyen d'action</div></div>
   `;
 
   // Conclusion adaptée CMS ou globale
@@ -2699,13 +2654,13 @@ function buildBilan(){
     const conumRef=topConum;
     const autresConums=conums.filter(c=>c!==topConum).map(c=>c.split(' ').pop()).join(', ');
     p1=`Au sein de la structure <strong>${diapoCms}</strong>, le conseiller numérique référent <strong>${conumRef}</strong> a pris en charge <strong>${topConumPct}% des accompagnements</strong>, soit <strong>${topConumN} bénéficiaires</strong> sur un total de <strong>${total}</strong>.${autresConums?` Il est appuyé par ${autresConums}.`:''}`;
-    p2=`La thématique dominante est <strong>${topThema}</strong>, illustrant les besoins prioritaires du public accompagné sur ce secteur. Le taux de complétion des dossiers atteint <strong>${txCompl}%</strong>, avec un taux de réalisation de <strong style="color:${txRealColor}">${txReal}%</strong>.`;
+    p2=`La thématique dominante est <strong>${topThema}</strong>, illustrant les besoins prioritaires du public accompagné sur ce secteur. Le taux de complétion des dossiers atteint <strong>${txCompl}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):'moins d\'une semaine'}</strong>.`;
     p3=`Avec <strong>${orienteurs} TS orienteurs</strong> mobilisés et une présence sur <strong>${communes} communes</strong>, l'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> — témoignant d'un engagement <strong>${delta>=0?'croissant et reconnu':'solide et constant'}</strong> au service des publics fragiles. 🎯`;
   } else {
     const conumsList=conums.map(c=>c.split(' ').pop()).join(', ');
     p1=`Sur la période analysée, l'équipe des conseillers numériques du Lot-et-Garonne — <strong>${conumsList}</strong> — a accompagné <strong>${total} bénéficiaires</strong> répartis sur <strong>${communes} communes</strong>, avec un taux de complétion de <strong>${txCompl}%</strong>.`;
     p2=`La thématique la plus traitée est <strong>${topThema}</strong>. L'activité trimestrielle affiche une évolution de <strong style="color:${trendColor}">${trend}</strong>, témoignant d'une dynamique <strong>${delta>=0?'positive et croissante':'solide et constante'}</strong>.`;
-    p3=`Avec <strong>${orienteurs} TS orienteurs</strong> mobilisés sur <strong>${communes} communes</strong>, le dispositif GDIN démontre son <strong>efficacité opérationnelle</strong> et sa capacité à répondre rapidement aux besoins numériques des publics fragiles. 🎯`;
+    p3=`Avec <strong>${orienteurs} TS orienteurs</strong> mobilisés et un délai moyen de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):'moins d\'une semaine'}</strong>, le dispositif GDIN démontre son <strong>efficacité opérationnelle</strong> et sa capacité à répondre rapidement aux besoins numériques des publics fragiles. 🎯`;
   }
 
   document.getElementById('bilan-conclusion').innerHTML=`<p>${p1}</p><p>${p2}</p><p>${p3}</p>`;
@@ -2822,7 +2777,24 @@ function printRapport(){
 
 // ÉTATS ACTIONS
 let ACTIONS_DATA = null; // raw parsed records
+const ACT_LS_KEY = 'gdin_actions_v1';
 
+function loadActionsFromStorage(){
+  try{const r=localStorage.getItem(ACT_LS_KEY);if(r)return JSON.parse(r);}catch(e){}return null;
+}
+function saveActionsToStorage(data){
+  try{localStorage.setItem(ACT_LS_KEY,JSON.stringify(data));return true;}catch(e){return false;}
+}
+function resetActions(){
+  if(!confirm('Supprimer les données actions ?'))return;
+  localStorage.removeItem(ACT_LS_KEY);
+  ACTIONS_DATA=null;
+  document.getElementById('act-source-info').style.display='flex';
+  document.getElementById('act-dashboard').style.display='none';
+  document.getElementById('act-dot').style.background='var(--muted)';
+  document.getElementById('act-label').textContent='Aucune donnée chargée';
+  // btn always visible
+}
 
 // ── Date helpers for actions parsing ──
 function parseDt(v){
@@ -2842,9 +2814,8 @@ function parseDt(v){
   }catch(e){return null;}
 }
 function dayDiff(d1,d2){if(!d1||!d2)return null;const ms=d2.getTime()-d1.getTime();return ms<0?null:Math.round(ms/86400000);}
-function bizDays(d1,d2){if(!d1||!d2)return null;const s=new Date(d1);s.setHours(0,0,0,0);const e=new Date(d2);e.setHours(0,0,0,0);if(e<s)return null;let n=0,cur=new Date(s);while(cur<e){const d=cur.getDay();if(d!==0&&d!==6)n++;cur.setDate(cur.getDate()+1);}return n;}
 
-function _parseActionsXlsx_UNUSED(arraybuffer){
+function parseActionsXlsx(arraybuffer){
   const wb=XLSX.read(arraybuffer,{type:'array',cellDates:true});
   const ws=wb.Sheets[wb.SheetNames[0]];
   const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
@@ -2924,6 +2895,35 @@ function _parseActionsXlsx_UNUSED(arraybuffer){
   return records;
 }
 
+function handleActionsFile(file){
+  if(!file)return;
+  document.getElementById('act-error').style.display='none';
+  const prog=document.getElementById('act-progress-box'),bar=document.getElementById('act-parse-bar'),msg=document.getElementById('act-parse-msg');
+  prog.style.display='block';bar.style.width='10%';msg.textContent=`Lecture de ${file.name}…`;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    bar.style.width='50%';msg.textContent='Analyse…';
+    setTimeout(()=>{
+      try{
+        const records=parseActionsXlsx(e.target.result);
+        bar.style.width='100%';msg.textContent=`${records.length} accompagnements`;
+        setTimeout(()=>{
+          prog.style.display='none';
+          ACTIONS_DATA=records;ACTIONS_DERIVED=false;
+          saveActionsToStorage(records);
+          updateActionsUI(file.name);
+          renderActions();
+        },300);
+      }catch(err){
+        prog.style.display='none';
+        document.getElementById('act-error').style.display='block';
+        document.getElementById('act-error').textContent=`Erreur : ${err.message}`;
+      }
+    },300);
+  };
+  reader.onerror=()=>{prog.style.display='none';document.getElementById('act-error').textContent='Impossible de lire le fichier.';};
+  reader.readAsArrayBuffer(file);
+}
 
 function updateActionsUI(filename){
   if(!ACTIONS_DATA)return;
@@ -2948,6 +2948,10 @@ function updateActionsUI(filename){
   cSel.innerHTML='<option value="">Tous</option>';
   conums.forEach(cn=>{const o=document.createElement('option');o.value=cn;o.textContent=cn;cSel.appendChild(o);});
   if(cCur&&conums.includes(cCur))cSel.value=cCur;
+  // Badge
+  document.getElementById('act-dot').style.background='var(--orange)';
+  document.getElementById('act-label').innerHTML=`<strong style="color:var(--orange)">${esc(filename||'Données chargées')}</strong> — ${ACTIONS_DATA.length} accompagnements · ${years.join(', ')}`;
+  // btn always visible
   // Reset active years so new import always shows all years
   window.actActiveYears=null; window.actYearsInit=false;
   document.getElementById('act-dashboard').style.display='block';
@@ -2982,15 +2986,14 @@ function renderActions(){
 
   // Donut global
   destroyChart('ch-act-global');
-  {const _ag=[['Réalisée',real,'#10b981'],['Non réalisée',nonReal,'#ef4444'],['En cours',encours,'#f97316']].filter(([,v])=>v>0);
   charts['ch-act-global']=new Chart(document.getElementById('ch-act-global'),{
     type:'doughnut',
     data:{
-      labels:_ag.map(([l])=>l),
-      datasets:[{data:_ag.map(([,v])=>v),backgroundColor:_ag.map(([,,c])=>c),borderWidth:2,borderColor:'#111827',hoverOffset:6}]
+      labels:['Réalisée','Non réalisée','En cours'],
+      datasets:[{data:[real,nonReal,encours],backgroundColor:['#10b981','#ef4444','#f97316'],borderWidth:2,borderColor:'#111827',hoverOffset:6}]
     },
     options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{color:legendColor(),font:{size:11},padding:10,boxWidth:10}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${pct(ctx.parsed,total)}%)`}}}}
-  });}
+  });
 
   // Monthly stacked bar
   const months=[...new Set(data.map(r=>r.date).filter(Boolean))].sort();
@@ -3138,16 +3141,10 @@ function renderActYoY(){
   });
 }
 
-// Init actions from localStorage on load — badge uniquement, pas de dashboard auto
+// Init actions from localStorage on load
 (function initActions(){
   const stored=loadActionsFromStorage();
-  if(!stored)return;
-  ACTIONS_DATA=stored;ACTIONS_DERIVED=false;
-  const years=[...new Set(stored.map(r=>r.year).filter(Boolean))].sort();
-  try{
-    document.getElementById('act-dot').style.background='var(--orange)';
-    document.getElementById('act-label').innerHTML=`<strong style="color:var(--orange)">Données sauvegardées</strong> — ${stored.length} accompagnements · ${years.join(', ')}`;
-  }catch(e){}
+  if(stored){ACTIONS_DATA=stored;ACTIONS_DERIVED=false;updateActionsUI('Données sauvegardées');}
 })();
 
 // SORTABLE TABLES
@@ -3245,9 +3242,7 @@ const COMMUNE_COORDS={"AGEN": [44.2042, 0.6208], "AGEN CEDEX 9": [44.2042, 0.620
 
 // ── ATELIERS ──
 function renderAteliers(){
-  const conumAtl=document.getElementById('sel-atl-conum-global')?.value||'';
-  let data=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier'));
-  if(conumAtl)data=data.filter(r=>r.conum===conumAtl);
+  const data=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier'));
 
   // KPIs
   const total=data.length;
@@ -3347,78 +3342,8 @@ function renderAteliers(){
     const topThemaL=Object.entries(row.themasL).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
     return `<tr><td>${row.lieu}</td><td class="mono">${row.commune}</td><td class="mono">${row.n}</td><td>${conumNameHtml(topConum,conumColor(topConum))}</td><td>${topThemaL}</td></tr>`;
   }).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted)">Aucun atelier sur la période sélectionnée</td></tr>';
-  initAtlConumGlobalSelect();
-  renderHeatmapAteliers();
 }
 
-
-function initAtlConumGlobalSelect(){
-  const sel=document.getElementById('sel-atl-conum-global');
-  if(!sel)return;
-  const cur=sel.value;
-  const atlData=DATA.filter(r=>(r.type_action||[]).includes('Atelier'));
-  const conums=[...new Set(atlData.map(r=>r.conum).filter(Boolean))].sort();
-  sel.innerHTML='<option value="">— Tous les conseillers —</option>'+conums.map(c=>`<option value="${c}">${c}</option>`).join('');
-  if(cur&&conums.includes(cur))sel.value=cur;
-}
-
-function renderHeatmapAteliers(){
-  const container=document.getElementById('heatmap-atl-container');
-  if(!container)return;
-  const conum=document.getElementById('sel-atl-conum-global')?.value||'';
-  const allYears=[...new Set(DATA.filter(r=>r.date_action).map(r=>r.date_action.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
-  let atlData=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier'));
-  if(conum)atlData=atlData.filter(r=>r.conum===conum);
-  if(!atlData.length){container.innerHTML='<div style="color:var(--muted);font-size:11px;padding:10px">Aucun atelier sur la période sélectionnée</div>';return;}
-  function atlLieu(r){return(r.lieu_raw||'').split(';')[0].trim()||'Lieu non précisé';}
-  const lieuList=[...new Set(atlData.map(atlLieu))].sort((a,b)=>{
-    const sa=atlData.filter(r=>atlLieu(r)===a).length,sb=atlData.filter(r=>atlLieu(r)===b).length;
-    return sb-sa;
-  });
-  const vol={};
-  lieuList.forEach(l=>{vol[l]={};allYears.forEach(yr=>{vol[l][yr]=Array(12).fill(0);});});
-  atlData.forEach(r=>{
-    const lieu=atlLieu(r);
-    if(!r.date_action||!vol[lieu])return;
-    const yr=r.date_action.slice(0,4),mo=parseInt(r.date_action.slice(5,7))-1;
-    if(vol[lieu][yr]&&mo>=0&&mo<12)vol[lieu][yr][mo]++;
-  });
-  const activeLieux=lieuList.filter(l=>allYears.some(yr=>vol[l][yr]&&vol[l][yr].some(v=>v>0)));
-  let maxVal=1;
-  activeLieux.forEach(l=>allYears.forEach(yr=>vol[l][yr].forEach(v=>{if(v>maxVal)maxVal=v;})));
-  function cellColor(v){
-    if(!v)return'var(--s2)';
-    const op=Math.max(0.12,Math.min(0.85,v/maxVal));
-    return`rgba(34,211,238,${op.toFixed(2)})`;
-  }
-  const displayYearsRev=[...allYears].reverse();
-  let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Ateliers réalisés par mois et par lieu réel (date de réalisation) · ← années précédentes à droite</div>`;
-  tbl+=`<div style="overflow-x:auto"><table class="heatmap-table"><thead><tr><th></th>`;
-  displayYearsRev.forEach((yr,yi)=>{
-    tbl+=`<th colspan="12" style="text-align:center;color:var(--text);font-size:10px;font-weight:700;padding-bottom:4px;letter-spacing:.5px">${yr}</th>`;
-    if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
-  });
-  tbl+=`</tr><tr><th></th>`;
-  displayYearsRev.forEach((yr,yi)=>{
-    MONTH_FR.forEach(m=>{tbl+=`<th title="${m} ${yr}">${m.slice(0,1)}</th>`;});
-    if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
-  });
-  tbl+=`</tr></thead><tbody>`;
-  activeLieux.forEach(lieu=>{
-    const shortL=lieu.replace(/^Médiathèque(?:\s+municipale)?\s*/i,'Méd. ').replace(/^Permanence\s+/i,'Perm. ').replace(/^Centre\s+Socio-Culturel\s*/i,'CSC ');
-    tbl+=`<tr><td class="hm-label" title="${lieu}" style="min-width:130px">${shortL}</td>`;
-    displayYearsRev.forEach((yr,yi)=>{
-      const vals=vol[lieu][yr]||Array(12).fill(0);
-      vals.forEach((v,mi)=>{
-        tbl+=`<td class="hm-cell" style="background:${cellColor(v)}" title="${lieu}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
-      });
-      if(yi<displayYearsRev.length-1)tbl+=`<td style="width:10px"></td>`;
-    });
-    tbl+=`</tr>`;
-  });
-  tbl+=`</tbody></table></div>`;
-  container.innerHTML=tbl;
-}
 
 // Couleur par CMS dominant
 function cmsColor(cms){
@@ -3459,12 +3384,6 @@ function renderTerritoire(){
   let communes=Object.entries(commCount).sort((a,b)=>b[1]-a[1]);
   if(topN>0)communes=communes.slice(0,topN);
   const commNames=new Set(communes.map(c=>c[0]));
-
-  // Référence absolue pour l'échelle des bulles : toutes données sans filtre année
-  // → permet de voir visuellement l'effet du filtre par année
-  const refCommAll={};
-  DATA.forEach(r=>{if(r.commune&&r.commune.trim()){const c=r.commune.trim().toUpperCase();refCommAll[c]=(refCommAll[c]||0)+1;}});
-  const maxVolRef=Math.max(1,...Object.values(refCommAll));
 
   // Couleur = CMS dominant de la commune (mode normal) / teinte neutre unique (mode Ateliers)
   function bubbleColor(nom){
@@ -3511,7 +3430,6 @@ function getCoordsGlobal(nom){
     if(!mapEl)return;
     if(window._leafletMap){try{window._leafletMap.remove();}catch(e){}window._leafletMap=null;}
     mapEl.innerHTML='';
-    try{delete mapEl._leaflet_id;}catch(e){}
 
     if(typeof L==='undefined'){
       mapEl.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:440px;color:var(--muted);font-size:12px;flex-direction:column;gap:8px"><span>⚠ Leaflet non disponible</span><span style="font-size:10px">Vérifier la connexion internet</span></div>';
@@ -3527,7 +3445,8 @@ function getCoordsGlobal(nom){
       attribution:'© OpenStreetMap © CartoDB'
     }).addTo(map);
 
-    function radius(n){return Math.max(4,Math.sqrt(n/maxVolRef)*42);}
+    const maxVol=communes[0]?communes[0][1]:1;
+    function radius(n){return Math.max(7,Math.sqrt(n/maxVol)*42);}
 
     let placed=0;
     communes.forEach(([nom])=>{
@@ -3650,14 +3569,6 @@ function getCoordsGlobal(nom){
   }else{
     const cmsPresents=cmsFilter?[cmsFilter]:allCmsInData;
     buildTerrLegend(cmsPresents);
-  }
-
-  // Sous-titre dynamique : nombre d'enregistrements sur la période filtrée
-  const terrSubEl=document.getElementById('terr-data-subtitle');
-  if(terrSubEl){
-    const nbRec=dataFiltered.length;
-    const nbComm=Object.keys(commCount).length;
-    terrSubEl.textContent=`${nbRec.toLocaleString('fr-FR')} enregistrements · ${nbComm} communes`;
   }
 
   // Afficher indicateur pendant chargement carte
@@ -3804,8 +3715,8 @@ function renderHeatmapCmsByConum(conum){
   const container=document.getElementById('heatmap-cms-conum-container');
   if(!container)return;
   if(!conum){container.innerHTML='';return;}
-  const allYears=[...new Set(DATA.filter(r=>r.date_action).map(r=>r.date_action.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
-  const conumData=getFiltered().filter(r=>r.conum===conum);
+  const allYears=[...new Set(DATA.map(r=>r.date_demande.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
+  const conumData=DATA.filter(r=>r.conum===conum);
   const cmsList=[...new Set(conumData.map(r=>r.cms).filter(Boolean))].sort((a,b)=>{
     const sa=conumData.filter(r=>r.cms===a).length,sb=conumData.filter(r=>r.cms===b).length;
     return sb-sa;
@@ -3814,13 +3725,12 @@ function renderHeatmapCmsByConum(conum){
   const vol={};
   cmsList.forEach(cms=>{vol[cms]={};allYears.forEach(yr=>{vol[cms][yr]=Array(12).fill(0);});});
   conumData.forEach(r=>{
-    if(!r.date_action||!vol[r.cms])return;
-    const yr=r.date_action.slice(0,4),mo=parseInt(r.date_action.slice(5,7))-1;
+    if(!vol[r.cms])return;
+    const yr=r.date_demande.slice(0,4),mo=parseInt(r.date_demande.slice(5,7))-1;
     if(vol[r.cms][yr]&&mo>=0&&mo<12)vol[r.cms][yr][mo]++;
   });
-  const activeCmsList=cmsList.filter(cms=>allYears.some(yr=>vol[cms][yr]&&vol[cms][yr].some(v=>v>0)));
   let maxVal=1;
-  activeCmsList.forEach(cms=>allYears.forEach(yr=>vol[cms][yr].forEach(v=>{if(v>maxVal)maxVal=v;})));
+  cmsList.forEach(cms=>allYears.forEach(yr=>vol[cms][yr].forEach(v=>{if(v>maxVal)maxVal=v;})));
   function cellColor(v,hex){
     if(!v)return'var(--s2)';
     const op=Math.max(0.12,Math.min(0.85,v/maxVal));
@@ -3829,7 +3739,7 @@ function renderHeatmapCmsByConum(conum){
   }
   const col=conumColor(conum)||'#3b82f6';
   const displayYearsRev=[...allYears].reverse();
-  let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Accompagnements réalisés par mois et par CMS (date de réalisation) · ← années précédentes à droite</div>`;
+  let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Nombre de demandes par mois et par CMS · ← années précédentes à droite</div>`;
   tbl+=`<div style="overflow-x:auto"><table class="heatmap-table"><thead><tr><th></th>`;
   displayYearsRev.forEach((yr,yi)=>{
     tbl+=`<th colspan="12" style="text-align:center;color:var(--text);font-size:10px;font-weight:700;padding-bottom:4px;letter-spacing:.5px">${yr}</th>`;
@@ -3841,7 +3751,7 @@ function renderHeatmapCmsByConum(conum){
     if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
   });
   tbl+=`</tr></thead><tbody>`;
-  activeCmsList.forEach(cms=>{
+  cmsList.forEach(cms=>{
     const shortCms=cms.replace(/^CMS /,'').replace(/^Permanence /,'');
     tbl+=`<tr><td class="hm-label" title="${cms}" style="min-width:110px">${shortCms}</td>`;
     displayYearsRev.forEach((yr,yi)=>{
@@ -3870,13 +3780,10 @@ function buildAnomalyReport(records, rawLines){
   const noOri=records.filter(r=>!r.orienteur||r.orienteur==='?').length;
   if(noOri>0)items.push({label:'Dossiers sans orienteur identifié',val:noOri,color:'var(--muted)'});
   // 3. Doublons potentiels (même clé)
-  function makeKey2(r){
-    if(r.id_demande&&r.date_action)return`id:${r.id_demande}|da:${r.date_action}|${(r.type_action||[]).slice().sort().join('+')}`;
-    return`${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.orienteur||''}|${(r.motif||'').slice(0,30)}`;
-  }
+  function makeKey2(r){return`${r.date_demande}|${r.conum}|${r.orienteur}|${(r.motif||'').slice(0,30)}`;}
   const keys=records.map(makeKey2);
   const dupKeys=keys.filter((k,i)=>keys.indexOf(k)!==i);
-  if(dupKeys.length>0)items.push({label:'Doublons détectés (même N°/date action/type)',val:dupKeys.length,color:'var(--orange)'});
+  if(dupKeys.length>0)items.push({label:'Doublons détectés (même jour/conum/orienteur/motif)',val:dupKeys.length,color:'var(--orange)'});
   return items;
 }
 
@@ -3898,12 +3805,11 @@ const DR_SLIDES=[
   {id:'cover',        title:'Couverture'},
   {id:'kpis',         title:'Chiffres clés'},
   {id:'evolution',    title:'Évolution mensuelle'},
-  {id:'yoy',          title:'N / N-1 / N-2'},
+  {id:'themas',       title:'Thématiques'},
   {id:'orienteurs',   title:'Orienteurs'},
   {id:'territoire',   title:'Territoire'},
   {id:'comparaison',  title:'Comparaison CMS'},
   {id:'nonreal',      title:'Non réalisés'},
-  {id:'themas',       title:'Thématiques'},
   {id:'bilan',        title:'Bilan & Conclusion'},
 ];
 
@@ -3948,7 +3854,6 @@ function drGoTo(idx){
   if(slide.id==='cover') drSlideCover(c,data,allDataConum);
   else if(slide.id==='kpis') drSlideKpis(c,data,allDataConum);
   else if(slide.id==='evolution') drSlideEvol(c,data,PALETTE_DR);
-  else if(slide.id==='yoy') drSlideYoY(c,data,PALETTE_DR);
   else if(slide.id==='themas') drSlideThemas(c,data,PALETTE_DR);
   else if(slide.id==='orienteurs') drSlideOrienteurs(c,data,PALETTE_DR);
   else if(slide.id==='territoire') drSlideTerritoire(c,data);
@@ -4094,32 +3999,6 @@ function drSlideEvol(c,data,palette){
       plugins:{legend:{labels:{color:legendColor(),font:{size:11},boxWidth:10,padding:12}}},
       scales:{x:{grid:{color:'rgba(128,128,128,.1)'},ticks:{color:cssVar('--muted'),font:{size:11}}},
               y:{grid:{color:'rgba(128,128,128,.1)'},beginAtZero:true,ticks:{color:cssVar('--muted'),font:{size:11}}}}}
-  });
-}
-
-// ── SLIDE N / N-1 / N-2 ──
-function drSlideYoY(c,data,palette){
-  const yoyYears=[...new Set(data.map(r=>r.date_demande.slice(0,4)))].sort();
-  c.innerHTML=`
-    <div style="font-family:'Space Grotesk',sans-serif;padding:0">
-      <div style="font-size:22px;font-weight:700;margin-bottom:4px">Accompagnements — N / N-1 / N-2</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:20px">${drConum} · ${drCms} · volume par mois calendaire</div>
-      <canvas id="dr-ch-yoy" style="width:100%;max-height:360px"></canvas>
-    </div>`;
-  const ctx=document.getElementById('dr-ch-yoy');
-  if(!ctx||!yoyYears.length)return;
-  drCharts['yoy']=new Chart(ctx,{
-    type:'bar',
-    data:{labels:MONTH_FR,datasets:yoyYears.map((yr,i)=>{
-      const col=palette[i%palette.length];
-      const vals=Array(12).fill(0);
-      data.filter(r=>r.date_demande.startsWith(yr)).forEach(r=>{const m=parseInt(r.date_demande.slice(5,7))-1;if(m>=0&&m<12)vals[m]++;});
-      return{label:yrLabel(yr),data:vals,backgroundColor:col+'55',borderColor:col,borderWidth:2,borderRadius:4,borderSkipped:false};
-    })},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:'#e5e7eb',font:{size:12},boxWidth:10,padding:10}}},
-      scales:{x:{grid:{display:false},ticks:{color:'#9ca3af',font:{size:11}}},
-              y:{grid:{color:'#1f2937'},beginAtZero:true,ticks:{precision:0,color:'#9ca3af',font:{size:11}}}}}
   });
 }
 
@@ -4278,7 +4157,7 @@ function drSlideNonReal(c,data){
     c.innerHTML=`<div style="padding:40px;text-align:center;color:var(--muted)">
       <div style="font-size:40px;margin-bottom:16px">📊</div>
       <div style="font-size:16px;font-weight:600;margin-bottom:8px">Données non disponibles</div>
-      <div style="font-size:12px">Aucune donnée de non réalisés disponible pour cette sélection.</div>
+      <div style="font-size:12px">Importe le fichier Etat_Actions pour afficher les non réalisés.</div>
     </div>`;
     return;
   }
@@ -4366,14 +4245,13 @@ function drSlideNonReal(c,data){
   });
 
   // Camembert Réalisés / Non réalisés
-  {const _dp=[['Réalisés',real,'#10b981'],['Non réalisés',nonReal,'#ef4444']].filter(([,v])=>v>0);
   drCharts['ch-dr-pie']=new Chart(document.getElementById('ch-dr-pie'),{
     type:'pie',
-    data:{labels:_dp.map(([l])=>l),datasets:[{data:_dp.map(([,v])=>v),backgroundColor:_dp.map(([,,c])=>c),borderWidth:2,borderColor:'#111827',hoverOffset:6}]},
+    data:{labels:['Réalisés','Non réalisés'],datasets:[{data:[real,nonReal],backgroundColor:['#10b981','#ef4444'],borderWidth:2,borderColor:'#111827',hoverOffset:6}]},
     options:{responsive:true,maintainAspectRatio:true,
       plugins:{legend:{position:'bottom',labels:{color:legendColor(),font:{size:10},padding:10,boxWidth:10}},
         tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${pct(ctx.parsed,real+nonReal)}%)`}}}}
-  });}
+  });
 }
 
 // ── SLIDE BILAN ──
@@ -4384,14 +4262,14 @@ function drSlideBilan(c,data,allDataConum){
   const partCN=pct(total,allDataConum.length);
   const done=data.filter(r=>r.date_action).length;
   const txC=pct(done,total);
-  // Évolution annuelle — année sélectionnée vs année sélectionnée-1
-  const rawTrendDR=DATA.filter(r=>r.conum===drConum&&r.cms===drCms);
-  const allYrsInDataDR=[...new Set(rawTrendDR.map(r=>r.date_demande.slice(0,4)))].sort();
-  const selYrsDR=drYears.size?allYrsInDataDR.filter(y=>drYears.has(y)):allYrsInDataDR;
-  const nYear=selYrsDR[selYrsDR.length-1]||'';
-  const nPrevYear=nYear?String(parseInt(nYear)-1):'';
-  const nRec=nYear?rawTrendDR.filter(r=>r.date_demande.startsWith(nYear)).length:0;
-  const nPre=nPrevYear?rawTrendDR.filter(r=>r.date_demande.startsWith(nPrevYear)).length:0;
+  const delais=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
+  const delaiMoy=delais.length?Math.round(delais.reduce((a,b)=>a+b,0)/delais.length):null;
+  // Évolution trimestrielle — même trimestre N vs N-1
+  const allMonthsDR=[...new Set(data.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
+  const recentMs=allMonthsDR.slice(0,3);
+  const prevYrMs=recentMs.map(m=>`${parseInt(m.slice(0,4))-1}-${m.slice(5)}`);
+  const nRec=data.filter(r=>recentMs.includes(r.date_demande.slice(0,7))).length;
+  const nPre=data.filter(r=>prevYrMs.includes(r.date_demande.slice(0,7))).length;
   const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):null;
   const trend=delta===null?'—':delta>=0?`+${delta}%`:`${delta}%`;
   const trendColor=delta===null?'var(--muted)':delta>=0?'var(--green)':'var(--orange)';
@@ -4405,9 +4283,6 @@ function drSlideBilan(c,data,allDataConum){
   const r48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0&&r.delai_reactivite<=2).length;
   const p48=t48>=20?Math.round(r48/t48*100):null;
   const p48Color=p48===null?'var(--muted)':p48>=95?'var(--green)':p48>=85?'var(--orange)':'var(--red)';
-  const nReal=data.filter(r=>r.etat==='Réalisée').length;
-  const txReal=pct(nReal,total);
-  const txRealColor=txReal>=80?'var(--green)':txReal>=60?'var(--orange)':'var(--red)';
   // Évolution annuelle — sur DATA brut (indépendant du filtre années)
   const rawCC=DATA.filter(r=>r.conum===drConum&&r.cms===drCms);
   const evolYears=[...new Set(rawCC.map(r=>r.date_demande.slice(0,4)))].sort();
@@ -4427,8 +4302,8 @@ function drSlideBilan(c,data,allDataConum){
     return`<strong style="color:${col}">${t}</strong> (${n} · ${pct(n,total)}%)`;
   }).join(', ');
   const p1=`Au sein de la structure <strong style="color:var(--blue)">${drCms}</strong>, ${conumNameHtml(drConum,cnColor)} a accompagné <strong>${total} bénéficiaire${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
-  const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>.`;
-  const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur l'année ${nYear} vs ${nPrevYear}, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
+  const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):"moins d'une semaine"}</strong>.`;
+  const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur le même trimestre N/N-1, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
 
   const bestYearIdx=evolCounts.indexOf(Math.max(...evolCounts));
   const bestYear=evolYears[bestYearIdx];
@@ -4440,7 +4315,7 @@ function drSlideBilan(c,data,allDataConum){
       <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;font-family:'Space Grotesk',sans-serif;font-size:20px">${conumNameHtml(drConum,cnColor)}</div>
       <div style="display:flex;align-items:center;margin-bottom:16px"><span style="font-size:11px;color:var(--muted)">${drCms} · ${years.join(', ')}</span>${drQ(insightBilan)}</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-        ${[[total,'Accompagnements','var(--blue)'],[txC+'%','Taux de complétion','var(--green)'],[trend,`Évol. ${nYear} / ${nPrevYear}`,trendColor],[communes,'Communes couvertes','var(--cyan)'],[orienteurs,'Orienteurs actifs','var(--purple)'],[txReal+'%','Taux de réalisation',txRealColor]].map(([v,l,col])=>`
+        ${[[total,'Accompagnements','var(--blue)'],[txC+'%','Taux de complétion','var(--green)'],[trend,'Évol. trim. N/N-1',trendColor],[communes,'Communes couvertes','var(--cyan)'],[orienteurs,'Orienteurs actifs','var(--purple)'],[delaiMoy!==null?delaiMoy+'j':'—',"Délai moyen d'action",'var(--orange)']].map(([v,l,col])=>`
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}">
             <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:${col}">${v}</div>
             <div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div>
@@ -4583,11 +4458,10 @@ function toggleTheme(){
 }
 
 // ── BOOT ──
-(async function(){
+(function(){
   injectConumCss();
   applyChartTheme();
-  await initData();
-  initCmsSelect();initConumSelect();initOriCmsSelect();initRptSelects();renderGlobal();
+  initData();initCmsSelect();initConumSelect();initOriCmsSelect();initRptSelects();renderGlobal();
   // Restaurer l'onglet actif
   try{
     const saved=sessionStorage.getItem('gdin_tab');
@@ -4636,7 +4510,6 @@ async function exportDiapoPDF(){
     if(slide.id==='cover') drSlideCover(c,data,allDataConum);
     else if(slide.id==='kpis') drSlideKpis(c,data,allDataConum);
     else if(slide.id==='evolution') drSlideEvol(c,data,PALETTE_DR);
-    else if(slide.id==='yoy') drSlideYoY(c,data,PALETTE_DR);
     else if(slide.id==='themas') drSlideThemas(c,data,PALETTE_DR);
     else if(slide.id==='orienteurs') drSlideOrienteurs(c,data,PALETTE_DR);
     else if(slide.id==='comparaison') drSlideComparaison(c,data,allDataConum);
