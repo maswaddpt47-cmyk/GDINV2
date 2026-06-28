@@ -3131,18 +3131,6 @@ function renderActYoY(){
 }
 
 
-// Init actions from localStorage on load — badge uniquement, pas de dashboard auto
-(function initActions(){
-  const stored=loadActionsFromStorage();
-  if(!stored)return;
-  ACTIONS_DATA=stored;ACTIONS_DERIVED=false;
-  const years=[...new Set(stored.map(r=>r.year).filter(Boolean))].sort();
-  try{
-    document.getElementById('act-dot').style.background='var(--orange)';
-    document.getElementById('act-label').innerHTML=`<strong style="color:var(--orange)">Données sauvegardées</strong> — ${stored.length} accompagnements · ${years.join(', ')}`;
-  }catch(e){}
-})();
-
 // SORTABLE TABLES
 const actSortState={cms:{col:-1,asc:true},conum:{col:-1,asc:true}};
 
