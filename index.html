@@ -1239,13 +1239,13 @@ function _idbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open(IDB_NA
 async function _idbPut(key,val){try{const db=await _idbOpen();await new Promise((res,rej)=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(val,key);tx.oncomplete=res;tx.onerror=rej;});return true;}catch(e){return false;}}
 async function _idbGet(key){try{const db=await _idbOpen();return new Promise(res=>{const tx=db.transaction('kv','readonly');const r=tx.objectStore('kv').get(key);r.onsuccess=()=>res(r.result??null);r.onerror=()=>res(null);});}catch(e){return null;}}
 async function _idbDel(...keys){try{const db=await _idbOpen();const tx=db.transaction('kv','readwrite');keys.forEach(k=>tx.objectStore('kv').delete(k));}catch(e){}}
-function saveToStorage(records,meta){
-  let ok=false;
-  try{localStorage.setItem(LS_KEY,JSON.stringify(records));localStorage.setItem(LS_META,JSON.stringify(meta));ok=true;}
+async function saveToStorage(records,meta){
+  let lsOk=false;
+  try{localStorage.setItem(LS_KEY,JSON.stringify(records));localStorage.setItem(LS_META,JSON.stringify(meta));lsOk=true;}
   catch(e){console.warn('[GDIN] localStorage quota — bascule IndexedDB');}
-  // Sauvegarde IDB en parallèle (capacité illimitée)
-  _idbPut(LS_KEY,records).then(()=>_idbPut(LS_META,meta)).catch(()=>{});
-  return ok;
+  // IDB en parallèle — si LS a échoué, on attend la confirmation IDB
+  if(lsOk){_idbPut(LS_KEY,records).then(()=>_idbPut(LS_META,meta)).catch(()=>{});return true;}
+  return _idbPut(LS_KEY,records).then(()=>_idbPut(LS_META,meta)).then(()=>true).catch(()=>false);
 }
 function loadFromStorage(){try{const r=localStorage.getItem(LS_KEY),m=localStorage.getItem(LS_META);if(r&&m)return{records:JSON.parse(r),meta:JSON.parse(m)};}catch(e){}return null;}
 async function loadFromIDB(){const r=await _idbGet(LS_KEY),m=await _idbGet(LS_META);return(r&&m)?{records:r,meta:m}:null;}
@@ -2449,7 +2449,7 @@ function showPreview(pd){
   }
 }
 
-function confirmImport(){
+async function confirmImport(){
   if(!pendingData)return;
   const{filename}=pendingData;
   let records=pendingData.records;
@@ -2476,7 +2476,7 @@ function confirmImport(){
   DATA=merged;applyConumAttrib(DATA);deriveActionsFromData();dataSource='imported';
   const years=[...new Set(merged.map(r=>r.date_demande.slice(0,4)))].sort();
   importMeta={filename,count:DATA.length,years,date:new Date().toLocaleDateString('fr-FR')};
-  const saved=saveToStorage(merged,importMeta);
+  const saved=await saveToStorage(merged,importMeta);
   updateSourceBadge(true,importMeta);updateAllYears();updateDateRange();updateCurrentSourceInfo();
   pendingData=null;document.getElementById('import-preview').style.display='none';document.getElementById('parse-progress-box').style.display='none';
   initCmsSelect();initConumSelect();initOriCmsSelect();initRptSelects();refreshAll();
