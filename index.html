@@ -2157,9 +2157,6 @@ function buildRptBilan(conum,cms,data,dataConum){
   const communes=new Set(data.map(r=>r.commune).filter(Boolean)).size;
   const orienteurs=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
   const partCN=pct(total,dataConum.length);
-  // Délai moyen (champ delai déjà calculé : demande → action)
-  const delais=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
-  const delaiMoy=delais.length?Math.round(delais.reduce((a,b)=>a+b,0)/delais.length):null;
   // Évolution annuelle — année sélectionnée vs année sélectionnée-1
   const rawTrend=DATA.filter(r=>r.conum===conum&&r.cms===cms);
   const allYrsInData=[...new Set(rawTrend.map(r=>r.date_demande.slice(0,4)))].sort();
@@ -2191,7 +2188,7 @@ function buildRptBilan(conum,cms,data,dataConum){
     [trend,`Évol. ${nYear} / ${nPrevYear}`,trendColor],
     [communes,'Communes couvertes','var(--cyan)'],
     [orienteurs,'Orienteurs actifs','var(--purple)'],
-    [delaiMoy!==null?delaiMoy+'j':'—',"Délai moyen d'action",'var(--orange)'],
+    [p48!==null?p48+'%':'—','Réactivité 48h',p48Color],
   ].map(([v,l,col])=>`<div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}"><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:${col}">${v}</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div></div>`).join('');
 
   // Évolution annuelle conum × cms — toujours sur DATA brut (indépendant du filtre années)
@@ -2214,7 +2211,7 @@ function buildRptBilan(conum,cms,data,dataConum){
     const col=i===0?'var(--orange)':i===1?'var(--cyan)':'var(--purple)';
     return`<strong style="color:${col}">${t}</strong> (${n} · ${pct(n,total)}%)`;
   }).join(', ');
-  const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):'moins d\'une semaine'}</strong>.`;
+  const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>.`;
   const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur l'année ${nYear} vs ${nPrevYear}, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
 
   document.getElementById('rpt-bilan-text').innerHTML=`<p style="margin-bottom:9px">${p1}</p><p style="margin-bottom:9px">${p2}</p><p>${p3}</p>`;
@@ -2652,9 +2649,12 @@ function buildBilan(){
   const topConumN=conumCount[topConum]||0;
   const topConumPct=Math.round(topConumN/total*100);
 
-  // Délai moyen
-  const delais=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
-  const delaiMoy=delais.length?Math.round(delais.reduce((a,b)=>a+b,0)/delais.length):null;
+  // Réactivité 48h
+  const actGlobal=ACTIONS_DATA?ACTIONS_DATA.filter(r=>(diapoCms?r.cms===diapoCms||r.cms===normCms(diapoCms):true)&&r.etat==='Réalisée'&&(!activeYears.size||activeYears.has(r.year))):[];
+  const t48=actGlobal.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0).length;
+  const r48=actGlobal.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0&&r.delai_reactivite<=2).length;
+  const p48=t48>=20?Math.round(r48/t48*100):null;
+  const p48Color=p48===null?'var(--muted)':p48>=95?'var(--green)':p48>=85?'var(--orange)':'var(--red)';
 
   // Période
   const dates=data.map(r=>r.date_demande).sort();
@@ -2675,7 +2675,7 @@ function buildBilan(){
     <div class="bilan-stat"><div class="bs-val" style="color:${trendColor}">${trend}</div><div class="bs-label">Évolution trimestrielle</div></div>
     <div class="bilan-stat"><div class="bs-val" style="color:var(--orange)">${communes}</div><div class="bs-label">Communes couvertes</div></div>
     <div class="bilan-stat"><div class="bs-val" style="color:var(--purple)">${orienteurs}</div><div class="bs-label">Orienteurs actifs</div></div>
-    <div class="bilan-stat"><div class="bs-val" style="color:var(--cyan)">${delaiMoy!==null?delaiMoy+'j':'—'}</div><div class="bs-label">Délai moyen d'action</div></div>
+    <div class="bilan-stat"><div class="bs-val" style="color:${p48Color}">${p48!==null?p48+'%':'—'}</div><div class="bs-label">Réactivité 48h</div></div>
   `;
 
   // Conclusion adaptée CMS ou globale
@@ -2684,13 +2684,13 @@ function buildBilan(){
     const conumRef=topConum;
     const autresConums=conums.filter(c=>c!==topConum).map(c=>c.split(' ').pop()).join(', ');
     p1=`Au sein de la structure <strong>${diapoCms}</strong>, le conseiller numérique référent <strong>${conumRef}</strong> a pris en charge <strong>${topConumPct}% des accompagnements</strong>, soit <strong>${topConumN} bénéficiaires</strong> sur un total de <strong>${total}</strong>.${autresConums?` Il est appuyé par ${autresConums}.`:''}`;
-    p2=`La thématique dominante est <strong>${topThema}</strong>, illustrant les besoins prioritaires du public accompagné sur ce secteur. Le taux de complétion des dossiers atteint <strong>${txCompl}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):'moins d\'une semaine'}</strong>.`;
+    p2=`La thématique dominante est <strong>${topThema}</strong>, illustrant les besoins prioritaires du public accompagné sur ce secteur. Le taux de complétion des dossiers atteint <strong>${txCompl}%</strong>${p48!==null?`, avec un taux de réactivité 48h de <strong style="color:${p48Color}">${p48}%</strong>`:''}.`;
     p3=`Avec <strong>${orienteurs} TS orienteurs</strong> mobilisés et une présence sur <strong>${communes} communes</strong>, l'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> — témoignant d'un engagement <strong>${delta>=0?'croissant et reconnu':'solide et constant'}</strong> au service des publics fragiles. 🎯`;
   } else {
     const conumsList=conums.map(c=>c.split(' ').pop()).join(', ');
     p1=`Sur la période analysée, l'équipe des conseillers numériques du Lot-et-Garonne — <strong>${conumsList}</strong> — a accompagné <strong>${total} bénéficiaires</strong> répartis sur <strong>${communes} communes</strong>, avec un taux de complétion de <strong>${txCompl}%</strong>.`;
     p2=`La thématique la plus traitée est <strong>${topThema}</strong>. L'activité trimestrielle affiche une évolution de <strong style="color:${trendColor}">${trend}</strong>, témoignant d'une dynamique <strong>${delta>=0?'positive et croissante':'solide et constante'}</strong>.`;
-    p3=`Avec <strong>${orienteurs} TS orienteurs</strong> mobilisés et un délai moyen de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):'moins d\'une semaine'}</strong>, le dispositif GDIN démontre son <strong>efficacité opérationnelle</strong> et sa capacité à répondre rapidement aux besoins numériques des publics fragiles. 🎯`;
+    p3=`Avec <strong>${orienteurs} TS orienteurs</strong> mobilisés sur <strong>${communes} communes</strong>, le dispositif GDIN démontre son <strong>efficacité opérationnelle</strong> et sa capacité à répondre rapidement aux besoins numériques des publics fragiles. 🎯`;
   }
 
   document.getElementById('bilan-conclusion').innerHTML=`<p>${p1}</p><p>${p2}</p><p>${p3}</p>`;
@@ -4358,8 +4358,6 @@ function drSlideBilan(c,data,allDataConum){
   const partCN=pct(total,allDataConum.length);
   const done=data.filter(r=>r.date_action).length;
   const txC=pct(done,total);
-  const delais=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
-  const delaiMoy=delais.length?Math.round(delais.reduce((a,b)=>a+b,0)/delais.length):null;
   // Évolution annuelle — année sélectionnée vs année sélectionnée-1
   const rawTrendDR=DATA.filter(r=>r.conum===drConum&&r.cms===drCms);
   const allYrsInDataDR=[...new Set(rawTrendDR.map(r=>r.date_demande.slice(0,4)))].sort();
@@ -4400,7 +4398,7 @@ function drSlideBilan(c,data,allDataConum){
     return`<strong style="color:${col}">${t}</strong> (${n} · ${pct(n,total)}%)`;
   }).join(', ');
   const p1=`Au sein de la structure <strong style="color:var(--blue)">${drCms}</strong>, ${conumNameHtml(drConum,cnColor)} a accompagné <strong>${total} bénéficiaire${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
-  const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):"moins d'une semaine"}</strong>.`;
+  const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>.`;
   const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur l'année ${nYear} vs ${nPrevYear}, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
 
   const bestYearIdx=evolCounts.indexOf(Math.max(...evolCounts));
@@ -4413,7 +4411,7 @@ function drSlideBilan(c,data,allDataConum){
       <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;font-family:'Space Grotesk',sans-serif;font-size:20px">${conumNameHtml(drConum,cnColor)}</div>
       <div style="display:flex;align-items:center;margin-bottom:16px"><span style="font-size:11px;color:var(--muted)">${drCms} · ${years.join(', ')}</span>${drQ(insightBilan)}</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-        ${[[total,'Accompagnements','var(--blue)'],[txC+'%','Taux de complétion','var(--green)'],[trend,`Évol. ${nYear} / ${nPrevYear}`,trendColor],[communes,'Communes couvertes','var(--cyan)'],[orienteurs,'Orienteurs actifs','var(--purple)'],[delaiMoy!==null?delaiMoy+'j':'—',"Délai moyen d'action",'var(--orange)']].map(([v,l,col])=>`
+        ${[[total,'Accompagnements','var(--blue)'],[txC+'%','Taux de complétion','var(--green)'],[trend,`Évol. ${nYear} / ${nPrevYear}`,trendColor],[communes,'Communes couvertes','var(--cyan)'],[orienteurs,'Orienteurs actifs','var(--purple)'],[p48!==null?p48+'%':'—','Réactivité 48h',p48Color]].map(([v,l,col])=>`
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}">
             <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:${col}">${v}</div>
             <div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div>
