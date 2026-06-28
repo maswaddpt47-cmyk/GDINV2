@@ -2167,14 +2167,14 @@ function buildRptBilan(conum,cms,data,dataConum){
   // Délai moyen (champ delai déjà calculé : demande → action)
   const delais=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
   const delaiMoy=delais.length?Math.round(delais.reduce((a,b)=>a+b,0)/delais.length):null;
-  // Tendance trimestrielle — 3 derniers mois dans les années actives vs même période N-1
+  // Évolution annuelle — année sélectionnée vs année sélectionnée-1
   const rawTrend=DATA.filter(r=>r.conum===conum&&r.cms===cms);
-  const trendBase=activeYears.size&&activeYears.size<ALL_YEARS.length?rawTrend.filter(r=>activeYears.has(r.date_demande.slice(0,4))):rawTrend;
-  const allMonthsSorted=[...new Set(trendBase.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
-  const recentMs=allMonthsSorted.slice(0,3);
-  const prevYrMs=recentMs.map(m=>`${parseInt(m.slice(0,4))-1}-${m.slice(5)}`);
-  const nRec=rawTrend.filter(r=>recentMs.includes(r.date_demande.slice(0,7))).length;
-  const nPre=rawTrend.filter(r=>prevYrMs.includes(r.date_demande.slice(0,7))).length;
+  const allYrsInData=[...new Set(rawTrend.map(r=>r.date_demande.slice(0,4)))].sort();
+  const selYrs=activeYears.size&&activeYears.size<ALL_YEARS.length?allYrsInData.filter(y=>activeYears.has(y)):allYrsInData;
+  const nYear=selYrs[selYrs.length-1]||'';
+  const nPrevYear=nYear?String(parseInt(nYear)-1):'';
+  const nRec=nYear?rawTrend.filter(r=>r.date_demande.startsWith(nYear)).length:0;
+  const nPre=nPrevYear?rawTrend.filter(r=>r.date_demande.startsWith(nPrevYear)).length:0;
   const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):null;
   const trend=delta===null?'—':delta>=0?`+${delta}%`:`${delta}%`;
   const trendColor=delta===null?'var(--muted)':delta>=0?'var(--green)':'var(--orange)';
@@ -2195,7 +2195,7 @@ function buildRptBilan(conum,cms,data,dataConum){
   document.getElementById('rpt-bilan-grid').innerHTML=[
     [total,'Accompagnements','var(--blue)'],
     [txC+'%','Taux de complétion','var(--green)'],
-    [trend,'Évol. trim. N/N-1',trendColor],
+    [trend,`Évol. ${nYear} / ${nPrevYear}`,trendColor],
     [communes,'Communes couvertes','var(--cyan)'],
     [orienteurs,'Orienteurs actifs','var(--purple)'],
     [delaiMoy!==null?delaiMoy+'j':'—',"Délai moyen d'action",'var(--orange)'],
@@ -2222,7 +2222,7 @@ function buildRptBilan(conum,cms,data,dataConum){
     return`<strong style="color:${col}">${t}</strong> (${n} · ${pct(n,total)}%)`;
   }).join(', ');
   const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):'moins d\'une semaine'}</strong>.`;
-  const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur le même trimestre N/N-1, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
+  const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur l'année ${nYear} vs ${nPrevYear}, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
 
   document.getElementById('rpt-bilan-text').innerHTML=`<p style="margin-bottom:9px">${p1}</p><p style="margin-bottom:9px">${p2}</p><p>${p3}</p>`;
 }
@@ -4463,14 +4463,14 @@ function drSlideBilan(c,data,allDataConum){
   const txC=pct(done,total);
   const delais=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
   const delaiMoy=delais.length?Math.round(delais.reduce((a,b)=>a+b,0)/delais.length):null;
-  // Évolution trimestrielle — 3 derniers mois dans les années actives vs même période N-1
+  // Évolution annuelle — année sélectionnée vs année sélectionnée-1
   const rawTrendDR=DATA.filter(r=>r.conum===drConum&&r.cms===drCms);
-  const trendBaseDR=activeYears.size&&activeYears.size<ALL_YEARS.length?rawTrendDR.filter(r=>activeYears.has(r.date_demande.slice(0,4))):rawTrendDR;
-  const allMonthsDR=[...new Set(trendBaseDR.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
-  const recentMs=allMonthsDR.slice(0,3);
-  const prevYrMs=recentMs.map(m=>`${parseInt(m.slice(0,4))-1}-${m.slice(5)}`);
-  const nRec=rawTrendDR.filter(r=>recentMs.includes(r.date_demande.slice(0,7))).length;
-  const nPre=rawTrendDR.filter(r=>prevYrMs.includes(r.date_demande.slice(0,7))).length;
+  const allYrsInDataDR=[...new Set(rawTrendDR.map(r=>r.date_demande.slice(0,4)))].sort();
+  const selYrsDR=drYears.size?allYrsInDataDR.filter(y=>drYears.has(y)):allYrsInDataDR;
+  const nYear=selYrsDR[selYrsDR.length-1]||'';
+  const nPrevYear=nYear?String(parseInt(nYear)-1):'';
+  const nRec=nYear?rawTrendDR.filter(r=>r.date_demande.startsWith(nYear)).length:0;
+  const nPre=nPrevYear?rawTrendDR.filter(r=>r.date_demande.startsWith(nPrevYear)).length:0;
   const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):null;
   const trend=delta===null?'—':delta>=0?`+${delta}%`:`${delta}%`;
   const trendColor=delta===null?'var(--muted)':delta>=0?'var(--green)':'var(--orange)';
@@ -4504,7 +4504,7 @@ function drSlideBilan(c,data,allDataConum){
   }).join(', ');
   const p1=`Au sein de la structure <strong style="color:var(--blue)">${drCms}</strong>, ${conumNameHtml(drConum,cnColor)} a accompagné <strong>${total} bénéficiaire${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
   const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>, avec un délai moyen de prise en charge de <strong>${delaiMoy!==null?delaiMoy+(delaiMoy>1?' jours':' jour'):"moins d'une semaine"}</strong>.`;
-  const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur le même trimestre N/N-1, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
+  const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur l'année ${nYear} vs ${nPrevYear}, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
 
   const bestYearIdx=evolCounts.indexOf(Math.max(...evolCounts));
   const bestYear=evolYears[bestYearIdx];
@@ -4516,7 +4516,7 @@ function drSlideBilan(c,data,allDataConum){
       <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;font-family:'Space Grotesk',sans-serif;font-size:20px">${conumNameHtml(drConum,cnColor)}</div>
       <div style="display:flex;align-items:center;margin-bottom:16px"><span style="font-size:11px;color:var(--muted)">${drCms} · ${years.join(', ')}</span>${drQ(insightBilan)}</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-        ${[[total,'Accompagnements','var(--blue)'],[txC+'%','Taux de complétion','var(--green)'],[trend,'Évol. trim. N/N-1',trendColor],[communes,'Communes couvertes','var(--cyan)'],[orienteurs,'Orienteurs actifs','var(--purple)'],[delaiMoy!==null?delaiMoy+'j':'—',"Délai moyen d'action",'var(--orange)']].map(([v,l,col])=>`
+        ${[[total,'Accompagnements','var(--blue)'],[txC+'%','Taux de complétion','var(--green)'],[trend,`Évol. ${nYear} / ${nPrevYear}`,trendColor],[communes,'Communes couvertes','var(--cyan)'],[orienteurs,'Orienteurs actifs','var(--purple)'],[delaiMoy!==null?delaiMoy+'j':'—',"Délai moyen d'action",'var(--orange)']].map(([v,l,col])=>`
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}">
             <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:${col}">${v}</div>
             <div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div>
