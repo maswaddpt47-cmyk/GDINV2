@@ -1236,26 +1236,19 @@ function parseXlsText(text){
 const LS_KEY='gdin_data_v3', LS_META='gdin_meta_v3';
 const IDB_NAME='gdin_idb_v1';
 function _idbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains('kv'))db.createObjectStore('kv');};r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});}
-async function _idbPut(key,val){try{const db=await _idbOpen();await new Promise((res,rej)=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(val,key);tx.oncomplete=res;tx.onerror=e=>rej(e.target.error);tx.onabort=e=>rej(e.target.error||new Error('IDB aborted'));});return true;}catch(e){console.warn('[GDIN] _idbPut échec:',e);return false;}}
+async function _idbPut(key,val){try{const db=await _idbOpen();await new Promise((res,rej)=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(val,key);tx.oncomplete=res;tx.onerror=rej;});return true;}catch(e){return false;}}
 async function _idbGet(key){try{const db=await _idbOpen();return new Promise(res=>{const tx=db.transaction('kv','readonly');const r=tx.objectStore('kv').get(key);r.onsuccess=()=>res(r.result??null);r.onerror=()=>res(null);});}catch(e){return null;}}
 async function _idbDel(...keys){try{const db=await _idbOpen();const tx=db.transaction('kv','readwrite');keys.forEach(k=>tx.objectStore('kv').delete(k));}catch(e){}}
-async function saveToStorage(records,meta){
-  let lsOk=false;
-  try{localStorage.setItem(LS_KEY,JSON.stringify(records));localStorage.setItem(LS_META,JSON.stringify(meta));lsOk=true;console.log('[GDIN] LS ok —',records.length,'enreg.');}
-  catch(e){
-    console.warn('[GDIN] LS quota — bascule IDB');
-    try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_META);}catch(_){}
-  }
-  // Toujours écrire dans IDB (double copie si LS ok, seul fallback si LS a échoué)
-  const r=await _idbPut(LS_KEY,records);
-  const m=await _idbPut(LS_META,meta);
-  const idbOk=r&&m;
-  console.log('[GDIN] IDB',idbOk?'ok':'ECHEC');
-  if(!lsOk&&!idbOk){console.error('[GDIN] Toutes sauvegardes échouées');return false;}
-  return true;
+function saveToStorage(records,meta){
+  let ok=false;
+  try{localStorage.setItem(LS_KEY,JSON.stringify(records));localStorage.setItem(LS_META,JSON.stringify(meta));ok=true;}
+  catch(e){console.warn('[GDIN] localStorage quota — bascule IndexedDB');}
+  // Sauvegarde IDB en parallèle (capacité illimitée)
+  _idbPut(LS_KEY,records).then(()=>_idbPut(LS_META,meta)).catch(()=>{});
+  return ok;
 }
-function loadFromStorage(){try{const r=localStorage.getItem(LS_KEY),m=localStorage.getItem(LS_META);if(r&&m){const data=JSON.parse(r);console.log('[GDIN] LS chargé:',data.length,'enreg.');return{records:data,meta:JSON.parse(m)};}console.log('[GDIN] LS: vide');}catch(e){console.warn('[GDIN] LS parse err:',e);}return null;}
-async function loadFromIDB(){const r=await _idbGet(LS_KEY),m=await _idbGet(LS_META);if(r&&m){console.log('[GDIN] IDB chargé:',r.length,'enreg.');return{records:r,meta:m};}console.log('[GDIN] IDB: vide');return null;}
+function loadFromStorage(){try{const r=localStorage.getItem(LS_KEY),m=localStorage.getItem(LS_META);if(r&&m)return{records:JSON.parse(r),meta:JSON.parse(m)};}catch(e){}return null;}
+async function loadFromIDB(){const r=await _idbGet(LS_KEY),m=await _idbGet(LS_META);return(r&&m)?{records:r,meta:m}:null;}
 function clearStorage(){localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_META);_idbDel(LS_KEY,LS_META);}
 
 // INIT
@@ -2257,7 +2250,7 @@ async function handleAutoImport(file){
     const r=new FileReader();
     r.onload=e=>{bar.style.width='70%';msg.textContent='Validation…';setTimeout(()=>{
       try{const payload=JSON.parse(e.target.result);bar.style.width='100%';
-        setTimeout(()=>{prog.style.display='none';importDataJSON(payload,file.name).catch(err=>showImportError(err.message));},300);
+        setTimeout(()=>{prog.style.display='none';try{importDataJSON(payload,file.name);}catch(err){showImportError(err.message);}},300);
       }catch(err){prog.style.display='none';showImportError('JSON invalide : '+err.message);}
     },200);};
     r.onerror=()=>{prog.style.display='none';showImportError('Impossible de lire le fichier JSON.');};
@@ -2514,7 +2507,7 @@ function exportDataJSON(){
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
-async function importDataJSON(payload,filename){
+function importDataJSON(payload,filename){
   if(payload.type!=='gdin-data'||!Array.isArray(payload.data))
     throw new Error('Format non reconnu — ce fichier n\'est pas un export GDIN');
   const records=payload.data;
@@ -2522,7 +2515,7 @@ async function importDataJSON(payload,filename){
   DATA=records;applyConumAttrib(DATA);deriveActionsFromData();dataSource='imported';
   const years=[...new Set(records.map(r=>r.date_demande.slice(0,4)))].sort();
   importMeta={filename,count:DATA.length,years,date:new Date().toLocaleDateString('fr-FR'),source_filename:payload.source_filename||filename};
-  await saveToStorage(DATA,importMeta);
+  saveToStorage(DATA,importMeta);
   updateSourceBadge(true,importMeta);updateAllYears();updateDateRange();updateCurrentSourceInfo();
   initCmsSelect();initConumSelect();initOriCmsSelect();initRptSelects();refreshAll();
   const dot=document.getElementById('cs-dot');if(dot)dot.style.background='var(--green)';
