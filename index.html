@@ -2167,9 +2167,10 @@ function buildRptBilan(conum,cms,data,dataConum){
   // Délai moyen (champ delai déjà calculé : demande → action)
   const delais=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
   const delaiMoy=delais.length?Math.round(delais.reduce((a,b)=>a+b,0)/delais.length):null;
-  // Tendance trimestrielle — même trimestre N vs N-1 (données brutes, indépendant du filtre années)
+  // Tendance trimestrielle — 3 derniers mois dans les années actives vs même période N-1
   const rawTrend=DATA.filter(r=>r.conum===conum&&r.cms===cms);
-  const allMonthsSorted=[...new Set(rawTrend.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
+  const trendBase=activeYears.size&&activeYears.size<ALL_YEARS.length?rawTrend.filter(r=>activeYears.has(r.date_demande.slice(0,4))):rawTrend;
+  const allMonthsSorted=[...new Set(trendBase.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
   const recentMs=allMonthsSorted.slice(0,3);
   const prevYrMs=recentMs.map(m=>`${parseInt(m.slice(0,4))-1}-${m.slice(5)}`);
   const nRec=rawTrend.filter(r=>recentMs.includes(r.date_demande.slice(0,7))).length;
@@ -4462,9 +4463,10 @@ function drSlideBilan(c,data,allDataConum){
   const txC=pct(done,total);
   const delais=data.filter(r=>r.delai!==null&&r.delai>=0).map(r=>r.delai);
   const delaiMoy=delais.length?Math.round(delais.reduce((a,b)=>a+b,0)/delais.length):null;
-  // Évolution trimestrielle — même trimestre N vs N-1 (données brutes, indépendant du filtre années)
+  // Évolution trimestrielle — 3 derniers mois dans les années actives vs même période N-1
   const rawTrendDR=DATA.filter(r=>r.conum===drConum&&r.cms===drCms);
-  const allMonthsDR=[...new Set(rawTrendDR.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
+  const trendBaseDR=activeYears.size&&activeYears.size<ALL_YEARS.length?rawTrendDR.filter(r=>activeYears.has(r.date_demande.slice(0,4))):rawTrendDR;
+  const allMonthsDR=[...new Set(trendBaseDR.map(r=>r.date_demande.slice(0,7)))].sort().reverse();
   const recentMs=allMonthsDR.slice(0,3);
   const prevYrMs=recentMs.map(m=>`${parseInt(m.slice(0,4))-1}-${m.slice(5)}`);
   const nRec=rawTrendDR.filter(r=>recentMs.includes(r.date_demande.slice(0,7))).length;
