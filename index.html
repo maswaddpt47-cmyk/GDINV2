@@ -775,6 +775,10 @@ body.pres-mode .tbl th{font-size:11px}
         <div class="drop-sub">Fichier GDIN (.xls / texte tabulé) — détection automatique</div>
         <span class="drop-formats">.xls · .xlsx · texte tabulé</span>
       </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px">
+        <input type="file" id="reset-file-input" accept=".xls,.xlsx,.txt,.csv,.json" style="display:none" onchange="handleResetAndImport(this.files[0]);this.value=''">
+        <button class="btn-sm" onclick="document.getElementById('reset-file-input').click()" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4);color:#fca5a5" title="Efface toutes les données existantes puis importe le nouveau fichier">🗑 Réinitialiser et importer</button>
+      </div>
 
       <div id="parse-progress-box" style="display:none">
         <div class="parse-progress"><div class="parse-bar" id="parse-bar"></div></div>
@@ -2483,6 +2487,7 @@ function confirmImport(){
   if(!saved)showImportError('Sauvegarde locale impossible (quota dépassé). Les données seront perdues au prochain rechargement. Utilisez ⬇ Exporter pour sauvegarder manuellement.');
 }
 function cancelImport(){pendingData=null;['import-preview','import-error','parse-progress-box','import-anomalies'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('file-input').value='';}
+function handleResetAndImport(file){if(!file)return;clearStorage();DATA=[];dataSource='embedded';importMeta=null;handleAutoImport(file);}
 function resetToEmbedded(){
   if(!confirm('Supprimer les données importées et revenir aux données intégrées ?'))return;
   clearStorage();const EXCL_RST=new Set(['Reservation']);DATA=EMBEDDED.map(r=>({...r,cms:normCms(r.cms),type_action:(r.type_action||[]).filter(t=>!EXCL_RST.has(t))}))
