@@ -1191,7 +1191,7 @@ function normCms(lieu){
 }
 
 let charts={}, evolModeVal='total', nnModeVal=false;
-let activeYears=new Set(), ALL_YEARS=[], pendingData=null;
+let activeYears=new Set(), ALL_YEARS=[], pendingData=null, _pendingReset=false;
 let DATA=[], dataSource='embedded', importMeta=null;
 
 // EXCEL DATE
@@ -2463,6 +2463,8 @@ async function confirmImport(){
     const types=(r.type_action||[]).slice().sort().join('+');
     return `${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.cms||''}|${r.commune||''}|${r.orienteur||''}|${(r.themas||[]).slice().sort().join('/')}|${types}`;
   }
+  // Réinitialisation demandée : effacer avant de merger
+  if(_pendingReset){clearStorage();DATA=[];dataSource='embedded';importMeta=null;_pendingReset=false;}
   // Base : si déjà importé on fusionne, sinon on repart de zéro (pas des données intégrées)
   const base=dataSource==='imported'?DATA:[];
   const existingKeys=new Set(base.map(makeKey));
@@ -2487,7 +2489,7 @@ async function confirmImport(){
   if(!saved)showImportError('Sauvegarde locale impossible (quota dépassé). Les données seront perdues au prochain rechargement. Utilisez ⬇ Exporter pour sauvegarder manuellement.');
 }
 function cancelImport(){pendingData=null;['import-preview','import-error','parse-progress-box','import-anomalies'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('file-input').value='';}
-function handleResetAndImport(file){if(!file)return;clearStorage();DATA=[];dataSource='embedded';importMeta=null;handleAutoImport(file);}
+function handleResetAndImport(file){if(!file)return;_pendingReset=true;handleAutoImport(file);}
 function resetToEmbedded(){
   if(!confirm('Supprimer les données importées et revenir aux données intégrées ?'))return;
   clearStorage();const EXCL_RST=new Set(['Reservation']);DATA=EMBEDDED.map(r=>({...r,cms:normCms(r.cms),type_action:(r.type_action||[]).filter(t=>!EXCL_RST.has(t))}))
