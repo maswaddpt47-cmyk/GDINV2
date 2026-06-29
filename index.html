@@ -2053,9 +2053,9 @@ function renderRapport(){
   destroyChart('ch-rpt-thema');
   charts['ch-rpt-thema']=new Chart(document.getElementById('ch-rpt-thema'),{type:'doughnut',data:{labels:themas.map(t=>t[0]),datasets:[{data:themas.map(t=>t[1]),backgroundColor:PALETTE,borderWidth:2,borderColor:'#111827',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:8,color:legendColor()}}}}});
   const _oriRpt=Object.fromEntries(Object.entries(count(data,'orienteur')).filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())));makeBarList(document.getElementById('bar-rpt-ori'),_oriRpt,'green');
-  {const cmsEntries=Object.entries(count(allData,'cms')).sort((a,b)=>b[1]-a[1]);
+  {const cmsEntries=Object.entries(count(dataConum,'cms')).sort((a,b)=>b[1]-a[1]);
   const hasSel=cmsEntries.some(([c])=>c===cms);
-  if(!hasSel){const v=(count(allData,'cms')[cms]||0);cmsEntries.push([cms,v]);}
+  if(!hasSel){const v=(count(dataConum,'cms')[cms]||0);cmsEntries.push([cms,v]);}
   const shortLbl=c=>c.replace(/^CMS /,'').replace(/^Permanence /,'Perm. ').replace(/\(St-Pardoux\)/,'(St-P.)');
   destroyChart('ch-rpt-comp');
   const ch=document.getElementById('ch-rpt-comp');
