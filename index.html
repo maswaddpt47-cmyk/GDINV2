@@ -4026,9 +4026,8 @@ function drSlideKpis(c,data,allDataConum){
 
 // ── SLIDE ÉVOLUTION ──
 function drSlideEvol(c,data,palette){
-  // Récupérer toutes les données CONUM×CMS sans filtre années pour le N-1
   const cmNormEvol=normCms(drCms)||drCms;
-  const allDataCmsEvol=DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormEvol));
+  const allDataCmsEvol=getFiltered().filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormEvol));
   const years=drYears.size?[...drYears].sort():[...new Set(data.map(r=>r.date_demande.slice(0,4)))].sort();
   const yCur=years[years.length-1];
   const allYearsTotal=[...new Set(allDataCmsEvol.map(r=>r.date_demande.slice(0,4)))].sort();
