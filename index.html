@@ -2163,6 +2163,7 @@ function renderRapport(){
 
 // Bilan de fin de rapport, calculé STRICTEMENT sur le conum × cms sélectionné
 function buildRptBilan(conum,cms,data,dataConum){
+  const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;
   const total=data.length;
   if(!total){
     document.getElementById('rpt-bilan-grid').innerHTML='';
