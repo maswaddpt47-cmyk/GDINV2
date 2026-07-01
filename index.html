@@ -3355,7 +3355,7 @@ function initAtlConumGlobalSelect(){
   const sel=document.getElementById('sel-atl-conum-global');
   if(!sel)return;
   const cur=sel.value;
-  const atlData=DATA.filter(r=>(r.type_action||[]).includes('Atelier'));
+  const atlData=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier'));
   const conums=[...new Set(atlData.map(r=>r.conum).filter(Boolean))].sort();
   sel.innerHTML='<option value="">— Tous les conseillers —</option>'+conums.map(c=>`<option value="${c}">${c}</option>`).join('');
   if(cur&&conums.includes(cur))sel.value=cur;
