@@ -1848,11 +1848,12 @@ function renderCms(){
 function initConumSelect(){const sel=document.getElementById('sel-conum'),cur=sel.value;sel.innerHTML='';[...new Set(DATA.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE')).sort().forEach(cn=>{const o=document.createElement('option');o.value=cn;o.textContent=cn;sel.appendChild(o);});if(cur)sel.value=cur;}
 function renderConum(){
   const conum=document.getElementById('sel-conum').value,allData=getFiltered();
+  const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;
   const data=allData.filter(r=>r.conum===conum);
   const cmsCount=new Set(data.map(r=>r.cms)).size;
   const topThema=Object.keys(countThemas(data))[0]||'—';
   // Réactivité 48h depuis ACTIONS_DATA (tous CMS confondus, filtre années actif)
-  const actC=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===conum&&(!activeYears.size||activeYears.has(r.year))):[];
+  const actC=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===conum&&(!activeYears.size||activeYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)):[];
   const totalOri=actC.length;
   const hasAct=ACTIONS_DATA&&ACTIONS_DATA.length>0;
   // Évolution par année
@@ -1881,7 +1882,7 @@ function renderConum(){
   allConums.forEach(cn=>{
     const d=allData.filter(r=>r.conum===cn);if(!d.length)return;
     const topT=Object.keys(countThemas(d))[0]||'—';
-    const oriRow=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===cn&&(!activeYears.size||activeYears.has(r.year))).length:null;
+    const oriRow=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===cn&&(!activeYears.size||activeYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)).length:null;
     const hl=cn===conum?'background:var(--s3)':'';
     rows+=`<tr style="${hl}"><td class="${conumClass(cn)}" style="font-weight:600">${cn}</td><td class="mono">${d.length}</td><td class="mono">${oriRow!==null?oriRow:'—'}</td><td><span class="badge badge-blue">${topT}</span></td></tr>`;
   });
@@ -2032,7 +2033,7 @@ function renderRapport(){
   const topThema=Object.keys(countThemas(data))[0]||'—';
   // Délais depuis ACTIONS_DATA
   const cmNormRpt=normCms(cms)||cms;
-  const actRpt=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===conum&&(r.cms===cms||r.cms===cmNormRpt)&&r.etat==='Réalisée'&&(!activeYears.size||activeYears.has(r.year))):[];
+  const actRpt=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===conum&&(r.cms===cms||r.cms===cmNormRpt)&&r.etat==='Réalisée'&&(!activeYears.size||activeYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)):[];
   const totalOrientations=actRpt.length;
   // % dans les 48h (orientation → prise de contact)
   let delR2=actRpt.map(r=>r.delai_total).filter(v=>v!=null&&v>=0);
@@ -2079,7 +2080,7 @@ function renderRapport(){
     actSec.style.display='block';
     // Filter actions by conum + cms
     const cmNorm=normCms(cms)||cms;
-    const actData=ACTIONS_DATA.filter(r=>r.conum===conum&&(r.cms===cms||r.cms===cmNorm)&&(!activeYears.size||activeYears.has(r.year)));
+    const actData=ACTIONS_DATA.filter(r=>r.conum===conum&&(r.cms===cms||r.cms===cmNorm)&&(!activeYears.size||activeYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7));
     const aReal=actData.filter(r=>r.etat==='Réalisée').length;
     const aNon=actData.filter(r=>r.etat==='Non réalisée').length;
     const aEnc=actData.filter(r=>r.etat==='En cours').length;
@@ -2196,7 +2197,7 @@ function buildRptBilan(conum,cms,data,dataConum){
   const topThemaPct=pct(topN,total);
   // Réactivité 48h depuis ACTIONS_DATA filtré conum × cms
   const cmNorm=normCms(cms)||cms;
-  const actBil=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===conum&&(r.cms===cms||r.cms===cmNorm)&&r.etat==='Réalisée'&&(!activeYears.size||activeYears.has(r.year))):[];
+  const actBil=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===conum&&(r.cms===cms||r.cms===cmNorm)&&r.etat==='Réalisée'&&(!activeYears.size||activeYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)):[];
   const t48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0).length;
   const r48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0&&r.delai_reactivite<=2).length;
   const p48=(t48>=20)?Math.round(r48/t48*100):null;
@@ -2642,6 +2643,7 @@ function getDiapoData(){
 function buildBilan(){
   const data=getDiapoData();
   if(!data.length)return;
+  const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;
   const total=data.length;
   const done=data.filter(r=>r.date_action).length;
   const txCompl=Math.round(done/total*100);
@@ -2671,7 +2673,7 @@ function buildBilan(){
   const topConumPct=Math.round(topConumN/total*100);
 
   // Réactivité 48h
-  const actGlobal=ACTIONS_DATA?ACTIONS_DATA.filter(r=>(diapoCms?r.cms===diapoCms||r.cms===normCms(diapoCms):true)&&r.etat==='Réalisée'&&(!activeYears.size||activeYears.has(r.year))):[];
+  const actGlobal=ACTIONS_DATA?ACTIONS_DATA.filter(r=>(diapoCms?r.cms===diapoCms||r.cms===normCms(diapoCms):true)&&r.etat==='Réalisée'&&(!activeYears.size||activeYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)):[];
   const t48=actGlobal.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0).length;
   const r48=actGlobal.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0&&r.delai_reactivite<=2).length;
   const p48=t48>=20?Math.round(r48/t48*100):null;
@@ -3988,11 +3990,12 @@ function drSlideCover(c,data,allDataConum){
 
 // ── SLIDE KPIs ──
 function drSlideKpis(c,data,allDataConum){
+  const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;
   const oriCount=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
   const communes=new Set(data.map(r=>r.commune).filter(Boolean)).size;
   // Délais ACTIONS_DATA
   const cmNormDR=normCms(drCms)||drCms;
-  const actDR=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormDR)&&r.etat==='Réalisée'&&(!drYears.size||drYears.has(r.year))):[];
+  const actDR=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormDR)&&r.etat==='Réalisée'&&(!drYears.size||drYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)):[];
   const totalOrientDR=actDR.length;
   const dR1=actDR.map(r=>r.delai_reactivite).filter(v=>v!=null&&v>=0);
   const dR2=actDR.map(r=>r.delai_total).filter(v=>v!=null&&v>=0);
@@ -4263,8 +4266,9 @@ function drSlideTerritoire(c,data){
 
 // ── SLIDE NON RÉALISÉS ──
 function drSlideNonReal(c,data){
+  const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;
   const cmNormNR=normCms(drCms)||drCms;
-  const actNR=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormNR)&&(!drYears.size||drYears.has(r.year))):[];
+  const actNR=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormNR)&&(!drYears.size||drYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)):[];
   const real=actNR.filter(r=>r.etat==='Réalisée').length;
   const nonReal=actNR.filter(r=>r.etat==='Non réalisée').length;
   const encours=actNR.filter(r=>r.etat==='En cours').length;
@@ -4391,6 +4395,7 @@ function drSlideNonReal(c,data){
 
 // ── SLIDE BILAN ──
 function drSlideBilan(c,data,allDataConum){
+  const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;
   const total=data.length;
   const communes=new Set(data.map(r=>r.commune).filter(Boolean)).size;
   const orienteurs=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
@@ -4413,7 +4418,7 @@ function drSlideBilan(c,data,allDataConum){
   const top3=themas.slice(0,3);
   // Réactivité 48h depuis ACTIONS_DATA
   const cmNormBil=normCms(drCms)||drCms;
-  const actBil=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormBil)&&r.etat==='Réalisée'&&(!drYears.size||drYears.has(r.year))):[];
+  const actBil=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormBil)&&r.etat==='Réalisée'&&(!drYears.size||drYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)):[];
   const t48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0).length;
   const r48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0&&r.delai_reactivite<=2).length;
   const p48=t48>=20?Math.round(r48/t48*100):null;
