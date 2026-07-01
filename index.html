@@ -2042,7 +2042,7 @@ function renderRapport(){
     <div class="kpi orange"><div class="kpi-label">Orienteurs actifs</div><div class="kpi-value">${oriCount}</div><div class="kpi-sub">TS</div></div>
     <div class="kpi cyan"><div class="kpi-label">Délai total</div><div class="kpi-value">${hasAct&&moyR2!=null?moyR2+'j':'—'}</div><div class="kpi-sub">orientation→réalisation</div></div>
     <div class="kpi purple"><div class="kpi-label">Communes couvertes</div><div class="kpi-value">${communesRpt}</div><div class="kpi-sub">sur ce CMS</div></div>`;
-  const mKeys=[...new Set(allData.map(r=>r.date_demande.slice(0,7)))].sort();
+  const mKeys=[...new Set(data.map(r=>r.date_demande.slice(0,7)))].sort();
   destroyChart('ch-rpt-evol');
   charts['ch-rpt-evol']=new Chart(document.getElementById('ch-rpt-evol'),{type:'bar',data:{labels:mKeys.map(monthLabel),datasets:[{data:mKeys.map(k=>data.filter(r=>r.date_demande.startsWith(k)).length),backgroundColor:'rgba(59,130,246,.45)',borderColor:'#3b82f6',borderRadius:5,borderSkipped:false,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:'#1a2235'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}});
   // Graphe calendaire N / N-1 / N-2
