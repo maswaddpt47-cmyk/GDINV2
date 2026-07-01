@@ -1635,7 +1635,7 @@ function renderEvolution(){
     let datasets=[];
     if(evolModeVal==='total'){
       const mc={};dataForEvol.forEach(r=>{const k=r.date_demande.slice(0,7);mc[k]=(mc[k]||0)+1;});
-      const vals=mKeys.map(k=>mc[k]||0),maxV=Math.max(...vals);
+      const vals=mKeys.map(k=>mc[k]||0),maxV=vals.length?Math.max(...vals):0;
       datasets=[{label:'Demandes',data:vals,backgroundColor:mKeys.map(k=>(mc[k]||0)===maxV?'rgba(59,130,246,.7)':'rgba(59,130,246,.3)'),borderColor:'#3b82f6',borderRadius:6,borderSkipped:false,borderWidth:1,type:'bar'},{label:'Tendance',data:vals,type:'line',borderColor:'#22d3ee',borderWidth:2,pointRadius:4,pointBackgroundColor:'#22d3ee',tension:.35,fill:false}];
     } else if(evolModeVal==='conum'){
       const conums=[...new Set(dataForEvol.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE'));
