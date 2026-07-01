@@ -3901,7 +3901,7 @@ const DR_SLIDES=[
 ];
 
 function drData(){
-  const base=getFiltered().filter(r=>r.conum===drConum&&r.cms===drCms);
+  const base=getFilteredExceptYears().filter(r=>r.conum===drConum&&r.cms===drCms);
   return drYears.size?base.filter(r=>drYears.has(r.date_demande.slice(0,4))):base;
 }
 
@@ -3935,7 +3935,7 @@ function drGoTo(idx){
   c.scrollTop=0;
 
   const data=drData();
-  const allDataConum=getFiltered().filter(r=>r.conum===drConum);
+  const allDataConum=getFilteredExceptYears().filter(r=>r.conum===drConum);
   const PALETTE_DR=['#3b82f6','#f97316','#10b981','#8b5cf6','#22d3ee','#eab308','#ef4444','#ec4899','#06b6d4','#84cc16'];
 
   if(slide.id==='cover') drSlideCover(c,data,allDataConum);
