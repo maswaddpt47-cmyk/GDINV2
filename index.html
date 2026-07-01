@@ -2033,7 +2033,6 @@ function renderRapport(){
   // Délais depuis ACTIONS_DATA
   const cmNormRpt=normCms(cms)||cms;
   const actRpt=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===conum&&(r.cms===cms||r.cms===cmNormRpt)&&r.etat==='Réalisée'&&(!activeYears.size||activeYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)):[];
-  const totalOrientations=actRpt.length;
   // % dans les 48h (orientation → prise de contact)
   let delR2=actRpt.map(r=>r.delai_total).filter(v=>v!=null&&v>=0);
   // Fallback : si ACTIONS_DATA (import séparé/stocké) ne couvre pas ce conseiller/CMS/période,
