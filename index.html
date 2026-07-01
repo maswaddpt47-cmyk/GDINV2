@@ -3957,7 +3957,7 @@ function drGoTo(idx){
 }
 
 // ── SLIDE COUVERTURE ──
-function drSlideCover(c,data,allDataConum){
+function drSlideCover(c,data){
   const dates=data.map(r=>r.date_demande).sort();
   const debut=dates[0]?.slice(0,7).replace('-','/')||'—';
   const fin=dates[dates.length-1]?.slice(0,7).replace('-','/')||'—';
