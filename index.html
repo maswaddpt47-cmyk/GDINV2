@@ -1469,7 +1469,6 @@ function renderGlobal(){
 
   makeBarList(document.getElementById('bar-cms-global'),Object.fromEntries(Object.entries(count(noDsian,'cms')).slice(0,9)),'blue');
 
-  const types=countTypes(data);
   destroyChart('ch-types');
   renderTypeChart('ch-types',data);
   {const theEnt=Object.entries(countThemas(data));
