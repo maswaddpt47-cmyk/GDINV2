@@ -4626,7 +4626,8 @@ async function exportDiapoPDF(){
 
   const savedIdx=drIdx;
   const c=document.getElementById('dr-content');
-  const allDataConum=getFiltered().filter(r=>r.conum===drConum);
+  const _baseCN=getFilteredExceptYears().filter(r=>r.conum===drConum);
+  const allDataConum=drYears.size?_baseCN.filter(r=>drYears.has(r.date_demande.slice(0,4))):_baseCN;
   const PALETTE_DR=['#3b82f6','#f97316','#10b981','#8b5cf6','#22d3ee','#eab308','#ef4444','#ec4899','#06b6d4','#84cc16'];
 
   for(let i=0;i<DR_SLIDES.length;i++){
