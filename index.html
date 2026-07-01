@@ -1828,7 +1828,7 @@ function renderCms(){
     const lbl=diff===0?`${yr} (N)`:diff===1?`${yr} (N-1)`:`${yr} (N-${diff})`;
     return{label:lbl,data:months.map(m=>cmsBase.filter(r=>r.date_demande.startsWith(`${yr}-${m}`)).length),backgroundColor:col+'99',borderColor:col,borderRadius:3,borderSkipped:false,borderWidth:1};
   });
-  charts['ch-cms-cal']=new Chart(document.getElementById('ch-cms-cal'),{type:'bar',data:{labels:labM,datasets},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:true,labels:{color:'#8899b0',font:{size:10},boxWidth:10,padding:6}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}});}
+  charts['ch-cms-cal']=new Chart(document.getElementById('ch-cms-cal'),{type:'bar',data:{labels:labM,datasets},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:true,labels:{color:legendColor(),font:{size:10},boxWidth:10,padding:6}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}});}
   let rows='';
   Object.entries(count(data,'orienteur')).filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())).slice(0,15).forEach(([name,n],i)=>{
     const od=data.filter(r=>r.orienteur===name),topCN2=(Object.keys(count(od,'conum'))[0]||'—');
