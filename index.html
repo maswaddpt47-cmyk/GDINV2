@@ -3301,7 +3301,7 @@ function renderAteliers(){
   const yoyYears=[...activeYears].sort();
   const YOY_COLORS=['#8b5cf6','#22d3ee','#f97316','#10b981','#3b82f6','#eab308'];
   const MOIS_COURTS=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
-  const allAtlData=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier'));
+  const allAtlData=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier')&&(!conumAtl||r.conum===conumAtl));
   const yoyDatasets=yoyYears.map((yr,i)=>{
     const vals=Array(12).fill(0);
     allAtlData.filter(r=>r.date_demande.startsWith(yr)).forEach(r=>{
