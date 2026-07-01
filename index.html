@@ -2087,7 +2087,7 @@ function renderRapport(){
     });}
 
     // Monthly non réalisés
-    const mKeys=[...new Set(allData.map(r=>r.date_demande.slice(0,7)))].sort();
+    const mKeys=[...new Set(actData.map(r=>r.date).filter(Boolean).map(d=>d.slice(0,7)))].sort();
     destroyChart('ch-rpt-act-monthly');
     charts['ch-rpt-act-monthly']=new Chart(document.getElementById('ch-rpt-act-monthly'),{
       type:'bar',
