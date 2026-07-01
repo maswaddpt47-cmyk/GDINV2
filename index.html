@@ -3935,7 +3935,8 @@ function drGoTo(idx){
   c.scrollTop=0;
 
   const data=drData();
-  const allDataConum=getFilteredExceptYears().filter(r=>r.conum===drConum);
+  const _baseConum=getFilteredExceptYears().filter(r=>r.conum===drConum);
+  const allDataConum=drYears.size?_baseConum.filter(r=>drYears.has(r.date_demande.slice(0,4))):_baseConum;
   const PALETTE_DR=['#3b82f6','#f97316','#10b981','#8b5cf6','#22d3ee','#eab308','#ef4444','#ec4899','#06b6d4','#84cc16'];
 
   if(slide.id==='cover') drSlideCover(c,data,allDataConum);
