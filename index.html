@@ -3625,7 +3625,7 @@ function getCoordsGlobal(nom){
   }
 
   // Peupler le dropdown CMS dynamiquement (désactivé en mode Ateliers, non pertinent)
-  const allCmsInData=[...new Set(DATA.map(r=>r.cms).filter(Boolean))].sort((a,b)=>CMS_MAIN.indexOf(a)-CMS_MAIN.indexOf(b));
+  const allCmsInData=[...new Set(getFiltered().map(r=>r.cms).filter(Boolean))].sort((a,b)=>CMS_MAIN.indexOf(a)-CMS_MAIN.indexOf(b));
   if(cmsFilterEl){
     cmsFilterEl.disabled=isAteliersMode;
     cmsFilterEl.title=isAteliersMode?'Filtre CMS non pertinent pour les ateliers collectifs':'';
