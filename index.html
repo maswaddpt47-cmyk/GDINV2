@@ -1820,7 +1820,7 @@ function renderCms(){
   if(ty){const nty=_nt(ty);cmsBase=cmsBase.filter(r=>(r.type_action||[]).some(x=>_nt(x).startsWith(nty)));}
   const months=['01','02','03','04','05','06','07','08','09','10','11','12'];
   const labM=months.map(m=>{const d=new Date(`2000-${m}-01`);return d.toLocaleDateString('fr-FR',{month:'short'});});
-  const maxYr=Math.max(...yearsForCal.map(Number));
+  const maxYr=yearsForCal.length?Math.max(...yearsForCal.map(Number)):new Date().getFullYear();
   const datasets=yearsForCal.map(yr=>{
     const col=yearColor(yr);
     const diff=maxYr-Number(yr);
