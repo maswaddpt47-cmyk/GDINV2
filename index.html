@@ -4302,15 +4302,19 @@ function drSlideNonReal(c,data){
         <div class="card-title"><span class="dot" style="background:var(--red)"></span>Évolution mensuelle — Réalisés vs Non réalisés</div>
         <canvas id="${chartId}" style="max-height:240px"></canvas>
       </div>
-      <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="card">
+          <div class="card-title"><span class="dot" style="background:var(--purple)"></span>Non réalisés — N vs N-1</div>
+          <canvas id="ch-dr-yoy-nr" style="max-height:220px"></canvas>
+        </div>
         <div class="card">
           <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Réalisés / Non réalisés — côte à côte N vs N-1</div>
-          <canvas id="ch-dr-rvn" style="max-height:240px"></canvas>
+          <canvas id="ch-dr-rvn" style="max-height:220px"></canvas>
         </div>
-        <div class="card">
-          <div class="card-title"><span class="dot" style="background:var(--orange)"></span>Répartition</div>
-          <canvas id="ch-dr-pie" style="max-height:240px"></canvas>
-        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--orange)"></span>Répartition</div>
+        <canvas id="ch-dr-pie" style="max-height:160px"></canvas>
       </div>
     </div>`;
 
@@ -4326,8 +4330,20 @@ function drSlideNonReal(c,data){
     options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{color:legendColor(),font:{size:10},padding:12,boxWidth:10}}},scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{stacked:true,grid:{color:'rgba(37,48,71,.5)'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}
   });
 
-  // Réalisés / Non réalisés — côte à côte N vs N-1
+  // Non réalisés seuls — N vs N-1 par mois calendaire
   const nrYears=[...new Set(actNR.map(r=>r.year).filter(Boolean))].sort();
+  drCharts['ch-dr-yoy-nr']=new Chart(document.getElementById('ch-dr-yoy-nr'),{
+    type:'bar',
+    data:{labels:MONTH_FR,datasets:nrYears.map((yr,i)=>{
+      const col=YEAR_PALETTE[i%YEAR_PALETTE.length];
+      const vals=Array(12).fill(0);
+      actNR.filter(r=>r.year===yr&&r.etat==='Non réalisée').forEach(r=>{if(r.date){const m=parseInt(r.date.slice(5,7))-1;if(m>=0)vals[m]++;}});
+      return{label:yrLabel(yr),data:vals,backgroundColor:col+'66',borderColor:col,borderWidth:1.5,borderRadius:3,borderSkipped:false};
+    })},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:legendColor(),font:{size:10},boxWidth:8,padding:6}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:'rgba(37,48,71,.5)'},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}
+  });
+
+  // Réalisés / Non réalisés — côte à côte N vs N-1
   const drRvnDatasets=[];
   nrYears.forEach((yr,i)=>{
     const alpha=nrYears.length>1?(0.35+0.45*(i/(nrYears.length-1))):0.70;
