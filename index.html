@@ -3364,9 +3364,9 @@ function renderHeatmapAteliers(){
   const container=document.getElementById('heatmap-atl-container');
   if(!container)return;
   const conum=document.getElementById('sel-atl-conum-global')?.value||'';
-  const allYears=[...new Set(DATA.filter(r=>r.date_action).map(r=>r.date_action.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
   let atlData=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier'));
   if(conum)atlData=atlData.filter(r=>r.conum===conum);
+  const allYears=[...new Set(atlData.filter(r=>r.date_action).map(r=>r.date_action.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
   if(!atlData.length){container.innerHTML='<div style="color:var(--muted);font-size:11px;padding:10px">Aucun atelier sur la période sélectionnée</div>';return;}
   function atlLieu(r){return(r.lieu_raw||'').split(';')[0].trim()||'Lieu non précisé';}
   const lieuList=[...new Set(atlData.map(atlLieu))].sort((a,b)=>{
