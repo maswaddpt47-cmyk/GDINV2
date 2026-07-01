@@ -3908,7 +3908,7 @@ function drData(){
 function drDestroyCharts(){Object.values(drCharts).forEach(c=>{try{c.destroy();}catch(e){}});drCharts={};}
 
 function drBuildYearChips(){
-  const allYears=[...new Set(getFiltered().filter(r=>r.conum===drConum&&r.cms===drCms).map(r=>r.date_demande.slice(0,4)))].sort();
+  const allYears=[...new Set(DATA.filter(r=>r.conum===drConum&&r.cms===drCms).map(r=>r.date_demande.slice(0,4)))].sort();
   const el=document.getElementById('dr-year-chips');
   el.innerHTML=allYears.map(y=>`
     <span onclick="drToggleYear('${y}')" id="dr-yr-${y}" style="cursor:pointer;font-size:10px;padding:2px 8px;border-radius:10px;border:1px solid var(--border);background:${drYears.has(y)?'var(--blue)':'var(--s2)'};color:${drYears.has(y)?'#fff':'var(--muted)'};transition:all .15s">${y}</span>
