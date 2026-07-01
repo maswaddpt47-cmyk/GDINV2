@@ -3731,7 +3731,6 @@ function getCoordsGlobal(nom){
 
 // ── HEATMAP CHARGE CONSEILLERS ──
 function renderHeatmapConum(){
-  const allData=getFiltered();
   const allYears=[...new Set(DATA.map(r=>r.date_demande.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
   const allConums=[...new Set(DATA.map(r=>r.conum).filter(c=>c&&!c.includes('CHIBANE')))].sort();
   const container=document.getElementById('heatmap-conum-container');
