@@ -4500,7 +4500,7 @@ function startDiapoRapport(){
   drCms=document.getElementById('sel-rpt-cms').value;
   if(!drConum||!drCms)return;
 
-  drYears=new Set();
+  drYears=activeYears.size?new Set([...activeYears]):new Set();
   drActive=true;
   drIdx=0;
 
