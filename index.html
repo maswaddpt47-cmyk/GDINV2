@@ -2751,7 +2751,10 @@ function diapoGoTo(idx){
   else if(slide.id==='par-conum')renderConum();
   else if(slide.id==='orienteurs')renderOrienteurs();
   else if(slide.id==='territoire')renderTerritoire();
-  else if(slide.id==='rapport')renderRapport();
+  else if(slide.id==='rapport'){
+    if(diapoCms){const s=document.getElementById('sel-rpt-cms');if(s)s.value=diapoCms;}
+    renderRapport();
+  }
   else if(slide.id==='bilan')buildBilan();
 
   setTimeout(()=>{
