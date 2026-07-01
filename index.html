@@ -1330,12 +1330,14 @@ function getFiltered(){
   let d=DATA.filter(r=>r.date_demande>=f&&r.date_demande<=t);
   if(!allSelected)d=d.filter(r=>activeYears.has(r.date_demande.slice(0,4)));
   if(ty){const _nt=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/s$/,'');const nty=_nt(ty);d=d.filter(r=>(r.type_action||[]).some(x=>_nt(x).startsWith(nty)));}
+  if(diapoCms){const _cms=normCms(diapoCms)||diapoCms;d=d.filter(r=>r.cms===diapoCms||r.cms===_cms);}
   return d;
 }
 function getFilteredExceptYears(){
   const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value,ty=document.getElementById('typeFilter').value;
   let d=DATA.filter(r=>r.date_demande>=f&&r.date_demande<=t);
   if(ty){const _nt=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/s$/,'');const nty=_nt(ty);d=d.filter(r=>(r.type_action||[]).some(x=>_nt(x).startsWith(nty)));}
+  if(diapoCms){const _cms=normCms(diapoCms)||diapoCms;d=d.filter(r=>r.cms===diapoCms||r.cms===_cms);}
   return d;
 }
 function resetDates(){updateDateRange();document.getElementById('typeFilter').value='';activeYears=new Set(ALL_YEARS);syncYearChipStyles();try{document.getElementById('typeFilterM').value='';document.getElementById('dFromM').value=document.getElementById('dFrom').value;document.getElementById('dToM').value=document.getElementById('dTo').value;}catch(e){}refreshAll();try{document.getElementById('btn-filter-toggle').classList.remove('has-filter');}catch(e){}}
@@ -2634,8 +2636,7 @@ let diapoCms=''; // CMS sélectionné au lancement du diapo
 
 // Retourne les données filtrées par CMS si contexte diapo actif
 function getDiapoData(){
-  const base=getFiltered();
-  return diapoCms?base.filter(r=>r.cms===diapoCms):base;
+  return getFiltered();
 }
 
 function buildBilan(){
