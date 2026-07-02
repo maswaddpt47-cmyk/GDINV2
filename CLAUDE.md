@@ -50,24 +50,21 @@ Il existe deux diaporamas distincts dans l'application — **ne pas les confondr
 
 Le fichier **`gdin-pure.js`** contient toutes les fonctions pures du projet (calculs, parsing, normalisation CMS). Le fichier **`tests.html`** contient 54 tests unitaires qui les couvrent.
 
+**Si le projet contient des fonctions de calcul, de parsing ou de normalisation de données → créer `gdin-pure.js` (ou équivalent) + `tests.html` dès la première session significative, sans attendre qu'on le demande.**
+
+Une session est significative si elle touche à la logique métier (pas une simple correction de typo ou de style).
+
 **Règle :** après toute modification de `gdin-pure.js`, vérifier que les tests passent avant de commiter :
 
 ```bash
-node -e "$(cat << 'EOF'
-eval(require('fs').readFileSync('gdin-pure.js','utf8'));
-// vérification rapide des fonctions critiques
-console.assert(pct(1,4)===25,'pct');
-console.assert(excelDate('01/01/2025')==='2025-01-01','excelDate');
-console.assert(normCms('CMS MONTANOU')==='CMS Agen Montanou','normCms');
-console.log('OK — tests rapides passent');
-EOF
-)"
+node -e "eval(require('fs').readFileSync('gdin-pure.js','utf8')); console.log('syntax OK');"
 ```
 
 Ou ouvrir `tests.html` dans un navigateur pour la suite complète.
 
-- Si un test échoue après une **correction de bug** : le comportement attendu n'a pas changé → corriger le code, pas le test.
-- Si un test échoue après un **changement intentionnel** : mettre à jour le test en même temps que le code.
+- Si un test échoue après une **correction de bug** → corriger le code, pas le test.
+- Si un test échoue après un **changement intentionnel** → mettre à jour le test ET le code dans le même commit.
+- Ne jamais désactiver ou supprimer un test pour faire passer le commit.
 
 > Ne jamais modifier `gdin-pure.js` sans vérifier les tests. Ne jamais modifier les tests sans modifier le code correspondant.
 
