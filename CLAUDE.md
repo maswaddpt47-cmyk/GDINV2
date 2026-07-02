@@ -46,6 +46,31 @@ Il existe deux diaporamas distincts dans l'application — **ne pas les confondr
 | Données | `getDiapoData()` (global) | `drData()` (conum × CMS) |
 | Charts | `charts{}` | `drCharts{}` |
 
+### Tests unitaires — règle obligatoire
+
+Le fichier **`gdin-pure.js`** contient toutes les fonctions pures du projet (calculs, parsing, normalisation CMS). Le fichier **`tests.html`** contient 54 tests unitaires qui les couvrent.
+
+**Règle :** après toute modification de `gdin-pure.js`, vérifier que les tests passent avant de commiter :
+
+```bash
+node -e "$(cat << 'EOF'
+eval(require('fs').readFileSync('gdin-pure.js','utf8'));
+// vérification rapide des fonctions critiques
+console.assert(pct(1,4)===25,'pct');
+console.assert(excelDate('01/01/2025')==='2025-01-01','excelDate');
+console.assert(normCms('CMS MONTANOU')==='CMS Agen Montanou','normCms');
+console.log('OK — tests rapides passent');
+EOF
+)"
+```
+
+Ou ouvrir `tests.html` dans un navigateur pour la suite complète.
+
+- Si un test échoue après une **correction de bug** : le comportement attendu n'a pas changé → corriger le code, pas le test.
+- Si un test échoue après un **changement intentionnel** : mettre à jour le test en même temps que le code.
+
+> Ne jamais modifier `gdin-pure.js` sans vérifier les tests. Ne jamais modifier les tests sans modifier le code correspondant.
+
 ### Convention de messages de commit
 | Préfixe | Usage |
 |---|---|
