@@ -57,10 +57,10 @@ Une session est significative si elle touche à la logique métier (pas une simp
 **Règle :** après toute modification de `gdin-pure.js`, vérifier que les tests passent avant de commiter :
 
 ```bash
-node -e "eval(require('fs').readFileSync('gdin-pure.js','utf8')); console.log('syntax OK');"
+node --test gdin-pure.test.js
 ```
 
-Ou ouvrir `tests.html` dans un navigateur pour la suite complète.
+La CI bloque le déploiement si un test échoue — ne jamais pousser sans avoir lancé les tests localement.
 
 - Si un test échoue après une **correction de bug** → corriger le code, pas le test.
 - Si un test échoue après un **changement intentionnel** → mettre à jour le test ET le code dans le même commit.
