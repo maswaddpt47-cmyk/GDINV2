@@ -711,7 +711,7 @@ body.pres-mode .tbl th{font-size:11px}
         <div class="card g1">
           <div class="card-title"><span class="dot" style="background:var(--orange)"></span>États des accompagnements — détail</div>
           <table class="tbl">
-            <thead><tr><th>État</th><th>Nombre</th><th>%</th><th>Évolution vs total</th></tr></thead>
+            <thead><tr><th>État</th><th>Nombre</th><th>%</th></tr></thead>
             <tbody id="tbl-rpt-act"></tbody>
           </table>
         </div>
@@ -1903,10 +1903,10 @@ function renderRapport(){
     // Detail table
     function txBar(p,col){return `<div style="display:flex;align-items:center;gap:5px"><div style="flex:1;background:var(--s3);border-radius:3px;height:5px;overflow:hidden"><div style="width:${p}%;height:100%;background:${col};border-radius:3px"></div></div><span class="mono" style="color:${col};font-size:10px">${p}%</span></div>`;}
     document.getElementById('tbl-rpt-act').innerHTML=
-      `<tr><td style="color:var(--green);font-weight:600">Réalisée</td><td class="mono">${aReal}</td><td style="min-width:80px">${txBar(pct(aReal,aTot),'#10b981')}</td><td>${txBar(pct(aReal,aTot),'#10b981')}</td></tr>`+
-      `<tr><td style="color:var(--red);font-weight:600">Non réalisée</td><td class="mono">${aNon}</td><td style="min-width:80px">${txBar(pct(aNon,aTot),'#ef4444')}</td><td>${txBar(pct(aNon,aTot),'#ef4444')}</td></tr>`+
-      `<tr><td style="color:var(--orange);font-weight:600">En cours</td><td class="mono">${aEnc}</td><td style="min-width:80px">${txBar(pct(aEnc,aTot),'#f97316')}</td><td>${txBar(pct(aEnc,aTot),'#f97316')}</td></tr>`+
-      `<tr class="total-row"><td style="font-weight:700">TOTAL</td><td class="mono">${aTot}</td><td></td><td></td></tr>`;
+      `<tr><td style="color:var(--green);font-weight:600">Réalisée</td><td class="mono">${aReal}</td><td style="min-width:80px">${txBar(pct(aReal,aTot),'#10b981')}</td></tr>`+
+      `<tr><td style="color:var(--red);font-weight:600">Non réalisée</td><td class="mono">${aNon}</td><td style="min-width:80px">${txBar(pct(aNon,aTot),'#ef4444')}</td></tr>`+
+      `<tr><td style="color:var(--orange);font-weight:600">En cours</td><td class="mono">${aEnc}</td><td style="min-width:80px">${txBar(pct(aEnc,aTot),'#f97316')}</td></tr>`+
+      `<tr class="total-row"><td style="font-weight:700">TOTAL</td><td class="mono">${aTot}</td><td></td></tr>`;
   } else {
     actSec.style.display='none';
     actMiss.style.display='block';
