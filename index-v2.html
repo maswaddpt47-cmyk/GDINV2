@@ -66,12 +66,12 @@ body{
 .sb-title{font-size:15px;font-weight:700;letter-spacing:-.5px;color:rgba(255,255,255,.85)}
 .sb-nav{display:flex;flex-direction:column;gap:1px;padding:10px 8px;overflow-y:auto;scrollbar-width:none}
 .sb-nav::-webkit-scrollbar{display:none}
-.sb-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:none;background:transparent;color:rgba(255,255,255,.45);border-radius:10px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;text-align:left;width:100%;transition:all .18s;position:relative;letter-spacing:.01em}
-.sb-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
-.sb-item.active{background:rgba(77,159,255,.15);color:#fff;border:1px solid rgba(77,159,255,.22)}
-.sb-item.active::before{content:'';position:absolute;left:-1px;top:20%;bottom:20%;width:3px;background:linear-gradient(180deg,var(--blue),var(--cyan));border-radius:0 3px 3px 0;box-shadow:0 0 8px var(--blue)}
+.sidebar .sb-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:none;background:transparent;color:rgba(255,255,255,.45);border-radius:10px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;text-align:left;width:100%;transition:all .18s;position:relative;letter-spacing:.01em}
+.sidebar .sb-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+.sidebar .sb-item.active{background:rgba(77,159,255,.15);color:#fff;border:1px solid rgba(77,159,255,.22)}
+.sidebar .sb-item.active::before{content:'';position:absolute;left:-1px;top:20%;bottom:20%;width:3px;background:linear-gradient(180deg,var(--blue),var(--cyan));border-radius:0 3px 3px 0;box-shadow:0 0 8px var(--blue)}
 .sb-icon{width:15px;height:15px;flex-shrink:0;opacity:.6}
-.sb-item.active .sb-icon{opacity:1}
+.sidebar .sb-item.active .sb-icon{opacity:1}
 .sb-divider{height:1px;background:rgba(255,255,255,.04);margin:6px 8px}
 .sb-import{color:rgba(0,229,160,.5)}
 .sb-import:hover{color:var(--green)!important;background:rgba(0,229,160,.05)!important}
@@ -153,6 +153,8 @@ select:focus{border-color:rgba(77,159,255,.5)}
 .kpi.purple .kpi-value{color:var(--purple);text-shadow:0 0 28px rgba(167,139,250,.45)}
 .kpi.cyan .kpi-value{color:var(--cyan);text-shadow:0 0 28px rgba(0,217,200,.4)}
 .kpi.red .kpi-value{color:var(--red);text-shadow:0 0 28px rgba(255,59,92,.45)}
+.kpi.yellow{background:linear-gradient(145deg,rgba(251,191,36,.08) 0%,rgba(255,255,255,.018) 55%);box-shadow:0 0 50px -12px rgba(251,191,36,.3),inset 0 1px 0 rgba(251,191,36,.12)}
+.kpi.yellow .kpi-value{color:var(--yellow);text-shadow:0 0 28px rgba(251,191,36,.45)}
 .kpi-sub{font-size:11px;color:var(--muted);line-height:1.5}
 .bar-list{display:flex;flex-direction:column;gap:10px}
 .bar-item .bi-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
@@ -231,13 +233,14 @@ canvas{display:block;width:100%!important;max-height:240px}
 .sort-icon.asc{opacity:1;color:var(--cyan);font-weight:700}
 .sort-icon.desc{opacity:1;color:var(--cyan);font-weight:700}
 @media(max-width:780px){
-  body{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}
+  /* Hauteur fixe = viewport : empêche le body de grandir et scrolle dans .container */
+  body{grid-template-columns:1fr;grid-template-rows:auto 1fr;height:100dvh;overflow:hidden}
   .sidebar{position:fixed;bottom:0;left:0;right:0;top:auto;height:auto;width:100%;flex-direction:row;border-right:none;border-top:1px solid rgba(255,255,255,.07);grid-row:auto;z-index:400}
   .sb-logo{display:none}
   .sb-nav{flex-direction:row;padding:6px 4px;gap:0;flex:1;overflow-x:auto;scrollbar-width:none}
   .sb-nav::-webkit-scrollbar{display:none}
-  .sb-item{flex-direction:column;gap:3px;padding:6px 8px;font-size:9.5px;border-radius:6px;min-width:52px;align-items:center;text-align:center}
-  .sb-item::before{display:none}
+  .sidebar .sb-item{flex-direction:column;gap:3px;padding:6px 8px;font-size:9.5px;border-radius:6px;min-width:52px;align-items:center;text-align:center}
+  .sidebar .sb-item::before{display:none}
   .sb-icon{width:18px;height:18px}
   .sb-divider{width:1px;height:auto;margin:6px 2px}
   .sb-footer{display:none}
@@ -247,7 +250,8 @@ canvas{display:block;width:100%!important;max-height:240px}
   .date-range input[type=date]{font-size:11px;max-width:100px}
   select{font-size:11px;padding:4px 7px}
   .type-filter label,.date-range label{font-size:9px}
-  .container{grid-column:1;padding:10px 10px 80px}
+  /* grid-row:2 + overflow-y:auto : le container scrolle en interne, pas la page */
+  .container{grid-column:1;grid-row:2;overflow-y:auto;padding:10px 10px 80px}
   .g5,.g6{grid-template-columns:1fr 1fr!important}
   .g4{grid-template-columns:1fr 1fr!important}
   .g3{grid-template-columns:1fr!important}
@@ -399,7 +403,7 @@ body.pres-mode .tbl th{font-size:11px}
 /* ── Mobile filter drawer ── */
 .filter-drawer-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300}
 .filter-drawer-backdrop.open{display:block}
-.filter-drawer{position:fixed;bottom:0;left:0;right:0;background:rgba(8,10,16,.92);backdrop-filter:blur(32px) saturate(180%);border-top:1px solid rgba(255,255,255,.08);border-radius:20px 20px 0 0;padding:20px 18px 32px;z-index:301;transform:translateY(100%);transition:transform .25s ease;max-height:70vh;overflow-y:auto}
+.filter-drawer{position:fixed;bottom:60px;left:0;right:0;background:rgba(8,10,16,.92);backdrop-filter:blur(32px) saturate(180%);border-top:1px solid rgba(255,255,255,.08);border-radius:20px 20px 0 0;padding:20px 18px 24px;z-index:301;transform:translateY(calc(100% + 60px));transition:transform .25s ease;max-height:calc(70vh - 60px);overflow-y:auto}
 .filter-drawer.open{transform:translateY(0)}
 .drawer-handle{width:40px;height:4px;background:var(--dim);border-radius:2px;margin:0 auto 16px}
 .drawer-title{font-size:13px;font-weight:600;margin-bottom:14px;color:var(--text)}
@@ -651,14 +655,27 @@ body.pres-mode .tbl th{font-size:11px}
     </div>
   </div>
   <div id="kpi-global" class="g5"></div>
-    <div class="g2">
-      <div class="card"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Thématiques</div><canvas id="ch-thema"></canvas></div>
-      <div class="card"><div class="card-title"><span class="dot" style="background:var(--orange)"></span>Répartition conseillers</div><canvas id="ch-conum"></canvas></div>
-    </div>
-    <div class="g2">
-      <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Accompagnements par CMS (hors DSIAN)</div><div id="bar-cms-global" class="bar-list"></div></div>
-      <div class="card"><div class="card-title"><span class="dot" style="background:var(--purple)"></span>Types d'action (hors Réservation)</div><canvas id="ch-types"></canvas></div>
-    </div>
+  <div id="kpi-global2" class="g4" style="margin-top:0"></div>
+  <div class="card g1">
+    <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Évolution mensuelle des demandes</div>
+    <canvas id="ch-global-evol" style="max-height:220px"></canvas>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Thématiques</div><canvas id="ch-thema"></canvas></div>
+    <div class="card"><div class="card-title"><span class="dot" style="background:var(--orange)"></span>Répartition conseillers</div><canvas id="ch-conum"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Accompagnements par CMS (hors DSIAN)</div><div id="bar-cms-global" class="bar-list"></div></div>
+    <div class="card"><div class="card-title"><span class="dot" style="background:var(--purple)"></span>Types d'action (hors Réservation)</div><canvas id="ch-types"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-title"><span class="dot" style="background:var(--cyan)"></span>État des demandes</div><canvas id="ch-etat"></canvas></div>
+    <div class="card"><div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Top orienteurs (15 premiers)</div><canvas id="ch-ori-global" style="max-height:320px"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Thématiques — barres comparatives</div><canvas id="ch-thema-bar" style="max-height:320px"></canvas></div>
+    <div class="card"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Volume par CMS — classement</div><canvas id="ch-cms-rank" style="max-height:320px"></canvas></div>
+  </div>
   </div>
 
   <!-- ÉVOLUTION -->
@@ -1405,6 +1422,82 @@ function renderGlobal(){
   setInsightQ('ch-conum',topCn?`Conseiller le plus actif : <strong>${topCn[0]}</strong> (${topCn[1]} accomp.)<br>Les 2 premiers : <strong>${pct(top2Sh,data.length)}%</strong> de l'activité.`:'Aucune donnée');
   const topCmsG=Object.entries(count(noDsian,'cms')).sort((a,b)=>b[1]-a[1])[0];
   setInsightQ('bar-cms-global',topCmsG?`CMS le plus actif (hors DSIAN) : <strong>${topCmsG[0].replace(/^Centre Médico-Social(?: de)? /,'CMS ')}</strong><br>${topCmsG[1]} accompagnements (${pct(topCmsG[1],noDsian.length)}% du total hors DSIAN).`:'Aucune donnée');}
+
+  // KPI ligne 2 : urgences, délai moyen, bénéficiaires connus, nouveaux bénéficiaires
+  const urgCount=data.filter(r=>r.urgence).length;
+  const benefConnu=data.filter(r=>r.benef_connu).length;
+  const withDelai=data.filter(r=>r.delai!=null&&r.delai>=0);
+  const avgDelai=withDelai.length?Math.round(withDelai.reduce((s,r)=>s+r.delai,0)/withDelai.length):null;
+  const realisees=data.filter(r=>(r.etat||'').toLowerCase().includes('réalisée')||r.date_action).length;
+  document.getElementById('kpi-global2').innerHTML=`
+    <div class="kpi red" data-tip="Demandes marquées urgentes"><div class="kpi-label">Urgences</div><div class="kpi-value">${urgCount}</div><div class="kpi-sub">${pct(urgCount,data.length)}% du total</div></div>
+    <div class="kpi green"><div class="kpi-label">Demandes réalisées</div><div class="kpi-value">${realisees}</div><div class="kpi-sub">${pct(realisees,data.length)}% de réalisation</div></div>
+    <div class="kpi blue"><div class="kpi-label">Bénéficiaires connus</div><div class="kpi-value">${benefConnu}</div><div class="kpi-sub">${pct(benefConnu,data.length)}% bénéf. déjà suivis</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Délai moyen</div><div class="kpi-value">${avgDelai!=null?avgDelai+'j':'—'}</div><div class="kpi-sub">${withDelai.length} dossiers renseignés</div></div>`;
+
+  // Évolution mensuelle (global)
+  {
+    const byMonth={};
+    data.forEach(r=>{const m=r.date_demande?r.date_demande.slice(0,7):null;if(m)byMonth[m]=(byMonth[m]||0)+1;});
+    const mKeys=Object.keys(byMonth).sort();
+    destroyChart('ch-global-evol');
+    charts['ch-global-evol']=new Chart(document.getElementById('ch-global-evol'),{
+      type:'bar',
+      data:{labels:mKeys.map(monthLabel),datasets:[{data:mKeys.map(k=>byMonth[k]),backgroundColor:'#3b82f688',borderColor:'#3b82f6',borderWidth:1.5,borderRadius:4,borderSkipped:false}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y} demandes`}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}
+    });
+  }
+
+  // État des demandes
+  {
+    const etatMap={};
+    data.forEach(r=>{const e=(r.etat||'Non renseigné').trim();etatMap[e]=(etatMap[e]||0)+1;});
+    const etatEntries=Object.entries(etatMap).sort((a,b)=>b[1]-a[1]);
+    const etatColors={'Réalisée':'#10b981','En attente':'#f97316','Annulée':'#ef4444','Non renseigné':'#6b7fa0'};
+    destroyChart('ch-etat');
+    charts['ch-etat']=new Chart(document.getElementById('ch-etat'),{
+      type:'doughnut',
+      data:{labels:etatEntries.map(e=>e[0]),datasets:[{data:etatEntries.map(e=>e[1]),backgroundColor:etatEntries.map(e=>etatColors[e[0]]||'#8b5cf6'),borderWidth:2,borderColor:'#111827',hoverOffset:6}]},
+      options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:8,color:legendColor()}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${pct(ctx.parsed,data.length)}%)`}}}}
+    });
+    setInsightQ('ch-etat',etatEntries[0]?`État dominant : <strong>${etatEntries[0][0]}</strong> (${etatEntries[0][1]} — ${pct(etatEntries[0][1],data.length)}%)`:'Aucune donnée');
+  }
+
+  // Top orienteurs (horizontal bar)
+  {
+    const oriMap={};
+    data.forEach(r=>{const o=(r.orienteur||'').trim();if(o&&!ORI_EXCL.has(o))oriMap[o]=(oriMap[o]||0)+1;});
+    const oriEntries=Object.entries(oriMap).sort((a,b)=>b[1]-a[1]).slice(0,15);
+    destroyChart('ch-ori-global');
+    charts['ch-ori-global']=new Chart(document.getElementById('ch-ori-global'),{
+      type:'bar',
+      data:{labels:oriEntries.map(e=>e[0]),datasets:[{data:oriEntries.map(e=>e[1]),backgroundColor:PALETTE.map(c=>c+'cc'),borderColor:PALETTE,borderWidth:1,borderRadius:4,borderSkipped:false}]},
+      options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.x} demandes`}}},scales:{x:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}},y:{grid:{display:false},ticks:{color:'var(--text)',font:{size:10}}}}}
+    });
+    setInsightQ('ch-ori-global',oriEntries[0]?`Orienteur principal : <strong>${oriEntries[0][0]}</strong> (${oriEntries[0][1]} dem. — ${pct(oriEntries[0][1],data.length)}%)`:'Aucune donnée');
+  }
+
+  // Thématiques — barres comparatives
+  {
+    const theEnt2=Object.entries(countThemas(data)).slice(0,12);
+    destroyChart('ch-thema-bar');
+    charts['ch-thema-bar']=new Chart(document.getElementById('ch-thema-bar'),{
+      type:'bar',
+      data:{labels:theEnt2.map(t=>t[0]),datasets:[{data:theEnt2.map(t=>t[1]),backgroundColor:PALETTE.map(c=>c+'cc'),borderColor:PALETTE,borderWidth:1,borderRadius:4,borderSkipped:false}]},
+      options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.x} demandes`}}},scales:{x:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}},y:{grid:{display:false},ticks:{color:'var(--text)',font:{size:10}}}}}
+    });
+  }
+
+  // Volume par CMS — classement (horizontal bar)
+  {
+    const cmsEntries=Object.entries(count(noDsian,'cms')).sort((a,b)=>b[1]-a[1]).slice(0,12);
+    destroyChart('ch-cms-rank');
+    charts['ch-cms-rank']=new Chart(document.getElementById('ch-cms-rank'),{
+      type:'bar',
+      data:{labels:cmsEntries.map(e=>e[0].replace(/^Centre Médico-Social(?: de)? /,'CMS ')),datasets:[{data:cmsEntries.map(e=>e[1]),backgroundColor:'#10b98188',borderColor:'#10b981',borderWidth:1.5,borderRadius:4,borderSkipped:false}]},
+      options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.x} accompagnements`}}},scales:{x:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}},y:{grid:{display:false},ticks:{color:'var(--text)',font:{size:10}}}}}
+    });
+  }
 }
 
 // ÉVOLUTION
