@@ -2813,7 +2813,6 @@ function sortActTable(which, colIdx, thEl){
   // Toggle direction
   if(state.col===colIdx){state.asc=!state.asc;}
   else{state.col=colIdx;state.asc=colIdx===0;}  // text col default asc, numeric desc
-  if(colIdx>0&&state.col!==colIdx)state.asc=false;
 
   // Update icons
   const table=tbody.closest('table');
