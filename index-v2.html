@@ -265,7 +265,8 @@ body.diapo-mode canvas{max-height:320px!important}
 #diapo-counter{font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(255,255,255,.7);background:rgba(0,0,0,.35);padding:2px 8px;border-radius:10px}
 #diapo-exit{pointer-events:all;background:rgba(239,68,68,.8);border:none;color:#fff;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:500}
 #diapo-exit:hover{background:var(--red)}
-#diapo-bottombar{pointer-events:all;background:linear-gradient(0deg,rgba(0,0,0,.6) 0%,transparent 100%);padding:8px 16px 10px;display:flex;align-items:center;justify-content:center;gap:12px;position:fixed;bottom:0;left:0;right:0;z-index:5001}
+#diapo-bottombar{pointer-events:all;background:linear-gradient(0deg,rgba(0,0,0,.6) 0%,transparent 100%);padding:8px 16px 10px;display:none;align-items:center;justify-content:center;gap:12px;position:fixed;bottom:0;left:0;right:0;z-index:5001}
+#diapo-overlay.on #diapo-bottombar{display:flex}
 .diapo-nav{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:6px;padding:5px 16px;font-size:16px;cursor:pointer;backdrop-filter:blur(4px);transition:all .15s}
 .diapo-nav:hover{background:rgba(255,255,255,.28)}
 .diapo-nav:disabled{opacity:.2;cursor:default}
@@ -385,7 +386,7 @@ body.pres-mode .tbl th{font-size:11px}
 .btn-filter-toggle{background:var(--s3);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .15s;display:none;align-items:center;gap:5px}
 .btn-filter-toggle:hover{color:var(--text);border-color:var(--blue)}
 .btn-filter-toggle.has-filter{color:var(--blue);border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.08)}
-@media(max-width:640px){.btn-filter-toggle{display:flex}.header-controls .date-range,.header-controls .type-filter,.btn-csv,.header-controls span:last-child{display:none}}
+@media(max-width:780px){.btn-filter-toggle{display:flex}.header-controls .date-range,.header-controls .type-filter,.btn-csv,.btn-pres,.header-controls span:last-child{display:none}}
 /* ── Export CSV ── */
 .btn-csv{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-weight:500;transition:all .15s;display:flex;align-items:center;gap:5px}
 .btn-csv:hover{color:var(--green);border-color:var(--green)}
