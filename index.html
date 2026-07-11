@@ -3702,8 +3702,6 @@ function drSlideEvol(c,data,palette){
   const allMonthVals=MONTH_FR.flatMap((_,mi)=>years.map(yr=>({m:mi,yr,v:data.filter(r=>r.date_demande.slice(0,4)===yr&&parseInt(r.date_demande.slice(5,7))-1===mi).length}))).filter(x=>x.v>0);
   const peak=allMonthVals.length?allMonthVals.reduce((a,b)=>b.v>a.v?b:a):null;
   const worst=allMonthVals.length?allMonthVals.reduce((a,b)=>b.v<a.v?b:a):null;
-  const recentMs3=data.map(r=>r.date_demande.slice(0,7)).sort().slice(-Math.ceil(data.length*.15));
-  const nLast=new Set(recentMs3).size;
   const nFirst3=MONTH_FR.slice(0,3).reduce((s,_,mi)=>s+data.filter(r=>parseInt(r.date_demande.slice(5,7))-1===mi).length,0);
   const nLast3=MONTH_FR.slice(9).reduce((s,_,mi)=>s+data.filter(r=>parseInt(r.date_demande.slice(5,7))-1===mi+9).length,0);
   const evolDir=nLast3>nFirst3?'📈 Tendance haussière en fin d\'année':'📉 Tendance baissière en fin d\'année';
