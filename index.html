@@ -3436,7 +3436,7 @@ function getCoordsGlobal(nom){
     }]},
     options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
       plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
-        const n=barComms.slice().reverse()[ctx.dataIndex][0];
+        const n=barComms[ctx.dataIndex][0];
         const done=commDone[n]||0,tot=commCount[n]||0;
         return[`${ctx.parsed.x} demandes`,`${Math.round(done/tot*100)}% complétées`];
       }}}},
