@@ -2423,6 +2423,11 @@ async function confirmImport(){
   const conumFilterLabel=conumFilter?` · filtre : <strong style="color:var(--cyan)">${conumFilter}</strong>`:'';
   document.getElementById('cs-label').innerHTML=`<strong style="color:var(--green)">✓ Fusion réussie —</strong> ${newRecords.length} nouveaux · ${DATA.length} total (${years.join(', ')})${dupMsg}${conumFilterLabel}`;
   if(!saved)showImportError('Sauvegarde locale impossible (quota dépassé). Les données seront perdues au prochain rechargement. Utilisez ⬇ Exporter pour sauvegarder manuellement.');
+  /* Redirection automatique vers le dashboard après import */
+  setTimeout(()=>{
+    const globalBtn=document.querySelector('.sb-item[onclick*="global"]')||document.querySelector('.tab[onclick*="global"]');
+    if(globalBtn)switchTab('global',globalBtn);
+  },600);
 }
 function cancelImport(){pendingData=null;['import-preview','import-error','parse-progress-box','import-anomalies'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('file-input').value='';}
 function handleResetAndImport(file){if(!file)return;_pendingReset=true;handleAutoImport(file);}
@@ -2460,6 +2465,10 @@ function importDataJSON(payload,filename){
   const dot=document.getElementById('cs-dot');if(dot)dot.style.background='var(--green)';
   const label=document.getElementById('cs-label');
   if(label)label.innerHTML=`<strong style="color:var(--green)">✓ JSON chargé —</strong> ${records.length} enregistrements · ${years.join(', ')}${payload.conum_filter?` · <span style="color:var(--cyan)">${esc(payload.conum_filter)}</span>`:''}`;
+  setTimeout(()=>{
+    const globalBtn=document.querySelector('.sb-item[onclick*="global"]')||document.querySelector('.tab[onclick*="global"]');
+    if(globalBtn)switchTab('global',globalBtn);
+  },400);
 }
 
 // ── PLEIN ÉCRAN CARTE ──
