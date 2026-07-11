@@ -4182,7 +4182,7 @@ function drSlideBilan(c,data,allDataConum){
   const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>.`;
   const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur l'année ${nYear} vs ${nPrevYear}, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
 
-  const bestYearIdx=evolCounts.indexOf(Math.max(...evolCounts));
+  const bestYearIdx=evolCounts.length?evolCounts.indexOf(Math.max(...evolCounts)):-1;
   const bestYear=evolYears[bestYearIdx];
   const bestYearN=evolCounts[bestYearIdx]||0;
   const insightBilan=`📊 Total : <strong>${total}</strong> accomp. · <strong>${partCN}%</strong> activité CN<br>🏆 Meilleure année : <strong>${bestYear||'—'}</strong> (${bestYearN} accomp.)<br>📈 Évol. trim. : <strong>${trend}</strong>${p48!==null?`<br>⏱ Réactivité 48h : <strong>${p48}%</strong>`:''}`;
