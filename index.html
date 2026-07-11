@@ -1102,7 +1102,6 @@ function getFilteredExceptYears(){
 }
 function resetDates(){updateDateRange();document.getElementById('typeFilter').value='';activeYears=new Set(ALL_YEARS);syncYearChipStyles();try{document.getElementById('typeFilterM').value='';document.getElementById('dFromM').value=document.getElementById('dFrom').value;document.getElementById('dToM').value=document.getElementById('dTo').value;}catch(e){}refreshAll();try{document.getElementById('btn-filter-toggle').classList.remove('has-filter');}catch(e){}}
 
-function onYearFilterChange(){/* remplacé par toggleYear + chips */}
 document.getElementById('dFrom').addEventListener('change',refreshAll);
 document.getElementById('dTo').addEventListener('change',refreshAll);
 
