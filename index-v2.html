@@ -405,6 +405,12 @@ body.pres-mode .tbl th{font-size:11px}
 .drawer-title{font-size:13px;font-weight:600;margin-bottom:14px;color:var(--text)}
 .drawer-row{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
 .drawer-row label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:600}
+.drawer-row input[type=date]{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--text);border-radius:8px;padding:8px 12px;font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none;width:100%;-webkit-appearance:none;appearance:none}
+.drawer-row input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:pointer}
+/* ── FAB Import ── */
+#fab-import{position:fixed;bottom:28px;right:20px;z-index:450;background:var(--green);color:#000;border:none;border-radius:50px;padding:13px 22px;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 24px rgba(0,229,160,.45);display:flex;align-items:center;gap:8px;transition:all .2s;white-space:nowrap}
+#fab-import:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,229,160,.55)}
+#fab-import.imported{display:none}
 .btn-filter-toggle{background:var(--s3);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .15s;display:none;align-items:center;gap:5px}
 .btn-filter-toggle:hover{color:var(--text);border-color:var(--blue)}
 .btn-filter-toggle.has-filter{color:var(--blue);border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.08)}
@@ -1184,7 +1190,22 @@ function updateAllYears(){
   buildAllYearChips();
 }
 function updateDateRange(){const dates=DATA.map(r=>r.date_demande).sort();const dmin=dates[0]||'2025-01-01',dmax=dates[dates.length-1]||'2026-12-31';document.getElementById('dFrom').value=dmin;document.getElementById('dTo').value=dmax;}
-function updateSourceBadge(imp,meta){const b=document.getElementById('data-source-badge');const banner=document.getElementById('import-banner');if(imp&&meta){b.className='data-source imported';b.textContent=`📂 ${meta.filename} — ${meta.count} enregistrements`;if(banner)banner.style.display='none';}else{b.className='data-source embedded';b.textContent='données intégrées';if(banner)banner.style.display='block';}}
+function updateSourceBadge(imp,meta){
+  const b=document.getElementById('data-source-badge');
+  const banner=document.getElementById('import-banner');
+  const fab=document.getElementById('fab-import');
+  if(imp&&meta){
+    b.className='data-source imported';
+    b.textContent=`📂 ${meta.filename} — ${meta.count} enregistrements`;
+    if(banner)banner.style.display='none';
+    if(fab)fab.classList.add('imported');
+  }else{
+    b.className='data-source embedded';
+    b.textContent='données intégrées';
+    if(banner)banner.style.display='block';
+    if(fab)fab.classList.remove('imported');
+  }
+}
 function updateCurrentSourceInfo(){const dot=document.getElementById('cs-dot'),label=document.getElementById('cs-label');if(dataSource==='imported'&&importMeta){dot.style.background='var(--green)';label.innerHTML=`<strong style="color:var(--green)">${esc(importMeta.filename)}</strong> — ${importMeta.count} enregistrements · ${importMeta.years.join(', ')} · importé le ${importMeta.date}`;}else{dot.style.background='var(--muted)';label.innerHTML=`<span style="color:var(--muted)">Données intégrées (${EMBEDDED.length} enregistrements, partiel)</span>`;}}
 
 // YEAR CHIPS
@@ -4528,5 +4549,11 @@ async function exportDiapoPDF(){
   }
 }
 </script>
+
+<!-- FAB Import — toujours visible quelle que soit la taille d'écran -->
+<button id="fab-import" class="tab" onclick="switchTab('import',this)" title="Importer un fichier de données XLSX">
+  ⬆ Importer mes données
+</button>
+
 </body>
 </html>
