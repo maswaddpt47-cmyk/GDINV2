@@ -1146,8 +1146,9 @@ function formatConumName(raw){
 // Retourne le HTML formaté prénom <strong>NOM</strong> avec couleur
 function conumNameHtml(raw,color){
   const cn=formatConumName(raw);
-  if(!cn.prenom)return `<strong style="color:#ffffff;font-weight:700">${cn.nom}</strong>`;
-  return `<strong style="color:#ffffff;font-weight:700">${cn.prenom} ${cn.nom}</strong>`;
+  const c=color||'#ffffff';
+  if(!cn.prenom)return `<strong style="color:${c};font-weight:700">${cn.nom}</strong>`;
+  return `<strong style="color:${c};font-weight:700">${cn.prenom} ${cn.nom}</strong>`;
 }
 function injectConumCss(){
   const id='gdin-conum-styles';
