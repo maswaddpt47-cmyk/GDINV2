@@ -2411,9 +2411,9 @@ function buildBilan(){
   const rec3=months.slice(0,3),pre3=months.slice(3,6);
   const nRec=data.filter(r=>rec3.includes(r.date_demande.slice(0,7))).length;
   const nPre=data.filter(r=>pre3.includes(r.date_demande.slice(0,7))).length;
-  const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):0;
-  const trend=delta>=0?`+${delta}%`:`${delta}%`;
-  const trendColor=delta>=0?'var(--green)':'var(--orange)';
+  const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):null;
+  const trend=delta===null?'—':delta>=0?`+${delta}%`:`${delta}%`;
+  const trendColor=delta===null?'var(--muted)':delta>=0?'var(--green)':'var(--orange)';
 
   // Top thématique
   const themaCount={};
