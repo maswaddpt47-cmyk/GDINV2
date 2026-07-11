@@ -52,7 +52,8 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-ser
 .sb-logo{padding:20px 18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.06)}
 .sb-badge{background:var(--blue);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;padding:3px 7px;border-radius:4px;letter-spacing:.5px;flex-shrink:0}
 .sb-title{font-size:16px;font-weight:700;letter-spacing:-.5px;color:#fff}
-.sb-nav{display:flex;flex-direction:column;gap:2px;padding:12px 10px}
+.sb-nav{display:flex;flex-direction:column;gap:2px;padding:12px 10px;overflow-y:auto;scrollbar-width:none}
+.sb-nav::-webkit-scrollbar{display:none}
 .sb-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border:none;background:transparent;color:var(--muted);border-radius:8px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12.5px;font-weight:500;text-align:left;width:100%;transition:all .15s;position:relative}
 .sb-item:hover{background:rgba(255,255,255,.06);color:var(--text)}
 .sb-item.active{background:rgba(79,133,245,.14);color:#fff}
@@ -64,7 +65,11 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-ser
 .sb-import:hover{color:var(--green)!important}
 .sb-import.active{background:rgba(17,204,141,.12);color:var(--green)!important}
 .sb-import.active::before{background:var(--green)}
-.sb-footer{margin-top:auto;padding:12px 14px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+/* ── Topbar import button ── */
+.btn-import-topbar{background:rgba(17,204,141,.12);border:1px solid rgba(17,204,141,.3);color:var(--green);border-radius:6px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .15s;white-space:nowrap}
+.btn-import-topbar:hover{background:rgba(17,204,141,.22);color:#fff}
+.btn-import-topbar.active{background:var(--green);color:#fff}
+.sb-footer{margin-top:auto;flex-shrink:0;padding:12px 14px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
 .sb-theme-btn{background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--muted);border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer;transition:all .15s}
 .sb-theme-btn:hover{color:#fff;border-color:rgba(255,255,255,.25)}
 .sb-version{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,.2);letter-spacing:.5px}
@@ -549,8 +554,8 @@ body.pres-mode .tbl th{font-size:11px}
     <button class="btn-csv" onclick="exportCSV()" title="Exporter les données filtrées en CSV" aria-label="Exporter CSV">↓ CSV</button>
     <button class="btn-filter-toggle" id="btn-filter-toggle" onclick="openFilterDrawer()" title="Filtres" aria-label="Ouvrir les filtres">⚙ Filtres</button>
     <!-- theme button moved to sidebar -->
+    <button class="btn-import-topbar tab" onclick="switchTab('import',this)" title="Importer un fichier de données">⬆ Import</button>
     <button class="btn-pres" id="btn-pres" onclick="startDiapo()" title="Mode diaporama" aria-label="Lancer le diaporama">▶ Plein Page</button>
-    <span style="font-size:10px;color:var(--muted)">Lot-et-Garonne · GDIN</span>
   </div>
   <!-- Drawer mobile filtres -->
   <div class="filter-drawer-backdrop" id="drawer-backdrop" onclick="closeFilterDrawer()"></div>
