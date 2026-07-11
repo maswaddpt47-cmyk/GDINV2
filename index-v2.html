@@ -66,9 +66,9 @@ body{
 .sb-title{font-size:15px;font-weight:700;letter-spacing:-.5px;color:rgba(255,255,255,.85)}
 .sb-nav{display:flex;flex-direction:column;gap:1px;padding:10px 8px;overflow-y:auto;scrollbar-width:none}
 .sb-nav::-webkit-scrollbar{display:none}
-.sb-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:none;background:transparent;color:rgba(255,255,255,.3);border-radius:10px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;text-align:left;width:100%;transition:all .18s;position:relative;letter-spacing:.01em}
-.sb-item:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.75)}
-.sb-item.active{background:rgba(77,159,255,.12);color:#fff;border:1px solid rgba(77,159,255,.18)}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:none;background:transparent;color:rgba(255,255,255,.45);border-radius:10px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;text-align:left;width:100%;transition:all .18s;position:relative;letter-spacing:.01em}
+.sb-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+.sb-item.active{background:rgba(77,159,255,.15);color:#fff;border:1px solid rgba(77,159,255,.22)}
 .sb-item.active::before{content:'';position:absolute;left:-1px;top:20%;bottom:20%;width:3px;background:linear-gradient(180deg,var(--blue),var(--cyan));border-radius:0 3px 3px 0;box-shadow:0 0 8px var(--blue)}
 .sb-icon{width:15px;height:15px;flex-shrink:0;opacity:.6}
 .sb-item.active .sb-icon{opacity:1}
@@ -408,7 +408,11 @@ body.pres-mode .tbl th{font-size:11px}
 .btn-filter-toggle{background:var(--s3);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .15s;display:none;align-items:center;gap:5px}
 .btn-filter-toggle:hover{color:var(--text);border-color:var(--blue)}
 .btn-filter-toggle.has-filter{color:var(--blue);border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.08)}
-@media(max-width:780px){.btn-filter-toggle{display:flex}.header-controls .date-range,.header-controls .type-filter,.btn-csv,.btn-pres,.header-controls span:last-child{display:none}}
+@media(max-width:780px){
+  .btn-filter-toggle{display:flex}
+  .header-controls .date-range,.header-controls .type-filter,.btn-csv,.btn-pres,.header-controls span:last-child{display:none}
+  .btn-import-topbar{order:-1;font-size:12px;padding:7px 15px}
+}
 /* ── Export CSV ── */
 .btn-csv{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-weight:500;transition:all .15s;display:flex;align-items:center;gap:5px}
 .btn-csv:hover{color:var(--green);border-color:var(--green)}
@@ -436,7 +440,7 @@ body.pres-mode .tbl th{font-size:11px}
 /* ── Landing overlay bêta ── */
 @keyframes lo-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
 @keyframes lo-blink{0%,49%{opacity:1}50%,100%{opacity:0}}
-#landing-overlay{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:99999;background:#07111e;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;font-family:'Space Grotesk',sans-serif;overflow:hidden}
+#landing-overlay{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:99999;background:#030507;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;font-family:'Space Grotesk',sans-serif;overflow:hidden}
 #landing-overlay .lo-bg-grid{position:absolute;top:0;left:0;right:0;bottom:0;background-image:linear-gradient(rgba(59,130,246,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.04) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
 #landing-overlay .lo-bg-glow{position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 60% 50% at 30% 40%,rgba(59,130,246,.08) 0%,transparent 70%),radial-gradient(ellipse 50% 40% at 75% 65%,rgba(16,185,129,.06) 0%,transparent 70%);pointer-events:none}
 #landing-overlay .lo-chip{display:inline-flex;align-items:center;gap:6px;background:#1a2235;border:1px solid #1e2d45;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:600;color:#3b82f6;letter-spacing:1px;text-transform:uppercase;margin-bottom:28px;position:relative}
@@ -630,6 +634,16 @@ body.pres-mode .tbl th{font-size:11px}
 
   <!-- VUE GLOBALE -->
   <div id="panel-global" class="panel active">
+  <!-- Bannière données démo — masquée une fois des données importées -->
+  <div id="import-banner" style="display:none;margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.22);border-radius:14px;padding:14px 18px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:rgba(238,242,255,.6);flex:1;min-width:180px">
+        <span style="font-size:18px">📊</span>
+        <span><strong style="color:var(--green)">Données de démonstration</strong> — Importez votre fichier XLSX pour afficher vos données réelles.</span>
+      </div>
+      <button class="tab" onclick="switchTab('import',this)" style="background:var(--green);color:#000;border:none;border-radius:8px;padding:9px 18px;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;box-shadow:0 0 16px rgba(0,229,160,.3)">⬆ Importer mes données</button>
+    </div>
+  </div>
   <div id="kpi-global" class="g5"></div>
     <div class="g2">
       <div class="card"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Thématiques</div><canvas id="ch-thema"></canvas></div>
@@ -1035,7 +1049,7 @@ body.pres-mode .tbl th{font-size:11px}
   <div id="dr-content" style="flex:1;overflow-y:auto;padding:20px 28px 80px"></div>
 
   <!-- Bottombar -->
-  <div style="position:fixed;bottom:0;left:0;right:0;z-index:8001;display:flex;align-items:center;justify-content:center;gap:14px;padding:8px 20px 12px;background:linear-gradient(0deg,var(--bg) 60%,transparent)">
+  <div id="dr-nav-bar" style="position:fixed;bottom:0;left:0;right:0;z-index:8001;display:none;align-items:center;justify-content:center;gap:14px;padding:8px 20px 12px;background:linear-gradient(0deg,var(--bg) 60%,transparent)">
     <button onclick="drNav(-1)" id="dr-prev" style="background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 18px;font-size:16px;cursor:pointer;transition:all .15s">←</button>
     <div id="dr-dots" style="display:flex;gap:6px;align-items:center"></div>
     <button onclick="drNav(1)" id="dr-next" style="background:var(--s2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 18px;font-size:16px;cursor:pointer;transition:all .15s">→</button>
@@ -1170,7 +1184,7 @@ function updateAllYears(){
   buildAllYearChips();
 }
 function updateDateRange(){const dates=DATA.map(r=>r.date_demande).sort();const dmin=dates[0]||'2025-01-01',dmax=dates[dates.length-1]||'2026-12-31';document.getElementById('dFrom').value=dmin;document.getElementById('dTo').value=dmax;}
-function updateSourceBadge(imp,meta){const b=document.getElementById('data-source-badge');if(imp&&meta){b.className='data-source imported';b.textContent=`📂 ${meta.filename} — ${meta.count} enregistrements`;}else{b.className='data-source embedded';b.textContent='données intégrées';}}
+function updateSourceBadge(imp,meta){const b=document.getElementById('data-source-badge');const banner=document.getElementById('import-banner');if(imp&&meta){b.className='data-source imported';b.textContent=`📂 ${meta.filename} — ${meta.count} enregistrements`;if(banner)banner.style.display='none';}else{b.className='data-source embedded';b.textContent='données intégrées';if(banner)banner.style.display='block';}}
 function updateCurrentSourceInfo(){const dot=document.getElementById('cs-dot'),label=document.getElementById('cs-label');if(dataSource==='imported'&&importMeta){dot.style.background='var(--green)';label.innerHTML=`<strong style="color:var(--green)">${esc(importMeta.filename)}</strong> — ${importMeta.count} enregistrements · ${importMeta.years.join(', ')} · importé le ${importMeta.date}`;}else{dot.style.background='var(--muted)';label.innerHTML=`<span style="color:var(--muted)">Données intégrées (${EMBEDDED.length} enregistrements, partiel)</span>`;}}
 
 // YEAR CHIPS
@@ -4307,6 +4321,7 @@ function startDiapoRapport(){
   drIdx=0;
 
   document.getElementById('dr-overlay').style.display='flex';
+  document.getElementById('dr-nav-bar').style.display='flex';
   const cnBadge=formatConumName(drConum);
   const cnBadgeColor=conumColor(drConum);
   document.getElementById('dr-conum-badge').innerHTML=
@@ -4329,6 +4344,7 @@ function stopDiapoRapport(){
   drDestroyCharts();
   if(window._drMap){try{window._drMap.remove();}catch(e){} window._drMap=null;}
   document.getElementById('dr-overlay').style.display='none';
+  document.getElementById('dr-nav-bar').style.display='none';
   try{document.exitFullscreen&&document.exitFullscreen();}catch(e){}
 }
 
