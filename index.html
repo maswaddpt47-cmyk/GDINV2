@@ -1237,7 +1237,7 @@ function renderGlobal(){
 
 // ÉVOLUTION
 function renderEvolution(){
-  const data=getFiltered().filter(r=>activeYears.has(r.date_demande.slice(0,4)));
+  const data=getFiltered();
   const note=document.getElementById('evol-note'),yoySection=document.getElementById('yoy-section');
 
   // Populate CMS select in evolution
