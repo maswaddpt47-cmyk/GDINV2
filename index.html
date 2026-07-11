@@ -3415,7 +3415,6 @@ function renderHeatmapConum(){
     return vb-va;
   });
   // Afficher seulement les 2 dernières années par défaut
-  const displayYears=allYears.slice(-2);
   const displayYearsRev=[...allYears].reverse();
   let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Nombre d'accompagnements par mois · couleur = intensité relative · ← années précédentes à droite</div>`;
   tbl+=`<div style="overflow-x:auto"><table class="heatmap-table"><thead><tr><th></th>`;
@@ -3425,7 +3424,7 @@ function renderHeatmapConum(){
   });
   tbl+=`</tr><tr><th></th>`;
   displayYearsRev.forEach((yr,yi)=>{
-    MONTH_FR.forEach((m,mi)=>{ tbl+=`<th title="${m} ${yr}">${m.slice(0,1)}</th>`; });
+    MONTH_FR.forEach(m=>{ tbl+=`<th title="${m} ${yr}">${m.slice(0,1)}</th>`; });
     if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
   });
   tbl+=`</tr></thead><tbody>`;
