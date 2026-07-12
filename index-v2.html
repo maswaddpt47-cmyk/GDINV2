@@ -679,6 +679,21 @@ body.pres-mode .tbl th{font-size:11px}
     <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Thématiques — barres comparatives</div><canvas id="ch-thema-bar" style="max-height:320px"></canvas></div>
     <div class="card"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Volume par CMS — classement</div><canvas id="ch-cms-rank" style="max-height:320px"></canvas></div>
   </div>
+
+  <!-- Saisonnalité — basé sur DATA brut, indépendant des filtres -->
+  <div class="card g1">
+    <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Saisonnalité des orientations — toutes données
+      <span style="font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:8px">Indépendant des filtres actifs</span>
+    </div>
+    <div id="saison-note" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;align-items:center"></div>
+    <canvas id="ch-saison" style="max-height:200px"></canvas>
+  </div>
+  <div class="card g1">
+    <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Heatmap mois × année — volume brut complet
+      <span style="font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:8px">Toutes données · intensité = volume</span>
+    </div>
+    <div id="heatmap-saison" style="overflow-x:auto;margin-top:4px"></div>
+  </div>
   </div>
 
   <!-- ÉVOLUTION -->
@@ -1501,6 +1516,92 @@ function renderGlobal(){
       options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.x} accompagnements`}}},scales:{x:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}},y:{grid:{display:false},ticks:{color:'var(--text)',font:{size:10}}}}}
     });
   }
+  renderSaisonGlobal();
+}
+
+// SAISONNALITÉ — basé sur DATA brut, indépendant des filtres
+function renderSaisonGlobal(){
+  const allData=DATA;
+  if(!allData||!allData.length){return;}
+  const MO=['01','02','03','04','05','06','07','08','09','10','11','12'];
+  // Construction de la matrice année × mois
+  const matrix={};const yearSet=new Set();
+  allData.forEach(r=>{
+    if(!r.date_demande)return;
+    const y=r.date_demande.slice(0,4),m=r.date_demande.slice(5,7);
+    if(!MO.includes(m))return;
+    yearSet.add(y);
+    if(!matrix[y])matrix[y]={};
+    matrix[y][m]=(matrix[y][m]||0)+1;
+  });
+  const years=[...yearSet].sort();
+  // Moyenne par mois calendaire (on ne compte que les années où le mois a au moins 1 entrée)
+  const avgByMonth=MO.map(m=>{
+    const vals=years.map(y=>matrix[y]?.[m]||0).filter(v=>v>0);
+    return vals.length?vals.reduce((s,v)=>s+v,0)/vals.length:0;
+  });
+  const nonZero=avgByMonth.filter(v=>v>0);
+  const globalAvg=nonZero.length?nonZero.reduce((s,v)=>s+v,0)/nonZero.length:0;
+  const hiThr=globalAvg*1.15,loThr=globalAvg*0.85;
+  const peakMonths=MONTH_FR.filter((_,i)=>avgByMonth[i]>=hiThr);
+  const cryMonths=MONTH_FR.filter((_,i)=>avgByMonth[i]>0&&avgByMonth[i]<=loThr);
+  // Couleurs barres
+  const barColors=avgByMonth.map(v=>v>=hiThr?'#10b98199':v>0&&v<=loThr?'#ef444499':'#3b82f677');
+  const borderColors=avgByMonth.map(v=>v>=hiThr?'#10b981':v>0&&v<=loThr?'#ef4444':'#3b82f6');
+  // Graphe mixte barre + ligne moyenne
+  destroyChart('ch-saison');
+  charts['ch-saison']=new Chart(document.getElementById('ch-saison'),{
+    type:'bar',
+    data:{
+      labels:MONTH_FR,
+      datasets:[
+        {type:'bar',label:'Moy. orient./mois',data:avgByMonth.map(v=>Math.round(v)),backgroundColor:barColors,borderColor:borderColors,borderWidth:1.5,borderRadius:4,borderSkipped:false,order:2},
+        {type:'line',label:'Moyenne globale',data:Array(12).fill(Math.round(globalAvg)),borderColor:'#fbbf24',borderWidth:2,borderDash:[5,4],pointRadius:0,fill:false,tension:0,order:1}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:legendColor(),font:{size:10},boxWidth:10,padding:12}},
+        tooltip:{callbacks:{label:ctx=>{
+          if(ctx.datasetIndex===1)return`Moy. globale : ${Math.round(globalAvg)} orient.`;
+          const v=ctx.parsed.y,diff=v-globalAvg;
+          return[`${v} orient./mois (moy.)`,(diff>=0?'+':'')+Math.round(diff)+` vs moy. (${(diff>=0?'+':'')+Math.round(diff/globalAvg*100)}%)`];
+        }}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:11}}},
+        y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}
+      }
+    }
+  });
+  // Note synthétique
+  const notEl=document.getElementById('saison-note');
+  notEl.innerHTML=`
+    <span style="font-size:11px;color:var(--muted)">${allData.length} dossiers · ${years.length} année${years.length>1?'s':''} (${years[0]}–${years[years.length-1]})</span>
+    ${peakMonths.length?`<span style="font-size:11px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);border-radius:20px;padding:2px 10px;color:var(--green)">▲ Chargés : <strong>${peakMonths.join(', ')}</strong></span>`:''}
+    ${cryMonths.length?`<span style="font-size:11px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:20px;padding:2px 10px;color:var(--red)">▼ Creux : <strong>${cryMonths.join(', ')}</strong></span>`:''}
+  `;
+  // Heatmap mois × année
+  const allVals=years.flatMap(y=>MO.map(m=>matrix[y]?.[m]||0));
+  const maxVal=Math.max(...allVals,1);
+  let html=`<table style="border-collapse:separate;border-spacing:3px;font-size:10px;min-width:520px"><tr><th style="min-width:70px"></th>`;
+  MONTH_FR.forEach(m=>html+=`<th style="font-size:9px;color:var(--muted);font-weight:600;padding:0 2px 6px;text-align:center;min-width:36px">${m}</th>`);
+  html+='</tr>';
+  years.forEach(y=>{
+    html+=`<tr><td style="color:var(--text);font-weight:600;font-size:10px;padding-right:10px;white-space:nowrap;font-family:'JetBrains Mono',monospace">${yrLabel(y)}</td>`;
+    MO.forEach(m=>{
+      const v=matrix[y]?.[m]||0;
+      const ratio=v/maxVal;
+      // Gradient bleu froid (creux) → bleu chaud → vert (chargé)
+      let bg,txt='var(--text)';
+      if(v===0){bg='rgba(255,255,255,.03)';txt='var(--dim)';}
+      else if(v>=hiThr){bg=`rgba(16,185,129,${(0.2+ratio*.75).toFixed(2)})`;txt=ratio>.5?'#fff':'var(--text)';}
+      else if(v<=loThr){bg=`rgba(239,68,68,${(0.15+ratio*.5).toFixed(2)})`;txt=ratio>.5?'#fff':'var(--text)';}
+      else{bg=`rgba(59,130,246,${(0.15+ratio*.7).toFixed(2)})`;txt=ratio>.5?'#fff':'var(--text)';}
+      html+=`<td style="text-align:center;padding:5px 2px;border-radius:5px;background:${bg};color:${v>0?txt:'var(--dim)'};font-family:'JetBrains Mono',monospace;font-weight:600;font-size:10px">${v||''}</td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</table>';
+  document.getElementById('heatmap-saison').innerHTML=html;
 }
 
 // ÉVOLUTION
