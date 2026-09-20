@@ -22,28 +22,48 @@ l'export de **septembre 2026** (24 410 lignes, 2022→2026), audité le
 l'export de juin (22 934 lignes) ; sur celui de septembre, 6 208 lignes
 sont écartées faute de CMS.
 
-## Décision en attente — les 5 919 lignes sans CMS
+## Décision en attente — les 5 158 lignes restantes sans CMS
 
-L'import écarte toute ligne dont « Lieu / CMS » est vide : 5 919 sur 22 934,
-soit **2 963 demandes entières absentes du dashboard** (aucune n'est
-rattachable à une demande déjà présente — vérifié). La règle est isolée dans
-`ECARTER_SANS_CMS` (`gdin-pure.js`), le compte rendu d'import affiche le
-nombre concerné dans les deux cas.
+L'import écarte toute ligne dont « Lieu / CMS » est vide. Sur l'export de
+septembre 2026 : 6 208 lignes sur 24 410. **La famille A est traitée depuis le
+20/09/2026** (commit `fe9abcd`), il reste 5 158 lignes à arbitrer. La règle est
+isolée dans `ECARTER_SANS_CMS` (`gdin-pure.js`), le compte rendu d'import
+affiche le nombre concerné dans les deux cas.
 
-Trois familles, à traiter différemment :
-
-| Famille | Volume | Nature | Traitement proposé |
+| Famille | Volume | Nature | État |
 |---|---|---|---|
-| **A** | 882 | Le CMS est renseigné dans « Structure orienteur » au lieu de « Lieu / CMS » (549 DSIAN, 333 CMS nommés). Dont 179 accompagnements et 85 prises de contact. | Lire `structure` en repli quand `lieu_raw` est vide. Correction franche, sans arbitrage. |
-| **B** | ~3 900 | Cycle de vie du Pass Numérique : `Demande suivi pass (auto)`, `Suivi pass`, `Sondage pass`. Ni conseiller, ni thématique, ni lieu. | Exclure **par type d'action**, pas par champ vide. |
-| **C** | ~1 100 | Ateliers et accompagnements chez des partenaires hors CMS (UNA 47, IME Montclairjoie, Collège Lucie Aubrac, CCAS, EVS…). | Conserver sous un libellé explicite, hors des vues « par CMS ». |
+| **A** | 1 050 | Le CMS est renseigné dans « Structure orienteur » au lieu de « Lieu / CMS » (648 DSIAN, 402 CMS nommés). | **Fait.** Repli `normCms(structure)` quand le lieu est vide. 18 202 → 19 252 enregistrements. |
+| **B** | ~4 175 | Cycle de vie du Pass Numérique : `Demande suivi pass (auto)`, `Suivi pass`, `Sondage pass`. Ni conseiller, ni thématique, ni lieu. | À exclure **par type d'action**, pas par champ vide. Bruit technique, pas de l'activité. |
+| **C** | ~983 | Ateliers et accompagnements chez des partenaires hors CMS (UNA 47 : 999, IME Montclairjoie : 324, Collège Lucie Aubrac : 264, CCAS, EVS…). | À conserver sous un libellé explicite, hors des vues « par CMS ». **1 166 ateliers, soit 21 % du total, sont invisibles tant que ce n'est pas fait.** |
 
-Le champ `structure` est déjà importé par `parseRows()`, la famille A est
-donc réalisable sans toucher au mapping.
+Le filtre `typeFilter` de l'interface ne peut rien pour ces lignes : il filtre
+l'affichage de ce qui est déjà en base, alors que `ECARTER_SANS_CMS` agit à
+l'import. Ne pas confondre les deux étages.
 
 Problème annexe : le Département apparaît sous **quatre orthographes** dans
-« Structure orienteur » (~1 460 lignes éclatées). À normaliser si cette
+« Structure orienteur » (~1 500 lignes éclatées). À normaliser si cette
 colonne est exploitée.
+
+## Trou de mapping — préfixes de service devant un CMS
+
+Découvert le 20/09/2026 en écrivant les tests de la famille A : `CMS_MAP` ne
+reconnaît pas un libellé préfixé par un service. 39 lignes sur l'export de
+septembre, rangées à tort sous « Autre structure » :
+
+```
+14  CIP - CMS Villeneuve/Lot        5  CIP - CMS Villeneuve
+ 7  DSIAN / CMS Villeneuve-Fumel    3  ASE - CMS Villeneuve
+ 6  Centre Médico-Social d'AGEN     2  TSSI CMS Villeneuve/Lot
+```
+
+À noter aussi : le libellé nu `CMS Marmande` n'est pas une clé du mapping
+(`normCms('CMS Marmande')` rend `null`). Il n'apparaît pas dans cet export,
+mais le jour où il arrive, la ligne part en « Autre structure ».
+
+Volume faible, non corrigé pour ne pas élargir le correctif famille A.
+Vérifié au passage : les 782 lignes « Autre structure » restantes sont de
+vraies structures externes (associations, mairies, bibliothèques), pas des CMS
+mal classés.
 
 ## Résolu le 20/09/2026 — « Date action (saisie) » illisible
 
