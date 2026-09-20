@@ -1062,7 +1062,7 @@ function updateAllYears(){
 }
 function updateDateRange(){const dates=DATA.map(r=>r.date_demande).sort();const dmin=dates[0]||'2025-01-01',dmax=dates[dates.length-1]||'2026-12-31';document.getElementById('dFrom').value=dmin;document.getElementById('dTo').value=dmax;}
 function updateSourceBadge(imp,meta){const b=document.getElementById('data-source-badge');if(imp&&meta){b.className='data-source imported';b.textContent=`📂 ${meta.filename} — ${meta.count} enregistrements`;}else{b.className='data-source embedded';b.textContent='données intégrées';}}
-function updateCurrentSourceInfo(){const dot=document.getElementById('cs-dot'),label=document.getElementById('cs-label');if(dataSource==='imported'&&importMeta){dot.style.background='var(--green)';label.innerHTML=`<strong style="color:var(--green)">${esc(importMeta.filename)}</strong> — ${importMeta.count} enregistrements · ${importMeta.years.join(', ')} · importé le ${importMeta.date}`;}else{dot.style.background='var(--muted)';label.innerHTML=`<span style="color:var(--muted)">Données intégrées (${EMBEDDED.length} enregistrements, partiel)</span>`;}}
+function updateCurrentSourceInfo(){const dot=document.getElementById('cs-dot'),label=document.getElementById('cs-label');if(dataSource==='imported'&&importMeta){dot.style.background='var(--green)';const _res=formatResumeImport(importMeta.stats);label.innerHTML=`<strong style="color:var(--green)">${esc(importMeta.filename)}</strong> — ${importMeta.count} enregistrements · ${importMeta.years.join(', ')} · importé le ${importMeta.date}`+(_res?`<br><span style="color:var(--muted);font-size:11px">Fichier : ${_res}</span>`:'');}else{dot.style.background='var(--muted)';label.innerHTML=`<span style="color:var(--muted)">Données intégrées (${EMBEDDED.length} enregistrements, partiel)</span>`;}}
 
 // YEAR CHIPS
 function yrLabel(yr){
@@ -2231,7 +2231,7 @@ async function handleAutoImport(file){
             bar.style.width='100%';msg.textContent=`${result.records.length} enregistrements`;
             setTimeout(()=>{
               prog.style.display='none';
-              pendingData={records:result.records,filename:file.name,warnings:result.warnings};
+              pendingData={records:result.records,filename:file.name,warnings:result.warnings,stats:result.stats};
               confirmImport();
             },400);
           }catch(err){
@@ -2261,53 +2261,21 @@ function isBinaryXls(file){
 }
 
 function parseXlsxBinary(arraybuffer){
-  // Essayer type:'array' puis fallback type:'binary' pour les vieux .xls CDFV2
+  // Lecture du classeur uniquement : le mapping des colonnes et les règles
+  // d'exclusion vivent dans parseRows() (gdin-pure.js), partagé avec le
+  // chemin « texte collé ». Ne jamais recopier le mapping ici.
   let rows;
+  const litBinaire=()=>{
+    const bin=Array.from(new Uint8Array(arraybuffer)).map(b=>String.fromCharCode(b)).join('');
+    const wb=XLSX.read(bin,{type:'binary',cellDates:false});
+    return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+  };
   try{
     const wb=XLSX.read(arraybuffer,{type:'array',cellDates:false});
     rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
-    if(!rows.length||rows[0].length<5){
-      const bin=Array.from(new Uint8Array(arraybuffer)).map(b=>String.fromCharCode(b)).join('');
-      const wb2=XLSX.read(bin,{type:'binary',cellDates:false});
-      rows=XLSX.utils.sheet_to_json(wb2.Sheets[wb2.SheetNames[0]],{header:1,defval:''});
-    }
-  }catch(e){
-    const bin=Array.from(new Uint8Array(arraybuffer)).map(b=>String.fromCharCode(b)).join('');
-    const wb2=XLSX.read(bin,{type:'binary',cellDates:false});
-    rows=XLSX.utils.sheet_to_json(wb2.Sheets[wb2.SheetNames[0]],{header:1,defval:''});
-  }
-  if(!rows||rows.length<2)throw new Error('Fichier vide');
-  const records=[],warnings=[];
-  function xlDate(v){
-    if(!v&&v!==0)return null;
-    if(typeof v==='string'){const m=v.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;}
-    const n=parseFloat(v);if(isNaN(n)||n<1)return null;
-    const d=new Date((n-25569)*86400*1000);return d.toISOString().slice(0,10);
-  }
-  function normH(s){return String(s).toLowerCase().replace(/\s+/g,' ').trim().replace(/[éèê]/g,'e').replace(/[àâ]/g,'a').replace(/[ùû]/g,'u').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/['\u2019]/g,"'");}
-  const hdrs=rows[0].map(normH);
-  function ci(...hints){return hdrs.findIndex(h=>hints.some(hint=>h.includes(normH(hint))));}
-  const iCommune=ci('commune'),iMotif=ci('motif'),iType=ci('type action',"type d'action"),iLieu=ci('lieu / cms','lieu/cms'),iDateAct=ci('date action'),iOrienteur=(()=>{const r=ci('referent');return r>=0?r:ci('orienteur','prescripteur');})(),iDateDem=ci('date demande'),iConum=ci('conseiller num'),iThemas=ci('thematique'),iBenef=ci('beneficiaire connu','benef connu'),iUrgence=ci('urgence'),iEtat=ci("libelle de l'etat","etat de l'action"),iDatePlanif=ci('date planif','date planifier'),iDateReal=ci('date de realisation','date reelle','date realisation'),iNDem=ci('n° demande','numero demande','n demande','num demande');
-  if(iDateDem<0)throw new Error(`Colonne "Date demande" introuvable. En-têtes : ${rows[0].slice(0,10).join(' | ')}`);
-  const ETAT_MAP={'en cours':'En attente','en attente':'En attente','realisee':'Réalisée','réalisée':'Réalisée','non realisee':'Non réalisée','non réalisée':'Non réalisée','annulee':'Annulée','annulée':'Annulée'};
-  for(let i=1;i<rows.length;i++){
-    const cols=rows[i];if(cols.length<5)continue;
-    const dd=xlDate(iDateDem>=0?cols[iDateDem]:'');if(!dd)continue;
-    const da=xlDate(iDateAct>=0?cols[iDateAct]:'')||null;
-    let cms=extractDominantCms(String(iLieu>=0?cols[iLieu]||'':'').trim());if(!cms)continue;
-    const lieuRaw=String(iLieu>=0?cols[iLieu]||'':'').trim();
-    const themas=String(iThemas>=0?cols[iThemas]||'':'').split('/').map(t=>t.trim()).filter(Boolean);
-    const seen=new Set(),types=[];
-    const EXCL_BIN=new Set(['Reservation']);
-    for(const p of String(iType>=0?cols[iType]||'':'').split(';')){const t=p.trim();if(t&&!EXCL_BIN.has(t)&&!seen.has(t)){seen.add(t);types.push(t);}if(types.length>=4)break;}
-    const etatRaw=String(iEtat>=0?cols[iEtat]||'':'').trim();
-    const etat=ETAT_MAP[etatRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')]||(etatRaw||null);
-    const dp=iDatePlanif>=0?xlDate(cols[iDatePlanif])||null:null;
-    const dr=iDateReal>=0?xlDate(cols[iDateReal])||null:null;
-    records.push({date_demande:dd,date_action:da,id_demande:String(iNDem>=0?cols[iNDem]||'':'').trim(),conum:String(iConum>=0?cols[iConum]||'':'').trim(),cms,lieu_raw:lieuRaw,commune:String(iCommune>=0?cols[iCommune]||'':'').trim(),themas,type_action:types,orienteur:String(iOrienteur>=0?cols[iOrienteur]||'':'').trim(),motif:String(iMotif>=0?cols[iMotif]||'':'').slice(0,120).trim(),benef_connu:String(iBenef>=0?cols[iBenef]||'':'').trim().toLowerCase()==='oui',urgence:String(iUrgence>=0?cols[iUrgence]||'':'').trim().toLowerCase()==='oui',etat,date_planifiee:dp,date_realisation:dr});
-  }
-  if(!records.length)throw new Error('Aucun enregistrement valide');
-  return{records,warnings};
+    if(!rows.length||rows[0].length<5)rows=litBinaire();
+  }catch(e){ rows=litBinaire(); }
+  return parseRows(rows);
 }
 
 function handleFileSelect(file){
@@ -2342,7 +2310,7 @@ function handleFileSelect(file){
           result=parseXlsText(e.target.result);
         }
         bar.style.width='100%';msg.textContent=`${result.records.length} enregistrements`;
-        setTimeout(()=>{prog.style.display='none';pendingData={records:result.records,filename:file.name,warnings:result.warnings};confirmImport();},400);
+        setTimeout(()=>{prog.style.display='none';pendingData={records:result.records,filename:file.name,warnings:result.warnings,stats:result.stats};confirmImport();},400);
       }catch(err){
         prog.style.display='none';
         document.getElementById('import-error').style.display='block';
@@ -2394,6 +2362,7 @@ function showPreview(pd){
 async function confirmImport(){
   if(!pendingData)return;
   const{filename}=pendingData;
+  const statsImport=pendingData.stats||null;
   let records=pendingData.records;
   // Filtrage par CONUM sélectionné
   const conumFilter=(document.getElementById('import-conum-filter')||{}).value||'';
@@ -2419,7 +2388,7 @@ async function confirmImport(){
   const merged=[...base,...newRecords];
   DATA=merged;applyConumAttrib(DATA);deriveActionsFromData();dataSource='imported';
   const years=[...new Set(merged.map(r=>r.date_demande.slice(0,4)))].sort();
-  importMeta={filename,count:DATA.length,years,date:new Date().toLocaleDateString('fr-FR')};
+  importMeta={filename,count:DATA.length,years,date:new Date().toLocaleDateString('fr-FR'),stats:statsImport};
   const saved=await saveToStorage(merged,importMeta);
   updateSourceBadge(true,importMeta);updateAllYears();updateDateRange();updateCurrentSourceInfo();
   pendingData=null;document.getElementById('import-preview').style.display='none';document.getElementById('parse-progress-box').style.display='none';
@@ -2427,7 +2396,9 @@ async function confirmImport(){
   const dot=document.getElementById('cs-dot');dot.style.background='var(--green)';
   const dupMsg=(internalDups+crossDups)>0?` · <span style="color:var(--orange)">${internalDups+crossDups} doublon${internalDups+crossDups>1?'s':''} ignoré${internalDups+crossDups>1?'s':''}</span>`:'';
   const conumFilterLabel=conumFilter?` · filtre : <strong style="color:var(--cyan)">${conumFilter}</strong>`:'';
-  document.getElementById('cs-label').innerHTML=`<strong style="color:var(--green)">✓ Fusion réussie —</strong> ${newRecords.length} nouveaux · ${DATA.length} total (${years.join(', ')})${dupMsg}${conumFilterLabel}`;
+  const resume=formatResumeImport(statsImport);
+  const resumeMsg=resume?`<br><span style="color:var(--muted);font-size:11px">Fichier : ${resume}</span>`:'';
+  document.getElementById('cs-label').innerHTML=`<strong style="color:var(--green)">✓ Fusion réussie —</strong> ${newRecords.length} nouveaux · ${DATA.length} total (${years.join(', ')})${dupMsg}${conumFilterLabel}${resumeMsg}`;
   if(!saved)showImportError('Sauvegarde locale impossible (quota dépassé). Les données seront perdues au prochain rechargement. Utilisez ⬇ Exporter pour sauvegarder manuellement.');
 }
 function cancelImport(){pendingData=null;['import-preview','import-error','parse-progress-box','import-anomalies'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('file-input').value='';}
@@ -3690,6 +3661,12 @@ function renderHeatmapCmsByConum(conum){
 // ── RAPPORT QUALITÉ à l'import ──
 function buildAnomalyReport(records, rawLines){
   const items=[];
+  // 0. Lignes écartées à l'import (visible sans ouvrir le code)
+  if(importMeta&&importMeta.stats&&importMeta.stats.ecartees>0){
+    const st=importMeta.stats;
+    items.push({label:`Lignes écartées à l'import (sur ${st.lues} lues)`,val:st.ecartees,color:'var(--orange)'});
+    if(st.motifs&&st.motifs.lieu_cms_vide)items.push({label:'└ dont sans Lieu / CMS renseigné',val:st.motifs.lieu_cms_vide,color:'var(--muted)'});
+  }
   // 1. Lignes sans date action
   const noDate=records.filter(r=>!r.date_action).length;
   if(noDate>0)items.push({label:"Dossiers sans date d'action renseignée",val:noDate,color:'var(--yellow)'});
