@@ -272,6 +272,33 @@ function communesCanoniques(records){
   return{canon,fusionnees};
 }
 
+// ─── Attribution du conseiller ───────────────────────────────────────────────
+// « Conseiller numérique » n'est renseigné que sur 30 % des lignes ; la colonne
+// « Référent » l'est à 99 % et porte souvent un conseiller. Mesuré le
+// 20/09/2026 : les deux concordent à 95 % là où elles coexistent, ce qui fait
+// du Référent une source constatée, à préférer à toute déduction.
+//
+// applyConumAttrib() (dans les HTML) comblait d'abord par CONUM_ATTRIB, un
+// mapping CMS → conseiller : une déduction géographique passait donc avant la
+// donnée réelle, et contredisait le Référent sur 782 lignes. Combler ici, à
+// l'import, rétablit l'ordre sans toucher à l'affichage — les lignes traitées
+// ne sont plus vues comme vides en aval.
+//
+// La liste des conseillers est dérivée des données, jamais codée en dur : le
+// dépôt est public, y inscrire des noms d'agents les publierait.
+// Couvert par les tests « comblerConum ».
+function comblerConum(records){
+  const connus=new Set();
+  records.forEach(r=>{const c=(r.conum||'').trim();if(c&&c!=='?')connus.add(c);});
+  let comblees=0;
+  records.forEach(r=>{
+    const c=(r.conum||'').trim();
+    if(c&&c!=='?')return;
+    if(r.orienteur&&connus.has(r.orienteur)){r.conum=r.orienteur;comblees++;}
+  });
+  return comblees;
+}
+
 // ─── Conversion de dates Excel ───────────────────────────────────────────────
 function excelDate(v){if(!v&&v!==0)return null;if(typeof v==='string'){const s=demojibakeUtf16(v).trim();const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;const m2=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m2)return s.slice(0,10);const n2=parseFloat(s);if(isNaN(n2)||n2<1)return null;return new Date((n2-25569)*86400*1000).toISOString().slice(0,10);}const n=parseFloat(v);if(isNaN(n)||n<1)return null;const d=new Date((n-25569)*86400*1000);return d.toISOString().slice(0,10);}
 
@@ -363,6 +390,7 @@ function parseRows(rows){
   const{canon,fusionnees}=communesCanoniques(records);
   records.forEach(r=>{if(r.commune)r.commune=canon[normCommuneKey(r.commune)];});
   stats.communes_fusionnees=fusionnees;
+  stats.conum_via_referent=comblerConum(records);
   return{records,warnings,stats};
 }
 
@@ -385,6 +413,7 @@ function formatResumeImport(stats){
     if(m.lieu_cms_vide)parts.push(`${m.lieu_cms_vide} sans CMS (conservées)`);
     if(stats.cms_via_structure)parts.push(`${stats.cms_via_structure} CMS lus dans la structure orienteur`);
     if(stats.communes_fusionnees)parts.push(`${stats.communes_fusionnees} communes regroupées`);
+    if(stats.conum_via_referent)parts.push(`${stats.conum_via_referent} conseillers lus dans le référent`);
     if(stats.cellules_reparees)parts.push(`${stats.cellules_reparees} cellules réparées (encodage)`);
     return parts.join(' · ');
   }
@@ -397,6 +426,7 @@ function formatResumeImport(stats){
   }else parts.push('aucune écartée');
   if(stats.cms_via_structure)parts.push(`${stats.cms_via_structure} CMS lus dans la structure orienteur`);
   if(stats.communes_fusionnees)parts.push(`${stats.communes_fusionnees} communes regroupées`);
+  if(stats.conum_via_referent)parts.push(`${stats.conum_via_referent} conseillers lus dans le référent`);
   if(stats.cellules_reparees)parts.push(`${stats.cellules_reparees} cellules réparées (encodage)`);
   return parts.join(' · ');
 }
@@ -442,7 +472,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,ETAT_MAP,TYPE_EXCLUS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,ETAT_MAP,TYPE_EXCLUS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,

@@ -4,7 +4,7 @@ const {
   pct, esc, excelDate, parseDt, dayDiff, bizDays, monthLabel, typeColor,
   count, countThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
   normEtat, isRealisee, countDemandes, parseRows, mapColonnes, demojibakeUtf16,
-  formatResumeImport, normCommuneKey,
+  formatResumeImport, normCommuneKey, comblerConum,
 } = require('./gdin-pure.js');
 
 // ─── pct ──────────────────────────────────────────────────────────────────
@@ -193,7 +193,8 @@ const ligne = (o={}) => {
   c[4]=o.motif||'motif'; c[5]=o.type||'Accompagnement'; c[6]=o.lieu===undefined?'CMS Marmande':o.lieu;
   c[7]=o.dateAct===undefined?'02/01/2025':o.dateAct;
   c[9]=o.dateDem===undefined?'01/01/2025':o.dateDem;
-  c[11]=o.conum||'MARTIN Paul';
+  c[10]=o.orienteur===undefined?'':o.orienteur;
+  c[11]=o.conum===undefined?'MARTIN Paul':o.conum;
   c[12]=o.structure||'CCAS'; c[13]=o.tel||'0600000000'; c[14]=o.email||'a@b.fr';
   c[15]=o.obs||'observation libre'; c[16]=o.benef||'Oui'; c[17]=o.urgence||'Non';
   c[18]=o.etat||'Réalisée';
@@ -415,5 +416,44 @@ describe('parseRows — communes', () => {
   it('départage les ex æquo de façon déterministe', () => {
     const r = parseRows([EN_TETES, ligne({ n: '1', commune: 'AGEN' }), ligne({ n: '2', commune: 'Agen' })]);
     assert.equal(r.records[0].commune, 'AGEN');
+  });
+});
+
+// ─── comblerConum ─────────────────────────────────────────────────────────
+// « Conseiller numérique » n'est rempli qu'à 30 % ; « Référent » l'est à 99 %
+// et porte souvent un conseiller. Combler ici fait primer le constaté sur la
+// déduction géographique de CONUM_ATTRIB, qui contredisait le référent sur
+// 782 lignes de l'export de septembre.
+describe('comblerConum', () => {
+  it('comble depuis le référent quand c\'est un conseiller connu', () => {
+    const recs = [{ conum: 'MARTIN Paul' }, { conum: '', orienteur: 'MARTIN Paul' }];
+    assert.equal(comblerConum(recs), 1);
+    assert.equal(recs[1].conum, 'MARTIN Paul');
+  });
+  it('ignore un référent qui n\'est pas un conseiller', () => {
+    const recs = [{ conum: 'MARTIN Paul' }, { conum: '', orienteur: 'CAF' }];
+    assert.equal(comblerConum(recs), 0);
+    assert.equal(recs[1].conum, '');
+  });
+  it('ne réécrit jamais un conseiller déjà renseigné', () => {
+    const recs = [{ conum: 'MARTIN Paul' }, { conum: 'DURAND Eva', orienteur: 'MARTIN Paul' }];
+    comblerConum(recs);
+    assert.equal(recs[1].conum, 'DURAND Eva');
+  });
+  it('traite « ? » comme une absence', () => {
+    const recs = [{ conum: 'MARTIN Paul' }, { conum: '?', orienteur: 'MARTIN Paul' }];
+    assert.equal(comblerConum(recs), 1);
+    assert.equal(recs[1].conum, 'MARTIN Paul');
+  });
+  it('ne comble rien si aucun conseiller n\'est connu', () => {
+    const recs = [{ conum: '', orienteur: 'MARTIN Paul' }];
+    assert.equal(comblerConum(recs), 0);
+  });
+  it('s\'applique à l\'import et alimente les stats', () => {
+    const r = parseRows([EN_TETES,
+      ligne({ n: '1', conum: 'MARTIN Paul' }),
+      ligne({ n: '2', conum: '', orienteur: 'MARTIN Paul' })]);
+    assert.equal(r.stats.conum_via_referent, 1);
+    assert.equal(r.records[1].conum, 'MARTIN Paul');
   });
 });
