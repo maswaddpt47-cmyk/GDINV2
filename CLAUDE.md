@@ -77,6 +77,125 @@ La CI bloque le déploiement si un test échoue — ne jamais pousser sans avoir
 
 ---
 
+## Règles générales adaptées à ce projet
+
+Sections issues de la bibliothèque **MD-LIB** (`maswaddpt47-cmyk/MD-LIB`),
+réécrites pour GDINV2. Il n'y a **pas de lien automatique** entre les deux :
+modifier la règle dans MD-LIB d'abord, puis la répercuter ici à la main.
+
+### Branche imposée par la plateforme
+
+La branche de travail reste `main`. Mais Claude Code sur le web impose parfois
+une branche de session (`claude/...`) : dans ce cas, développer dessus puis
+**merger dans `main` en fin de session**, sinon rien n'est déployé.
+
+```bash
+git checkout main && git merge <branche> --no-ff && git push origin main
+```
+
+### Déploiement et cache
+
+`.github/workflows/deploy.yml` publie sur GitHub Pages **au push sur `main`
+uniquement**, et seulement si `node --test gdin-pure.test.js` passe. Une
+branche de feature ne déploie rien.
+
+Les scripts sont chargés sans cache-busting (`<script src="gdin-pure.js">`,
+sans `?v=N`) — constaté par lecture du `<head>` le 20/09/2026, effet en
+production non mesuré. Conséquence possible : après un correctif dans
+`gdin-pure.js`, un navigateur peut continuer à exécuter l'ancienne version.
+Si un correctif « ne passe pas », tester en navigation privée avant de
+chercher un bug ailleurs.
+
+### index.html et index-v2.html — trancher, pas converger au hasard
+
+Deux dashboards complets coexistent : `index.html` (servi par défaut sur
+GitHub Pages) et `index-v2.html` (refonte du design system, ~300 lignes de
+plus). Chacun embarque sa propre copie de la logique d'affichage, et des
+commits récents portent la mention « (v1 + v2) » : chaque évolution est
+écrite deux fois.
+
+**Règle :** tant que les deux fichiers existent, une modification
+fonctionnelle s'applique aux deux dans le même commit — ou le message de
+commit dit explicitement pourquoi un seul est touché. Si v2 doit remplacer
+v1, l'écrire ici et supprimer v1. La pire situation est deux versions qui
+divergent en silence et dont plus personne ne sait laquelle fait foi.
+
+### RGPD & données personnelles
+
+Le dashboard traite des données d'accompagnement d'usagers d'un service
+public départemental. Trois garde-fous sont **déjà dans le code** — les
+casser est le risque principal du projet :
+
+1. **Minimisation à l'import.** `parseXlsText()` (gdin-pure.js) et
+   `parseXlsxBinary()` (dans les HTML) ne retiennent aucune identité de
+   bénéficiaire : ni nom, ni prénom, ni adresse, ni téléphone, ni date de
+   naissance. Champs conservés : date, commune, CMS, thématiques, type
+   d'action, conum, orienteur, état, motif tronqué à 120 caractères.
+   **Ne jamais ajouter de colonne nominative au mapping**, même présente
+   dans le fichier source.
+2. **`const EMBEDDED=[]` reste vide.** Le repo est public et déployé sur
+   GitHub Pages : y commiter un extrait de données réelles les publie sur
+   Internet. Les données réelles n'entrent que par import utilisateur, côté
+   navigateur.
+3. **Le `motif` est du texte libre** saisi par un agent : il peut contenir un
+   nom ou une situation personnelle malgré la troncature. Il est stocké en
+   clair dans `localStorage` (`gdin_data_v3`) sur le poste. Acceptable en
+   usage local ; à relire avant toute capture, export ou diapo projeté.
+
+Signaler explicitement en réponse tout écart constaté, même si la question
+n'a pas été posée.
+
+⚠️ Point ouvert au 20/09/2026 : les polices sont chargées depuis
+`fonts.googleapis.com`, ce qui transmet l'IP des visiteurs à Google. Les
+héberger localement supprime le sujet.
+
+### Si un service worker / une PWA est ajouté un jour
+
+Aucun service worker n'existe aujourd'hui (vérifié le 20/09/2026). S'il en
+faut un pour l'installabilité :
+
+- **aucun cache** — un handler `fetch` qui ne fait rien suffit ;
+- **jamais de `event.respondWith()`** : la requête est ré-émise hors de portée
+  des mocks `page.route()` et toute la suite e2e casse sans rapport apparent
+  avec la cause ;
+- enregistrement sur `load`, en fin de `<body>`, avec un `catch` vide ;
+- en PWA installée il n'y a plus de Ctrl+F5 : vérifier les en-têtes
+  `Cache-Control` servis sur le HTML avant de conclure.
+
+### Hygiène des instructions et des commentaires
+
+- **Une contrainte formulable en test devient un test, pas un paragraphe.**
+  Un `.md` espère être lu ; un test fait échouer la CI. Ce fichier garde le
+  *pourquoi* et le nom du test, pas les deux en entier.
+- **Dater et qualifier toute affirmation technique** (JJ/MM/AAAA, puis
+  *mesuré* — avec la mesure — ou *supposé*). Une mesure qui contredit une
+  note existante oblige à corriger la note, pas seulement à la contourner.
+- **Budget fermé** : avant d'ajouter une section ici, vérifier qu'elle n'en
+  répète pas une autre et supprimer ce qu'elle remplace. Un fichier
+  d'instructions qui grossit est moins bien appliqué, pas mieux.
+- **Pas de changelog en commentaire** dans `index.html`, `index-v2.html` ou
+  `gdin-pure.js` (« v11.9 : retiré / v11.10 : remis »). Ça appartient à
+  `git log`. Reste légitime : la décision en vigueur et la raison qui la rend
+  non négociable, surtout si elle est contre-intuitive.
+
+### Posture de travail attendue
+
+- Ne jamais présenter une explication plausible comme un fait : marquer
+  « hypothèse non vérifiée » tant qu'aucun log, capture ou test réel ne la
+  confirme.
+- Ne jamais dire « c'est réparé » ou « c'est en ligne » sans avoir vérifié le
+  chemin réel (test exécuté, rendu navigateur, déploiement passé) — pas une
+  lecture de code qui « devrait marcher ».
+- Sur une demande d'audit ou un bug de calcul, livrer l'audit systématique de
+  tous les points d'impact **avant** la première correction.
+- Signaler toute déviation d'une consigne ou toute décision de design prise
+  seul au moment où elle est prise, jamais en note après coup.
+- Utiliser des dates explicites (JJ/MM/AAAA) plutôt que « hier » ou « la
+  semaine dernière ».
+- En contexte multi-repo, préfixer chaque commande par `cd /chemin/complet &&`.
+
+---
+
 ## Pourquoi ces règles
 
 L'utilisateur modifie régulièrement les fichiers directement sur GitHub entre les sessions. Sans `git pull` au démarrage, les modifications locales écrasent silencieusement son travail. L'historique git sert de filet de sécurité.
