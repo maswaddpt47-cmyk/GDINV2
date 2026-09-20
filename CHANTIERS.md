@@ -45,38 +45,31 @@ Problème annexe : le Département apparaît sous **quatre orthographes** dans
 « Structure orienteur » (~1 460 lignes éclatées). À normaliser si cette
 colonne est exploitée.
 
-## Bug bloquant — « Date action (saisie) » illisible, 100 % des lignes
+## Résolu le 20/09/2026 — « Date action (saisie) » illisible
 
-Mesuré le 20/09/2026 sur l'export de septembre (24 410 lignes). La colonne
-`Date action (saisie)` (indice 7) sort de SheetJS en mojibake UTF-16 :
-`"㠰〯⼳〲㈲"` au lieu de `08/03/2022`. Chaque caractère porte deux octets
-ASCII inversés — `String.fromCharCode(c & 0xff) + String.fromCharCode(c >> 8)`
-restitue la date. Décodage validé sur **24 410 / 24 410** lignes (toutes
-`JJ/MM/AAAA` valides) et cohérent chronologiquement (30 actions antérieures
-à leur demande, soit 0 %).
+La colonne sortait de SheetJS en mojibake UTF-16 (`"㠰〯⼳〲㈲"` au lieu de
+`08/03/2022`) sur 100 % des 24 410 lignes, chemin navigateur compris.
+`date_action` était donc `null` sur les 18 202 enregistrements retenus, ce qui
+rendait la clé de fusion des doublons constante et **écrasait 2 826 actions
+réelles à chaque import**.
 
-Aucune autre colonne n'est touchée. Le chemin navigateur
-(`XLSX.read(..., {type:'array'})`) produit exactement le même mojibake que
-`readFile()` : **l'application est affectée à l'identique**.
+Corrigé par `demojibakeUtf16()` (`gdin-pure.js`, commit `fff4554`). Mesures
+après correctif, sur le même export :
 
-Conséquence : `date_action` est `null` sur les 18 202 enregistrements
-retenus. Points d'impact :
+| | Avant | Après |
+|---|---|---|
+| `date_action` renseignée | 0 | 18 202 |
+| Clés de fusion distinctes | 11 548 | 14 374 |
+| Délais calculables | 0 | 18 180 (moyenne 9 j, médiane 1 j) |
 
-| Impact | Mesure |
-|---|---|
-| **Sur-fusion des doublons** — la clé de fusion contient `date_action\|\|''`, donc constante | 11 548 lignes en base au lieu de 14 374 : **2 826 actions réelles écrasées** (24 %) |
-| Délais demande → action | `r.delai = null` partout, aucun délai calculable |
-| KPI « Complétion » / « done » | `filter(r => r.date_action)` = 0 |
-| Heatmaps par lieu et par CMS | `allYears` vide, les vues ne s'affichent pas |
-| Export CSV | colonne `date_action` vide |
+Le compte rendu d'import affiche le nombre de cellules réparées — une
+réparation silencieuse sur 100 % d'une colonne ne doit pas passer inaperçue.
+Ne pas assouplir la détection : elle ne décode que si toute la chaîne est dans
+le plan supérieur Unicode et si le résultat est de l'ASCII imprimable.
+Appliquée à tort, elle corromprait une donnée saine.
 
-C'est **la cause** du chantier « indicateurs de complétion à 100 % constant » :
-ce n'était pas un défaut d'indicateur.
-
-Non corrigé : l'audit précède la correction. À trancher avant de coder — le
-décodage doit être conditionné à la détection du mojibake (plage CJK), pas
-appliqué systématiquement, sinon un export sain serait corrompu à son tour.
-Vérifier aussi si l'export de juin 2026 portait déjà le défaut.
+**Reste à vérifier** : l'export de juin 2026 portait-il déjà le défaut ? Si
+oui, tous les rapports tirés avant le 20/09/2026 sous-comptaient les actions.
 
 ## Chantiers restants, par priorité
 
@@ -90,9 +83,11 @@ Vérifier aussi si l'export de juin 2026 portait déjà le défaut.
 3. **Détecteur de doublons quadratique.** `keys.indexOf(k)` dans un `filter`
    (fonction du panneau qualité) : 823 ms mesurés sur 17 015 lignes, 3 ms
    avec un `Set`. Le coût croît au carré du volume.
-4. **Indicateurs de complétion restants.** Trois occurrences encore basées
-   sur `!r.date_action`, donc à 100 % constant : colonne `%` du tableau
-   mensuel (deux fois) et KPI « Complétion » de la vue par conseiller.
+4. **Indicateurs de complétion restants.** Trois occurrences basées sur
+   `!r.date_action` : colonne `%` du tableau mensuel (deux fois) et KPI
+   « Complétion » de la vue par conseiller. Leur valeur constante venait du
+   bug d'encodage ci-dessus, désormais corrigé — à revérifier sur un import
+   réel avant de conclure qu'il reste quelque chose à faire.
 5. **Types absents du dropdown.** `typeFilter` ne propose que
    Accompagnement, Prise de contact, Orientation tiers et Atelier. Les types
    Pass, `Orientation vers un CN du 47` et `Autre` ne sont atteignables par

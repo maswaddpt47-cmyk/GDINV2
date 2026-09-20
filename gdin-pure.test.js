@@ -3,7 +3,8 @@ const assert = require('node:assert/strict');
 const {
   pct, esc, excelDate, parseDt, dayDiff, bizDays, monthLabel, typeColor,
   count, countThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
-  normEtat, isRealisee, countDemandes, parseRows, mapColonnes,
+  normEtat, isRealisee, countDemandes, parseRows, mapColonnes, demojibakeUtf16,
+  formatResumeImport,
 } = require('./gdin-pure.js');
 
 // ─── pct ──────────────────────────────────────────────────────────────────
@@ -278,5 +279,58 @@ describe('mapColonnes', () => {
   });
   it('retourne -1 pour une colonne absente', () => {
     assert.equal(mapColonnes(['A','B','C','D','E']).lieu, -1);
+  });
+});
+
+
+// ─── demojibakeUtf16 ──────────────────────────────────────────────────────
+// Défaut mesuré le 20/09/2026 sur l'export de septembre : la colonne
+// « Date action (saisie) » arrive avec deux octets ASCII inversés par
+// caractère. Sans réparation, date_action est null sur 100 % des lignes.
+describe('demojibakeUtf16', () => {
+  it('répare une date de l\'export réel', () => {
+    assert.equal(demojibakeUtf16('\u3830\u302f\u2f33\u3032\u3232'), '08/03/2022');
+  });
+  it('laisse une date saine intacte', () => {
+    assert.equal(demojibakeUtf16('08/03/2022'), '08/03/2022');
+  });
+  it('laisse le texte accentué intact', () => {
+    assert.equal(demojibakeUtf16('Réalisée'), 'Réalisée');
+    assert.equal(demojibakeUtf16('CMS Marmande'), 'CMS Marmande');
+    assert.equal(demojibakeUtf16('Numérique de base'), 'Numérique de base');
+  });
+  it('laisse une chaîne vide intacte', () => {
+    assert.equal(demojibakeUtf16(''), '');
+  });
+  it('renonce si le décodage ne donne pas de l\'ASCII imprimable', () => {
+    assert.equal(demojibakeUtf16('東京都'), '東京都');
+  });
+  it('tolère un octet nul final (longueur impaire)', () => {
+    // "abc" en UTF-16LE mal lu : 0x6261, 0x0063
+    assert.equal(demojibakeUtf16('\u6261\u0063'), 'abc');
+  });
+});
+
+describe('parseRows — réparation d\'encodage', () => {
+  const moji = '\u3830\u302f\u2f33\u3032\u3232'; // 08/03/2022
+  it('décode une Date action illisible au lieu de la perdre', () => {
+    const r = parseRows([EN_TETES, ligne({ dateAct: moji, dateDem: '01/03/2022' })]);
+    assert.equal(r.records[0].date_action, '2022-03-08');
+  });
+  it('compte les cellules réparées dans les stats', () => {
+    const r = parseRows([EN_TETES, ligne({ dateAct: moji, dateDem: '01/03/2022' })]);
+    assert.equal(r.stats.cellules_reparees, 1);
+  });
+  it('ne répare rien sur un export sain', () => {
+    const r = parseRows([EN_TETES, ligne()]);
+    assert.equal(r.stats.cellules_reparees, 0);
+  });
+  it('le compte rendu d\'import signale les réparations', () => {
+    const r = parseRows([EN_TETES, ligne({ dateAct: moji, dateDem: '01/03/2022' })]);
+    assert.match(formatResumeImport(r.stats), /1 cellules réparées \(encodage\)/);
+  });
+  it('le compte rendu reste muet sans réparation', () => {
+    const r = parseRows([EN_TETES, ligne()]);
+    assert.doesNotMatch(formatResumeImport(r.stats), /réparées/);
   });
 });
