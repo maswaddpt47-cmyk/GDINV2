@@ -24,8 +24,28 @@ jobs:
           node-version: '20'
       - run: npm test
 
+  # Les tests unitaires couvrent ce que gdin-pure.js calcule ; ils ne disent
+  # rien de ce que la page affiche. Trois défauts d'affichage sont passés en
+  # production le 20/09/2026 faute de ce job.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: rapport-e2e
+          path: test-results/
+          retention-days: 7
+
   deploy:
-    needs: test
+    needs: [test, e2e]
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
