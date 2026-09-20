@@ -110,6 +110,23 @@ const CMS_MAP_RAW={
   'PONT DU CASSE':                          'Médiathèque Pont-du-Casse',
   'Médiathèque de Boé':                     'Médiathèque Boé',
   'Médiathèque municipale de Boé':          'Médiathèque Boé',
+  // === Lieux partenaires sortis de « Autre structure » le 20/09/2026 ===
+  // Admis par le repli sur « Structure orienteur », ils y arrivaient en vrac.
+  // normKey() ne neutralise que casse, accents et espaces multiples : chaque
+  // graphie qui diffère par la ponctuation ou un mot en plus a besoin de sa
+  // propre clé. ABRIS était éclaté en dix graphies pour 181 lignes.
+  'IME Montclairjoie':                      'IME Montclairjoie',
+  'Collège Lucie AUBRAC':                   'Collège Lucie Aubrac',
+  'Club des Aînés de la Cascade - Fauillet':'Club des Aînés Fauillet',
+  'Val de Garonne Agglomération':           'Val de Garonne Agglomération',
+  'Association Service Environnement':      'Association Service Environnement',
+  'Association Service Environnement - Sainte-Bazeille':'Association Service Environnement',
+  'France Services Pays de Lauzun':         'France Services Pays de Lauzun',
+  'France Services du Pays de Lauzun':      'France Services Pays de Lauzun',
+  'Mairie Monteton':                        'Mairie Monteton',
+  'Permanence - Maison de la vie associative':'Maison de la vie associative',
+  'MFR Castelmoron':                        'MFR Castelmoron',
+  'UNA 47':                                 'UNA 47',
   // === Structures externes majeures ===
   'IME de Fongrave - Layrac':               'IME Fongrave Layrac',
   'IME de Fongrave Layrac':                 'IME Fongrave Layrac',
@@ -170,16 +187,21 @@ const CMS_MAP_RAW={
   'Campus numérique':                       'Campus Numérique',
   'Campus Numérique - Agen':                'Campus Numérique',
   'Campus Numérique':                       'Campus Numérique',
-  // === Associations et structures diverses → 'Autre structure' ===
-  'Association ABRIS':                      'Autre structure',
-  'Asso ABRIS':                             'Autre structure',
-  'Association ABRIS (Casseneuil)':         'Autre structure',
-  'Asso ABRIS (Casseneuil)':                'Autre structure',
-  'Asso ABRIS Casseneuil':                  'Autre structure',
-  'ABRIS - CASSENEUIL':                     'Autre structure',
-  'Association ABRIS Casseneuil':           'Autre structure',
-  'Association ABRIS - Casseneuil':         'Autre structure',
-  'Association ABRIS ( Casseneuil)':        'Autre structure',
+  // === Association ABRIS (Casseneuil) ===
+  // Les graphies étaient recensées mais toutes renvoyées vers « Autre
+  // structure », ce qui les noyait au lieu de les regrouper. Confirmé par
+  // l'utilisateur le 20/09/2026 : c'est bien un seul lieu, 181 lignes.
+  'ABRIS':                                  'Association ABRIS Casseneuil',
+  'Association ABRIS':                      'Association ABRIS Casseneuil',
+  'Asso ABRIS':                             'Association ABRIS Casseneuil',
+  'Association Abris Casseneuil':           'Association ABRIS Casseneuil',
+  'Association ABRIS (Casseneuil)':         'Association ABRIS Casseneuil',
+  'Asso ABRIS (Casseneuil)':                'Association ABRIS Casseneuil',
+  'Asso ABRIS Casseneuil':                  'Association ABRIS Casseneuil',
+  'ABRIS - CASSENEUIL':                     'Association ABRIS Casseneuil',
+  'Association ABRIS Casseneuil':           'Association ABRIS Casseneuil',
+  'Association ABRIS - Casseneuil':         'Association ABRIS Casseneuil',
+  'Association ABRIS ( Casseneuil)':        'Association ABRIS Casseneuil',
 };
 // KEEP_CMS dérivée automatiquement — une seule source de vérité
 const KEEP_CMS=new Set(Object.values(CMS_MAP_RAW));
