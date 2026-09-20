@@ -25,16 +25,7 @@ comparaison avec un fichier antérieur. Référence actuelle : septembre 2026,
 
 ## Chantiers ouverts
 
-### Règle métier non documentée — conseiller masqué
-
-`CONUM_MASQUES` (dans `index.html`) masque un conseiller de tous les
-affichages par conseiller. La raison n'est écrite nulle part et **483 lignes
-de l'export de septembre sont concernées** — ce n'est pas marginal.
-
-C'est la seule occurrence de nom d'agent qui reste dans le source. Trois
-issues possibles, à trancher avec l'utilisateur : la règle est justifiée et
-mérite d'être documentée ; elle est périmée et se supprime ; ou elle se
-remplace par un critère dérivable des données.
+Aucun.
 
 ## En attente de l'utilisateur
 
@@ -43,7 +34,6 @@ remplace par un critère dérivable des données.
   l'époque — principalement Tonneins, Nérac, Antenne Aiguillon et Agen Tapie.
   Corrigé. Les bilans individuels tirés avant cette date sont faux : à
   signaler aux conseillers concernés.
-- **Règle `CONUM_MASQUES`** ci-dessus.
 - **Validation en usage réel de l'onglet Fiabilité** avant d'y toucher.
 
 ## À porter aux développeurs de l'outil de saisie
@@ -64,10 +54,12 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
 
 **Noms d'agents**
 
-- **Aucun nom d'agent dans le code source.** Le dépôt est public et indexable :
+- **Aucun nom d'agent dans le code source**, et aucune exclusion par nom : elle
+  publierait ce nom et se périmerait d'elle-même. Le dépôt est public et indexable :
   une publication sans finalité ne se justifie pas au regard de la
-  minimisation. Le rattachement CMS → conseiller, la liste des conseillers et
-  leurs couleurs sont tous dérivés des données importées.
+  Le dépôt est public et indexable : une publication sans finalité ne se
+  justifie pas au regard de la minimisation. Le rattachement CMS → conseiller,
+  la liste des conseillers et leurs couleurs sont dérivés des données.
 - **L'attribution se dérive par année**, jamais globalement : les affectations
   changent, et un mapping figé réécrit rétroactivement cinq ans d'historique.
 
