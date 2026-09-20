@@ -57,8 +57,14 @@ Une session est significative si elle touche à la logique métier (pas une simp
 **Règle :** après toute modification de `gdin-pure.js`, vérifier que les tests passent avant de commiter :
 
 ```bash
-node --test gdin-pure.test.js
+npm test          # 88 tests unitaires
+npm run audit -- export.xls   # audit d'un export avant d'en tirer un rapport
 ```
+
+`audit-export.js` rejoue le parseur de l'application sur un fichier réel et
+affiche ce qui est retenu, ce qui est écarté et pourquoi, les formats de
+dates, les doublons, les délais aberrants et le contrôle de minimisation
+RGPD. À lancer sur chaque nouvel export avant d'en tirer un rapport.
 
 La CI bloque le déploiement si un test échoue — ne jamais pousser sans avoir lancé les tests localement.
 
