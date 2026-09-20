@@ -29,12 +29,6 @@ Aucun.
 
 ## En attente de l'utilisateur
 
-- **Attributions rectifiées.** Jusqu'au 20/09/2026, 2 853 lignes étaient
-  attribuées au conseiller actuel d'un secteur plutôt qu'à celui en poste à
-  l'époque — principalement Tonneins, Nérac, Antenne Aiguillon et Agen Tapie.
-  Corrigé. Les bilans individuels tirés avant cette date sont faux : à
-  signaler aux conseillers concernés.
-- **Validation en usage réel de l'onglet Fiabilité** avant d'y toucher.
 - **Suppression de la branche `claude/review-markdown-fuxynm`** (SHA
   `719d623`) via l'interface GitHub : le proxy de développement refuse la
   suppression de branche distante (403). Son contenu est déjà dans `main`.
@@ -172,6 +166,18 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
 
 **Limites connues, à assumer plutôt qu'à masquer**
 
+- **Rupture d'historique au 20/09/2026.** Jusqu'à cette date, 2 853 lignes
+  étaient attribuées au conseiller en poste aujourd'hui sur un secteur, et non
+  à celui qui l'occupait à l'époque — principalement Tonneins, Nérac, Antenne
+  Aiguillon et Agen Tapie. Corrigé depuis. Un bilan individuel antérieur au
+  20/09/2026 ne se compare donc pas à un bilan tiré après : l'écart vient de
+  la correction, pas de l'activité.
+- **L'onglet Fiabilité est validé en l'état** (20/09/2026). Trois choix y sont
+  délibérés et ne se défont pas sans raison mesurée : la synthèse nomme
+  l'indicateur le plus sensible au lieu de résumer au pire, « Ateliers »
+  s'affiche sans marge parce que séances et participations sont une
+  reformulation et non une incertitude, et la marge de 40,4 % porte sur
+  l'attribution individuelle, jamais sur le volume d'activité.
 - **L'attribution par conseiller est déduite à 40,4 %** : `comblerConum()`
   applique d'abord le référent constaté, `applyConumAttrib()` comble le reste
   depuis le secteur — le conseiller majoritaire de ce secteur pour l'année
