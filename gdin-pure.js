@@ -352,6 +352,150 @@ function comblerConum(records){
   return comblees;
 }
 
+// ─── Référentiel des communes du Lot-et-Garonne ──────────────────────────────
+// Les 319 communes actuelles du département, d'après le découpage administratif
+// officiel (@etalab/decoupage-administratif 6.0.0, extrait le 20/09/2026).
+// Embarqué plutôt qu'appelé : geo.api.gouv.fr sert déjà la carte, mais un
+// réseau qui le filtre ne doit pas emporter la normalisation des communes.
+//
+// Ce référentiel est ce qui rend le rapprochement sûr. Brax et Bias, Layrac et
+// Clairac, Saint-Vite et Saint-Sixte sont à deux caractères les unes des
+// autres : toutes y figurent, donc aucune ne peut être écrasée par une
+// voisine. Sans lui, un rapprochement par ressemblance fabrique des chiffres
+// faux sans prévenir.
+const COMMUNES_47=[
+  'Agen','Agmé','Agnac','Aiguillon','Allemans-du-Dropt',
+  'Allez-et-Cazeneuve','Allons','Ambrus','Andiran','Antagnac','Anthé',
+  'Anzex','Argenton','Armillac','Astaffort','Aubiac','Auradou',
+  'Auriac-sur-Dropt','Bajamont','Baleyssagues','Barbaste','Bazens',
+  'Beaugas','Beaupuy','Beauville','Beauziac','Bias','Birac-sur-Trec',
+  'Blanquefort-sur-Briolance','Blaymont','Boé','Bon-Encontre',
+  'Boudy-de-Beauregard','Bouglon','Bourgougnague','Bourlens','Bournel',
+  'Bourran','Boussès','Brax','Bruch','Brugnac','Buzet-sur-Baïse','Cahuzac',
+  'Calignac','Calonges','Cambes','Cancon','Casseneuil','Cassignas',
+  'Castelculier','Casteljaloux','Castella','Castelmoron-sur-Lot',
+  'Castelnau-sur-Gupie','Castelnaud-de-Gratecambe','Castillonnès',
+  'Caubeyres','Caubon-Saint-Sauveur','Caudecoste','Caumont-sur-Garonne',
+  'Cauzac','Cavarc','Cazideroque','Clairac','Clermont-Dessous',
+  'Clermont-Soubiran','Cocumont','Colayrac-Saint-Cirq','Condezaygues',
+  'Coulx','Courbiac','Cours','Couthures-sur-Garonne','Cuq','Cuzorn',
+  'Damazan','Dausse','Dévillac','Dolmayrac','Dondas','Doudrac','Douzains',
+  'Durance','Duras','Engayrac','Escassefort','Esclottes','Espiens',
+  'Estillac','Fals','Fargues-sur-Ourbise','Fauguerolles','Fauillet',
+  'Ferrensac','Feugarolles','Fieux','Fongrave','Foulayronnes',
+  'Fourques-sur-Garonne','Francescas','Fréchou','Frégimont','Frespech',
+  'Fumel','Galapian','Gaujac','Gavaudun','Gontaud-de-Nogaret',
+  'Granges-sur-Lot','Grateloup-Saint-Gayrand','Grayssas','Grézet-Cavagnan',
+  'Guérin','Hautefage-la-Tour','Hautesvignes','Houeillès','Jusix',
+  'La Croix-Blanche','La Réunion','La Sauvetat-de-Savères',
+  'La Sauvetat-du-Dropt','La Sauvetat-sur-Lède','Labastide-Castel-Amouroux',
+  'Labretonie','Lacapelle-Biron','Lacaussade','Lacépède','Lachapelle',
+  'Lafitte-sur-Lot','Lafox','Lagarrigue','Lagruère','Lagupie','Lalandusse',
+  'Lamontjoie','Lannes','Laparade','Laperche','Laplume','Laroque-Timbaut',
+  'Lasserre','Laugnac','Laussou','Lauzun','Lavardac','Lavergne','Layrac',
+  'Le Mas-d\'Agenais','Le Passage','Le Temple-sur-Lot','Lédat',
+  'Lévignac-de-Guyenne','Leyritz-Moncassin','Longueville','Loubès-Bernac',
+  'Lougratte','Lusignan-Petit','Madaillan','Marcellus','Marmande',
+  'Marmont-Pachas','Masquières','Massels','Massoulès','Mauvezin-sur-Gupie',
+  'Mazières-Naresse','Meilhan-sur-Garonne','Mézin','Miramont-de-Guyenne',
+  'Moirax','Monbahus','Monbalen','Moncaut','Monclar','Moncrabeau',
+  'Monflanquin','Monheurt','Monségur','Monsempron-Libos',
+  'Montagnac-sur-Auvignon','Montagnac-sur-Lède','Montastruc','Montauriol',
+  'Montaut','Montayral','Montesquieu','Monteton','Montgaillard-en-Albret',
+  'Montignac-de-Lauzun','Montignac-Toupinerie','Montpezat','Montpouillan',
+  'Monviel','Moulinet','Moustier','Nérac','Nicole','Nomdieu','Pailloles',
+  'Pardaillan','Parranquet','Paulhiac','Penne-d\'Agenais','Peyrière',
+  'Pindères','Pinel-Hauterive','Pompiey','Pompogne','Pont-du-Casse',
+  'Port-Sainte-Marie','Poudenas','Poussignac','Prayssas','Puch-d\'Agenais',
+  'Pujols','Puymiclan','Puymirol','Puysserampion','Rayet','Razimet',
+  'Réaup-Lisse','Rives','Romestaing','Roquefort','Roumagne','Ruffiac',
+  'Saint-Antoine-de-Ficalba','Saint-Astier','Saint-Aubin','Saint-Avit',
+  'Saint-Barthélemy-d\'Agenais','Saint-Caprais-de-Lerm',
+  'Saint-Colomb-de-Lauzun','Saint-Étienne-de-Fougères',
+  'Saint-Étienne-de-Villeréal','Saint-Eutrope-de-Born',
+  'Saint-Front-sur-Lémance','Saint-Georges','Saint-Géraud',
+  'Saint-Hilaire-de-Lusignan','Saint-Jean-de-Duras','Saint-Jean-de-Thurac',
+  'Saint-Laurent','Saint-Léger','Saint-Léon','Saint-Martin-Curton',
+  'Saint-Martin-de-Beauville','Saint-Martin-de-Villeréal',
+  'Saint-Martin-Petit','Saint-Maurice-de-Lestapel','Saint-Maurin',
+  'Saint-Nicolas-de-la-Balerme','Saint-Pardoux-du-Breuil',
+  'Saint-Pardoux-Isaac','Saint-Pastour','Saint-Pé-Saint-Simon',
+  'Saint-Pierre-de-Buzet','Saint-Pierre-de-Clairac',
+  'Saint-Pierre-sur-Dropt','Saint-Quentin-du-Dropt','Saint-Robert',
+  'Saint-Romain-le-Noble','Saint-Salvy','Saint-Sardos',
+  'Saint-Sauveur-de-Meilhan','Saint-Sernin','Saint-Sixte',
+  'Saint-Sylvestre-sur-Lot','Saint-Urcisse','Saint-Vincent-de-Lamontjoie',
+  'Saint-Vite','Sainte-Bazeille','Sainte-Colombe-de-Duras',
+  'Sainte-Colombe-de-Villeneuve','Sainte-Colombe-en-Bruilhois',
+  'Sainte-Gemme-Martaillac','Sainte-Livrade-sur-Lot','Sainte-Marthe',
+  'Sainte-Maure-de-Peyriac','Salles','Samazan','Sauméjan','Saumont',
+  'Sauvagnas','Sauveterre-la-Lémance','Sauveterre-Saint-Denis',
+  'Savignac-de-Duras','Savignac-sur-Leyze','Ségalas','Sembas','Sénestis',
+  'Sérignac-Péboudou','Sérignac-sur-Garonne','Seyches','Sos','Soumensac',
+  'Taillebourg','Tayrac','Thézac','Thouars-sur-Garonne','Tombebœuf',
+  'Tonneins','Tourliac','Tournon-d\'Agenais','Tourtrès','Trémons',
+  'Trentels','Varès','Verteuil-d\'Agenais','Vianne','Villebramar',
+  'Villefranche-du-Queyran','Villeneuve-de-Duras','Villeneuve-sur-Lot',
+  'Villeréal','Villeton','Virazeil','Xaintrailles'
+];
+
+// Rattache un libellé saisi à son nom officiel, ou rend null.
+// Quatre niveaux, du plus sûr au moins sûr — et jamais de choix en cas
+// d'ambiguïté : mieux vaut garder la saisie que se tromper de commune.
+//   1. correspondance exacte, une fois casse, accents, tirets et ST/SAINT
+//      neutralisés, et le bruit retiré (code postal, CEDEX, téléphone) ;
+//   2. à l'article initial près — « MAS D'AGENAIS » pour « Le Mas-d'Agenais » ;
+//   3. le nom officiel ouvre le libellé — « LE PASSAGE D'AGEN » pour
+//      « Le Passage ». Exigé en tête, jamais n'importe où : « Agen » apparaît
+//      dans « Passage d'Agen » et dans « Valence-d'Agen », qui est du 82 ;
+//   4. à deux caractères près, et seulement au-delà de dix caractères, pour
+//      un seul candidat. En deçà la ressemblance ne prouve rien : « Vannes »
+//      est à un caractère de « Lannes », « Donzac » à deux de « Dondas ».
+// Mesuré le 20/09/2026 sur l'export de septembre : 42 libellés rattachés,
+// 342 lignes, aucun rattachement erroné après inspection de chaque décision.
+function communeKeyBase(s){
+  return normCommuneKey(String(s).replace(/[ŒœŒ]/g,'oe')).toLowerCase();
+}
+function communeNettoyee(s){
+  return communeKeyBase(s).replace(/\b\d{5}\b/g,' ').replace(/\bcedex\b\s*\d*/g,' ')
+    .replace(/\b\d{6,}\b/g,' ').replace(/\s+/g,' ').trim();
+}
+function sansArticle(s){return s.replace(/^(le|la|les) /,'');}
+const REF_47={},REF_47_SANS_ARTICLE={};
+const REF_47_CLES=COMMUNES_47.map(n=>[communeKeyBase(n),n]);
+COMMUNES_47.forEach(n=>{
+  const b=communeKeyBase(n);
+  REF_47[b]=n;
+  const a=sansArticle(b);
+  if(!(a in REF_47_SANS_ARTICLE))REF_47_SANS_ARTICLE[a]=n;
+  else if(REF_47_SANS_ARTICLE[a]!==n)REF_47_SANS_ARTICLE[a]=null;
+});
+function distanceMax2(a,b){
+  if(Math.abs(a.length-b.length)>2)return 9;
+  const m=[];
+  for(let i=0;i<=b.length;i++)m[i]=[i];
+  for(let j=0;j<=a.length;j++)m[0][j]=j;
+  for(let i=1;i<=b.length;i++)for(let j=1;j<=a.length;j++)
+    m[i][j]=b[i-1]===a[j-1]?m[i-1][j-1]:Math.min(m[i-1][j-1]+1,m[i][j-1]+1,m[i-1][j]+1);
+  return m[b.length][a.length];
+}
+function rattacherCommune(nom){
+  const s=communeNettoyee(nom);
+  if(!s)return null;
+  if(REF_47[s])return REF_47[s];
+  const sa=sansArticle(s);
+  if(REF_47_SANS_ARTICLE[sa])return REF_47_SANS_ARTICLE[sa];
+  let c=REF_47_CLES.filter(([rk])=>rk.length>=4&&(s+' ').startsWith(rk+' '));
+  if(!c.length)c=REF_47_CLES.filter(([rk])=>sansArticle(rk).length>=4&&(sa+' ').startsWith(sansArticle(rk)+' '));
+  if(c.length){
+    c.sort((a,b)=>b[0].length-a[0].length);
+    return(c.length===1||c[0][0].length>c[1][0].length)?c[0][1]:null;
+  }
+  if(s.length<10)return null;
+  c=REF_47_CLES.filter(([rk])=>distanceMax2(s,rk)<=2);
+  return c.length===1?c[0][1]:null;
+}
+
 // ─── Conversion de dates Excel ───────────────────────────────────────────────
 function excelDate(v){if(!v&&v!==0)return null;if(typeof v==='string'){const s=demojibakeUtf16(v).trim();const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;const m2=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m2)return s.slice(0,10);const n2=parseFloat(s);if(isNaN(n2)||n2<1)return null;return new Date((n2-25569)*86400*1000).toISOString().slice(0,10);}const n=parseFloat(v);if(isNaN(n)||n<1)return null;const d=new Date((n-25569)*86400*1000);return d.toISOString().slice(0,10);}
 
@@ -453,8 +597,15 @@ function parseRows(rows){
   stats.cellules_reparees=cellulesReparees;
   stats.cms_via_structure=cmsViaStructure;
   const{canon,fusionnees}=communesCanoniques(records);
-  records.forEach(r=>{if(r.commune)r.commune=canon[normCommuneKey(r.commune)];});
+  let communesOfficielles=0;
+  records.forEach(r=>{
+    if(!r.commune)return;
+    const officiel=rattacherCommune(r.commune);
+    if(officiel){r.commune=officiel;communesOfficielles++;}
+    else r.commune=canon[normCommuneKey(r.commune)];
+  });
   stats.communes_fusionnees=fusionnees;
+  stats.communes_officielles=communesOfficielles;
   stats.conum_via_referent=comblerConum(records);
   return{records,warnings,stats};
 }
@@ -477,6 +628,7 @@ function formatResumeImport(stats){
     if(stats.ecartees>0)parts.push(`${stats.ecartees} écartées`);
     if(m.lieu_cms_vide)parts.push(`${m.lieu_cms_vide} sans CMS (conservées)`);
     if(stats.cms_via_structure)parts.push(`${stats.cms_via_structure} lieux lus dans la structure orienteur`);
+    if(stats.communes_officielles)parts.push(`${stats.communes_officielles} communes rattachées au référentiel`);
     if(stats.communes_fusionnees)parts.push(`${stats.communes_fusionnees} communes regroupées`);
     if(stats.conum_via_referent)parts.push(`${stats.conum_via_referent} conseillers lus dans le référent`);
     if(stats.cellules_reparees)parts.push(`${stats.cellules_reparees} cellules réparées (encodage)`);
@@ -491,6 +643,7 @@ function formatResumeImport(stats){
     parts.push(`${stats.ecartees} écartées (${d.join(', ')})`);
   }else parts.push('aucune écartée');
   if(stats.cms_via_structure)parts.push(`${stats.cms_via_structure} lieux lus dans la structure orienteur`);
+  if(stats.communes_officielles)parts.push(`${stats.communes_officielles} communes rattachées au référentiel`);
   if(stats.communes_fusionnees)parts.push(`${stats.communes_fusionnees} communes regroupées`);
   if(stats.conum_via_referent)parts.push(`${stats.conum_via_referent} conseillers lus dans le référent`);
   if(stats.cellules_reparees)parts.push(`${stats.cellules_reparees} cellules réparées (encodage)`);
@@ -538,7 +691,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,

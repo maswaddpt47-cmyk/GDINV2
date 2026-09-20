@@ -5,6 +5,7 @@ const {
   count, countThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
   normEtat, isRealisee, countDemandes, parseRows, mapColonnes, demojibakeUtf16,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
+  rattacherCommune, COMMUNES_47,
 } = require('./gdin-pure.js');
 
 // ─── pct ──────────────────────────────────────────────────────────────────
@@ -397,7 +398,7 @@ describe('parseRows — communes', () => {
     const r = parseRows([EN_TETES,
       ligne({ n: '1', commune: 'AGEN' }), ligne({ n: '2', commune: 'AGEN' }),
       ligne({ n: '3', commune: 'agen' })]);
-    assert.deepEqual([...new Set(r.records.map(x => x.commune))], ['AGEN']);
+    assert.deepEqual([...new Set(r.records.map(x => x.commune))], ['Agen']);
   });
   it('conserve tirets et accents de la graphie dominante', () => {
     const r = parseRows([EN_TETES,
@@ -413,9 +414,12 @@ describe('parseRows — communes', () => {
     const r = parseRows([EN_TETES, ligne({ n: '1', commune: 'AGEN' }), ligne({ n: '2', commune: 'FUMEL' })]);
     assert.equal(r.stats.communes_fusionnees, 0);
   });
-  it('départage les ex æquo de façon déterministe', () => {
-    const r = parseRows([EN_TETES, ligne({ n: '1', commune: 'AGEN' }), ligne({ n: '2', commune: 'Agen' })]);
-    assert.equal(r.records[0].commune, 'AGEN');
+  it('départage les ex æquo de façon déterministe hors référentiel', () => {
+    const r = parseRows([EN_TETES,
+      ligne({ n: '1', commune: 'HAMEAU DE NULLE PART' }),
+      ligne({ n: '2', commune: 'Hameau de Nulle Part' })]);
+    assert.equal(r.records[0].commune, 'HAMEAU DE NULLE PART');
+    assert.equal(r.stats.communes_officielles, 0);
   });
 });
 
@@ -563,5 +567,66 @@ describe('normCms — rattrapage des graphies nouvelles', () => {
       vus[ks] = v;
     });
     assert.deepEqual(conflits, []);
+  });
+});
+
+// ─── rattacherCommune ─────────────────────────────────────────────────────
+// Le référentiel officiel est ce qui rend le rapprochement sûr : sans lui,
+// une simple ressemblance fusionnerait des communes bien distinctes.
+describe('rattacherCommune', () => {
+  it('connaît les 319 communes du département', () => {
+    assert.equal(COMMUNES_47.length, 319);
+  });
+  it('reconnaît une commune quelle que soit la casse', () => {
+    assert.equal(rattacherCommune('AGEN'), 'Agen');
+    assert.equal(rattacherCommune('nérac'), 'Nérac');
+  });
+  it('rend le nom officiel accentué et tireté', () => {
+    assert.equal(rattacherCommune('VILLENEUVE SUR LOT'), 'Villeneuve-sur-Lot');
+    assert.equal(rattacherCommune('ST-SYLVESTRE-SUR-LOT'), 'Saint-Sylvestre-sur-Lot');
+  });
+  it('retire le bruit de saisie', () => {
+    assert.equal(rattacherCommune('47180 SAINTE-BAZEILLE'), 'Sainte-Bazeille');
+    assert.equal(rattacherCommune('AGEN CEDEX 9'), 'Agen');
+    assert.equal(rattacherCommune('BOURGOUGNAGUE 0553844902'), 'Bourgougnague');
+  });
+  it('tolère l\'article initial manquant', () => {
+    assert.equal(rattacherCommune("MAS D'AGENAIS"), "Le Mas-d'Agenais");
+    assert.equal(rattacherCommune('LE LEDAT'), 'Lédat');
+  });
+  it('rattache un suffixe surnuméraire au nom officiel', () => {
+    assert.equal(rattacherCommune("LE PASSAGE D'AGEN"), 'Le Passage');
+    assert.equal(rattacherCommune("MONTPEZAT D'AGENAIS"), 'Montpezat');
+  });
+  it('corrige une faute de frappe sur un nom assez long', () => {
+    assert.equal(rattacherCommune('VILLLENEUVE-SUR-LOT'), 'Villeneuve-sur-Lot');
+    assert.equal(rattacherCommune('ALLMANS DU DROPT'), 'Allemans-du-Dropt');
+  });
+
+  // Les garde-fous : ce que la fonction doit REFUSER de faire.
+  it('ne confond pas deux communes proches du département', () => {
+    assert.equal(rattacherCommune('BRAX'), 'Brax');
+    assert.equal(rattacherCommune('BIAS'), 'Bias');
+    assert.equal(rattacherCommune('LAYRAC'), 'Layrac');
+    assert.equal(rattacherCommune('CLAIRAC'), 'Clairac');
+  });
+  it('ne rapproche pas un nom court d\'un voisin ressemblant', () => {
+    assert.equal(rattacherCommune('VANNES'), null);   // à 1 lettre de Lannes
+    assert.equal(rattacherCommune('DONZAC'), null);   // à 2 de Dondas, et du 82
+    assert.equal(rattacherCommune('TOULON'), null);   // à 2 de Bouglon
+  });
+  it('ne rattache pas une commune d\'un autre département', () => {
+    assert.equal(rattacherCommune('SOTURAC'), null);       // Lot
+    assert.equal(rattacherCommune("VALENCE-D'AGEN"), null); // Tarn-et-Garonne
+  });
+  it('ne cherche le nom officiel qu\'en tête du libellé', () => {
+    // « Agen » apparaît dans les deux, mais n'ouvre ni l'un ni l'autre.
+    assert.equal(rattacherCommune("VALENCE-D'AGEN"), null);
+    assert.equal(rattacherCommune('COMMUNE INCONNUE AGENAISE'), null);
+  });
+  it('rend null sur une saisie vide ou absurde', () => {
+    assert.equal(rattacherCommune(''), null);
+    assert.equal(rattacherCommune(')'), null);
+    assert.equal(rattacherCommune('Inconnu'), null);
   });
 });
