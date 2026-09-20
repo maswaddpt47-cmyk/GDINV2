@@ -109,6 +109,14 @@ header{grid-column:2;grid-row:1;background:rgba(3,5,7,.72);backdrop-filter:blur(
 .type-filter label{font-size:10px;color:var(--muted)}
 select{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--text);padding:5px 10px;border-radius:8px;font-family:'Space Grotesk',sans-serif;font-size:12px;cursor:pointer;outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none;backdrop-filter:blur(8px)}
 select:focus{border-color:rgba(77,159,255,.5)}
+/* Le menu déroulant natif s'ouvre hors de la page, sur un fond système blanc.
+   Sans fond opaque explicite, les options héritent du color:var(--text) du
+   select — #eef2ff en thème sombre — et deviennent invisibles : la liste
+   paraît vide alors qu'elle est peuplée. Constaté le 20/09/2026 sur le
+   sélecteur de conseiller. Les variables de thème sont translucides, donc
+   inutilisables ici : il faut des couleurs opaques. */
+select option{background-color:#10141c;color:#eef2ff}
+body.light-mode select option{background-color:#ffffff;color:#0d1220}
 .btn-theme{display:none}/* theme button moved to sidebar */
 
 /* ── Content area ── */

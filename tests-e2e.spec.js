@@ -539,3 +539,66 @@ test.describe('Balayage des panneaux', () => {
     expect(a, 'la fiabilité ne réagit pas au changement d\'année').not.toEqual(b);
   });
 });
+
+test.describe('Lisibilité des listes déroulantes', () => {
+
+  // Le menu déroulant natif s'ouvre hors de la page, sur un fond système
+  // blanc. Sans fond opaque explicite, les options héritent du color du
+  // select — clair en thème sombre — et deviennent invisibles : l'utilisateur
+  // voit une liste vide alors qu'elle est peuplée. Constaté le 20/09/2026 sur
+  // le sélecteur de conseiller, en production.
+  const LUMINANCE = `(c) => {
+    const [r, g, b] = c.match(/[\\d.]+/g).map(Number);
+    const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  }`;
+
+  async function auditOptions(page) {
+    return page.evaluate(`(() => {
+      const lum = ${LUMINANCE};
+      const out = [];
+      document.querySelectorAll('select').forEach((sel) => {
+        const opt = sel.querySelector('option');
+        if (!opt) return;
+        const st = getComputedStyle(opt);
+        const fond = st.backgroundColor;
+        const alpha = fond.startsWith('rgba') ? Number(fond.match(/[\\d.]+/g)[3]) : 1;
+        const l1 = lum(st.color), l2 = lum(fond);
+        const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+        out.push({ id: sel.id || sel.className, fond, couleur: st.color, alpha, ratio });
+      });
+      return out;
+    })()`);
+  }
+
+  test('le sélecteur de conseiller est peuplé après import', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    await page.evaluate((json) => {
+      const blob = new Blob([json], { type: 'application/json' });
+      window.handleAutoImport(new File([blob], 'test.json', { type: 'application/json' }));
+    }, TEST_JSON);
+    await page.waitForFunction(() => typeof DATA !== 'undefined' && DATA.length > 0, { timeout: 10000 });
+    const n = await page.locator('#sel-conum option').count();
+    expect(n).toBeGreaterThan(0);
+  });
+
+  test('les options ont un fond opaque et lisible en thème sombre', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    const audit = await auditOptions(page);
+    expect(audit.length).toBeGreaterThan(0);
+    const fautifs = audit.filter(o => o.alpha < 1 || o.ratio < 4.5);
+    expect(fautifs, JSON.stringify(fautifs, null, 1)).toEqual([]);
+  });
+
+  test('les options restent lisibles en thème clair', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    await page.evaluate(() => document.body.classList.add('light-mode'));
+    const audit = await auditOptions(page);
+    const fautifs = audit.filter(o => o.alpha < 1 || o.ratio < 4.5);
+    expect(fautifs, JSON.stringify(fautifs, null, 1)).toEqual([]);
+  });
+
+});
