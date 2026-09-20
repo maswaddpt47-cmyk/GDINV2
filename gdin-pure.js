@@ -213,8 +213,32 @@ function normCms(lieu){
 // ─── Utilitaires HTML ────────────────────────────────────────────────────────
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
+// ─── Réparation d'encodage ───────────────────────────────────────────────────
+// Sur l'export de septembre 2026, la colonne « Date action (saisie) » sort de
+// SheetJS en mojibake UTF-16 : "㠰〯⼳〲㈲" au lieu de "08/03/2022". Chaque
+// caractère porte deux octets ASCII inversés. Sans réparation, date_action est
+// null partout, la clé de fusion des doublons devient constante et 2 826
+// actions réelles sont écrasées (mesuré le 20/09/2026 sur 24 410 lignes).
+//
+// La détection est volontairement stricte — tout caractère hors du plan
+// supérieur fait renoncer — parce qu'un décodage appliqué à tort corrompt une
+// donnée saine : "é" (U+00E9) produirait un octet nul. Sur l'export réel,
+// 24 410 cellules réparées, toutes dans la colonne visée, aucun faux positif
+// sur les ~512 000 autres. Couvert par les tests « demojibakeUtf16 ».
+function demojibakeUtf16(s){
+  const t=String(s);
+  // Un nombre impair d'octets laisse un dernier caractère à octet haut nul,
+  // donc sous U+0100 : la queue optionnelle le couvre sans ouvrir la porte au
+  // texte latin, qui n'a aucun caractère du plan supérieur en tête.
+  if(!/^[Ā-￿]+[\x20-\x7E]?$/.test(t))return t;
+  let o='';
+  for(let i=0;i<t.length;i++){const c=t.charCodeAt(i);o+=String.fromCharCode(c&0xff,c>>8);}
+  if(o.charCodeAt(o.length-1)===0)o=o.slice(0,-1);
+  return /^[\x20-\x7E]+$/.test(o)?o:t;
+}
+
 // ─── Conversion de dates Excel ───────────────────────────────────────────────
-function excelDate(v){if(!v&&v!==0)return null;if(typeof v==='string'){const m=v.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;const m2=v.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);if(m2)return v.trim().slice(0,10);}const n=parseFloat(v);if(isNaN(n)||n<1)return null;const d=new Date((n-25569)*86400*1000);return d.toISOString().slice(0,10);}
+function excelDate(v){if(!v&&v!==0)return null;if(typeof v==='string'){const s=demojibakeUtf16(v).trim();const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;const m2=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m2)return s.slice(0,10);const n2=parseFloat(s);if(isNaN(n2)||n2<1)return null;return new Date((n2-25569)*86400*1000).toISOString().slice(0,10);}const n=parseFloat(v);if(isNaN(n)||n<1)return null;const d=new Date((n-25569)*86400*1000);return d.toISOString().slice(0,10);}
 
 // ─── Import : un seul parseur pour tous les chemins ──────────────────────────
 // Le texte collé et le fichier .xls passent par parseRows(). Jusqu'au
@@ -255,20 +279,26 @@ function parseRows(rows){
   if(hdrsRaw.length<5)throw new Error(`En-têtes insuffisantes : ${hdrsRaw.length} colonnes`);
   const I=mapColonnes(hdrsRaw);
   if(I.dateDem<0)throw new Error(`Colonne "Date demande" introuvable. En-têtes : ${hdrsRaw.slice(0,8).join(' | ')}`);
-  const cell=(c,i)=>String(i>=0?(c[i]==null?'':c[i]):'').trim();
+  let cellulesReparees=0;
+  const cell=(c,i)=>{
+    const brut=String(i>=0?(c[i]==null?'':c[i]):'');
+    const repare=demojibakeUtf16(brut);
+    if(repare!==brut)cellulesReparees++;
+    return repare.trim();
+  };
   const records=[],warnings=[];
   const stats={lues:rows.length-1,retenues:0,ecartees:0,motifs:{ligne_incomplete:0,date_demande_absente:0,lieu_cms_vide:0},
     colonnes_absentes:Object.keys(I).filter(k=>I[k]<0),regle_sans_cms:ECARTER_SANS_CMS?'ecartees':'conservees'};
   for(let i=1;i<rows.length;i++){
     const c=rows[i];
     if(!c||c.length<5){stats.motifs.ligne_incomplete++;stats.ecartees++;continue;}
-    const dd=excelDate(I.dateDem>=0?c[I.dateDem]:'');
+    const dd=excelDate(cell(c,I.dateDem));
     if(!dd){stats.motifs.date_demande_absente++;stats.ecartees++;continue;}
     const lieuRaw=cell(c,I.lieu);
     const cms=extractDominantCms(lieuRaw);
     if(!cms&&ECARTER_SANS_CMS){stats.motifs.lieu_cms_vide++;stats.ecartees++;continue;}
     if(!cms)stats.motifs.lieu_cms_vide++;
-    const da=excelDate(I.dateAct>=0?c[I.dateAct]:'')||null;
+    const da=excelDate(cell(c,I.dateAct))||null;
     const themas=cell(c,I.themas).split('/').map(t=>t.trim()).filter(Boolean);
     const seen=new Set(),types=[];
     for(const p of cell(c,I.type).split(';')){const t=p.trim();
@@ -280,11 +310,12 @@ function parseRows(rows){
       cms,lieu_raw:lieuRaw,structure:cell(c,I.structure),commune:cell(c,I.commune),themas,type_action:types,
       orienteur:cell(c,I.orienteur),motif:cell(c,I.motif).slice(0,120),
       benef_connu:cell(c,I.benef).toLowerCase()==='oui',urgence:cell(c,I.urgence).toLowerCase()==='oui',
-      etat,date_planifiee:I.datePlanif>=0?excelDate(c[I.datePlanif])||null:null,
-      date_realisation:I.dateReal>=0?excelDate(c[I.dateReal])||null:null});
+      etat,date_planifiee:excelDate(cell(c,I.datePlanif))||null,
+      date_realisation:excelDate(cell(c,I.dateReal))||null});
     stats.retenues++;
   }
   if(!records.length)throw new Error('Aucun enregistrement valide. Vérifiez le format.');
+  stats.cellules_reparees=cellulesReparees;
   return{records,warnings,stats};
 }
 
@@ -305,6 +336,7 @@ function formatResumeImport(stats){
   if(stats.regle_sans_cms==='conservees'){
     if(stats.ecartees>0)parts.push(`${stats.ecartees} écartées`);
     if(m.lieu_cms_vide)parts.push(`${m.lieu_cms_vide} sans CMS (conservées)`);
+    if(stats.cellules_reparees)parts.push(`${stats.cellules_reparees} cellules réparées (encodage)`);
     return parts.join(' · ');
   }
   if(stats.ecartees>0){
@@ -314,6 +346,7 @@ function formatResumeImport(stats){
     if(m.ligne_incomplete)d.push(`${m.ligne_incomplete} incomplètes`);
     parts.push(`${stats.ecartees} écartées (${d.join(', ')})`);
   }else parts.push('aucune écartée');
+  if(stats.cellules_reparees)parts.push(`${stats.cellules_reparees} cellules réparées (encodage)`);
   return parts.join(' · ');
 }
 
@@ -358,7 +391,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,ETAT_MAP,TYPE_EXCLUS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,ETAT_MAP,TYPE_EXCLUS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,
