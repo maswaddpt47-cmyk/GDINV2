@@ -2712,10 +2712,10 @@ async function confirmImport(){
     records=records.filter(r=>(r.conum||'').trim()===conumFilter);
   }
   // Clé de déduplication robuste : date + conum + cms + commune + orienteur + themas triés
-  function makeKey(r){
-    const types=(r.type_action||[]).slice().sort().join('+');
-    return `${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.cms||''}|${r.commune||''}|${r.orienteur||''}|${(r.themas||[]).slice().sort().join('/')}|${types}`;
-  }
+  // La clé de fusion vit dans gdin-pure.js avec ses tests : elle porte le rang
+  // du participant pour les ateliers, sans quoi la fusion supprime 78 % des
+  // participations. Ne pas réécrire une clé locale ici.
+  const makeKey=cleFusion;
   // Réinitialisation demandée : effacer avant de merger
   if(_pendingReset){clearStorage();DATA=[];dataSource='embedded';importMeta=null;_pendingReset=false;}
   // Base : si déjà importé on fusionne, sinon on repart de zéro (pas des données intégrées)

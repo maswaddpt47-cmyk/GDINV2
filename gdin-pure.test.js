@@ -6,6 +6,7 @@ const {
   normEtat, isRealisee, countDemandes, parseRows, mapColonnes, demojibakeUtf16,
   cleDoublon, compterDoublons,
   estAtelier, cleSessionAtelier, compterSessionsAtelier, statsAteliers,
+  numeroterParticipants, cleFusion,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
   rattacherCommune, COMMUNES_47,
 } = require('./gdin-pure.js');
@@ -772,4 +773,66 @@ describe('statsAteliers', () => {
     assert.equal(s.participations, 20);
   });
   it('jeu vide', () => assert.deepEqual(statsAteliers([]), { sessions: 0, participations: 0 }));
+});
+
+// ─── Rang de participant et clé de fusion ─────────────────────────────────
+// Sans le rang, confirmImport() supprimait 78 % des participations aux
+// ateliers : deux participants d'une même séance sont indistinguables sur
+// les champs importés (le nom n'entre pas dans l'application).
+describe('numeroterParticipants', () => {
+  it('numérote dans l\'ordre du fichier', () => {
+    const recs = [atelier('1', '2025-01-01'), atelier('1', '2025-01-01'), atelier('1', '2025-01-01')];
+    numeroterParticipants(recs);
+    assert.deepEqual(recs.map(r => r.rang_atelier), [1, 2, 3]);
+  });
+  it('recommence à 1 pour chaque séance', () => {
+    const recs = [atelier('1', '2025-01-01'), atelier('2', '2025-01-01'), atelier('1', '2025-01-01')];
+    numeroterParticipants(recs);
+    assert.deepEqual(recs.map(r => r.rang_atelier), [1, 1, 2]);
+  });
+  it('ne touche pas aux lignes qui ne sont pas des ateliers', () => {
+    const recs = [{ type_action: ['Accompagnement'], id_demande: '1', date_action: '2025-01-01' }];
+    numeroterParticipants(recs);
+    assert.equal(recs[0].rang_atelier, undefined);
+  });
+  it('rend le nombre de participations numérotées', () => {
+    assert.equal(numeroterParticipants([atelier('1', '2025-01-01'), atelier('1', '2025-01-01')]), 2);
+  });
+  it('jeu vide', () => assert.equal(numeroterParticipants([]), 0));
+  it('null',      () => assert.equal(numeroterParticipants(null), 0));
+});
+
+describe('cleFusion', () => {
+  it('deux participants d\'une même séance ont des clés différentes', () => {
+    const recs = [atelier('1', '2025-01-01'), atelier('1', '2025-01-01')];
+    numeroterParticipants(recs);
+    assert.notEqual(cleFusion(recs[0]), cleFusion(recs[1]));
+  });
+  it('deux séances distinctes ne se confondent pas', () => {
+    const recs = [atelier('1', '2025-01-01'), atelier('2', '2025-01-01')];
+    numeroterParticipants(recs);
+    assert.notEqual(cleFusion(recs[0]), cleFusion(recs[1]));
+  });
+  it('aucune participation perdue à la fusion', () => {
+    const recs = Array.from({ length: 12 }, () => atelier('7161', '2025-03-12'));
+    numeroterParticipants(recs);
+    assert.equal(new Set(recs.map(cleFusion)).size, 12);
+  });
+  it('idempotent : réimporter le même jeu n\'ajoute rien', () => {
+    const recs = Array.from({ length: 5 }, () => atelier('1', '2025-01-01'));
+    numeroterParticipants(recs);
+    const base = new Set(recs.map(cleFusion));
+    const rejoue = Array.from({ length: 5 }, () => atelier('1', '2025-01-01'));
+    numeroterParticipants(rejoue);
+    assert.equal(rejoue.filter(r => !base.has(cleFusion(r))).length, 0);
+  });
+  it('les non-ateliers restent dédupliqués sur les mêmes champs', () => {
+    const a = { date_demande: '2025-01-01', date_action: '2025-01-02', conum: 'X', cms: 'CMS Agen Tapie', commune: 'Agen', orienteur: 'Y', themas: ['Logement'], type_action: ['Accompagnement'] };
+    assert.equal(cleFusion(a), cleFusion({ ...a }));
+  });
+  it('un accompagnement et un atelier ne collisionnent pas', () => {
+    const base = { date_demande: '2025-01-01', date_action: '2025-01-02', id_demande: '1', conum: '', cms: '', commune: '', orienteur: '', themas: [] };
+    assert.notEqual(cleFusion({ ...base, type_action: ['Atelier'] }), cleFusion({ ...base, type_action: ['Accompagnement'] }));
+  });
+  it('null', () => assert.equal(cleFusion(null), ''));
 });
