@@ -4,7 +4,7 @@ const {
   pct, esc, excelDate, parseDt, dayDiff, bizDays, monthLabel, typeColor,
   count, countThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
   normEtat, isRealisee, countDemandes, parseRows, mapColonnes, demojibakeUtf16,
-  formatResumeImport, normCommuneKey, comblerConum,
+  formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
 } = require('./gdin-pure.js');
 
 // ─── pct ──────────────────────────────────────────────────────────────────
@@ -526,5 +526,42 @@ describe('normCms — partenaires', () => {
   it('laisse inconnu ce qui n\'a pas été tranché', () => {
     assert.equal(normCms('micro collège'), null);
     assert.equal(normCms('Villeneuve sur Lot'), null);
+  });
+});
+
+// ─── normCms — rattrapage souple ──────────────────────────────────────────
+// Les saisies restent libres : chaque export apporte de nouvelles façons
+// d'écrire un partenaire déjà connu. Sans dernier recours, chacune retombe
+// dans « Autre structure » et la dérive est continue.
+describe('normCms — rattrapage des graphies nouvelles', () => {
+  it('rattrape une ponctuation inédite', () => {
+    assert.equal(normCms('Association ABRIS / Casseneuil'), 'Association ABRIS Casseneuil');
+  });
+  it('rattrape « asso » écrit autrement', () => {
+    assert.equal(normCms("l'association ABRIS de Casseneuil"), 'Association ABRIS Casseneuil');
+  });
+  it('rattrape une variante de médiathèque', () => {
+    assert.equal(normCms('Médiathèque, municipale de Foulayronnes'), 'Médiathèque Foulayronnes');
+  });
+  it('laisse le mapping explicite décider en premier', () => {
+    assert.equal(normCms('CCAS Fumel'), 'CMS Fumel');
+  });
+  it('ne rattache pas un lieu réellement inconnu', () => {
+    assert.equal(normCms('Foyer rural de Nulle Part'), null);
+  });
+  it('ne rattache pas sur une clé vide', () => {
+    assert.equal(normCms('de la'), null);
+  });
+  it('ne rattache jamais deux lieux différents à la même clé souple', () => {
+    // Construit depuis CMS_MAP_RAW : toute clé ambiguë est neutralisée.
+    const vus = {};
+    const conflits = [];
+    Object.entries(CMS_MAP_RAW).forEach(([k, v]) => {
+      const ks = normKeySouple(k);
+      if (!ks) return;
+      if (vus[ks] && vus[ks] !== v) conflits.push([ks, vus[ks], v]);
+      vus[ks] = v;
+    });
+    assert.deepEqual(conflits, []);
   });
 });

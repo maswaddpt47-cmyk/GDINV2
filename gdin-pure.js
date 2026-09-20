@@ -226,10 +226,41 @@ function extractDominantCms(lieuRaw){
   return sorted[0]?sorted[0][0]:'Autre structure';
 }
 // normCms — pas de fallback : absent du map = null
+// Clé souple : en plus de la casse et des accents, neutralise la ponctuation
+// et les mots qui ne distinguent pas deux lieux (« association », « asso »,
+// « permanence », articles). Sert de dernier recours, jamais de premier :
+// le mapping explicite porte les décisions métier et garde la priorité.
+//
+// Sans elle, chaque nouvelle façon d'écrire un partenaire déjà connu retombe
+// dans « Autre structure » — et les saisies restant libres, la dérive est
+// continue. ABRIS était arrivé à dix graphies. Vérifié le 20/09/2026 : sur les
+// 181 entrées écrites à la main, cette clé n'en met jamais deux en conflit, et
+// elle aurait déduit seule 54 d'entre elles.
+//
+// Une clé qui désigne deux lieux différents n'est pas indexée : mieux vaut
+// renvoyer « Autre structure » que rattacher au mauvais partenaire.
+function normKeySouple(s){
+  return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
+    .replace(/[^a-z0-9]+/g,' ')
+    .replace(/\b(association|asso|permanence|de|du|des|la|le|les|d|l)\b/g,' ')
+    .replace(/\s+/g,' ').trim();
+}
+const CMS_MAP_SOUPLE={};
+{
+  const vus={};
+  Object.entries(CMS_MAP_RAW).forEach(([k,v])=>{
+    const ks=normKeySouple(k);
+    if(!ks)return;
+    if(vus[ks]&&vus[ks]!==v){CMS_MAP_SOUPLE[ks]=null;return;}
+    vus[ks]=v;
+    if(CMS_MAP_SOUPLE[ks]!==null)CMS_MAP_SOUPLE[ks]=v;
+  });
+}
+
 function normCms(lieu){
   if(!lieu)return null;
   const s=String(lieu).trim();
-  return CMS_MAP[s]??CMS_MAP[normKey(s)]??null;
+  return CMS_MAP[s]??CMS_MAP[normKey(s)]??CMS_MAP_SOUPLE[normKeySouple(s)]??null;
 }
 
 // ─── Utilitaires HTML ────────────────────────────────────────────────────────
@@ -507,7 +538,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,
