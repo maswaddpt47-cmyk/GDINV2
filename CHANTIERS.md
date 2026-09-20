@@ -434,17 +434,21 @@ valider en usage réel avant de supprimer cette section.
 depuis le fichier réellement importé. Un chiffre inventé ferait exactement le
 contraire de ce que l'utilisateur demande.
 
-## Chantiers restants, par priorité
+## Résolu le 20/09/2026 — complétion et filtre par type
 
-1. **Indicateurs de complétion restants.** Trois occurrences basées sur
-   `!r.date_action` : colonne `%` du tableau mensuel (deux fois) et KPI
-   « Complétion » de la vue par conseiller. Leur valeur constante venait du
-   bug d'encodage ci-dessus, désormais corrigé — à revérifier sur un import
-   réel avant de conclure qu'il reste quelque chose à faire.
-2. **Types absents du dropdown.** `typeFilter` ne propose que
-   Accompagnement, Prise de contact, Orientation tiers et Atelier. Les types
-   Pass, `Orientation vers un CN du 47` et `Autre` ne sont atteignables par
-   aucune position du filtre.
+**Aucun chantier ouvert ne reste dans ce fichier.**
+
+Les trois indicateurs de « complétion » comptaient les lignes ayant une date
+d'action : elles en ont toutes une depuis la correction de l'encodage, donc la
+valeur était constamment 100 %. Remplacés par le **taux de réalisation**, qui
+varie de 38 % à 83 % selon les mois — les mois récents sont bas parce que les
+demandes ne sont pas encore réalisées, ce qui est l'information attendue.
+**Ne pas revenir à un indicateur fondé sur `!r.date_action`** : cette colonne
+est renseignée à 100 % dans l'export.
+
+Le filtre par type ne proposait que quatre valeurs sur sept ; « Demande de
+prescription de Pass », « Orientation vers un CN du 47 » et « Autre » sont
+désormais atteignables.
 
 ## Points à ne pas défaire
 
