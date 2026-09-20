@@ -11,7 +11,7 @@ pourquoi : `git log`, les messages portent les mesures.
 ## Comment reprendre
 
 ```bash
-npm test                      # 88 tests unitaires
+npm test                      # 175 tests unitaires
 npm run audit -- export.xls   # ce que l'appli retient d'un export réel
 ```
 
@@ -131,21 +131,24 @@ Le collège Germillac a reçu une entrée qui ne sert à rien aujourd'hui : ses 
 lignes relèvent toutes du cycle Pass et sont écartées. Elle est conservée pour
 qu'un atelier qui s'y tiendrait demain ne reparte pas en « Autre structure ».
 
-## Bug d'affichage — les libellés numériques passent en tête des classements
+## Résolu le 20/09/2026 — classement des libellés numériques
 
-Découvert le 20/09/2026 en vérifiant le regroupement des communes.
-`count()` renvoie un objet construit par `Object.fromEntries` : JavaScript
-replace les **clés entières** en tête, quel que soit leur volume. Le classement
-des communes affiche donc `47` (2 lignes) avant `AGEN` (4 791).
+Un libellé numérique — « 47 », « 47000 », codes postaux saisis à la place du
+nom — s'affichait en tête de tous les classements, devant « Agen » et ses
+4 791 lignes. `count()` renvoie un objet, et JavaScript y replace les clés
+entières en premier quel que soit leur volume : le tri appliqué juste avant
+était perdu à la restitution.
 
-Trois libellés concernés (`47`, `47000`, `47240`, codes postaux saisis à la
-place du nom). Aucune autre dimension n'a de clé numérique aujourd'hui, mais le
-défaut est dans `count()`, pas dans la donnée : il frappera toute dimension qui
-en recevra une.
+**Ne pas utiliser `count()` pour un classement affiché.** `countEntries()` rend
+un tableau, dont l'ordre ne dépend plus des clés ; `count()` subsiste pour les
+accès par clé. Les 33 appels concernés y sont passés dans les deux HTML, et
+`makeBarList()` accepte un tableau d'entrées — sans quoi un
+`Object.fromEntries` réintroduit le défaut juste après l'avoir corrigé.
 
-Corriger suppose de changer le type de retour de `count()`, utilisé par tous
-les classements des deux HTML. Non fait pour ne pas élargir les chantiers en
-cours — à arbitrer.
+Vérifié dans le navigateur : deux tests e2e (`Classement des communes`)
+importent un jeu où « 47 » ne pèse qu'une ligne et lisent l'ordre que la page
+produit. Le second reproduit l'ancien comportement via `count()`, de sorte que
+la correction cesserait d'être prouvée si elle disparaissait.
 
 ## Trou de mapping — préfixes de service devant un CMS
 
@@ -196,29 +199,28 @@ oui, tous les rapports tirés avant le 20/09/2026 sous-comptaient les actions.
 
 ## Chantiers restants, par priorité
 
-1. **Mapping nominatif des partenaires** et bug de `count()` — voir ci-dessus.
-2. **Garde-fou sur IndexedDB.** `localStorage` ne tient pas les données
+1. **Garde-fou sur IndexedDB.** `localStorage` ne tient pas les données
    (quota dépassé dès 6 Mo, un export en fait ~7,7) : le repli IndexedDB est
    le chemin normal, pas l'exception. Or `_idbOpen()` ne gère ni `onblocked`
    ni délai maximum — si l'ouverture reste en attente, l'import se fige après
    « N enregistrements » sans message. Risque identifié par lecture du code,
    non reproduit.
-3. **Détecteur de doublons quadratique.** `keys.indexOf(k)` dans un `filter`
+2. **Détecteur de doublons quadratique.** `keys.indexOf(k)` dans un `filter`
    (fonction du panneau qualité) : 823 ms mesurés sur 17 015 lignes, 3 ms
    avec un `Set`. Le coût croît au carré du volume.
-4. **Indicateurs de complétion restants.** Trois occurrences basées sur
+3. **Indicateurs de complétion restants.** Trois occurrences basées sur
    `!r.date_action` : colonne `%` du tableau mensuel (deux fois) et KPI
    « Complétion » de la vue par conseiller. Leur valeur constante venait du
    bug d'encodage ci-dessus, désormais corrigé — à revérifier sur un import
    réel avant de conclure qu'il reste quelque chose à faire.
-5. **Types absents du dropdown.** `typeFilter` ne propose que
+4. **Types absents du dropdown.** `typeFilter` ne propose que
    Accompagnement, Prise de contact, Orientation tiers et Atelier. Les types
    Pass, `Orientation vers un CN du 47` et `Autre` ne sont atteignables par
    aucune position du filtre.
-6. **Cache-busting.** Les scripts sont chargés sans `?v=N` : après un
+5. **Cache-busting.** Les scripts sont chargés sans `?v=N` : après un
    correctif, un navigateur peut continuer à servir l'ancienne version. En
    attendant, vérifier les déploiements en navigation privée.
-7. **Suppression de `index.html`.** Décidé : v2 remplace v1. Tant que la
+6. **Suppression de `index.html`.** Décidé : v2 remplace v1. Tant que la
    suppression n'est pas faite, `index.html` reste servi à la racine par
    GitHub Pages et toute correction fonctionnelle doit être appliquée aux
    deux fichiers.
