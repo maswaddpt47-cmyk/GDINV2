@@ -682,3 +682,38 @@ test.describe('Lisibilité par-dessus la carte', () => {
   });
 
 });
+
+test.describe('Fond de carte neutre', () => {
+
+  // Un fond bavard concurrence les cercles de données au lieu de les porter.
+  // La désaturation ne doit toucher que le calque des tuiles : les cercles et
+  // les étiquettes vivent dans overlay-pane et gardent leurs couleurs.
+  async function filtreDe(page, cls, clair) {
+    return page.evaluate(({ cls, clair }) => {
+      document.body.classList.toggle('light-mode', clair);
+      const d = document.createElement('div');
+      d.className = cls;
+      document.body.appendChild(d);
+      const f = getComputedStyle(d).filter;
+      d.remove();
+      return f;
+    }, { cls, clair });
+  }
+
+  test('les tuiles sont désaturées dans les deux thèmes', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    expect(await filtreDe(page, 'leaflet-tile-pane', false)).toMatch(/grayscale/);
+    expect(await filtreDe(page, 'leaflet-tile-pane', true)).toMatch(/grayscale/);
+  });
+
+  test('les données posées sur la carte gardent leurs couleurs', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    for (const cls of ['leaflet-overlay-pane', 'leaflet-marker-pane', 'leaflet-tooltip-pane']) {
+      const f = await filtreDe(page, cls, false);
+      expect(f, `${cls} ne doit pas être désaturé`).not.toMatch(/grayscale/);
+    }
+  });
+
+});
