@@ -279,7 +279,7 @@ function parseRows(rows){
   if(hdrsRaw.length<5)throw new Error(`En-têtes insuffisantes : ${hdrsRaw.length} colonnes`);
   const I=mapColonnes(hdrsRaw);
   if(I.dateDem<0)throw new Error(`Colonne "Date demande" introuvable. En-têtes : ${hdrsRaw.slice(0,8).join(' | ')}`);
-  let cellulesReparees=0;
+  let cellulesReparees=0,cmsViaStructure=0;
   const cell=(c,i)=>{
     const brut=String(i>=0?(c[i]==null?'':c[i]):'');
     const repare=demojibakeUtf16(brut);
@@ -295,9 +295,17 @@ function parseRows(rows){
     const dd=excelDate(cell(c,I.dateDem));
     if(!dd){stats.motifs.date_demande_absente++;stats.ecartees++;continue;}
     const lieuRaw=cell(c,I.lieu);
-    const cms=extractDominantCms(lieuRaw);
+    const structureRaw=cell(c,I.structure);
+    const cmsLieu=extractDominantCms(lieuRaw);
+    // Famille A : le CMS est parfois saisi dans « Structure orienteur » au lieu
+    // de « Lieu / CMS ». Le repli utilise normCms(), qui rend null sur un
+    // libellé inconnu — pas extractDominantCms(), qui range tout libellé non
+    // vide sous « Autre structure » et ferait entrer les 5 158 lignes des
+    // familles B et C (mesuré le 20/09/2026 sur l'export de septembre).
+    const cms=cmsLieu||normCms(structureRaw);
     if(!cms&&ECARTER_SANS_CMS){stats.motifs.lieu_cms_vide++;stats.ecartees++;continue;}
     if(!cms)stats.motifs.lieu_cms_vide++;
+    if(!cmsLieu&&cms)cmsViaStructure++;
     const da=excelDate(cell(c,I.dateAct))||null;
     const themas=cell(c,I.themas).split('/').map(t=>t.trim()).filter(Boolean);
     const seen=new Set(),types=[];
@@ -307,7 +315,7 @@ function parseRows(rows){
     const etatRaw=cell(c,I.etat);
     const etat=ETAT_MAP[normEtat(etatRaw)]||(etatRaw||null);
     records.push({date_demande:dd,date_action:da,id_demande:cell(c,I.nDem),conum:cell(c,I.conum),
-      cms,lieu_raw:lieuRaw,structure:cell(c,I.structure),commune:cell(c,I.commune),themas,type_action:types,
+      cms,lieu_raw:lieuRaw,structure:structureRaw,commune:cell(c,I.commune),themas,type_action:types,
       orienteur:cell(c,I.orienteur),motif:cell(c,I.motif).slice(0,120),
       benef_connu:cell(c,I.benef).toLowerCase()==='oui',urgence:cell(c,I.urgence).toLowerCase()==='oui',
       etat,date_planifiee:excelDate(cell(c,I.datePlanif))||null,
@@ -316,6 +324,7 @@ function parseRows(rows){
   }
   if(!records.length)throw new Error('Aucun enregistrement valide. Vérifiez le format.');
   stats.cellules_reparees=cellulesReparees;
+  stats.cms_via_structure=cmsViaStructure;
   return{records,warnings,stats};
 }
 
@@ -336,6 +345,7 @@ function formatResumeImport(stats){
   if(stats.regle_sans_cms==='conservees'){
     if(stats.ecartees>0)parts.push(`${stats.ecartees} écartées`);
     if(m.lieu_cms_vide)parts.push(`${m.lieu_cms_vide} sans CMS (conservées)`);
+    if(stats.cms_via_structure)parts.push(`${stats.cms_via_structure} CMS lus dans la structure orienteur`);
     if(stats.cellules_reparees)parts.push(`${stats.cellules_reparees} cellules réparées (encodage)`);
     return parts.join(' · ');
   }
@@ -346,6 +356,7 @@ function formatResumeImport(stats){
     if(m.ligne_incomplete)d.push(`${m.ligne_incomplete} incomplètes`);
     parts.push(`${stats.ecartees} écartées (${d.join(', ')})`);
   }else parts.push('aucune écartée');
+  if(stats.cms_via_structure)parts.push(`${stats.cms_via_structure} CMS lus dans la structure orienteur`);
   if(stats.cellules_reparees)parts.push(`${stats.cellules_reparees} cellules réparées (encodage)`);
   return parts.join(' · ');
 }
