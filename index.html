@@ -1331,7 +1331,7 @@ function updateSourceBadge(imp,meta){
     if(fab)fab.classList.remove('imported');
   }
 }
-function updateCurrentSourceInfo(){const dot=document.getElementById('cs-dot'),label=document.getElementById('cs-label');if(dataSource==='imported'&&importMeta){dot.style.background='var(--green)';const _res=formatResumeImport(importMeta.stats);label.innerHTML=`<strong style="color:var(--green)">${esc(importMeta.filename)}</strong> — ${importMeta.count} enregistrements · ${importMeta.years.join(', ')} · importé le ${importMeta.date}`+(_res?`<br><span style="color:var(--muted);font-size:11px">Fichier : ${_res}</span>`:'');}else{dot.style.background='var(--muted)';label.innerHTML=`<span style="color:var(--muted)">Données intégrées (${EMBEDDED.length} enregistrements, partiel)</span>`;}}
+function updateCurrentSourceInfo(){const dot=document.getElementById('cs-dot'),label=document.getElementById('cs-label');if(dataSource==='imported'&&importMeta){dot.style.background='var(--green)';const _res=formatResumeImport(importMeta.stats);label.innerHTML=`<strong style="color:var(--green)">${esc(importMeta.filename)}</strong> — ${importMeta.count} enregistrements · ${importMeta.years.join(', ')} · importé le ${importMeta.date}`+(_res?`<br><span style="color:var(--muted);font-size:11px">Fichier : ${_res}</span>`:'')+ligneSyntheseFiabilite();}else{dot.style.background='var(--muted)';label.innerHTML=`<span style="color:var(--muted)">Données intégrées (${EMBEDDED.length} enregistrements, partiel)</span>`;}}
 
 // YEAR CHIPS
 function yrLabel(yr){
@@ -1517,9 +1517,9 @@ function renderGlobal(){
   document.getElementById('kpi-global').innerHTML=`
     <div class="kpi blue" data-tip="Nombre de lignes d'action sur la période filtrée.\nSous le filtre « Atelier » ce sont des participations,\npas des séances."><div class="kpi-label">${kpiPrincipalLabel}</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">${kpiPrincipalSub}</div></div>
     <div class="kpi green" data-tip="N° de demande distincts.\nUne demande génère plusieurs lignes d'action,\ndonc ce nombre est inférieur au total d'actions."><div class="kpi-label">Demandes distinctes</div><div class="kpi-value">${nbDemandes}</div><div class="kpi-sub">pour ${data.length} actions</div></div>
-    <div class="kpi orange"><div class="kpi-label">Conseillers actifs</div><div class="kpi-value">${conumSet.size}</div><div class="kpi-sub">sur la période</div></div>
-    <div class="kpi purple"><div class="kpi-label">Structures couvertes</div><div class="kpi-value">${cmsSet.size}</div><div class="kpi-sub">CMS / structures</div></div>
-    <div class="kpi cyan"><div class="kpi-label">Thématique dominante</div><div class="kpi-value" style="font-size:13px;line-height:1.5;padding-top:4px">${topThema}</div><div class="kpi-sub">${countThemas(data)[topThema]||0} demandes</div></div>`;
+    <div class="kpi orange"><div class="kpi-label">Conseillers actifs${pointVigilance('conseiller')}</div><div class="kpi-value">${conumSet.size}</div><div class="kpi-sub">sur la période</div></div>
+    <div class="kpi purple"><div class="kpi-label">Structures couvertes${pointVigilance('lieu')}</div><div class="kpi-value">${cmsSet.size}</div><div class="kpi-sub">CMS / structures</div></div>
+    <div class="kpi cyan"><div class="kpi-label">Thématique dominante${pointVigilance('themas')}</div><div class="kpi-value" style="font-size:13px;line-height:1.5;padding-top:4px">${topThema}</div><div class="kpi-sub">${countThemas(data)[topThema]||0} demandes</div></div>`;
 
   const themas=Object.entries(countThemas(data)).slice(0,9);
   destroyChart('ch-thema');
@@ -1551,7 +1551,7 @@ function renderGlobal(){
     <div class="kpi red" data-tip="Demandes marquées urgentes"><div class="kpi-label">Urgences</div><div class="kpi-value">${urgCount}</div><div class="kpi-sub">${pct(urgCount,data.length)}% du total</div></div>
     <div class="kpi green"><div class="kpi-label">Demandes réalisées</div><div class="kpi-value">${realisees}</div><div class="kpi-sub">${pct(realisees,data.length)}% de réalisation</div></div>
     <div class="kpi blue"><div class="kpi-label">Bénéficiaires connus</div><div class="kpi-value">${benefConnu}</div><div class="kpi-sub">${pct(benefConnu,data.length)}% bénéf. déjà suivis</div></div>
-    <div class="kpi yellow"><div class="kpi-label">Délai moyen</div><div class="kpi-value">${avgDelai!=null?avgDelai+'j':'—'}</div><div class="kpi-sub">${withDelai.length} dossiers renseignés</div></div>`;
+    <div class="kpi yellow"><div class="kpi-label">Délai moyen${pointVigilance('delais')}</div><div class="kpi-value">${avgDelai!=null?avgDelai+'j':'—'}</div><div class="kpi-sub">${withDelai.length} dossiers renseignés</div></div>`;
 
   // Évolution mensuelle (global)
   {
@@ -2762,7 +2762,7 @@ async function confirmImport(){
   const dupMsg=(internalDups+crossDups)>0?` · <span style="color:var(--orange)">${internalDups+crossDups} doublon${internalDups+crossDups>1?'s':''} ignoré${internalDups+crossDups>1?'s':''}</span>`:'';
   const conumFilterLabel=conumFilter?` · filtre : <strong style="color:var(--cyan)">${conumFilter}</strong>`:'';
   const resume=formatResumeImport(statsImport);
-  const resumeMsg=resume?`<br><span style="color:var(--muted);font-size:11px">Fichier : ${resume}</span>`:'';
+  const resumeMsg=(resume?`<br><span style="color:var(--muted);font-size:11px">Fichier : ${resume}</span>`:'')+ligneSyntheseFiabilite();
   document.getElementById('cs-label').innerHTML=`<strong style="color:var(--green)">✓ Fusion réussie —</strong> ${newRecords.length} nouveaux · ${DATA.length} total (${years.join(', ')})${dupMsg}${conumFilterLabel}${resumeMsg}`;
   if(!saved)showImportError('Sauvegarde locale impossible (quota dépassé). Les données seront perdues au prochain rechargement. Utilisez ⬇ Exporter pour sauvegarder manuellement.');
   /* Redirection automatique vers le dashboard après import */
@@ -2849,6 +2849,31 @@ document.addEventListener('keydown',e=>{
 // un chiffre estimé ferait exactement l'inverse de ce que cette page promet.
 const FIA_COULEUR={solide:'var(--green)',bonne:'var(--blue)',moyenne:'var(--yellow)',partielle:'var(--orange)',faible:'var(--red)'};
 const FIA_MOT={solide:'Solide',bonne:'Bonne',moyenne:'Moyenne',partielle:'Partielle',faible:'Faible'};
+
+// Ligne de synthèse affichée après import, à côté du compte rendu du fichier.
+// Cliquable : c'est le chemin le plus court vers le détail quand un chiffre
+// est contesté.
+// Point de vigilance sur un KPI : rien sur un indicateur solide, un point
+// coloré avec bulle au survol sinon. Afficher « ±x % » sur tous les KPI
+// décrédibiliserait ceux qui sont exacts — c'est pour ça qu'il n'y en a que
+// sur les indicateurs dont la marge est mesurée et non nulle.
+function pointVigilance(cle){
+  const base=DATA||[];
+  if(!base.length)return'';
+  const i=indicateursFiabilite(base,(importMeta&&importMeta.stats)||{}).find(x=>x.cle===cle);
+  if(!i||i.niveau==='solide')return'';
+  const c=FIA_COULEUR[i.niveau]||'var(--muted)';
+  const bulle=`${FIA_MOT[i.niveau]} — écart mesuré ${i.marge} %\n${i.fait}\nVoir l'onglet Fiabilité`;
+  return`<span title="${esc(bulle)}" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${c};margin-left:6px;vertical-align:middle;cursor:help"></span>`;
+}
+
+function ligneSyntheseFiabilite(){
+  const base=DATA||[];
+  if(!base.length)return'';
+  const syn=syntheseFiabilite(indicateursFiabilite(base,(importMeta&&importMeta.stats)||{}));
+  const c=FIA_COULEUR[syn.niveau]||'var(--muted)';
+  return`<br><span style="font-size:11px;color:var(--muted)">Fiabilité : <span style="color:${c};font-weight:600">${esc(syn.texte)}</span> · <a href="#" onclick="switchTab('fiabilite',document.querySelector('[onclick*=\'fiabilite\']'));return false;" style="color:var(--blue);text-decoration:underline">voir le détail</a></span>`;
+}
 
 function renderFiabilite(){
   const base=DATA||[];
@@ -4166,6 +4191,7 @@ const DR_SLIDES=[
   {id:'comparaison',  title:'Comparaison CMS'},
   {id:'nonreal',      title:'Non réalisés'},
   {id:'themas',       title:'Thématiques'},
+  {id:'fiabilite',    title:'Fiabilité des données'},
   {id:'bilan',        title:'Bilan & Conclusion'},
 ];
 
@@ -4217,6 +4243,7 @@ function drGoTo(idx){
   else if(slide.id==='territoire') drSlideTerritoire(c,data);
   else if(slide.id==='comparaison') drSlideComparaison(c,data,allDataConum);
   else if(slide.id==='nonreal') drSlideNonReal(c,data);
+  else if(slide.id==='fiabilite') drSlideFiabilite(c,data);
   else if(slide.id==='bilan') drSlideBilan(c,data,allDataConum);
 }
 
@@ -4655,6 +4682,38 @@ function drSlideNonReal(c,data){
 }
 
 // ── SLIDE BILAN ──
+// Slide de fiabilité — imposé par la règle CR ↔ Diapo Rapport du CLAUDE.md.
+// C'est ce qui est projeté : si un chiffre est contesté en séance, la réponse
+// doit être à l'écran, pas dans un onglet qu'il faut aller rouvrir.
+function drSlideFiabilite(c,data){
+  const stats=(importMeta&&importMeta.stats)||{};
+  const ind=indicateursFiabilite(data,stats);
+  const syn=syntheseFiabilite(ind);
+  const conseiller=ind.find(i=>i.cle==='conseiller');
+  const vigilance=ind.filter(i=>i.niveau!=='solide');
+  const solides=ind.filter(i=>i.niveau==='solide');
+  const carte=(titre,corps,couleur)=>`<div style="background:var(--s1);border:1px solid var(--border);border-left:3px solid ${couleur};border-radius:14px;padding:18px 20px">
+      <div style="font-size:12px;font-weight:700;color:${couleur};margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px">${titre}</div>${corps}</div>`;
+  const listeSolides=solides.length?`<div style="font-size:13px;line-height:1.9;color:var(--text)">${solides.map(i=>`✓ ${esc(i.libelle)} <span style="color:var(--muted)">— ${esc(i.fait)}</span>`).join('<br>')}</div>`:'<div style="font-size:13px;color:var(--muted)">—</div>';
+  const listeVigilance=vigilance.length?`<div style="font-size:13px;line-height:1.9;color:var(--text)">${vigilance.map(i=>`<span style="color:${FIA_COULEUR[i.niveau]}">●</span> ${esc(i.libelle)} <span style="color:var(--muted)">— ${i.marge} % · ${esc(i.fait)}</span>`).join('<br>')}</div>`:'<div style="font-size:13px;color:var(--muted)">aucun</div>';
+  const alerte=conseiller&&conseiller.marge>=25?`
+    <div style="background:rgba(239,68,68,.08);border:1px solid var(--red);border-radius:14px;padding:16px 20px;margin-top:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px">⚠ Attribution par conseiller</div>
+      <div style="font-size:13px;color:var(--text);line-height:1.6">${conseiller.marge} % des attributions sont déduites du CMS, faute de conseiller renseigné à la saisie — <strong>à ne pas présenter comme une mesure individuelle</strong>.</div>
+    </div>`:'';
+  c.innerHTML=`
+    <div style="padding:10px 0">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">Fiabilité des données</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:20px">${drConum} · ${drCms} — écarts mesurés sur le fichier importé, aucune marge estimée</div>
+      <div style="background:var(--s2);border-radius:12px;padding:14px 18px;margin-bottom:18px;font-size:14px;font-weight:600">${esc(syn.texte)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        ${carte('Chiffres exacts',listeSolides,'var(--green)')}
+        ${carte('Points de vigilance',listeVigilance,'var(--orange)')}
+      </div>
+      ${alerte}
+    </div>`;
+}
+
 function drSlideBilan(c,data,allDataConum){
   const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;
   const total=data.length;
