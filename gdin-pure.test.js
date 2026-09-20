@@ -5,6 +5,7 @@ const {
   count, countEntries, countThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
   normEtat, isRealisee, countDemandes, parseRows, mapColonnes, demojibakeUtf16,
   cleDoublon, compterDoublons,
+  estAtelier, cleSessionAtelier, compterSessionsAtelier, statsAteliers,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
   rattacherCommune, COMMUNES_47,
 } = require('./gdin-pure.js');
@@ -722,4 +723,53 @@ describe('compterDoublons', () => {
     const attendu = cles.filter((k, i) => cles.indexOf(k) !== i).length;
     assert.equal(compterDoublons(jeu), attendu);
   });
+});
+
+// ─── Sessions d'atelier ───────────────────────────────────────────────────
+// Une ligne d'atelier est une participation, pas un atelier. Sur l'export de
+// septembre 2026 : 5 478 lignes pour 596 sessions. Ne jamais afficher le
+// nombre de lignes seul.
+const atelier = (n, da) => ({ id_demande: n, date_action: da, type_action: ['Atelier'] });
+
+describe('estAtelier', () => {
+  it('ligne de type Atelier',        () => assert.equal(estAtelier(atelier('1', '2025-01-01')), true));
+  it('accompagnement',               () => assert.equal(estAtelier({ type_action: ['Accompagnement'] }), false));
+  it('type multiple incluant Atelier',() => assert.equal(estAtelier({ type_action: ['Accompagnement', 'Atelier'] }), true));
+  it('sans type',                    () => assert.equal(estAtelier({}), false));
+  it('null',                         () => assert.equal(estAtelier(null), false));
+});
+
+describe('compterSessionsAtelier', () => {
+  it('10 participants, 1 séance', () => {
+    const recs = Array.from({ length: 10 }, () => atelier('7161', '2025-03-12'));
+    assert.equal(compterSessionsAtelier(recs), 1);
+  });
+  it('même N°, deux dates = deux séances', () => {
+    assert.equal(compterSessionsAtelier([atelier('7161', '2025-03-12'), atelier('7161', '2025-04-02')]), 2);
+  });
+  it('deux N°, même date = deux séances', () => {
+    assert.equal(compterSessionsAtelier([atelier('1', '2025-03-12'), atelier('2', '2025-03-12')]), 2);
+  });
+  it('ignore les lignes qui ne sont pas des ateliers', () => {
+    const recs = [atelier('1', '2025-01-01'), { id_demande: '2', date_action: '2025-01-01', type_action: ['Accompagnement'] }];
+    assert.equal(compterSessionsAtelier(recs), 1);
+  });
+  it('aucun atelier', () => assert.equal(compterSessionsAtelier([{ type_action: ['Accompagnement'] }]), 0));
+  it('tableau vide',   () => assert.equal(compterSessionsAtelier([]), 0));
+  it('null',           () => assert.equal(compterSessionsAtelier(null), 0));
+});
+
+describe('statsAteliers', () => {
+  it('rend les deux chiffres ensemble', () => {
+    const recs = [atelier('1', '2025-01-01'), atelier('1', '2025-01-01'), atelier('2', '2025-02-01')];
+    assert.deepEqual(statsAteliers(recs), { sessions: 2, participations: 3 });
+  });
+  it('participations toujours >= sessions', () => {
+    const recs = Array.from({ length: 20 }, (_, i) => atelier(String(i % 3), '2025-01-01'));
+    const s = statsAteliers(recs);
+    assert.ok(s.participations >= s.sessions, 'participations < sessions');
+    assert.equal(s.sessions, 3);
+    assert.equal(s.participations, 20);
+  });
+  it('jeu vide', () => assert.deepEqual(statsAteliers([]), { sessions: 0, participations: 0 }));
 });

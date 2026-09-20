@@ -1482,11 +1482,17 @@ function setNNMode(on,btn){nnModeVal=on;document.querySelectorAll('#nnMode .togg
 function renderGlobal(){
   const data=getFiltered(),noDsian=data.filter(r=>r.cms!=='DSIAN');
   const nbDemandes=countDemandes(data);
+  // Filtre « Atelier » : data.length compte des participations, pas des
+  // ateliers. Le libellé et le sous-titre suivent le filtre actif.
+  const atlG=statsAteliers(data);
+  const modeAtelier=atlG.participations>0&&atlG.participations===data.length;
+  const kpiPrincipalLabel=modeAtelier?'Participations':'Accompagnements';
+  const kpiPrincipalSub=modeAtelier?`${atlG.sessions} ateliers · ${(atlG.participations/atlG.sessions).toFixed(1).replace('.',',')} par séance`:'période sélectionnée';
   const conumSet=new Set(data.map(r=>r.conum));
   const cmsSet=new Set(data.map(r=>r.cms));
   const topThema=Object.keys(countThemas(data))[0]||'—';
   document.getElementById('kpi-global').innerHTML=`
-    <div class="kpi blue" data-tip="Total des demandes reçues\nsur la période filtrée"><div class="kpi-label">Accompagnements</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">période sélectionnée</div></div>
+    <div class="kpi blue" data-tip="Nombre de lignes d'action sur la période filtrée.\nSous le filtre « Atelier » ce sont des participations,\npas des séances."><div class="kpi-label">${kpiPrincipalLabel}</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">${kpiPrincipalSub}</div></div>
     <div class="kpi green" data-tip="N° de demande distincts.\nUne demande génère plusieurs lignes d'action,\ndonc ce nombre est inférieur au total d'actions."><div class="kpi-label">Demandes distinctes</div><div class="kpi-value">${nbDemandes}</div><div class="kpi-sub">pour ${data.length} actions</div></div>
     <div class="kpi orange"><div class="kpi-label">Conseillers actifs</div><div class="kpi-value">${conumSet.size}</div><div class="kpi-sub">sur la période</div></div>
     <div class="kpi purple"><div class="kpi-label">Structures couvertes</div><div class="kpi-value">${cmsSet.size}</div><div class="kpi-sub">CMS / structures</div></div>
@@ -3395,7 +3401,11 @@ function renderAteliers(){
   if(conumAtl)data=data.filter(r=>r.conum===conumAtl);
 
   // KPIs
+  // Une ligne d'atelier est une PARTICIPATION, pas un atelier : afficher les
+  // deux chiffres, jamais le nombre de lignes seul (cf. statsAteliers).
+  const atl=statsAteliers(data);
   const total=data.length;
+  const moyParticipants=atl.sessions?(atl.participations/atl.sessions).toFixed(1).replace('.',','):'0';
   const communes=new Set(data.map(r=>r.commune).filter(Boolean).map(c=>c.trim().toUpperCase()));
   const lieux=new Set(data.map(r=>(r.lieu_raw||'').split(';')[0].trim()).filter(Boolean));
   const conumSet=new Set(data.map(r=>r.conum).filter(Boolean));
@@ -3411,11 +3421,11 @@ function renderAteliers(){
     </div>`;
   }
   document.getElementById('kpi-ateliers').innerHTML=
-    kpiAtl(total,'Ateliers','sur la période','var(--cyan)')+
+    kpiAtl(atl.sessions,'Ateliers',`${atl.participations} participations · ${moyParticipants} par séance`,'var(--cyan)')+
     kpiAtl(communes.size,'Communes','couvertes','var(--blue)')+
     kpiAtl(lieux.size,'Lieux','distincts (médiathèques, écoles…)','var(--purple)')+
     kpiAtl(conumSet.size,'Conseillers','animateurs','var(--orange)')+
-    kpiAtl(`<span style="font-size:18px">${topThema}</span>`,'Thématique principale',`${topThemaN} ateliers`,'var(--green)');
+    kpiAtl(`<span style="font-size:18px">${topThema}</span>`,'Thématique principale',`${topThemaN} participations`,'var(--green)');
 
   // Évolution mensuelle — axe complet (tous les mois de la plage, y compris ceux à 0)
   const allMonthsSet=[];
@@ -3429,7 +3439,7 @@ function renderAteliers(){
   destroyChart('ch-atl-evol');
   charts['ch-atl-evol']=new Chart(document.getElementById('ch-atl-evol'),{
     type:'bar',
-    data:{labels:months.map(monthLabel),datasets:[{label:'Ateliers',data:months.map(m=>data.filter(r=>r.date_demande.startsWith(m)).length),backgroundColor:'#22d3ee99',borderColor:'#22d3ee',borderWidth:1.5,borderRadius:4}]},
+    data:{labels:months.map(monthLabel),datasets:[{label:'Participations',data:months.map(m=>data.filter(r=>r.date_demande.startsWith(m)).length),backgroundColor:'#22d3ee99',borderColor:'#22d3ee',borderWidth:1.5,borderRadius:4}]},
     options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}
   });
 
@@ -3730,7 +3740,7 @@ function getCoordsGlobal(nom){
       circle.bindPopup(
         `<div style="font-family:sans-serif;min-width:180px">
           <div style="font-weight:700;font-size:13px;margin-bottom:2px">${nom}</div>
-          <div style="font-size:10px;color:#888;margin-bottom:8px">${total} ${isAteliersMode?`atelier${total>1?'s':''}`:`accompagnement${total>1?'s':''}`}</div>
+          <div style="font-size:10px;color:#888;margin-bottom:8px">${total} ${isAteliersMode?`participation${total>1?'s':''}`:`accompagnement${total>1?'s':''}`}</div>
           ${detail}
         </div>`,
         {maxWidth:240}
