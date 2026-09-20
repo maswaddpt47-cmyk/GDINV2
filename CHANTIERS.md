@@ -82,6 +82,59 @@ Le filtre `typeFilter` de l'interface ne peut rien pour ces lignes : il filtre
 l'affichage de ce qui est déjà en base, alors que `ECARTER_SANS_CMS` agit à
 l'import. Ne pas confondre les deux étages.
 
+## Sur quoi peut-on produire des statistiques — mesuré le 20/09/2026
+
+Audit de fiabilité par dimension, sur les 19 252 enregistrements retenus de
+l'export de septembre. À lire **avant** d'ajouter un graphe : une dimension non
+fiable produit un chiffre faux sans prévenir.
+
+| Dimension | Rempli | Libellés | Après normalisation | Verdict |
+|---|---|---|---|---|
+| Lieu / CMS | 100 % | 39 | 39 | **Fiable.** Zéro variante — le mapping fait son travail. |
+| État de l'action | 100 % | 4 | 4 | **Fiable.** |
+| Dates (demande, action) | 100 % | — | — | **Fiable** depuis la réparation d'encodage. |
+| N° de demande | 100 % | 7 206 | — | **Fiable.** |
+| Type d'action | 95 % | 10 | 10 | **Fiable.** |
+| Thématiques | 75 % | 13 | 13 | Propre, mais un quart des lignes sans thématique. |
+| Structure orienteur | 100 % | 133 | 115 | 18 variantes. À normaliser. |
+| Commune | 99 % | 497 | 383 | **88 groupes éclatés** par casse et tirets. |
+| Conseiller numérique | **30 %** | 7 | 7 | **Le plus fragile.** Voir ci-dessous. |
+
+### La commune est réparable mécaniquement
+
+497 libellés pour 383 communes réelles. L'éclatement est purement
+typographique : casse et séparateurs. Une même commune apparaît jusqu'à six
+fois (`VILLENEUVE-SUR-LOT`, `Villeneuve-sur-Lot`, `VILLENEUVE SUR LOT`,
+`Villeneuve sur Lot`, `villeneuve sur lot`, `villeneuve-sur-lot`).
+
+Contrairement aux partenaires, aucun arbitrage n'est nécessaire : normaliser
+casse, accents et séparateurs suffit. `normKey()` fait déjà ce travail pour les
+CMS. Tant que ce n'est pas fait, **toute statistique par commune est fausse**,
+les volumes étant répartis entre les graphies.
+
+### Le conseiller est la dimension la moins sûre, pas la plus sûre
+
+La colonne « Conseiller numérique » n'est remplie que sur **30 %** des lignes.
+L'application comble le reste via `CONUM_ATTRIB`, une inférence CMS →
+conseiller : un rattachement géographique, pas une donnée constatée.
+
+Or la colonne « Référent » est remplie à 99 % et porte le nom d'un conseiller
+sur une grande partie des lignes. Mesures :
+
+| | Lignes | Couverture |
+|---|---|---|
+| Conseiller renseigné à la source | 5 761 | 30 % |
+| + Référent identifié comme conseiller | +5 254 | **57 %** |
+| Restant, aujourd'hui inféré du CMS | 8 237 | 43 % |
+
+**Contrôle de cohérence** : sur les 2 706 lignes où les deux colonnes portent
+un conseiller, elles concordent à **95 %**. Le « Référent » est donc une source
+solide, nettement meilleure qu'une déduction géographique.
+
+Piste : combler depuis « Référent » avant de tomber sur `CONUM_ATTRIB`, et
+distinguer dans l'interface ce qui est constaté de ce qui est déduit. Non
+appliqué — à arbitrer.
+
 ## Trou de mapping — préfixes de service devant un CMS
 
 Découvert le 20/09/2026 en écrivant les tests de la famille A : `CMS_MAP` ne
