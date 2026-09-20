@@ -1,6 +1,6 @@
 # Chantiers en cours — GDINV2
 
-État au **20/09/2026**, commit `270e38f` (branche de session, non mergé). Ce fichier existe pour qu'une
+État au **20/09/2026**, onglet Fiabilité en place (branche de session, non mergé). Ce fichier existe pour qu'une
 session de travail qui démarre sans historique sache où en est le projet et
 ce qui reste à trancher. **Le supprimer quand tout est soldé** — ce n'est pas
 de la documentation permanente, c'est un état transitoire.
@@ -421,7 +421,8 @@ conseillers lus dans le référent.
    - `defautsSaisie()` utilise **deux dénominateurs** — base pour les défauts
      constatés, lignes lues ou retenues pour ceux issus de l'import. Les
      mélanger affichait 104,9 % sur une colonne réparée à 100 %.
-4. Onglet « Fiabilité des données » + ligne sur la landing.
+4. ~~Onglet « Fiabilité des données »~~ — fait. Reste la ligne de synthèse
+   sur la landing après import.
 5. Points orange et bulles sur les KPI concernés ; bandeau « par conseiller ».
 6. Slide correspondant dans `DR_SLIDES` (règle CR ↔ Diapo Rapport).
 
