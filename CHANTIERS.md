@@ -133,7 +133,9 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
 
 - **L'attribution par conseiller est déduite à 40,4 %** : `comblerConum()`
   applique d'abord le référent constaté, `applyConumAttrib()` comble le reste
-  depuis le CMS. Un changement de secteur réécrit l'historique. Le bandeau de
+  depuis le secteur — le conseiller majoritaire de ce secteur pour l'année
+  concernée, donc un changement d'affectation ne réécrit plus l'historique,
+  mais cela reste une inférence. Le bandeau de
   l'onglet Fiabilité est la réponse retenue — ne pas présenter ces chiffres
   comme une mesure individuelle.
 - **La saisie reste du texte libre.** Les trois mécanismes de rattrapage
