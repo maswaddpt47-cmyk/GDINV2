@@ -7,6 +7,7 @@ const {
   cleDoublon, compterDoublons,
   estAtelier, cleSessionAtelier, compterSessionsAtelier, statsAteliers,
   numeroterParticipants, cleFusion,
+  indicateursFiabilite, defautsSaisie, syntheseFiabilite, niveauFiabilite,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
   rattacherCommune, COMMUNES_47,
 } = require('./gdin-pure.js');
@@ -709,9 +710,25 @@ describe('compterDoublons', () => {
     assert.equal(compterDoublons([a, b]), 0);
   });
   it('ignore l\'ordre des types d\'action', () => {
-    const a = l({ id_demande: '1', type_action: ['Atelier', 'Accompagnement'] });
-    const b = l({ id_demande: '1', type_action: ['Accompagnement', 'Atelier'] });
+    const a = l({ id_demande: '1', type_action: ['Prise de contact', 'Accompagnement'] });
+    const b = l({ id_demande: '1', type_action: ['Accompagnement', 'Prise de contact'] });
     assert.equal(compterDoublons([a, b]), 1);
+  });
+  // Les participants d'une séance portent la même clé — le nom du
+  // bénéficiaire n'entre pas dans l'application. Les compter faisait annoncer
+  // 25 % de doublons là où il y en a 0,1 %.
+  it('n\'accuse pas les participants d\'un même atelier', () => {
+    const a = l({ id_demande: '7161', type_action: ['Atelier'] });
+    assert.equal(compterDoublons([a, { ...a }, { ...a }]), 0);
+  });
+  it('un atelier n\'empêche pas de voir les autres doublons', () => {
+    const atl = l({ id_demande: '7161', type_action: ['Atelier'] });
+    const acc = l({ id_demande: '900' });
+    assert.equal(compterDoublons([atl, { ...atl }, acc, { ...acc }]), 1);
+  });
+  it('une ligne mixte contenant Atelier est exclue elle aussi', () => {
+    const m = l({ id_demande: '1', type_action: ['Accompagnement', 'Atelier'] });
+    assert.equal(compterDoublons([m, { ...m }]), 0);
   });
   it('accepte une liste vide', () => {
     assert.equal(compterDoublons([]), 0);
@@ -835,4 +852,103 @@ describe('cleFusion', () => {
     assert.notEqual(cleFusion({ ...base, type_action: ['Atelier'] }), cleFusion({ ...base, type_action: ['Accompagnement'] }));
   });
   it('null', () => assert.equal(cleFusion(null), ''));
+});
+
+// ─── Fiabilité des indicateurs ────────────────────────────────────────────
+// Ne jamais afficher une marge qui ne soit pas calculée depuis le fichier
+// réellement importé : un chiffre inventé ferait l'inverse du but recherché.
+const ligneF = (o = {}) => Object.assign({
+  date_demande: '2025-01-01', date_action: '2025-01-02', id_demande: '1',
+  conum: 'MARTIN Paul', cms: 'CMS Marmande', commune: 'Agen', orienteur: 'CAF',
+  themas: ['Logement'], type_action: ['Accompagnement'], motif: '',
+}, o);
+
+describe('niveauFiabilite', () => {
+  it('moins de 1 % → solide',   () => assert.equal(niveauFiabilite(0.4), 'solide'));
+  it('1 % → bonne',             () => assert.equal(niveauFiabilite(1), 'bonne'));
+  it('7 % → moyenne',           () => assert.equal(niveauFiabilite(7), 'moyenne'));
+  it('22 % → partielle',        () => assert.equal(niveauFiabilite(22), 'partielle'));
+  it('43 % → faible',           () => assert.equal(niveauFiabilite(43), 'faible'));
+});
+
+describe('indicateursFiabilite', () => {
+  it('jeu vide → aucun indicateur', () => assert.deepEqual(indicateursFiabilite([], {}), []));
+  it('une marge est toujours calculée, jamais inventée', () => {
+    const recs = [ligneF(), ligneF({ id_demande: '2' })];
+    indicateursFiabilite(recs, {}).forEach(i => {
+      assert.equal(typeof i.marge, 'number', i.cle + ' : marge non numérique');
+      assert.ok(i.marge >= 0 && i.marge <= 100, i.cle + ' : marge hors bornes');
+      assert.ok(i.fait && i.fait.length > 0, i.cle + ' : fait manquant');
+    });
+  });
+  it('les thématiques manquantes remontent en marge', () => {
+    const recs = [ligneF(), ligneF({ id_demande: '2', themas: [] })];
+    const t = indicateursFiabilite(recs, {}).find(i => i.cle === 'themas');
+    assert.equal(t.ecart, 1);
+    assert.equal(t.marge, 50);
+    assert.equal(t.niveau, 'faible');
+  });
+  it('conum_deduit pilote la marge du conseiller', () => {
+    const recs = [ligneF({ conum_deduit: true }), ligneF({ id_demande: '2', conum_deduit: false })];
+    const c = indicateursFiabilite(recs, {}).find(i => i.cle === 'conseiller');
+    assert.equal(c.ecart, 1);
+    assert.equal(c.marge, 50);
+  });
+  it('sans conum_deduit, retombe sur les lignes sans conseiller', () => {
+    const recs = [ligneF({ conum: '' }), ligneF({ id_demande: '2' })];
+    assert.equal(indicateursFiabilite(recs, {}).find(i => i.cle === 'conseiller').ecart, 1);
+  });
+  it('les ateliers sont une reformulation, pas une marge', () => {
+    const recs = [atelier('1', '2025-01-01'), atelier('1', '2025-01-01')];
+    const a = indicateursFiabilite(recs, {}).find(i => i.cle === 'ateliers');
+    assert.equal(a.valeur, 1);
+    assert.equal(a.participations, 2);
+    assert.equal(a.marge, 0);
+  });
+});
+
+describe('defautsSaisie', () => {
+  it('ne liste que ce qui est non nul', () => {
+    assert.deepEqual(defautsSaisie([ligneF()], {}), []);
+  });
+  it('rapporte les défauts de base aux lignes en base', () => {
+    const d = defautsSaisie([ligneF({ orienteur: '' }), ligneF({ id_demande: '2' })], {});
+    const ref = d.find(x => x.libelle === 'Référent absent');
+    assert.equal(ref.val, 1);
+    assert.equal(ref.sur, 2);
+    assert.equal(ref.part, 50);
+  });
+  it('rapporte les défauts d\'import aux lignes retenues, pas à la base', () => {
+    const d = defautsSaisie([ligneF()], { retenues: 100, cellules_reparees: 100, lues: 120, ecartees: 20 });
+    assert.equal(d.find(x => x.libelle.startsWith('Cellules')).part, 100);
+    assert.equal(d.find(x => x.libelle.startsWith('Lignes écartées')).part, 16.7);
+  });
+});
+
+describe('syntheseFiabilite', () => {
+  it('jeu vide', () => assert.equal(syntheseFiabilite([]).texte, 'aucune donnée'));
+  it('ne réduit pas l\'ensemble au pire indicateur', () => {
+    const ind = [
+      { cle: 'a', libelle: 'A', niveau: 'solide', marge: 0 },
+      { cle: 'b', libelle: 'B', niveau: 'solide', marge: 0 },
+      { cle: 'c', libelle: 'Par conseiller', niveau: 'faible', marge: 43.4 },
+    ];
+    const s = syntheseFiabilite(ind);
+    assert.equal(s.solides, 2);
+    assert.equal(s.vigilance, 1);
+    assert.ok(s.texte.includes('2 indicateurs solides'), s.texte);
+    assert.ok(s.texte.includes('Par conseiller'), s.texte);
+  });
+  it('nomme le plus sensible, pas le premier venu', () => {
+    const ind = [
+      { cle: 'a', libelle: 'A', niveau: 'moyenne', marge: 7 },
+      { cle: 'b', libelle: 'B', niveau: 'faible', marge: 40 },
+    ];
+    assert.equal(syntheseFiabilite(ind).plusFaible.libelle, 'B');
+  });
+  it('tout solide', () => {
+    const s = syntheseFiabilite([{ cle: 'a', libelle: 'A', niveau: 'solide', marge: 0 }]);
+    assert.equal(s.vigilance, 0);
+    assert.ok(s.texte.includes('aucun point de vigilance'));
+  });
 });

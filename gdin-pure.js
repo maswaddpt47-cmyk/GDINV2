@@ -717,10 +717,17 @@ function cleDoublon(r){
     return`id:${r.id_demande}|da:${r.date_action}|${(r.type_action||[]).slice().sort().join('+')}`;
   return`${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.orienteur||''}|${(r.motif||'').slice(0,30)}`;
 }
+// Les ateliers sont exclus : cleDoublon() donne la même clé à tous les
+// participants d'une séance, puisque le nom du bénéficiaire n'entre pas dans
+// l'application. Les compter revenait à signaler 4 894 doublons (25 % de la
+// base) là où il y en a 12, soit 0,1 % hors ateliers — mesuré le 20/09/2026
+// sur l'export de septembre. Un panneau qualité qui crie au loup sur un quart
+// des lignes ne sert plus à rien.
 function compterDoublons(records){
   const vus=new Set();
   let n=0;
   (records||[]).forEach(r=>{
+    if(estAtelier(r))return;
     const k=cleDoublon(r);
     if(vus.has(k))n++;else vus.add(k);
   });
@@ -786,6 +793,119 @@ function cleFusion(r){
   return`${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.cms||''}|${r.commune||''}|${r.orienteur||''}|${(r.themas||[]).slice().sort().join('/')}|${(r.type_action||[]).slice().sort().join('+')}`;
 }
 
+// ─── Fiabilité des indicateurs ────────────────────────────────────────────────
+// Protéger celui qui présente le dashboard. N'afficher que des écarts MESURÉS
+// sur le fichier importé — jamais une marge inventée, ce serait l'inverse du
+// but recherché. Couvert par les tests « indicateursFiabilite ».
+//
+// Les seuils sont arbitraires mais explicites : ils servent à hiérarchiser
+// l'affichage (rien / point orange / bandeau), pas à juger la donnée.
+const SEUILS_FIABILITE=[[1,'solide'],[5,'bonne'],[10,'moyenne'],[25,'partielle']];
+function niveauFiabilite(margePct){
+  for(const[seuil,nom]of SEUILS_FIABILITE)if(margePct<seuil)return nom;
+  return'faible';
+}
+function indicateursFiabilite(records,stats){
+  const base=records||[];
+  const n=base.length;
+  if(!n)return[];
+  const st=stats||{};
+  const pourcent=x=>Math.round(x/n*1000)/10;
+  const ind=[];
+  const ajoute=(cle,libelle,valeur,ecart,fait,niveauForce)=>{
+    const marge=pourcent(ecart);
+    ind.push({cle,libelle,valeur,ecart,marge,niveau:niveauForce||niveauFiabilite(marge),fait});
+  };
+
+  // Demandes : le N° est renseigné sur toutes les lignes retenues, donc exact.
+  const sansNum=base.filter(r=>!r.id_demande).length;
+  ajoute('demandes','Demandes distinctes',countDemandes(base),sansNum,
+    sansNum?`${sansNum} lignes sans N° de demande`:'N° de demande renseigné sur 100 % des lignes');
+
+  // Types principaux : la marge est le nombre de doublons suspects du type.
+  [['accompagnements','Accompagnements','Accompagnement'],
+   ['contacts','Prises de contact','Prise de contact']].forEach(([cle,libelle,type])=>{
+    const lignes=base.filter(r=>(r.type_action||[]).includes(type));
+    const dbl=compterDoublons(lignes);
+    ajoute(cle,libelle,lignes.length,dbl,dbl?`${dbl} doublons suspects`:'aucun doublon suspect');
+  });
+
+  // Ateliers : pas de marge, une reformulation. Une ligne est une participation.
+  const atl=statsAteliers(base);
+  if(atl.participations>0)ind.push({cle:'ateliers',libelle:'Ateliers',valeur:atl.sessions,
+    ecart:0,marge:0,niveau:'solide',
+    fait:`${atl.sessions} séances pour ${atl.participations} participations`,
+    participations:atl.participations});
+
+  // Dimensions d'analyse : la marge est la part de lignes non rattachables.
+  const autreStructure=base.filter(r=>r.cms==='Autre structure').length;
+  ajoute('lieu','Par lieu / CMS',new Set(base.map(r=>r.cms).filter(Boolean)).size,autreStructure,
+    `${autreStructure} lignes en « Autre structure »`);
+
+  const horsRef=base.filter(r=>r.commune&&!rattacherCommune(r.commune)).length;
+  ajoute('commune','Par commune',new Set(base.map(r=>r.commune).filter(Boolean)).size,horsRef,
+    `${horsRef} lignes hors référentiel officiel`);
+
+  const sansThema=base.filter(r=>!r.themas||!r.themas.length).length;
+  ajoute('themas','Thématiques',new Set(base.flatMap(r=>r.themas||[])).size,sansThema,
+    `${sansThema} lignes sans thématique`);
+
+  const chrono=base.filter(r=>r.date_realisation&&r.date_realisation<r.date_demande).length;
+  ajoute('delais','Délais',null,chrono,`${chrono} réalisations antérieures à leur demande`);
+
+  // Conseiller : l'indicateur le plus sensible. conum_deduit est posé par
+  // applyConumAttrib ; sans lui on retombe sur les lignes sans conseiller.
+  const deduits=base.some(r=>r.conum_deduit!==undefined)
+    ? base.filter(r=>r.conum_deduit).length
+    : base.filter(r=>!r.conum||r.conum==='?').length;
+  ajoute('conseiller','Par conseiller',new Set(base.map(r=>r.conum).filter(Boolean)).size,deduits,
+    `${deduits} lignes attribuées par déduction depuis le CMS`);
+
+  return ind;
+}
+
+// Défauts de saisie constatés, à lister tels quels dans l'onglet.
+function defautsSaisie(records,stats){
+  const base=records||[];
+  const n=base.length;
+  const st=stats||{};
+  const l=[];
+  // Deux dénominateurs : les défauts constatés sur la base portent sur les
+  // lignes en base, ceux issus de l'import portent sur les lignes lues ou
+  // retenues à ce moment-là. Les mélanger donnait 104,9 % sur une colonne
+  // réparée à 100 % (mesuré le 20/09/2026).
+  const add=(libelle,val,total)=>{if(val>0)l.push({libelle,val,sur:total,part:total?Math.round(val/total*1000)/10:0});};
+  add('Référent absent',base.filter(r=>!r.orienteur).length,n);
+  add('Commune absente',base.filter(r=>!r.commune).length,n);
+  add('Action antérieure à sa demande',base.filter(r=>r.date_action&&r.date_action<r.date_demande).length,n);
+  const retenues=st.retenues||n;
+  add('Cellules « Date action » réparées à l\'import',st.cellules_reparees||0,retenues);
+  add('Graphies de communes regroupées',st.communes_fusionnees||0,retenues);
+  add('Lieux lus dans la structure orienteur',st.cms_via_structure||0,retenues);
+  add('Conseillers lus dans le référent',st.conum_via_referent||0,retenues);
+  add('Lignes écartées à l\'import',st.ecartees||0,st.lues||retenues);
+  return l;
+}
+
+// Synthèse d'une ligne, affichée après import.
+// Ne PAS réduire l'ensemble au pire indicateur : un seul point faible ferait
+// afficher « fiabilité faible » alors que la plupart des chiffres sont exacts,
+// et décrédibiliterait ce qui est solide — l'inverse du but. La synthèse
+// compte ce qui est solide, annonce les points de vigilance et nomme le plus
+// sensible, à charge pour l'onglet de détailler.
+function syntheseFiabilite(indicateurs){
+  const ind=indicateurs||[];
+  if(!ind.length)return{niveau:'—',solides:0,vigilance:0,plusFaible:null,texte:'aucune donnée'};
+  const solides=ind.filter(i=>i.niveau==='solide').length;
+  const enVigilance=ind.filter(i=>i.niveau!=='solide');
+  const plusFaible=enVigilance.slice().sort((a,b)=>b.marge-a.marge)[0]||null;
+  const pire=plusFaible?plusFaible.niveau:'solide';
+  const texte=enVigilance.length
+    ?`${solides} indicateur${solides>1?'s':''} solide${solides>1?'s':''} · ${enVigilance.length} point${enVigilance.length>1?'s':''} de vigilance · le plus sensible : ${plusFaible.libelle} (${plusFaible.marge} %)`
+    :`${solides} indicateur${solides>1?'s':''} solide${solides>1?'s':''} · aucun point de vigilance`;
+  return{niveau:pire,solides,vigilance:enVigilance.length,plusFaible,texte};
+}
+
 // ─── Demandes distinctes ──────────────────────────────────────────────────────
 // Une demande (N° Demande) génère plusieurs lignes d'action : compter les lignes
 // n'est pas compter les demandes. Couvert par les tests « countDemandes ».
@@ -796,7 +916,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,cleFusion,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,cleFusion,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,cleDoublon,compterDoublons,

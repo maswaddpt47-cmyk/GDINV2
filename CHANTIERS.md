@@ -1,6 +1,6 @@
 # Chantiers en cours — GDINV2
 
-État au **20/09/2026**, commit `83a78ea` (branche de session, non mergé). Ce fichier existe pour qu'une
+État au **20/09/2026**, onglet Fiabilité en place (branche de session, non mergé). Ce fichier existe pour qu'une
 session de travail qui démarre sans historique sache où en est le projet et
 ce qui reste à trancher. **Le supprimer quand tout est soldé** — ce n'est pas
 de la documentation permanente, c'est un état transitoire.
@@ -339,16 +339,19 @@ globale, qui ne dit plus « Accompagnements » sous le filtre Atelier.
 Commits `981a06d` et `83a78ea`. Les valeurs affichées sont désormais celles
 du fichier : 596 sessions, 5 478 participations.
 
-**2. Le détecteur de doublons est faux et dessert l'utilisateur.**
-Il annonce 5 693 doublons (28,1 %), dont 4 882 ateliers. Vérifié sur les
-lignes brutes : sur 478 groupes d'atelier (même N° de demande + même date),
-**465 ont des bénéficiaires différents** — ce sont les participants d'une même
-session. Seuls 13 groupes ont le même bénéficiaire.
-→ Ne pas compter les ateliers dans les doublons. Hors ateliers : **811 lignes
-suspectes sur 14 748, soit 5,5 %**.
-→ Le nom du bénéficiaire n'entre pas dans l'application (minimisation RGPD) :
-le dashboard ne peut pas distinguer participant et doublon sur les ateliers.
-C'est la raison de fond, à écrire dans l'onglet.
+**2. ~~Le détecteur de doublons est faux~~ FAIT** — commit à la suite de
+`83a78ea`. Il annonçait 4 894 doublons (25 % de la base), dont 4 882 étaient
+des participants d'atelier. `compterDoublons()` les exclut désormais.
+
+Mesuré sur l'export de septembre, après la fusion corrigée : **12 doublons sur
+13 812 lignes hors ateliers, soit 0,1 %**. Le libellé du panneau qualité
+devient « Doublons hors ateliers », et une ligne y rappelle le volume de
+participations et le nombre de séances, pour que l'exclusion soit visible.
+
+Raison de fond, à reprendre dans l'onglet Fiabilité : le nom du bénéficiaire
+n'entre pas dans l'application (minimisation RGPD), donc rien ne distingue
+deux participants d'une même séance. Le dashboard ne peut pas trancher, il
+s'abstient plutôt que d'accuser à tort.
 
 ### Fiabilité par indicateur — mesurée, à afficher telle quelle
 
@@ -357,7 +360,7 @@ C'est la raison de fond, à écrire dans l'onglet.
 | Demandes distinctes (7 271) | Solide | ±0 % | N° renseigné sur 100 % des lignes |
 | Accompagnements (8 047) | Solide | −2,7 % | 219 doublons suspects |
 | Prises de contact (5 444) | Solide | −1,2 % | 65 doublons |
-| Ateliers | À reformuler | — | 596 sessions / 5 478 participations |
+| Ateliers | Solide | — | 596 séances / 5 478 participations (affiché) |
 | Par lieu / CMS | Bonne | 3,1 % | 635 lignes en « Autre structure » |
 | Par commune | Bonne | 1,9 % | 390 lignes hors référentiel officiel |
 | Thématiques | Partielle | 24,5 % | 4 951 lignes sans thématique |
@@ -406,29 +409,46 @@ conseillers lus dans le référent.
 
 0. ~~Trancher la déduplication des ateliers~~ — fait, commit `83a78ea`.
 1. ~~Sessions d'atelier distinctes~~ — fait, commit `981a06d`.
-2. `compterDoublons()` exclut les ateliers → mettre à jour les tests existants
-   (`compterDoublons`), le panneau qualité, et dire pourquoi dans l'onglet.
-3. Calcul des indicateurs de fiabilité → `gdin-pure.js`, alimenté par
-   `stats` de `parseRows()` + comptages sur les records. Tests obligatoires.
-4. Onglet « Fiabilité des données » + ligne sur la landing.
-5. Points orange et bulles sur les KPI concernés ; bandeau « par conseiller ».
-6. Slide correspondant dans `DR_SLIDES` (règle CR ↔ Diapo Rapport).
+2. ~~`compterDoublons()` exclut les ateliers~~ — fait. Reste à reprendre
+   l'explication dans l'onglet Fiabilité quand il sera construit.
+3. ~~Calcul des indicateurs de fiabilité~~ — fait, commit `270e38f`.
+   `indicateursFiabilite()`, `defautsSaisie()`, `syntheseFiabilite()` dans
+   `gdin-pure.js`, 18 tests. Mesures sur l'export de septembre dans le message
+   de commit. Deux décisions prises en écrivant, à ne pas défaire :
+   - la synthèse **ne réduit pas l'ensemble au pire indicateur** (afficher
+     « fiabilité faible » quand quatre indicateurs sur neuf sont exacts
+     décrédibilise ce qui est solide) ; elle nomme le plus sensible ;
+   - `defautsSaisie()` utilise **deux dénominateurs** — base pour les défauts
+     constatés, lignes lues ou retenues pour ceux issus de l'import. Les
+     mélanger affichait 104,9 % sur une colonne réparée à 100 %.
+4. ~~Onglet « Fiabilité des données » + ligne de synthèse~~ — fait. La
+   synthèse est dans le bandeau de source après import (la landing est un
+   écran d'accueil statique, affiché avant les données).
+5. ~~Points orange et bulles sur les KPI ; bandeau « par conseiller »~~ — fait.
+6. ~~Slide `fiabilite` dans `DR_SLIDES`~~ — fait.
+
+**Le chantier « Fiabilité des données » est terminé.** Reste à le faire
+valider en usage réel avant de supprimer cette section.
 
 **Rappel de méthode** : ne jamais afficher une marge qui ne soit pas calculée
 depuis le fichier réellement importé. Un chiffre inventé ferait exactement le
 contraire de ce que l'utilisateur demande.
 
-## Chantiers restants, par priorité
+## Résolu le 20/09/2026 — complétion et filtre par type
 
-1. **Indicateurs de complétion restants.** Trois occurrences basées sur
-   `!r.date_action` : colonne `%` du tableau mensuel (deux fois) et KPI
-   « Complétion » de la vue par conseiller. Leur valeur constante venait du
-   bug d'encodage ci-dessus, désormais corrigé — à revérifier sur un import
-   réel avant de conclure qu'il reste quelque chose à faire.
-2. **Types absents du dropdown.** `typeFilter` ne propose que
-   Accompagnement, Prise de contact, Orientation tiers et Atelier. Les types
-   Pass, `Orientation vers un CN du 47` et `Autre` ne sont atteignables par
-   aucune position du filtre.
+**Aucun chantier ouvert ne reste dans ce fichier.**
+
+Les trois indicateurs de « complétion » comptaient les lignes ayant une date
+d'action : elles en ont toutes une depuis la correction de l'encodage, donc la
+valeur était constamment 100 %. Remplacés par le **taux de réalisation**, qui
+varie de 38 % à 83 % selon les mois — les mois récents sont bas parce que les
+demandes ne sont pas encore réalisées, ce qui est l'information attendue.
+**Ne pas revenir à un indicateur fondé sur `!r.date_action`** : cette colonne
+est renseignée à 100 % dans l'export.
+
+Le filtre par type ne proposait que quatre valeurs sur sept ; « Demande de
+prescription de Pass », « Orientation vers un CN du 47 » et « Autre » sont
+désormais atteignables.
 
 ## Points à ne pas défaire
 
