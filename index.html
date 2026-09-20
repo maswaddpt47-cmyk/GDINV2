@@ -2968,9 +2968,11 @@ function renderFiabilite(){
     <div style="background:rgba(239,68,68,.08);border:1px solid var(--red);border-radius:12px;padding:14px 18px;margin-bottom:18px">
       <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:4px">⚠ Attribution par conseiller</div>
       <div style="font-size:12px;color:var(--text);line-height:1.6">
-        ${conseiller.marge} % des attributions sont déduites du CMS, faute de conseiller renseigné à la saisie —
+        ${conseiller.marge} % des attributions sont déduites du secteur, faute de conseiller renseigné à la saisie —
         <strong>à ne pas présenter comme une mesure individuelle</strong>.
-        Un changement de secteur réécrit rétroactivement l'historique.
+        La déduction retient le conseiller majoritaire du secteur <em>pour l'année concernée</em>,
+        elle ne réécrit donc plus l'historique lors d'un changement d'affectation — mais elle
+        reste une inférence : elle attribue à un conseiller l'activité de son secteur.
       </div>
     </div>`:'';
 
