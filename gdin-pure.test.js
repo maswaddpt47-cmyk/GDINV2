@@ -528,8 +528,9 @@ describe('normCms — partenaires', () => {
     assert.equal(normCms('Club des Aînés de la Cascade - Fauillet'), 'Club des Aînés Fauillet');
   });
   it('laisse inconnu ce qui n\'a pas été tranché', () => {
-    // « Villeneuve sur Lot » est une commune saisie dans la case du lieu :
-    // arbitrage métier non rendu, elle reste en « Autre structure ».
+    // « Villeneuve sur Lot » est une commune saisie dans la case du lieu.
+    // Tranché par l'utilisateur le 20/09/2026 : ces lignes ne sont pas son
+    // activité, elles restent en « Autre structure ». Ne pas la mapper.
     assert.equal(normCms('Villeneuve sur Lot'), null);
   });
 });

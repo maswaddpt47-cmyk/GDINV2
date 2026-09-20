@@ -117,8 +117,19 @@ La saisie reste du texte libre. Le jour où l'outil amont proposera des listes
 déroulantes pour le lieu et la commune, ces trois mécanismes deviendront des
 filets de sécurité au lieu d'être la seule défense.
 
-Deux libellés restent sans arbitrage métier : `micro collège` (60 lignes) et
-`Villeneuve sur Lot` (55) saisi comme lieu alors que c'est une commune.
+Les deux libellés en suspens ont été tranchés le 20/09/2026 :
+
+- `micro collège` est un dispositif du collège Saint-Pierre à Casseneuil. Il a
+  son entrée (60 lignes). Les 22 lignes « Micro-collège Casseneuil » gardent
+  la médiathèque de Casseneuil pour lieu : l'atelier s'y tient, le
+  micro-collège n'est que la structure orientrice. Le lieu prime, c'est voulu.
+- `Villeneuve sur Lot` saisi comme lieu (55 lignes) **reste en « Autre
+  structure »** : ce ne sont pas les ateliers de l'utilisateur. Ne pas le
+  mapper — un test le verrouille.
+
+Le collège Germillac a reçu une entrée qui ne sert à rien aujourd'hui : ses 82
+lignes relèvent toutes du cycle Pass et sont écartées. Elle est conservée pour
+qu'un atelier qui s'y tiendrait demain ne reparte pas en « Autre structure ».
 
 ## Bug d'affichage — les libellés numériques passent en tête des classements
 
