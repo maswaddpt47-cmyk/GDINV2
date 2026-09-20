@@ -27,12 +27,6 @@ comparaison avec un fichier antérieur. Référence actuelle : septembre 2026,
 
 Aucun.
 
-## En attente de l'utilisateur
-
-- **Suppression de la branche `claude/review-markdown-fuxynm`** (SHA
-  `719d623`) via l'interface GitHub : le proxy de développement refuse la
-  suppression de branche distante (403). Son contenu est déjà dans `main`.
-
 ## À porter aux développeurs de l'outil de saisie
 
 Par gain décroissant. L'encodage a été signalé le 20/09/2026.
