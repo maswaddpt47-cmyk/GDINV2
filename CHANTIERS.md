@@ -150,6 +150,40 @@ importent un jeu où « 47 » ne pèse qu'une ligne et lisent l'ordre que la pag
 produit. Le second reproduit l'ancien comportement via `count()`, de sorte que
 la correction cesserait d'être prouvée si elle disparaissait.
 
+## Résolu le 20/09/2026 — gel d'import et détecteur quadratique
+
+### IndexedDB : un gel silencieux devenu un message
+
+`localStorage` ne tient pas les données (quota dépassé dès 6 Mo, un export en
+fait ~7,7) : le repli IndexedDB est le chemin normal, pas l'exception.
+
+`saveToStorage()` attend `_idbPut()`, qui attend `_idbOpen()`. Une ouverture
+sans réponse laissait ce `await` pendant pour toujours, et **tout le code qui
+suit l'import ne s'exécutait jamais** — y compris le message d'erreur déjà
+prévu pour ce cas. D'où un import arrêté après « N enregistrements », sans
+rien à l'écran.
+
+Trois garde-fous : `onblocked`, qui n'était pas traité ; un délai maximum de
+10 s sur l'ouverture ; le même sur les transactions, dont une qui ne se dénoue
+pas figerait l'import de la même façon. La lecture est couverte aussi : au
+démarrage, c'est le dashboard entier qui l'attend.
+
+Cinq tests e2e (`Garde-fous IndexedDB`) le vérifient dans le navigateur, dont
+une contre-preuve qui rejoue l'implémentation d'origine sur la même panne et
+constate qu'elle reste pendante. Ne pas retirer cette contre-preuve : sans
+elle, les quatre autres passeraient même si le garde-fou disparaissait.
+
+### Doublons : 1 547 ms → 3 ms
+
+`keys.filter((k,i)=>keys.indexOf(k)!==i)` était quadratique. Sur les 20 226
+enregistrements de l'export de septembre : 1 547 ms contre 3 ms avec un `Set`,
+pour un résultat identique (5 693 doublons). La note précédente mesurait
+823 ms sur 17 015 lignes — le coût croît bien au carré.
+
+`cleDoublon()` et `compterDoublons()` sont dans `gdin-pure.js`. Un test compare
+les deux comptages sur un jeu construit, pour que l'équivalence reste
+vérifiée. **Ne pas revenir à `indexOf()`.**
+
 ## Trou de mapping — préfixes de service devant un CMS
 
 Découvert le 20/09/2026 en écrivant les tests de la famille A : `CMS_MAP` ne
@@ -199,28 +233,19 @@ oui, tous les rapports tirés avant le 20/09/2026 sous-comptaient les actions.
 
 ## Chantiers restants, par priorité
 
-1. **Garde-fou sur IndexedDB.** `localStorage` ne tient pas les données
-   (quota dépassé dès 6 Mo, un export en fait ~7,7) : le repli IndexedDB est
-   le chemin normal, pas l'exception. Or `_idbOpen()` ne gère ni `onblocked`
-   ni délai maximum — si l'ouverture reste en attente, l'import se fige après
-   « N enregistrements » sans message. Risque identifié par lecture du code,
-   non reproduit.
-2. **Détecteur de doublons quadratique.** `keys.indexOf(k)` dans un `filter`
-   (fonction du panneau qualité) : 823 ms mesurés sur 17 015 lignes, 3 ms
-   avec un `Set`. Le coût croît au carré du volume.
-3. **Indicateurs de complétion restants.** Trois occurrences basées sur
+1. **Indicateurs de complétion restants.** Trois occurrences basées sur
    `!r.date_action` : colonne `%` du tableau mensuel (deux fois) et KPI
    « Complétion » de la vue par conseiller. Leur valeur constante venait du
    bug d'encodage ci-dessus, désormais corrigé — à revérifier sur un import
    réel avant de conclure qu'il reste quelque chose à faire.
-4. **Types absents du dropdown.** `typeFilter` ne propose que
+2. **Types absents du dropdown.** `typeFilter` ne propose que
    Accompagnement, Prise de contact, Orientation tiers et Atelier. Les types
    Pass, `Orientation vers un CN du 47` et `Autre` ne sont atteignables par
    aucune position du filtre.
-5. **Cache-busting.** Les scripts sont chargés sans `?v=N` : après un
+3. **Cache-busting.** Les scripts sont chargés sans `?v=N` : après un
    correctif, un navigateur peut continuer à servir l'ancienne version. En
    attendant, vérifier les déploiements en navigation privée.
-6. **Suppression de `index.html`.** Décidé : v2 remplace v1. Tant que la
+4. **Suppression de `index.html`.** Décidé : v2 remplace v1. Tant que la
    suppression n'est pas faite, `index.html` reste servi à la racine par
    GitHub Pages et toute correction fonctionnelle doit être appliquée aux
    deux fichiers.
