@@ -420,3 +420,122 @@ test.describe('Garde-fous IndexedDB — contre-preuve', () => {
   });
 
 });
+
+// ── Balayage des panneaux ────────────────────────────────────────────────────
+// Les tests unitaires couvrent gdin-pure.js : ce que les fonctions calculent.
+// Ils ne disent rien de ce qu'on leur donne à calculer ni de ce que la page
+// affiche. Trois défauts sont passés au travers le 20/09/2026 — l'onglet
+// Fiabilité lisait toute la base au lieu des données filtrées, le filtre de
+// type y faisait afficher « Prises de contact : 0 », et un bandeau affirmait
+// un défaut déjà corrigé. Ce balayage ouvre chaque panneau sous plusieurs
+// filtres et échoue sur ce qu'aucune relecture ne garantit.
+
+/** Jeu de référence : volumes connus, donc invariants vérifiables. */
+function jeuDeTest() {
+  const rec = [];
+  const cms = ['CMS Marmande', 'CMS Agen Tapie', 'CMS Nérac'];
+  const conseillers = ['NOM-A Prenom', 'NOM-B Prenom'];
+  const themas = ['Logement', 'Emploi', 'Santé'];
+  for (let a = 0; a < 3; a++) {
+    const annee = 2024 + a;
+    for (let i = 0; i < 30; i++) {
+      const type = i % 3 === 0 ? 'Accompagnement' : i % 3 === 1 ? 'Prise de contact' : 'Atelier';
+      // La qualité de saisie s'améliore d'une année sur l'autre : sans cela les
+      // années seraient indiscernables et le test de réaction au filtre ne
+      // prouverait rien.
+      const conumVide = i % (2 + a * 3) === 0;
+      rec.push({
+        date_demande: `${annee}-0${(i % 9) + 1}-1${i % 9}`,
+        date_action: `${annee}-0${(i % 9) + 1}-2${i % 9}`,
+        id_demande: `${annee}${i}`,
+        conum: conumVide ? '' : conseillers[i % 2],
+        cms: cms[i % 3], lieu_raw: cms[i % 3], structure: '', commune: 'Agen',
+        themas: i % 5 === 0 ? [] : [themas[i % 3]],
+        type_action: [type], orienteur: 'CAF', motif: '',
+        benef_connu: i % 2 === 0, urgence: i % 7 === 0,
+        etat: i % 4 === 0 ? 'Non réalisée' : 'Réalisée',
+        date_planifiee: null, date_realisation: `${annee}-0${(i % 9) + 1}-2${i % 9}`,
+      });
+    }
+  }
+  return { type: 'gdin-data', data: rec };
+}
+
+async function importerJeu(page) {
+  await page.evaluate((payload) => { importDataJSON(payload, 'test.json'); }, jeuDeTest());
+  await page.waitForFunction(() => dataSource === 'imported', { timeout: 15000 });
+}
+
+const ONGLETS = ['global', 'evolution', 'par-cms', 'par-conum', 'orienteurs', 'ateliers', 'rapport', 'fiabilite'];
+const FILTRES = [
+  { nom: 'sans filtre', type: '', annees: null },
+  { nom: 'année récente seule', type: '', annees: ['2026'] },
+  { nom: 'année ancienne seule', type: '', annees: ['2024'] },
+  { nom: 'type Atelier', type: 'Atelier', annees: null },
+];
+
+test.describe('Balayage des panneaux', () => {
+
+  test('aucun panneau ne produit NaN, undefined ou [object Object]', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    const fautifs = await page.evaluate(({ ONGLETS, FILTRES }) => {
+      const out = [];
+      for (const f of FILTRES) for (const o of ONGLETS) {
+        document.getElementById('typeFilter').value = f.type;
+        activeYears = f.annees ? new Set(f.annees) : new Set(ALL_YEARS);
+        const btn = document.querySelector(`[onclick*="'${o}'"]`);
+        if (btn) btn.click();
+        const txt = (document.getElementById('panel-' + o) || {}).textContent || '';
+        if (/\bNaN\b|undefined|\[object Object\]|Infinity/.test(txt)) out.push(`${f.nom} / ${o}`);
+      }
+      return out;
+    }, { ONGLETS, FILTRES });
+    expect(fautifs, 'valeurs cassées affichées').toEqual([]);
+  });
+
+  test('aucun panneau ne reste vide sous un filtre', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    const vides = await page.evaluate(({ ONGLETS, FILTRES }) => {
+      const out = [];
+      for (const f of FILTRES) for (const o of ONGLETS) {
+        document.getElementById('typeFilter').value = f.type;
+        activeYears = f.annees ? new Set(f.annees) : new Set(ALL_YEARS);
+        const btn = document.querySelector(`[onclick*="'${o}'"]`);
+        if (btn) btn.click();
+        const p = document.getElementById('panel-' + o);
+        if (p && p.textContent.replace(/\s+/g, ' ').trim().length < 40) out.push(`${f.nom} / ${o}`);
+      }
+      return out;
+    }, { ONGLETS, FILTRES });
+    expect(vides, 'panneaux vides').toEqual([]);
+  });
+
+  // Régression du 20/09/2026 : avec un filtre de type actif, l'onglet affichait
+  // « Prises de contact : 0 ». Exact pour le sous-ensemble, absurde à lire.
+  test('le filtre de type ne vide aucun indicateur de fiabilité', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    const zeros = await page.evaluate(() => {
+      document.getElementById('typeFilter').value = 'Accompagnement';
+      document.querySelector('[onclick*="\'fiabilite\'"]').click();
+      const t = document.querySelector('#fia-indicateurs table');
+      return [...t.querySelectorAll('tbody tr')]
+        .map(tr => [...tr.querySelectorAll('td')].map(td => td.textContent.trim()))
+        .filter(c => c[1] === '0').map(c => c[0]);
+    });
+    expect(zeros, 'indicateurs à zéro sous un filtre de type').toEqual([]);
+  });
+
+  // Régression du 20/09/2026 : renderFiabilite() lisait DATA, donc changer
+  // d'année ne changeait rien à l'écran.
+  test('les indicateurs de fiabilité suivent le filtre années', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    const [a, b] = await page.evaluate(() => {
+      const lire = () => { renderFiabilite(); return document.getElementById('fia-synthese').textContent; };
+      document.querySelector('[onclick*="\'fiabilite\'"]').click();
+      activeYears = new Set(['2024']); const x = lire();
+      activeYears = new Set(['2026']); const y = lire();
+      return [x, y];
+    });
+    expect(a, 'la fiabilité ne réagit pas au changement d\'année').not.toEqual(b);
+  });
+});
