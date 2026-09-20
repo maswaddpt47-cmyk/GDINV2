@@ -1,6 +1,6 @@
 # Chantiers en cours — GDINV2
 
-État au **20/09/2026**, commit `d06b5e3`. Ce fichier existe pour qu'une
+État au **20/09/2026**, commit `83a78ea` (branche de session, non mergé). Ce fichier existe pour qu'une
 session de travail qui démarre sans historique sache où en est le projet et
 ce qui reste à trancher. **Le supprimer quand tout est soldé** — ce n'est pas
 de la documentation permanente, c'est un état transitoire.
@@ -276,7 +276,7 @@ Toutes les mesures ci-dessous viennent de l'export de **septembre 2026**
 (24 410 lignes, 20 226 retenues). L'export n'est pas dans le dépôt — le
 redemander à l'utilisateur pour rejouer les chiffres.
 
-### BLOQUANT — la fusion supprime les participants d'atelier
+### Résolu le 20/09/2026 — la fusion supprimait les participants d'atelier
 
 Découvert le 20/09/2026 en vérifiant l'affichage des sessions dans le
 navigateur : les chiffres de la page ne correspondaient pas au fichier.
@@ -303,19 +303,28 @@ importés rigoureusement identiques**. Sans identifiant de participant ou de
 séance dans le fichier source, l'application ne peut pas distinguer « dix
 personnes à un atelier » de « la même ligne importée dix fois ».
 
-Trois options soumises à l'utilisateur le 20/09/2026, **décision en attente** :
+**Option 2 retenue par l'utilisateur**, commit `83a78ea` :
+`numeroterParticipants()` attribue à chaque ligne d'atelier son rang dans la
+séance, dans l'ordre du fichier, et `cleFusion()` le porte dans la clé.
 
-1. Ne pas dédupliquer les lignes d'atelier. Chiffres justes, mais un
-   ré-import du même fichier double les ateliers.
-2. **(recommandée)** Dédupliquer les ateliers sur le rang de la ligne dans le
-   fichier — 1er, 2e, 3e participant d'une même séance. Reste idempotent au
-   ré-import, préserve les participations, ne touche aucun autre type.
-3. Ne rien changer et afficher que les participations sont sous-comptées de
-   78 %. Rend le volet Ateliers inexploitable.
+Pour un atelier la clé est `atl:<N° demande>|<date action>|p:<rang>`. **Ne pas
+revenir à la clé générique pour les ateliers** : elle ne porte pas le N° de
+demande, et deux séances partageant date, lieu et conseiller entraient en
+collision — 314 participations perdues, mesuré avant correction.
 
-Tant que ce point n'est pas tranché, **ne pas merger le chantier atelier dans
-`main`** : `statsAteliers()` est juste, mais il compte sur des données déjà
-amputées. Commit `981a06d`, sur la branche de session.
+| | Avant | Après |
+|---|---|---|
+| Sessions en base | 570 | **596** |
+| Participations en base | 1 225 | **5 478** |
+| Accompagnements | 7 764 | 7 764 (inchangé) |
+| Prises de contact | 5 320 | 5 320 (inchangé) |
+
+La fusion reste **idempotente** : réimporter le même fichier n'ajoute aucune
+ligne (vérifié sur l'export réel, et couvert par un test). `index.html` n'a
+plus de clé locale, `makeKey` pointe sur `cleFusion`.
+
+Vérifié dans le navigateur : « 596 ateliers · 5 478 participations · 9,2 par
+séance ». 215 tests verts.
 
 Conséquence pour les propositions à la source : « identifiant de session
 d'atelier, ou champ nombre de participants » passe juste derrière
@@ -327,8 +336,8 @@ l'obligation du conseiller numérique. À remonter aux devs avec l'encodage.
 `statsAteliers()` (`gdin-pure.js`, 15 tests) rend les deux chiffres ensemble.
 Affiché dans le panneau Ateliers, la popup de carte et le KPI de la vue
 globale, qui ne dit plus « Accompagnements » sous le filtre Atelier.
-Commit `981a06d` — **en attente du point bloquant ci-dessus** : les valeurs
-affichées seront justes le jour où la fusion cessera d'amputer les données.
+Commits `981a06d` et `83a78ea`. Les valeurs affichées sont désormais celles
+du fichier : 596 sessions, 5 478 participations.
 
 **2. Le détecteur de doublons est faux et dessert l'utilisateur.**
 Il annonce 5 693 doublons (28,1 %), dont 4 882 ateliers. Vérifié sur les
@@ -395,9 +404,7 @@ conseillers lus dans le référent.
 
 ### Ordre de travail
 
-0. **Trancher la déduplication des ateliers** (section bloquante ci-dessus).
-   Rien d'autre ne peut être chiffré tant que la base est amputée de 78 % des
-   participations.
+0. ~~Trancher la déduplication des ateliers~~ — fait, commit `83a78ea`.
 1. ~~Sessions d'atelier distinctes~~ — fait, commit `981a06d`.
 2. `compterDoublons()` exclut les ateliers → mettre à jour les tests existants
    (`compterDoublons`), le panneau qualité, et dire pourquoi dans l'onglet.
