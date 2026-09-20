@@ -14,7 +14,7 @@ Règles permanentes : `CLAUDE.md`.
 ## Comment reprendre
 
 ```bash
-npm test                      # 236 tests unitaires
+npm test                      # 236 tests unitaires · 36 e2e
 npm run audit -- export.xls   # ce que l'application retient d'un export réel
 ```
 
@@ -112,6 +112,26 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
   affichait 104,9 % sur une colonne réparée à 100 %.
 - **Aucune marge affichée ne doit être estimée.** Toutes viennent de
   `indicateursFiabilite()`, recalculées depuis le fichier importé.
+
+**Dépendances externes et affichage**
+
+- **Le fond de carte ne doit dépendre d'aucune clé.** CARTO a fermé l'accès
+  libre à ses tuiles le 20/09/2026 : un filigrane « API KEY REQUIRED » barrait
+  les deux cartes en production, sans qu'une ligne du dépôt ait changé. Source
+  actuelle : OpenStreetMap France, libre et hébergé en UE. `TUILES_URL` et
+  `TUILES_ATTRIB` sont partagées par les deux cartes — elles déclaraient
+  chacune la leur, l'une pouvait casser sans l'autre. Trois tests e2e refusent
+  une URL contenant `cartocdn`, `apikey` ou `access_token`.
+- **Les options des `<select>` ont besoin d'un fond opaque écrit en dur.** Le
+  menu natif s'ouvre hors de la page, sur un fond système blanc : sans fond
+  explicite, les options héritent du `color` clair du select et deviennent
+  invisibles — la liste paraît vide alors qu'elle est peuplée. Les variables de
+  thème sont translucides et ne conviennent pas. Des tests e2e mesurent le
+  contraste réel dans les deux thèmes.
+- **Ce que le réseau de développement ne permet pas de vérifier.** Le proxy
+  filtre cdnjs, geo.api.gouv.fr et les serveurs de tuiles. Le rendu réel d'un
+  fond de carte ne peut donc pas être constaté ici : il se vérifie sur le site
+  déployé, jamais par lecture de code.
 
 **Structure**
 
