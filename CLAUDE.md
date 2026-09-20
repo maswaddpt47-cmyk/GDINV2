@@ -48,7 +48,7 @@ Il existe deux diaporamas distincts dans l'application — **ne pas les confondr
 
 ### Tests unitaires — règle obligatoire
 
-Le fichier **`gdin-pure.js`** contient les fonctions pures du projet (calculs, parsing, normalisation CMS). Le fichier **`gdin-pure.test.js`** contient 88 tests unitaires (`node:test`) qui les couvrent. Une suite end-to-end Playwright (`tests-e2e.spec.js`, 19 tests) couvre les parcours navigateur.
+Le fichier **`gdin-pure.js`** contient les fonctions pures du projet (calculs, parsing, normalisation CMS). Le fichier **`gdin-pure.test.js`** contient 181 tests unitaires (`node:test`) qui les couvrent. Une suite end-to-end Playwright (`tests-e2e.spec.js`, 26 tests) couvre les parcours navigateur.
 
 **Toute nouvelle fonction de calcul, de parsing ou de normalisation va dans `gdin-pure.js` avec ses tests, pas dans le HTML.**
 
@@ -57,7 +57,7 @@ Une session est significative si elle touche à la logique métier (pas une simp
 **Règle :** après toute modification de `gdin-pure.js`, vérifier que les tests passent avant de commiter :
 
 ```bash
-npm test          # 88 tests unitaires
+npm test          # 181 tests unitaires
 npm run audit -- export.xls   # audit d'un export avant d'en tirer un rapport
 ```
 
@@ -123,19 +123,17 @@ production non mesuré. Conséquence possible : après un correctif dans
 Si un correctif « ne passe pas », tester en navigation privée avant de
 chercher un bug ailleurs.
 
-### index.html et index-v2.html — trancher, pas converger au hasard
+### Un seul dashboard
 
-Deux dashboards complets coexistent : `index.html` (servi par défaut sur
-GitHub Pages) et `index-v2.html` (refonte du design system, ~300 lignes de
-plus). Chacun embarque sa propre copie de la logique d'affichage, et des
-commits récents portent la mention « (v1 + v2) » : chaque évolution est
-écrite deux fois.
+`index.html` est le seul fichier servi. Il porte le design system dit « v2» :
+l'ancien dashboard a été supprimé le 20/09/2026 après vérification que les
+144 fonctions et tous les identifiants DOM étaient présents des deux côtés.
 
-**Règle :** tant que les deux fichiers existent, une modification
-fonctionnelle s'applique aux deux dans le même commit — ou le message de
-commit dit explicitement pourquoi un seul est touché. Si v2 doit remplacer
-v1, l'écrire ici et supprimer v1. La pire situation est deux versions qui
-divergent en silence et dont plus personne ne sait laquelle fait foi.
+Avant cela, chaque évolution était écrite deux fois — les commits portaient la
+mention « (v1 + v2) ». **Ne pas recréer un second dashboard.** Une variante à
+essayer se fait sur une branche, pas dans un fichier parallèle : deux versions
+qui divergent en silence, et dont plus personne ne sait laquelle fait foi, est
+la pire situation.
 
 ### RGPD & données personnelles
 
@@ -144,7 +142,7 @@ public départemental. Trois garde-fous sont **déjà dans le code** — les
 casser est le risque principal du projet :
 
 1. **Minimisation à l'import.** `parseXlsText()` (gdin-pure.js) et
-   `parseXlsxBinary()` (dans les HTML) ne retiennent aucune identité de
+   `parseXlsxBinary()` (dans `index.html`) ne retiennent aucune identité de
    bénéficiaire : ni nom, ni prénom, ni adresse, ni téléphone, ni date de
    naissance. Champs conservés : date, commune, CMS, thématiques, type
    d'action, conum, orienteur, état, motif tronqué à 120 caractères.
@@ -199,8 +197,7 @@ faut un pour l'installabilité :
 - **Budget fermé** : avant d'ajouter une section ici, vérifier qu'elle n'en
   répète pas une autre et supprimer ce qu'elle remplace. Un fichier
   d'instructions qui grossit est moins bien appliqué, pas mieux.
-- **Pas de changelog en commentaire** dans `index.html`, `index-v2.html` ou
-  `gdin-pure.js` (« v11.9 : retiré / v11.10 : remis »). Ça appartient à
+- **Pas de changelog en commentaire** dans `index.html` ou `gdin-pure.js` (« v11.9 : retiré / v11.10 : remis »). Ça appartient à
   `git log`. Reste légitime : la décision en vigueur et la raison qui la rend
   non négociable, surtout si elle est contre-intuitive.
 

@@ -11,7 +11,7 @@ pourquoi : `git log`, les messages portent les mesures.
 ## Comment reprendre
 
 ```bash
-npm test                      # 175 tests unitaires
+npm test                      # 181 tests unitaires
 npm run audit -- export.xls   # ce que l'appli retient d'un export réel
 ```
 
@@ -184,6 +184,19 @@ pour un résultat identique (5 693 doublons). La note précédente mesurait
 les deux comptages sur un jeu construit, pour que l'équivalence reste
 vérifiée. **Ne pas revenir à `indexOf()`.**
 
+## Résolu le 20/09/2026 — un seul dashboard
+
+`index-v2.html` a pris la place d'`index.html`. Le fichier est renommé, pas
+seulement effacé : GitHub Pages sert `index.html` à la racine, une simple
+suppression aurait mis le site hors ligne.
+
+Vérifié avant : les 144 fonctions et l'intégralité des identifiants DOM
+étaient présents des deux côtés. Vérifié après : page chargée sans erreur,
+10 panneaux, KPI affichés, trois librairies définies, 26 tests e2e verts.
+
+**Ne pas recréer un second dashboard.** Une variante à essayer se fait sur une
+branche, pas dans un fichier parallèle.
+
 ## Trou de mapping — préfixes de service devant un CMS
 
 Découvert le 20/09/2026 en écrivant les tests de la famille A : `CMS_MAP` ne
@@ -245,10 +258,6 @@ oui, tous les rapports tirés avant le 20/09/2026 sous-comptaient les actions.
 3. **Cache-busting.** Les scripts sont chargés sans `?v=N` : après un
    correctif, un navigateur peut continuer à servir l'ancienne version. En
    attendant, vérifier les déploiements en navigation privée.
-4. **Suppression de `index.html`.** Décidé : v2 remplace v1. Tant que la
-   suppression n'est pas faite, `index.html` reste servi à la racine par
-   GitHub Pages et toute correction fonctionnelle doit être appliquée aux
-   deux fichiers.
 
 ## Points à ne pas défaire
 

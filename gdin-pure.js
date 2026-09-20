@@ -1,6 +1,6 @@
 // gdin-pure.js — fonctions utilitaires pures
 // Aucune dépendance DOM, Chart.js ou état mutable.
-// Chargé par index.html (via <script src>) ET par tests.html.
+// Chargé par index.html (via <script src>) et par gdin-pure.test.js (Node).
 
 // ─── Constantes ────────────────────────────────────────────────────────────
 const MONTH_FR=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
