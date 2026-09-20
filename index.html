@@ -386,9 +386,13 @@ body.pres-mode .tbl th{font-size:11px}
    s'applique qu'au calque des tuiles — les cercles et étiquettes vivent dans
    overlay-pane et gardent leurs couleurs. Désaturer ici évite de dépendre d'un
    fournisseur de fond « clair », espèce en voie de disparition : c'est la
-   fermeture de CartoDB Positron qui a cassé la carte le 20/09/2026. */
-.leaflet-tile-pane{filter:grayscale(1) brightness(1.06) contrast(.92)}
-body.light-mode .leaflet-tile-pane{filter:grayscale(1) brightness(1.02) contrast(.95)}
+   fermeture de CartoDB Positron qui a cassé la carte le 20/09/2026.
+   Le contraste bas et la clarté haute lavent le fond : ce qui distinguait
+   Positron n'était pas l'absence de couleur mais la faible densité de
+   détails, qu'OSM ne permet pas de réduire autrement. Ne pas monter
+   brightness au-delà : les libellés de communes cessent d'être lisibles. */
+.leaflet-tile-pane{filter:grayscale(1) brightness(1.18) contrast(.8)}
+body.light-mode .leaflet-tile-pane{filter:grayscale(1) brightness(1.12) contrast(.85)}
 
 /* Le popup se pose sur le fond de carte, dont on ne maîtrise pas les couleurs.
    Les variables de thème sont translucides (--s1 vaut rgba(255,255,255,.028)) :
