@@ -4,6 +4,7 @@ const {
   pct, esc, excelDate, parseDt, dayDiff, bizDays, monthLabel, typeColor,
   count, countEntries, countThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
   normEtat, isRealisee, countDemandes, parseRows, mapColonnes, demojibakeUtf16,
+  cleDoublon, compterDoublons,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
   rattacherCommune, COMMUNES_47,
 } = require('./gdin-pure.js');
@@ -683,5 +684,42 @@ describe('countEntries', () => {
   });
   it('accepte une liste vide', () => {
     assert.deepEqual(countEntries([], 'c'), []);
+  });
+});
+
+// ─── compterDoublons ──────────────────────────────────────────────────────
+// Le comptage était quadratique : 1 547 ms sur 20 226 enregistrements contre
+// 3 ms avec un Set, pour un résultat identique. Ne pas revenir à indexOf().
+describe('compterDoublons', () => {
+  const l = (o = {}) => Object.assign({
+    date_demande: '2025-01-01', date_action: '2025-01-02', conum: 'MARTIN Paul',
+    orienteur: 'CAF', motif: 'aide', id_demande: '', type_action: ['Accompagnement'],
+  }, o);
+
+  it('ne compte rien sur des lignes distinctes', () => {
+    assert.equal(compterDoublons([l({ motif: 'a' }), l({ motif: 'b' })]), 0);
+  });
+  it('compte les occurrences au-delà de la première', () => {
+    assert.equal(compterDoublons([l(), l(), l()]), 2);
+  });
+  it('distingue par numéro de demande quand il est présent', () => {
+    const a = l({ id_demande: '1' }), b = l({ id_demande: '2' });
+    assert.equal(compterDoublons([a, b]), 0);
+  });
+  it('ignore l\'ordre des types d\'action', () => {
+    const a = l({ id_demande: '1', type_action: ['Atelier', 'Accompagnement'] });
+    const b = l({ id_demande: '1', type_action: ['Accompagnement', 'Atelier'] });
+    assert.equal(compterDoublons([a, b]), 1);
+  });
+  it('accepte une liste vide', () => {
+    assert.equal(compterDoublons([]), 0);
+    assert.equal(compterDoublons(null), 0);
+  });
+  it('donne le même résultat que le comptage quadratique d\'origine', () => {
+    const jeu = [];
+    for (let i = 0; i < 300; i++) jeu.push(l({ id_demande: String(i % 90) }));
+    const cles = jeu.map(cleDoublon);
+    const attendu = cles.filter((k, i) => cles.indexOf(k) !== i).length;
+    assert.equal(compterDoublons(jeu), attendu);
   });
 });
