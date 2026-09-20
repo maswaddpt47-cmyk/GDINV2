@@ -334,3 +334,43 @@ describe('parseRows — réparation d\'encodage', () => {
     assert.doesNotMatch(formatResumeImport(r.stats), /réparées/);
   });
 });
+
+// ─── parseRows — famille A : CMS saisi dans « Structure orienteur » ───────
+// Sur l'export de septembre 2026, 1 050 lignes portent un CMS identifiable
+// dans « Structure orienteur » alors que « Lieu / CMS » est vide. Le repli
+// doit rester strict : extractDominantCms() rangerait tout libellé inconnu
+// sous « Autre structure » et ferait entrer 5 158 lignes de plus.
+describe('parseRows — CMS lu dans la structure orienteur', () => {
+  it('récupère une ligne dont le CMS est dans la structure', () => {
+    const r = parseRows([EN_TETES, ligne({ lieu: '', structure: 'CMS Tonneins' })]);
+    assert.equal(r.records.length, 1);
+    assert.equal(r.records[0].cms, 'CMS Tonneins');
+  });
+  it('normalise une variante connue du libellé', () => {
+    const r = parseRows([EN_TETES, ligne({ lieu: '', structure: 'Centre Médico-Social de Marmande' })]);
+    assert.equal(r.records[0].cms, 'CMS Marmande');
+  });
+  it('écarte toujours une structure non reconnue', () => {
+    const r = parseRows([EN_TETES, ligne({ lieu: '', structure: 'UNA 47' }), ligne({ n: '2' })]);
+    assert.equal(r.records.length, 1);
+    assert.equal(r.stats.motifs.lieu_cms_vide, 1);
+  });
+  it('écarte toujours une ligne sans lieu ni structure', () => {
+    const r = parseRows([EN_TETES, ligne({ lieu: '', structure: '' }), ligne({ n: '2' })]);
+    assert.equal(r.records.length, 1);
+    assert.equal(r.stats.motifs.lieu_cms_vide, 1);
+  });
+  it('ne touche pas une ligne dont le lieu est renseigné', () => {
+    const r = parseRows([EN_TETES, ligne({ lieu: 'CMS Tonneins', structure: 'CMS Nérac' })]);
+    assert.equal(r.records[0].cms, 'CMS Tonneins');
+    assert.equal(r.stats.cms_via_structure, 0);
+  });
+  it('compte les reprises dans les stats', () => {
+    const r = parseRows([EN_TETES, ligne({ lieu: '', structure: 'CMS Tonneins' })]);
+    assert.equal(r.stats.cms_via_structure, 1);
+  });
+  it('le compte rendu d\'import signale les reprises', () => {
+    const r = parseRows([EN_TETES, ligne({ lieu: '', structure: 'CMS Tonneins' })]);
+    assert.match(formatResumeImport(r.stats), /1 CMS lus dans la structure orienteur/);
+  });
+});
