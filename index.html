@@ -910,19 +910,9 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
       </div>
       <!-- États actions pour ce conum × CMS -->
       <div id="rpt-actions-section" style="display:none">
-        <div class="g3">
-          <div class="card">
-            <div class="card-title"><span class="dot" style="background:var(--green)"></span>État des accompagnements</div>
-            <canvas id="ch-rpt-act-donut" style="max-height:200px"></canvas>
-          </div>
-          <div class="card">
-            <div class="card-title"><span class="dot" style="background:var(--red)"></span>Non réalisés — évolution mensuelle</div>
-            <canvas id="ch-rpt-act-monthly" style="max-height:200px"></canvas>
-          </div>
-          <div class="card">
-            <div class="card-title"><span class="dot" style="background:var(--purple)"></span>Non réalisés — N vs N-1</div>
-            <canvas id="ch-rpt-act-yoy" style="max-height:200px"></canvas>
-          </div>
+        <div class="card g1">
+          <div class="card-title"><span class="dot" style="background:var(--red)"></span>Réalisés / Non réalisés — évolution mensuelle</div>
+          <canvas id="ch-rpt-act-monthly" style="max-height:200px"></canvas>
         </div>
         <div class="card g1">
           <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Réalisés / Non réalisés — côte à côte N vs N-1</div>
@@ -1042,10 +1032,7 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
           <label>Conseiller</label><select id="act-conum" onchange="renderActions()"><option value="">Tous</option></select>
         </div>
         <div id="act-kpi" class="g4" style="margin-bottom:14px"></div>
-        <div class="g2">
-          <div class="card"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>État global des accompagnements</div><canvas id="ch-act-global" style="max-height:220px"></canvas></div>
-          <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Évolution mensuelle</div><canvas id="ch-act-monthly" style="max-height:220px"></canvas></div>
-        </div>
+        <div class="card g1"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Évolution mensuelle</div><canvas id="ch-act-monthly" style="max-height:220px"></canvas></div>
         <!-- N vs N-1 non réalisés -->
         <div class="card g1">
           <div class="card-title">
@@ -2396,16 +2383,7 @@ function renderRapport(){
     const aEnc=actData.filter(r=>r.etat==='En cours').length;
     const aTot=actData.length;
 
-    // Donut
-    destroyChart('ch-rpt-act-donut');
-    {const _all=[['Réalisée',aReal,'#10b981'],['Non réalisée',aNon,'#ef4444'],['En cours',aEnc,'#f97316']].filter(([,v])=>v>0);
-    charts['ch-rpt-act-donut']=new Chart(document.getElementById('ch-rpt-act-donut'),{
-      type:'doughnut',
-      data:{labels:_all.map(([l])=>l),datasets:[{data:_all.map(([,v])=>v),backgroundColor:_all.map(([,,c])=>c),borderWidth:2,borderColor:'#111827',hoverOffset:6}]},
-      options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{color:legendColor(),font:{size:10},padding:8,boxWidth:8}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${pct(ctx.parsed,aTot)}%)`}}}}
-    });}
-
-    // Monthly non réalisés
+    // Réalisés / non réalisés par mois
     const mKeys=[...new Set(actData.map(r=>r.date).filter(Boolean).map(d=>d.slice(0,7)))].sort();
     destroyChart('ch-rpt-act-monthly');
     charts['ch-rpt-act-monthly']=new Chart(document.getElementById('ch-rpt-act-monthly'),{
@@ -2417,19 +2395,7 @@ function renderRapport(){
       options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:legendColor(),font:{size:9},boxWidth:7,padding:5}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:9}}},y:{grid:{color:gridColor()},beginAtZero:true,stacked:true,ticks:{color:'#6b7fa0',font:{size:9}}}}}
     });
 
-    // Non réalisés par mois calendaire N vs N-1
     const actYears=[...new Set(actData.map(r=>r.year).filter(Boolean))].sort();
-    destroyChart('ch-rpt-act-yoy');
-    charts['ch-rpt-act-yoy']=new Chart(document.getElementById('ch-rpt-act-yoy'),{
-      type:'bar',
-      data:{labels:MONTH_FR,datasets:actYears.map((yr,i)=>{
-        const col=YEAR_PALETTE[i%YEAR_PALETTE.length];
-        const vals=Array(12).fill(0);
-        actData.filter(r=>r.year===yr&&r.etat==='Non réalisée').forEach(r=>{if(r.date){const m=parseInt(r.date.slice(5,7))-1;if(m>=0)vals[m]++;}});
-        return{label:yrLabel(yr),data:vals,backgroundColor:col+'66',borderColor:col,borderWidth:1.5,borderRadius:3,borderSkipped:false};
-      })},
-      options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:legendColor(),font:{size:9},boxWidth:7,padding:5}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:9}}},y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:9}}}}}
-    });
 
     // Réalisés / Non réalisés côte à côte N vs N-1
     {const yoyDs=[];
@@ -3323,18 +3289,6 @@ function renderActions(){
     <div class="kpi red"><div class="kpi-label">Non réalisées</div><div class="kpi-value">${nonReal}</div><div class="kpi-sub">${pct(nonReal,total)}% des accompagnements</div></div>
     <div class="kpi orange"><div class="kpi-label">En cours</div><div class="kpi-value">${encours}</div><div class="kpi-sub">${pct(encours,total)}% des accompagnements</div></div>
     <div class="kpi blue"><div class="kpi-label">Total accompagnements</div><div class="kpi-value">${total}</div><div class="kpi-sub">période sélectionnée</div></div>`;
-
-  // Donut global
-  destroyChart('ch-act-global');
-  {const _ag=[['Réalisée',real,'#10b981'],['Non réalisée',nonReal,'#ef4444'],['En cours',encours,'#f97316']].filter(([,v])=>v>0);
-  charts['ch-act-global']=new Chart(document.getElementById('ch-act-global'),{
-    type:'doughnut',
-    data:{
-      labels:_ag.map(([l])=>l),
-      datasets:[{data:_ag.map(([,v])=>v),backgroundColor:_ag.map(([,,c])=>c),borderWidth:2,borderColor:'#111827',hoverOffset:6}]
-    },
-    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{color:legendColor(),font:{size:11},padding:10,boxWidth:10}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${pct(ctx.parsed,total)}%)`}}}}
-  });}
 
   // Monthly stacked bar
   const months=[...new Set(data.map(r=>r.date).filter(Boolean))].sort();
