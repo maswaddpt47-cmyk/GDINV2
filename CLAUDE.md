@@ -48,7 +48,7 @@ Il existe deux diaporamas distincts dans l'application — **ne pas les confondr
 
 ### Tests unitaires — règle obligatoire
 
-Le fichier **`gdin-pure.js`** contient les fonctions pures du projet (calculs, parsing, normalisation CMS). Le fichier **`gdin-pure.test.js`** contient 181 tests unitaires (`node:test`) qui les couvrent. Une suite end-to-end Playwright (`tests-e2e.spec.js`, 26 tests) couvre les parcours navigateur.
+Le fichier **`gdin-pure.js`** contient les fonctions pures du projet (calculs, parsing, normalisation CMS). Le fichier **`gdin-pure.test.js`** contient 187 tests unitaires (`node:test`) qui les couvrent. Une suite end-to-end Playwright (`tests-e2e.spec.js`, 26 tests) couvre les parcours navigateur.
 
 **Toute nouvelle fonction de calcul, de parsing ou de normalisation va dans `gdin-pure.js` avec ses tests, pas dans le HTML.**
 
@@ -57,7 +57,7 @@ Une session est significative si elle touche à la logique métier (pas une simp
 **Règle :** après toute modification de `gdin-pure.js`, vérifier que les tests passent avant de commiter :
 
 ```bash
-npm test          # 181 tests unitaires
+npm test          # 187 tests unitaires (gdin-pure + deploy)
 npm run audit -- export.xls   # audit d'un export avant d'en tirer un rapport
 ```
 
@@ -116,12 +116,12 @@ git checkout main && git merge <branche> --no-ff && git push origin main
 uniquement**, et seulement si `node --test gdin-pure.test.js` passe. Une
 branche de feature ne déploie rien.
 
-Les scripts sont chargés sans cache-busting (`<script src="gdin-pure.js">`,
-sans `?v=N`) — constaté par lecture du `<head>` le 20/09/2026, effet en
-production non mesuré. Conséquence possible : après un correctif dans
-`gdin-pure.js`, un navigateur peut continuer à exécuter l'ancienne version.
-Si un correctif « ne passe pas », tester en navigation privée avant de
-chercher un bug ailleurs.
+Le workflow injecte `?v=<sha court>` dans les URLs locales d'`index.html`
+avant de publier, GitHub Pages ne permettant pas de configurer d'en-tête de
+cache. **Ne pas écrire de version dans le fichier source** : elle ne serait
+jamais incrémentée. Si le `<head>` est réécrit dans une forme que
+l'expression du workflow ne reconnaît plus, le remplacement cesse sans erreur
+— `deploy.test.js` verrouille le motif.
 
 ### Un seul dashboard
 

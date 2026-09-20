@@ -11,7 +11,7 @@ pourquoi : `git log`, les messages portent les mesures.
 ## Comment reprendre
 
 ```bash
-npm test                      # 181 tests unitaires
+npm test                      # 187 tests unitaires
 npm run audit -- export.xls   # ce que l'appli retient d'un export réel
 ```
 
@@ -197,6 +197,21 @@ Vérifié avant : les 144 fonctions et l'intégralité des identifiants DOM
 **Ne pas recréer un second dashboard.** Une variante à essayer se fait sur une
 branche, pas dans un fichier parallèle.
 
+## Résolu le 20/09/2026 — cache-busting
+
+`?v=<sha court>` est injecté dans les six URLs locales d'`index.html` par
+`.github/workflows/deploy.yml`, au déploiement. Plus besoin de tester en
+navigation privée pour savoir si un correctif est réellement passé.
+
+La version n'est pas écrite dans le fichier source, exprès : elle ne serait
+jamais incrémentée, et le dépôt comme les tests chargent la page sans query.
+
+Le risque n'est pas que la commande échoue, c'est qu'elle cesse
+**silencieusement** de mordre si le `<head>` est réécrit autrement.
+`deploy.test.js` rejoue la même expression et vérifie qu'elle touche les six
+assets, ne touche rien d'autre, et précède la publication. La CI lance
+désormais `npm test`, qui couvre les deux fichiers de tests.
+
 ## Trou de mapping — préfixes de service devant un CMS
 
 Découvert le 20/09/2026 en écrivant les tests de la famille A : `CMS_MAP` ne
@@ -255,9 +270,6 @@ oui, tous les rapports tirés avant le 20/09/2026 sous-comptaient les actions.
    Accompagnement, Prise de contact, Orientation tiers et Atelier. Les types
    Pass, `Orientation vers un CN du 47` et `Autre` ne sont atteignables par
    aucune position du filtre.
-3. **Cache-busting.** Les scripts sont chargés sans `?v=N` : après un
-   correctif, un navigateur peut continuer à servir l'ancienne version. En
-   attendant, vérifier les déploiements en navigation privée.
 
 ## Points à ne pas défaire
 
