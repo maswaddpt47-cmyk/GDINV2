@@ -466,7 +466,7 @@ async function importerJeu(page) {
   await page.waitForFunction(() => dataSource === 'imported', { timeout: 15000 });
 }
 
-const ONGLETS = ['global', 'evolution', 'par-cms', 'par-conum', 'orienteurs', 'ateliers', 'rapport', 'fiabilite'];
+const ONGLETS = ['global', 'evolution', 'par-cms', 'par-conum', 'orienteurs', 'ateliers', 'rapport', 'fiabilite', 'etats'];
 const FILTRES = [
   { nom: 'sans filtre', type: '', annees: null },
   { nom: 'année récente seule', type: '', annees: ['2026'] },
@@ -786,6 +786,110 @@ test.describe('Panneau de filtres mobile', () => {
       return d.height / window.innerHeight;
     });
     expect(pct).toBeLessThan(0.5);
+  });
+
+});
+
+test.describe('Onglet États', () => {
+
+  // Le bloc vivait dans l'onglet Import avec ses propres listes année / CMS /
+  // conseiller. Deux jeux de filtres coexistaient : l'écran pouvait montrer
+  // 2024 pendant que le reste du tableau de bord montrait 2026, sans que rien
+  // ne le signale. Ces tests verrouillent le branchement sur les filtres
+  // généraux et l'absence de filtres locaux.
+
+  async function ouvrirEtats(page) {
+    await page.evaluate(() => {
+      document.querySelector('[onclick*="\'etats\'"]').click();
+    });
+  }
+
+  async function totalEtats(page) {
+    return page.evaluate(() => {
+      const kpis = document.querySelectorAll('#act-kpi .kpi-value');
+      return kpis.length ? Number(kpis[kpis.length - 1].textContent) : null;
+    });
+  }
+
+  test("l'onglet existe et se peuple après import", async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    await ouvrirEtats(page);
+    const etat = await page.evaluate(() => ({
+      visible: document.getElementById('act-dashboard').style.display === 'block',
+      lignesCms: document.querySelectorAll('#tbody-act-cms tr').length,
+      lignesConum: document.querySelectorAll('#tbody-act-conum tr').length,
+    }));
+    expect(etat.visible, 'le bloc doit être affiché').toBe(true);
+    expect(etat.lignesCms, 'table par structure vide').toBeGreaterThan(1);
+    expect(etat.lignesConum, 'table par conseiller vide').toBeGreaterThan(0);
+  });
+
+  test('le panneau devient réellement visible, pas seulement peuplé', async ({ page }) => {
+    // Une première version de ces tests ne vérifiait que le contenu des
+    // tables : elle serait passée avec un panneau resté masqué.
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    await ouvrirEtats(page);
+    const vu = await page.evaluate(() => {
+      const p = document.getElementById('panel-etats');
+      return {
+        actifs: [...document.querySelectorAll('.panel.active')].map((x) => x.id),
+        display: getComputedStyle(p).display,
+        onglet: document.querySelector('[onclick*="\'etats\'"]').classList.contains('active'),
+      };
+    });
+    expect(vu.actifs, 'un seul panneau actif').toEqual(['panel-etats']);
+    expect(vu.display).not.toBe('none');
+    expect(vu.onglet, 'le bouton de barre latérale doit être actif').toBe(true);
+  });
+
+  test('aucun filtre local ne subsiste dans la page', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    const restes = await page.evaluate(() =>
+      ['act-year', 'act-cms-filter', 'act-conum', 'act-year-chips']
+        .filter((id) => document.getElementById(id) !== null));
+    expect(restes, 'filtres locaux encore présents').toEqual([]);
+  });
+
+  test('les chiffres suivent le filtre années général', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    await ouvrirEtats(page);
+    const toutes = await totalEtats(page);
+    await page.evaluate(() => { activeYears = new Set(['2024']); refreshAll(); });
+    const une = await totalEtats(page);
+    expect(toutes, 'total sur toutes les années').toBeGreaterThan(0);
+    expect(une, 'une seule année doit donner moins').toBeLessThan(toutes);
+  });
+
+  test('les chiffres suivent la période générale', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    await ouvrirEtats(page);
+    const avant = await totalEtats(page);
+    await page.evaluate(() => {
+      document.getElementById('dFrom').value = '2026-01-01';
+      refreshAll();
+    });
+    const apres = await totalEtats(page);
+    expect(apres, 'une période plus courte doit donner moins').toBeLessThan(avant);
+  });
+
+  test("le filtre de type ne vide pas l'onglet", async ({ page }) => {
+    // ACTIONS_DATA ne contient que des accompagnements : appliquer le type
+    // global viderait l'écran dès qu'on choisit « Atelier ». Choix assumé,
+    // aligné sur l'onglet Fiabilité.
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    await ouvrirEtats(page);
+    await page.evaluate(() => {
+      document.getElementById('typeFilter').value = 'Atelier';
+      refreshAll();
+    });
+    expect(await totalEtats(page), "l'onglet ne doit pas se vider").toBeGreaterThan(0);
+  });
+
+  test("le bloc a quitté l'onglet Import", async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    const dansImport = await page.evaluate(() =>
+      document.getElementById('panel-import').contains(document.getElementById('act-dashboard')));
+    expect(dansImport, 'le bloc est resté dans Import').toBe(false);
   });
 
 });
