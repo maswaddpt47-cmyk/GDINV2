@@ -421,10 +421,14 @@ conseillers lus dans le référent.
    - `defautsSaisie()` utilise **deux dénominateurs** — base pour les défauts
      constatés, lignes lues ou retenues pour ceux issus de l'import. Les
      mélanger affichait 104,9 % sur une colonne réparée à 100 %.
-4. ~~Onglet « Fiabilité des données »~~ — fait. Reste la ligne de synthèse
-   sur la landing après import.
-5. Points orange et bulles sur les KPI concernés ; bandeau « par conseiller ».
-6. Slide correspondant dans `DR_SLIDES` (règle CR ↔ Diapo Rapport).
+4. ~~Onglet « Fiabilité des données » + ligne de synthèse~~ — fait. La
+   synthèse est dans le bandeau de source après import (la landing est un
+   écran d'accueil statique, affiché avant les données).
+5. ~~Points orange et bulles sur les KPI ; bandeau « par conseiller »~~ — fait.
+6. ~~Slide `fiabilite` dans `DR_SLIDES`~~ — fait.
+
+**Le chantier « Fiabilité des données » est terminé.** Reste à le faire
+valider en usage réel avant de supprimer cette section.
 
 **Rappel de méthode** : ne jamais afficher une marge qui ne soit pas calculée
 depuis le fichier réellement importé. Un chiffre inventé ferait exactement le
