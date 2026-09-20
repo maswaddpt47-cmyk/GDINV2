@@ -90,7 +90,13 @@ défaire sont dans **`CHANTIERS.md`**. Le lire avant d'attaquer quoi que ce
 soit : une session qui démarre sans historique n'a pas d'autre source.
 Ce fichier-ci porte les règles permanentes, `CHANTIERS.md` l'état du moment.
 Le tenir à jour à chaque avancée significative — pas en fin de session, qui
-peut s'interrompre sans préavis. Le supprimer quand tout est soldé.
+peut s'interrompre sans préavis.
+
+**Ce fichier ne se supprime pas** : il sert aux sessions suivantes, qui ne
+reprennent jamais le contexte de la précédente. Ce qui s'efface, ce sont les
+**tâches, au fur et à mesure qu'elles sont terminées** — après avoir remonté
+dans « Décisions à ne pas défaire » l'invariant ou le piège qui doit survivre.
+Le récit de ce qui a été fait appartient à `git log`.
 
 ---
 
