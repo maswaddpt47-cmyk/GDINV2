@@ -636,3 +636,49 @@ test.describe('Fond de carte', () => {
   });
 
 });
+
+test.describe('Lisibilité par-dessus la carte', () => {
+
+  // Tout ce qui se pose sur le fond de carte a besoin d'un fond opaque : les
+  // couleurs de la carte ne sont pas maîtrisées. Les variables de thème sont
+  // translucides (--s1 vaut rgba(255,255,255,.028)) et ne conviennent pas.
+  // Le défaut ne s'est vu qu'au passage de CartoDB, presque blanc, à OSM,
+  // coloré : le popup laissait voir la carte au travers.
+  const CLASSES = [
+    'leaflet-popup-content-wrapper',
+    'leaflet-popup-tip',
+    'leaflet-label-dark',
+  ];
+
+  async function opacites(page, clair) {
+    return page.evaluate(({ classes, clair }) => {
+      document.body.classList.toggle('light-mode', clair);
+      return classes.map((cls) => {
+        const d = document.createElement('div');
+        d.className = cls;
+        document.body.appendChild(d);
+        const fond = getComputedStyle(d).backgroundColor;
+        d.remove();
+        const m = fond.match(/[\d.]+/g) || [];
+        return { cls, fond, alpha: fond.startsWith('rgba') ? Number(m[3]) : 1 };
+      });
+    }, { classes: CLASSES, clair });
+  }
+
+  test('les éléments posés sur la carte sont opaques en thème sombre', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    const res = await opacites(page, false);
+    const transparents = res.filter(o => o.alpha < 0.85);
+    expect(transparents, JSON.stringify(transparents, null, 1)).toEqual([]);
+  });
+
+  test('ils le restent en thème clair', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    const res = await opacites(page, true);
+    const transparents = res.filter(o => o.alpha < 0.85);
+    expect(transparents, JSON.stringify(transparents, null, 1)).toEqual([]);
+  });
+
+});

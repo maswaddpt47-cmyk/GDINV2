@@ -381,8 +381,15 @@ body.pres-mode .tbl th{font-size:11px}
 /* ── Leaflet dark theme ── */
 /* filtre carte supprimé — rendu plan clair */
 #map-territoire .leaflet-container{background:#e8eaed!important}
-.leaflet-popup-content-wrapper{background:var(--s1)!important;border:1px solid var(--border)!important;color:var(--text)!important;border-radius:8px!important;box-shadow:0 4px 20px rgba(0,0,0,.5)!important}
-.leaflet-popup-tip{background:var(--s1)!important}
+/* Le popup se pose sur le fond de carte, dont on ne maîtrise pas les couleurs.
+   Les variables de thème sont translucides (--s1 vaut rgba(255,255,255,.028)) :
+   le popup laissait voir la carte au travers et devenait illisible. Le défaut
+   ne s'est vu qu'en passant de CartoDB, presque blanc, à OSM, coloré. Fond
+   opaque obligatoire ici, comme pour les options de select. */
+.leaflet-popup-content-wrapper{background:#10141c!important;border:1px solid var(--border2)!important;color:#eef2ff!important;border-radius:8px!important;box-shadow:0 4px 20px rgba(0,0,0,.5)!important}
+.leaflet-popup-tip{background:#10141c!important}
+body.light-mode .leaflet-popup-content-wrapper{background:#ffffff!important;color:#0d1220!important}
+body.light-mode .leaflet-popup-tip{background:#ffffff!important}
 .leaflet-popup-content{margin:10px 14px!important;font-family:'Space Grotesk',sans-serif!important;font-size:12px!important;line-height:1.6}
 .leaflet-popup-close-button{color:var(--muted)!important}
 
@@ -402,8 +409,8 @@ body.pres-mode .tbl th{font-size:11px}
 #btn-dr-map-fs:hover{border-color:var(--blue)}
 
 
-.leaflet-popup-dark .leaflet-popup-content-wrapper{background:var(--s1);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.5);color:var(--text)}
-.leaflet-popup-dark .leaflet-popup-tip{background:var(--s1)}
+.leaflet-popup-dark .leaflet-popup-content-wrapper{background:#10141c;border:1px solid var(--border2);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.5);color:#eef2ff}
+.leaflet-popup-dark .leaflet-popup-tip{background:#10141c}
 .leaflet-popup-dark .leaflet-popup-close-button{color:var(--muted)!important}
 .leaflet-label-dark{background:rgba(255,255,255,0.85)!important;border:none!important;box-shadow:none!important;padding:1px 3px!important;border-radius:2px!important}
 
