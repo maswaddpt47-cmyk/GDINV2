@@ -561,6 +561,10 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
       <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       <span>Rapport</span>
     </button>
+    <button class="tab sb-item" onclick="switchTab('etats',this)">
+      <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>
+      <span>États</span>
+    </button>
     <button class="tab sb-item" onclick="switchTab('fiabilite',this)">
       <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
       <span>Fiabilité</span>
@@ -943,6 +947,59 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
     <div id="rpt-empty" class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Sélectionne un conseiller et une structure</div><div style="font-size:11px;margin-top:4px">Le rapport sera généré pour la combinaison choisie</div></div>
   </div>
 
+  <!-- ÉTATS DES ACCOMPAGNEMENTS -->
+  <div id="panel-etats" class="panel">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px">
+      Suit la période, les années et la structure choisies dans les filtres généraux.
+      Le filtre de type ne s'y applique pas : cet onglet ne porte que des accompagnements.
+    </div>
+    <div id="act-dashboard" style="display:none">
+        <div id="act-kpi" class="g4" style="margin-bottom:14px"></div>
+        <div class="card g1"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Évolution mensuelle</div><canvas id="ch-act-monthly" style="max-height:220px"></canvas></div>
+        <!-- N vs N-1 non réalisés -->
+        <div class="card g1">
+          <div class="card-title">
+            <span class="dot" style="background:var(--red)"></span>Non réalisés — comparaison multi-années (mois calendaires)
+          </div>
+          <canvas id="ch-act-yoy" style="max-height:240px"></canvas>
+        </div>
+
+        <div class="card g1">
+          <div class="card-title"><span class="dot" style="background:var(--orange)"></span>Réalisés vs Non réalisés — par structure</div>
+          <div style="overflow-x:auto">
+            <table class="tbl sortable" id="tbl-act-cms-tbl"><thead><tr>
+              <th onclick="sortActTable('cms',0,this)">Structure<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('cms',1,this)">Réalisées<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('cms',2,this)">%<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('cms',3,this)">Non réalisées<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('cms',4,this)">%<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('cms',5,this)">En cours<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('cms',6,this)">Total<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('cms',7,this)">Taux réalisation<span class="sort-icon">⇅</span></th>
+            </tr></thead>
+            <tbody id="tbody-act-cms"></tbody></table>
+          </div>
+        </div>
+        <div class="card g1">
+          <div class="card-title"><span class="dot" style="background:var(--purple)"></span>Réalisés vs Non réalisés — par conseiller</div>
+          <div style="overflow-x:auto">
+            <table class="tbl sortable" id="tbl-act-conum-tbl"><thead><tr>
+              <th onclick="sortActTable('conum',0,this)">Conseiller<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('conum',1,this)">Réalisées<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('conum',2,this)">%<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('conum',3,this)">Non réalisées<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('conum',4,this)">%<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('conum',5,this)">En cours<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('conum',6,this)">Total<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('conum',7,this)">Taux réalisation<span class="sort-icon">⇅</span></th>
+            </tr></thead>
+            <tbody id="tbody-act-conum"></tbody></table>
+          </div>
+        </div>
+    </div>
+    <div id="act-empty" class="empty-state"><div class="empty-icon">📈</div><div class="empty-title">Importe un fichier pour voir les états</div><div style="font-size:11px;margin-top:4px">Réalisés, non réalisés et en cours, par structure et par conseiller</div></div>
+  </div>
+
   <!-- FIABILITÉ DES DONNÉES -->
   <div id="panel-fiabilite" class="panel">
     <div style="max-width:1100px;margin:0 auto">
@@ -1019,65 +1076,11 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
         <button class="btn-sm" onclick="document.getElementById('import-error').style.display='none'">Réessayer</button>
       </div>
 
-      <!-- Dashboard Actions -->
       <div id="act-progress-box" style="display:none">
         <div class="parse-progress"><div class="parse-bar" id="act-parse-bar"></div></div>
         <div style="font-size:11px;color:var(--muted);text-align:center" id="act-parse-msg">Lecture…</div>
       </div>
       <div class="alert-box" id="act-error" style="display:none"></div>
-      <div id="act-dashboard" style="display:none">
-        <div class="frow" style="margin-bottom:12px">
-          <label>Année</label><select id="act-year" onchange="renderActions()"><option value="">Toutes</option></select>
-          <label>CMS</label><select id="act-cms-filter" onchange="renderActions()"><option value="">Tous</option></select>
-          <label>Conseiller</label><select id="act-conum" onchange="renderActions()"><option value="">Tous</option></select>
-        </div>
-        <div id="act-kpi" class="g4" style="margin-bottom:14px"></div>
-        <div class="card g1"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Évolution mensuelle</div><canvas id="ch-act-monthly" style="max-height:220px"></canvas></div>
-        <!-- N vs N-1 non réalisés -->
-        <div class="card g1">
-          <div class="card-title">
-            <span class="dot" style="background:var(--red)"></span>Non réalisés — comparaison multi-années (mois calendaires)
-            <span class="ct-action" style="margin-left:auto;display:flex;align-items:center;gap:6px">
-              <span style="font-size:10px;color:var(--muted)">Années :</span>
-              <div class="year-chips" id="act-year-chips"></div>
-            </span>
-          </div>
-          <canvas id="ch-act-yoy" style="max-height:240px"></canvas>
-        </div>
-
-        <div class="card g1">
-          <div class="card-title"><span class="dot" style="background:var(--orange)"></span>Réalisés vs Non réalisés — par structure</div>
-          <div style="overflow-x:auto">
-            <table class="tbl sortable" id="tbl-act-cms-tbl"><thead><tr>
-              <th onclick="sortActTable('cms',0,this)">Structure<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('cms',1,this)">Réalisées<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('cms',2,this)">%<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('cms',3,this)">Non réalisées<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('cms',4,this)">%<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('cms',5,this)">En cours<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('cms',6,this)">Total<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('cms',7,this)">Taux réalisation<span class="sort-icon">⇅</span></th>
-            </tr></thead>
-            <tbody id="tbody-act-cms"></tbody></table>
-          </div>
-        </div>
-        <div class="card g1">
-          <div class="card-title"><span class="dot" style="background:var(--purple)"></span>Réalisés vs Non réalisés — par conseiller</div>
-          <div style="overflow-x:auto">
-            <table class="tbl sortable" id="tbl-act-conum-tbl"><thead><tr>
-              <th onclick="sortActTable('conum',0,this)">Conseiller<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('conum',1,this)">Réalisées<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('conum',2,this)">%<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('conum',3,this)">Non réalisées<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('conum',4,this)">%<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('conum',5,this)">En cours<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('conum',6,this)">Total<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('conum',7,this)">Taux réalisation<span class="sort-icon">⇅</span></th>
-            </tr></thead>
-            <tbody id="tbody-act-conum"></tbody></table>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -1514,8 +1517,8 @@ function switchTab(id,btn){
       renderTerritoire();
     });});
   }
-  if(id==='import'){updateCurrentSourceInfo();if(ACTIONS_DATA&&document.getElementById('act-dashboard').style.display==='block')try{renderActions();}catch(e){}}
-  if(id==='actions'){if(ACTIONS_DATA)renderActions();}
+  if(id==='import')updateCurrentSourceInfo();
+  if(id==='etats'){buildYearChips();if(ACTIONS_DATA)renderActions();}
 }
 function setEvolMode(mode,btn){evolModeVal=mode;document.querySelectorAll('#evolMode .toggle-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderEvolution();}
 function setNNMode(on,btn){nnModeVal=on;document.querySelectorAll('#nnMode .toggle-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderEvolution();}
@@ -2981,6 +2984,7 @@ function refreshAll(){
   if(document.getElementById('panel-orienteurs').classList.contains('active'))renderOrienteurs();
   if(document.getElementById('panel-territoire').classList.contains('active'))renderTerritoire();
   if(document.getElementById('panel-fiabilite').classList.contains('active'))renderFiabilite();
+  if(document.getElementById('panel-etats').classList.contains('active')&&ACTIONS_DATA)renderActions();
   if(document.getElementById('panel-ateliers').classList.contains('active'))renderAteliers();
   if(document.getElementById('panel-rapport').classList.contains('active')){
     const _rConum=document.getElementById('sel-rpt-conum').value;
@@ -3236,42 +3240,24 @@ let ACTIONS_DATA = null; // raw parsed records
 
 
 function updateActionsUI(filename){
-  if(!ACTIONS_DATA)return;
-  const years=[...new Set(ACTIONS_DATA.map(r=>r.year).filter(Boolean))].sort();
-  const conums=[...new Set(ACTIONS_DATA.map(r=>r.conum).filter(Boolean))].sort();
-  // Year filter
-  const ySel=document.getElementById('act-year');
-  const yCur=ySel.value;
-  ySel.innerHTML='<option value="">Toutes</option>';
-  years.forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent=y;ySel.appendChild(o);});
-  if(yCur&&years.includes(yCur))ySel.value=yCur;
-  // CMS filter
-  const cmsSel=document.getElementById('act-cms-filter');
-  const cmsCur=cmsSel.value;
-  const allActCms=[...new Set(ACTIONS_DATA.map(r=>r.cms).filter(Boolean))].sort();
-  cmsSel.innerHTML='<option value="">Tous</option>';
-  allActCms.forEach(cm=>{const o=document.createElement('option');o.value=cm;o.textContent=cm.replace('Centre Médico-Social ','CMS ').replace('Centre Médico-Social de ','CMS ');cmsSel.appendChild(o);});
-  if(cmsCur&&allActCms.includes(cmsCur))cmsSel.value=cmsCur;
-  // Conum filter
-  const cSel=document.getElementById('act-conum');
-  const cCur=cSel.value;
-  cSel.innerHTML='<option value="">Tous</option>';
-  conums.forEach(cn=>{const o=document.createElement('option');o.value=cn;o.textContent=cn;cSel.appendChild(o);});
-  if(cCur&&conums.includes(cCur))cSel.value=cCur;
-  // Reset active years so new import always shows all years
-  window.actActiveYears=null; window.actYearsInit=false;
+  if(!ACTIONS_DATA||!ACTIONS_DATA.length)return;
   document.getElementById('act-dashboard').style.display='block';
+  const empty=document.getElementById('act-empty');
+  if(empty)empty.style.display='none';
 }
 
+// Périmètre de l'onglet États : la période, les années et la structure des
+// filtres généraux — mais PAS le filtre de type. ACTIONS_DATA ne contient que
+// des accompagnements par construction : appliquer le type viderait l'onglet
+// dès que « Atelier » est choisi.
 function getActFiltered(){
   if(!ACTIONS_DATA)return[];
-  const yr=document.getElementById('act-year').value;
-  const cn=document.getElementById('act-conum').value;
-  const cms=document.getElementById('act-cms-filter').value;
-  let d=ACTIONS_DATA;
-  if(yr)d=d.filter(r=>r.year===yr);
-  if(cms)d=d.filter(r=>r.cms===cms);
-  if(cn)d=d.filter(r=>r.conum===cn);
+  const f=document.getElementById('dFrom').value.slice(0,7);
+  const t=document.getElementById('dTo').value.slice(0,7);
+  const allSelected=activeYears.size===ALL_YEARS.length;
+  let d=ACTIONS_DATA.filter(r=>r.date&&r.date>=f&&r.date<=t);
+  if(!allSelected)d=d.filter(r=>activeYears.has(r.year));
+  if(diapoCms){const _c=normCms(diapoCms)||diapoCms;d=d.filter(r=>r.cms===diapoCms||r.cms===_c);}
   return d;
 }
 
@@ -3364,43 +3350,14 @@ function renderActions(){
 
 function renderActYoY(){
   if(!ACTIONS_DATA)return;
-  const yr=document.getElementById('act-year').value;
-  const cn=document.getElementById('act-conum').value;
-  const cmsF=document.getElementById('act-cms-filter').value;
-
-  // All years present in full dataset (ignore year filter for this chart)
+  // La comparaison porte sur les années du filtre général, indépendamment de
+  // la période : restreindre aux mois sélectionnés ne laisserait qu'une année
+  // et il n'y aurait plus rien à comparer.
   let base=ACTIONS_DATA;
-  if(cn)base=base.filter(r=>r.conum===cn);
-  if(cmsF)base=base.filter(r=>r.cms===cmsF);
+  if(diapoCms){const _c=normCms(diapoCms)||diapoCms;base=base.filter(r=>r.cms===diapoCms||r.cms===_c);}
 
   const allYears=[...new Set(base.map(r=>r.year).filter(Boolean))].sort();
-
-  // Build / refresh year chips
-  const chipsEl=document.getElementById('act-year-chips');
-  if(!window.actActiveYears){window.actActiveYears=new Set(allYears);}
-  // Add any new years that appeared after re-import
-  allYears.forEach(y=>{if(!window.actActiveYears.has(y)&&!window.actYearsInit)window.actActiveYears.add(y);});
-  window.actYearsInit=true;
-  chipsEl.innerHTML='';
-  allYears.forEach((yr2,i)=>{
-    const col=YEAR_PALETTE[i%YEAR_PALETTE.length];
-    const on=window.actActiveYears.has(yr2);
-    const chip=document.createElement('button');
-    chip.className='year-chip';chip.textContent=yr2;
-    chip.style.borderColor=col;
-    chip.style.color=on?'#fff':'var(--muted)';
-    chip.style.background=on?col+'55':'var(--s2)';
-    chip.onclick=()=>{
-      if(window.actActiveYears.has(yr2)){
-        if(window.actActiveYears.size===1)return;
-        window.actActiveYears.delete(yr2);
-      }else{window.actActiveYears.add(yr2);}
-      renderActYoY();
-    };
-    chipsEl.appendChild(chip);
-  });
-
-  const activeYrs=allYears.filter(y=>window.actActiveYears.has(y));
+  const activeYrs=activeYears.size?allYears.filter(y=>activeYears.has(y)):allYears;
 
   // One dataset per year — non réalisés par mois calendaire
   const datasets=activeYrs.map((yr2,i)=>{
