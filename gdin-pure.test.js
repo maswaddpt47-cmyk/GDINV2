@@ -709,9 +709,25 @@ describe('compterDoublons', () => {
     assert.equal(compterDoublons([a, b]), 0);
   });
   it('ignore l\'ordre des types d\'action', () => {
-    const a = l({ id_demande: '1', type_action: ['Atelier', 'Accompagnement'] });
-    const b = l({ id_demande: '1', type_action: ['Accompagnement', 'Atelier'] });
+    const a = l({ id_demande: '1', type_action: ['Prise de contact', 'Accompagnement'] });
+    const b = l({ id_demande: '1', type_action: ['Accompagnement', 'Prise de contact'] });
     assert.equal(compterDoublons([a, b]), 1);
+  });
+  // Les participants d'une séance portent la même clé — le nom du
+  // bénéficiaire n'entre pas dans l'application. Les compter faisait annoncer
+  // 25 % de doublons là où il y en a 0,1 %.
+  it('n\'accuse pas les participants d\'un même atelier', () => {
+    const a = l({ id_demande: '7161', type_action: ['Atelier'] });
+    assert.equal(compterDoublons([a, { ...a }, { ...a }]), 0);
+  });
+  it('un atelier n\'empêche pas de voir les autres doublons', () => {
+    const atl = l({ id_demande: '7161', type_action: ['Atelier'] });
+    const acc = l({ id_demande: '900' });
+    assert.equal(compterDoublons([atl, { ...atl }, acc, { ...acc }]), 1);
+  });
+  it('une ligne mixte contenant Atelier est exclue elle aussi', () => {
+    const m = l({ id_demande: '1', type_action: ['Accompagnement', 'Atelier'] });
+    assert.equal(compterDoublons([m, { ...m }]), 0);
   });
   it('accepte une liste vide', () => {
     assert.equal(compterDoublons([]), 0);

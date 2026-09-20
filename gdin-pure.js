@@ -717,10 +717,17 @@ function cleDoublon(r){
     return`id:${r.id_demande}|da:${r.date_action}|${(r.type_action||[]).slice().sort().join('+')}`;
   return`${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.orienteur||''}|${(r.motif||'').slice(0,30)}`;
 }
+// Les ateliers sont exclus : cleDoublon() donne la même clé à tous les
+// participants d'une séance, puisque le nom du bénéficiaire n'entre pas dans
+// l'application. Les compter revenait à signaler 4 894 doublons (25 % de la
+// base) là où il y en a 12, soit 0,1 % hors ateliers — mesuré le 20/09/2026
+// sur l'export de septembre. Un panneau qualité qui crie au loup sur un quart
+// des lignes ne sert plus à rien.
 function compterDoublons(records){
   const vus=new Set();
   let n=0;
   (records||[]).forEach(r=>{
+    if(estAtelier(r))return;
     const k=cleDoublon(r);
     if(vus.has(k))n++;else vus.add(k);
   });
