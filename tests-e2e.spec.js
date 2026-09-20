@@ -1,5 +1,5 @@
 /**
- * Tests E2E — GDIN v2
+ * Tests E2E — GDIN
  * Lance le dashboard dans un vrai navigateur et vérifie les comportements UI.
  * Ces tests couvrent ce que gdin-pure.test.js ne peut PAS tester :
  * navigation, affichage après import, redirections, KPIs visibles.
@@ -10,7 +10,7 @@
 const { test, expect } = require('@playwright/test');
 const path = require('path');
 
-const PAGE_URL = `file://${path.resolve(__dirname, 'index-v2.html')}`;
+const PAGE_URL = `file://${path.resolve(__dirname, 'index.html')}`;
 
 // Données de test minimales au format JSON GDIN
 const TEST_RECORDS = [
