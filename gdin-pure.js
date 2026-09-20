@@ -216,38 +216,105 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 // ─── Conversion de dates Excel ───────────────────────────────────────────────
 function excelDate(v){if(!v&&v!==0)return null;if(typeof v==='string'){const m=v.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;const m2=v.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);if(m2)return v.trim().slice(0,10);}const n=parseFloat(v);if(isNaN(n)||n<1)return null;const d=new Date((n-25569)*86400*1000);return d.toISOString().slice(0,10);}
 
-// ─── Parse TSV texte (export XLS→texte) ─────────────────────────────────────
-function parseXlsText(text){
-  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim()!==''&&!l.startsWith('## Sheet:'));
-  if(lines.length<2)throw new Error('Fichier vide ou format non reconnu');
-  const hdrsRaw=lines[0].split('\t');
+// ─── Import : un seul parseur pour tous les chemins ──────────────────────────
+// Le texte collé et le fichier .xls passent par parseRows(). Jusqu'au
+// 20/09/2026 il existait deux implémentations divergentes : sur l'export de
+// juin 2026, le même fichier donnait 22 934 enregistrements par un chemin et
+// 17 015 par l'autre (mesuré). Ne jamais réintroduire une seconde copie du
+// mapping ailleurs — couvert par les tests « parseRows ».
+const ETAT_MAP={'en cours':'En attente','en attente':'En attente','realisee':'Réalisée','réalisée':'Réalisée','non realisee':'Non réalisée','non réalisée':'Non réalisée','annulee':'Annulée','annulée':'Annulée'};
+const TYPE_EXCLUS=new Set(['Reservation']);
+// Règle d'exclusion en vigueur : une ligne sans CMS identifiable est écartée.
+// Décision non tranchée au 20/09/2026 : 5 919 lignes de l'export de juin, dont
+// des ateliers et des accompagnements hors CMS. Passer à false les réintègre —
+// le compte rendu d'import affiche le nombre concerné dans les deux cas.
+const ECARTER_SANS_CMS=true;
+
+function normHeader(s){return String(s).toLowerCase().replace(/\s+/g,' ').trim().replace(/[éèê]/g,'e').replace(/[àâ]/g,'a').replace(/[ùû]/g,'u').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/['’]/g,"'");}
+
+function mapColonnes(hdrsRaw){
+  const hdrs=(hdrsRaw||[]).map(normHeader);
+  const ci=(...hints)=>hdrs.findIndex(h=>hints.some(hint=>h.includes(normHeader(hint))));
+  return {commune:ci('commune'),motif:ci('motif'),type:ci('type action',"type d'action"),
+    lieu:ci('lieu / cms','lieu/cms'),dateAct:ci('date action'),
+    orienteur:(()=>{const r=ci('referent');return r>=0?r:ci('orienteur','prescripteur');})(),
+    dateDem:ci('date demande'),conum:ci('conseiller num'),themas:ci('thematique'),
+    benef:ci('beneficiaire connu','benef connu'),urgence:ci('urgence'),
+    etat:ci("libelle de l'etat","etat de l'action"),
+    datePlanif:ci('date planif','date planifier'),
+    dateReal:ci('date de realisation','date reelle','date realisation'),
+    nDem:ci('n° demande','numero demande','n demande','num demande'),
+    structure:ci('structure orienteur')};
+}
+
+// rows : tableau de lignes, chaque ligne étant un tableau de cellules.
+// Retourne {records, stats} — stats alimente le compte rendu d'import.
+function parseRows(rows){
+  if(!rows||rows.length<2)throw new Error('Fichier vide ou format non reconnu');
+  const hdrsRaw=rows[0];
   if(hdrsRaw.length<5)throw new Error(`En-têtes insuffisantes : ${hdrsRaw.length} colonnes`);
-  function normH(s){return String(s).toLowerCase().replace(/\s+/g,' ').trim().replace(/[éèê]/g,'e').replace(/[àâ]/g,'a').replace(/[ùû]/g,'u').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/['’]/g,"'");}
-  const hdrs=hdrsRaw.map(normH);
-  function ci(...hints){return hdrs.findIndex(h=>hints.some(hint=>h.includes(normH(hint))));}
-  const iCommune=ci('commune'),iMotif=ci('motif'),iType=ci('type action',"type d'action"),iLieu=ci('lieu / cms','lieu/cms'),iDateAct=ci('date action'),iOrienteur=(()=>{const r=ci('referent');return r>=0?r:ci('orienteur','prescripteur');})(),iDateDem=ci('date demande'),iConum=ci('conseiller num'),iThemas=ci('thematique'),iBenef=ci('beneficiaire connu','benef connu'),iUrgence=ci('urgence'),iEtat=ci("libelle de l'etat","etat de l'action"),iDatePlanif=ci('date planif','date planifier'),iDateReal=ci('date de realisation','date reelle','date realisation'),iNDem=ci('n° demande','numero demande','n demande','num demande');
-  if(iDateDem<0)throw new Error(`Colonne "Date demande" introuvable. En-têtes : ${hdrsRaw.slice(0,8).join(' | ')}`);
-  const EXCL=new Set(['Reservation']);
-  const ETAT_MAP={'en cours':'En attente','en attente':'En attente','realisee':'Réalisée','réalisée':'Réalisée','non realisee':'Non réalisée','non réalisée':'Non réalisée','annulee':'Annulée','annulée':'Annulée'};
+  const I=mapColonnes(hdrsRaw);
+  if(I.dateDem<0)throw new Error(`Colonne "Date demande" introuvable. En-têtes : ${hdrsRaw.slice(0,8).join(' | ')}`);
+  const cell=(c,i)=>String(i>=0?(c[i]==null?'':c[i]):'').trim();
   const records=[],warnings=[];
-  for(let i=1;i<lines.length;i++){
-    const cols=lines[i].split('\t');
-    if(cols.length<5)continue;
-    const dd=excelDate(iDateDem>=0?cols[iDateDem]:'');if(!dd)continue;
-    const da=excelDate(iDateAct>=0?cols[iDateAct]:'')||null;
-    let cms=extractDominantCms((iLieu>=0?cols[iLieu]||'':'').trim());
-    const lieuRaw=(iLieu>=0?cols[iLieu]||'':'').trim();
-    const themas=(iThemas>=0?cols[iThemas]||'':'').split('/').map(t=>t.trim()).filter(Boolean);
+  const stats={lues:rows.length-1,retenues:0,ecartees:0,motifs:{ligne_incomplete:0,date_demande_absente:0,lieu_cms_vide:0},
+    colonnes_absentes:Object.keys(I).filter(k=>I[k]<0),regle_sans_cms:ECARTER_SANS_CMS?'ecartees':'conservees'};
+  for(let i=1;i<rows.length;i++){
+    const c=rows[i];
+    if(!c||c.length<5){stats.motifs.ligne_incomplete++;stats.ecartees++;continue;}
+    const dd=excelDate(I.dateDem>=0?c[I.dateDem]:'');
+    if(!dd){stats.motifs.date_demande_absente++;stats.ecartees++;continue;}
+    const lieuRaw=cell(c,I.lieu);
+    const cms=extractDominantCms(lieuRaw);
+    if(!cms&&ECARTER_SANS_CMS){stats.motifs.lieu_cms_vide++;stats.ecartees++;continue;}
+    if(!cms)stats.motifs.lieu_cms_vide++;
+    const da=excelDate(I.dateAct>=0?c[I.dateAct]:'')||null;
+    const themas=cell(c,I.themas).split('/').map(t=>t.trim()).filter(Boolean);
     const seen=new Set(),types=[];
-    for(const p of (iType>=0?cols[iType]||'':'').split(';')){const t=p.trim();if(t&&!EXCL.has(t)&&!seen.has(t)){seen.add(t);types.push(t);}if(types.length>=4)break;}
-    const etatRaw=(iEtat>=0?cols[iEtat]||'':'').trim();
-    const etat=ETAT_MAP[etatRaw.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')]||(etatRaw||null);
-    const dp=iDatePlanif>=0?excelDate(cols[iDatePlanif])||null:null;
-    const dr=iDateReal>=0?excelDate(cols[iDateReal])||null:null;
-    records.push({date_demande:dd,date_action:da,id_demande:(iNDem>=0?cols[iNDem]||'':'').trim(),conum:(iConum>=0?cols[iConum]||'':'').trim(),cms,lieu_raw:lieuRaw,commune:(iCommune>=0?cols[iCommune]||'':'').trim(),themas,type_action:types,orienteur:(iOrienteur>=0?cols[iOrienteur]||'':'').trim(),motif:(iMotif>=0?cols[iMotif]||'':'').slice(0,120).trim(),benef_connu:(iBenef>=0?cols[iBenef]||'':'').trim().toLowerCase()==='oui',urgence:(iUrgence>=0?cols[iUrgence]||'':'').trim().toLowerCase()==='oui',etat,date_planifiee:dp,date_realisation:dr});
+    for(const p of cell(c,I.type).split(';')){const t=p.trim();
+      if(t&&!TYPE_EXCLUS.has(t)&&!seen.has(t)){seen.add(t);types.push(t);}
+      if(types.length>=4)break;}
+    const etatRaw=cell(c,I.etat);
+    const etat=ETAT_MAP[normEtat(etatRaw)]||(etatRaw||null);
+    records.push({date_demande:dd,date_action:da,id_demande:cell(c,I.nDem),conum:cell(c,I.conum),
+      cms,lieu_raw:lieuRaw,structure:cell(c,I.structure),commune:cell(c,I.commune),themas,type_action:types,
+      orienteur:cell(c,I.orienteur),motif:cell(c,I.motif).slice(0,120),
+      benef_connu:cell(c,I.benef).toLowerCase()==='oui',urgence:cell(c,I.urgence).toLowerCase()==='oui',
+      etat,date_planifiee:I.datePlanif>=0?excelDate(c[I.datePlanif])||null:null,
+      date_realisation:I.dateReal>=0?excelDate(c[I.dateReal])||null:null});
+    stats.retenues++;
   }
   if(!records.length)throw new Error('Aucun enregistrement valide. Vérifiez le format.');
-  return{records,warnings};
+  return{records,warnings,stats};
+}
+
+// Texte collé depuis Excel (TSV) → lignes → parseRows
+function parseXlsText(text){
+  const lines=String(text).replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n')
+    .filter(l=>l.trim()!==''&&!l.startsWith('## Sheet:'));
+  return parseRows(lines.map(l=>l.split('\t')));
+}
+
+// Résumé lisible du compte rendu d'import, affiché après chaque import.
+// L'utilisateur produit des rapports fréquemment : il doit voir ce que l'outil
+// a gardé et ce qu'il a jeté sans avoir à ouvrir le code.
+function formatResumeImport(stats){
+  if(!stats)return '';
+  const m=stats.motifs||{};
+  const parts=[`${stats.lues} lignes lues`,`${stats.retenues} retenues`];
+  if(stats.regle_sans_cms==='conservees'){
+    if(stats.ecartees>0)parts.push(`${stats.ecartees} écartées`);
+    if(m.lieu_cms_vide)parts.push(`${m.lieu_cms_vide} sans CMS (conservées)`);
+    return parts.join(' · ');
+  }
+  if(stats.ecartees>0){
+    const d=[];
+    if(m.lieu_cms_vide)d.push(`${m.lieu_cms_vide} sans CMS`);
+    if(m.date_demande_absente)d.push(`${m.date_demande_absente} sans date de demande`);
+    if(m.ligne_incomplete)d.push(`${m.ligne_incomplete} incomplètes`);
+    parts.push(`${stats.ecartees} écartées (${d.join(', ')})`);
+  }else parts.push('aucune écartée');
+  return parts.join(' · ');
 }
 
 // ─── Agrégations ─────────────────────────────────────────────────────────────
@@ -291,7 +358,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,excelDate,parseXlsText,
+    esc,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,ETAT_MAP,TYPE_EXCLUS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,
