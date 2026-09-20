@@ -403,7 +403,7 @@ body.pres-mode .tbl th{font-size:11px}
 /* ── Mobile filter drawer ── */
 .filter-drawer-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300}
 .filter-drawer-backdrop.open{display:block}
-.filter-drawer{position:fixed;bottom:60px;left:0;right:0;background:rgba(8,10,16,.95);backdrop-filter:blur(32px) saturate(180%);border-top:1px solid rgba(255,255,255,.08);border-radius:20px 20px 0 0;padding:14px 16px 18px;z-index:301;transform:translateY(calc(100% + 60px));transition:transform .25s ease;overflow-y:auto}
+.filter-drawer{position:fixed;bottom:60px;left:0;right:0;background:#080a10;backdrop-filter:blur(32px) saturate(180%);border-top:1px solid rgba(255,255,255,.08);border-radius:20px 20px 0 0;padding:14px 16px 18px;z-index:301;transform:translateY(calc(100% + 60px));transition:transform .25s ease;overflow-y:auto}
 .filter-drawer.open{transform:translateY(0)}
 .drawer-handle{width:36px;height:3px;background:var(--dim);border-radius:2px;margin:0 auto 12px}
 .drawer-title{font-size:12px;font-weight:700;margin-bottom:10px;color:var(--text);text-transform:uppercase;letter-spacing:.8px}
@@ -421,6 +421,12 @@ body.pres-mode .tbl th{font-size:11px}
 .btn-filter-toggle{background:var(--s3);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .15s;display:none;align-items:center;gap:5px}
 .btn-filter-toggle:hover{color:var(--text);border-color:var(--blue)}
 .btn-filter-toggle.has-filter{color:var(--blue);border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.08)}
+/* Le drawer est un composant mobile : son bouton n'existe qu'en dessous de
+   780 px. Sans cette règle il restait ouvert et sans issue quand la fenêtre
+   était agrandie après coup, par-dessus le contenu. */
+@media(min-width:781px){
+  .filter-drawer,.filter-drawer-backdrop{display:none!important}
+}
 @media(max-width:780px){
   .btn-filter-toggle{display:flex}
   .header-controls .date-range,.header-controls .type-filter,.btn-csv,.btn-pres,.header-controls span:last-child{display:none}
@@ -3505,6 +3511,13 @@ function openFilterDrawer(){
   document.getElementById('drawer-backdrop').classList.add('open');
   document.body.style.overflow='hidden';
 }
+// Le drawer bloque le défilement du body tant qu'il est ouvert : le masquer
+// en CSS ne suffit pas, il faut le refermer vraiment quand on repasse en
+// grand écran, sinon la page reste non défilable sans rien qui l'explique.
+window.addEventListener('resize',()=>{
+  if(window.innerWidth>780&&document.getElementById('filter-drawer').classList.contains('open'))closeFilterDrawer();
+});
+
 function closeFilterDrawer(){
   document.getElementById('filter-drawer').classList.remove('open');
   document.getElementById('drawer-backdrop').classList.remove('open');
