@@ -24,25 +24,63 @@ sont écartées faute de CMS.
 
 ## Décision en attente — les 5 158 lignes restantes sans CMS
 
-L'import écarte toute ligne dont « Lieu / CMS » est vide. Sur l'export de
-septembre 2026 : 6 208 lignes sur 24 410. **La famille A est traitée depuis le
-20/09/2026** (commit `fe9abcd`), il reste 5 158 lignes à arbitrer. La règle est
-isolée dans `ECARTER_SANS_CMS` (`gdin-pure.js`), le compte rendu d'import
-affiche le nombre concerné dans les deux cas.
+**Requalifié le 20/09/2026 après un apport métier de l'utilisateur : les
+ateliers ne se tiennent quasiment jamais en CMS, mais chez des partenaires.**
+Cette phrase change la lecture du problème.
 
-| Famille | Volume | Nature | État |
-|---|---|---|---|
-| **A** | 1 050 | Le CMS est renseigné dans « Structure orienteur » au lieu de « Lieu / CMS » (648 DSIAN, 402 CMS nommés). | **Fait.** Repli `normCms(structure)` quand le lieu est vide. 18 202 → 19 252 enregistrements. |
-| **B** | ~4 175 | Cycle de vie du Pass Numérique : `Demande suivi pass (auto)`, `Suivi pass`, `Sondage pass`. Ni conseiller, ni thématique, ni lieu. | À exclure **par type d'action**, pas par champ vide. Bruit technique, pas de l'activité. |
-| **C** | ~983 | Ateliers et accompagnements chez des partenaires hors CMS (UNA 47 : 999, IME Montclairjoie : 324, Collège Lucie Aubrac : 264, CCAS, EVS…). | À conserver sous un libellé explicite, hors des vues « par CMS ». **1 166 ateliers, soit 21 % du total, sont invisibles tant que ce n'est pas fait.** |
+### Ce que « Lieu / CMS » contient vraiment
+
+`CMS_MAP` n'est pas une liste de CMS : c'est une liste de **lieux connus**, CMS
+inclus. Il contient déjà IME Fongrave, APF France Handicap, Cité Scolaire
+Fumel, la Régie de Territoire, les médiathèques. Vérifié sur les 4 513 ateliers
+qui passent l'import : ils ne sont pas en CMS non plus, ils sont chez ces
+partenaires-là.
+
+La règle d'exclusion ne teste donc pas « est-ce un CMS ». Elle teste **« la
+case Lieu / CMS est-elle remplie »** — remplie avec n'importe quoi, la ligne
+entre (sous « Autre structure » si le libellé est inconnu) ; vide, elle est
+jetée même si le lieu est écrit dans la colonne d'à côté.
+
+D'où une incohérence franche : `Club des Aînés de la Cascade - Fauillet`
+(80 lignes) est **retenu** parce que saisi dans « Lieu / CMS », tandis que
+`IME Montclairjoie` (324 lignes) est **jeté** parce que saisi dans
+« Structure orienteur ». Même nature, sort opposé, pour une raison purement
+administrative.
+
+### Les 5 158 lignes, toutes structures renseignées
+
+Aucune n'a les deux colonnes vides : **le lieu est toujours connu**.
+
+| | Volume | Nature |
+|---|---|---|
+| **Cycle Pass** | 4 033 | `Demande suivi pass (auto)`, `Suivi pass`, `Sondage pass`, `Demande de prescription`. Plomberie du Pass Numérique, pas de l'activité. |
+| **Activité réelle** | 1 125 | 965 ateliers, 86 prises de contact, 74 accompagnements, chez des partenaires non encore mappés. |
+
+Le découpage se fait **par type d'action, jamais par nom de structure** :
+`UNA 47` porte 969 lignes de cycle Pass *et* 30 lignes d'activité réelle. Un
+filtre par libellé se tromperait.
+
+### Correction proposée, non appliquée
+
+1. Exclure le cycle Pass **par type d'action** (comme `TYPE_EXCLUS` le fait
+   déjà pour `Reservation`).
+2. Puis élargir le repli famille A aux libellés inconnus : ils atterriraient
+   sous « Autre structure », exactement comme ils le font déjà lorsqu'ils sont
+   saisis dans « Lieu / CMS ». La cohérence entre les deux colonnes est
+   rétablie, et les 965 ateliers manquants entrent.
+3. Au passage, mapper nommément les lieux récurrents plutôt que de les laisser
+   en « Autre structure » — et corriger les doublons de casse qui en font des
+   lieux distincts : `IME Montclairjoie` + `IME MONTCLAIRJOIE` (372),
+   `Collège Lucie AUBRAC` (264), `France Services Pays de Lauzun` sous deux
+   graphies (42).
+
+Problème annexe : le Département apparaît sous **quatre orthographes** dans
+« Structure orienteur » (~1 500 lignes éclatées), toutes dans le cycle Pass.
+Sans objet si le point 1 est fait.
 
 Le filtre `typeFilter` de l'interface ne peut rien pour ces lignes : il filtre
 l'affichage de ce qui est déjà en base, alors que `ECARTER_SANS_CMS` agit à
 l'import. Ne pas confondre les deux étages.
-
-Problème annexe : le Département apparaît sous **quatre orthographes** dans
-« Structure orienteur » (~1 500 lignes éclatées). À normaliser si cette
-colonne est exploitée.
 
 ## Trou de mapping — préfixes de service devant un CMS
 
