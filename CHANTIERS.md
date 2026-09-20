@@ -1,6 +1,6 @@
 # Chantiers — GDINV2
 
-État au **20/09/2026**, commit `66c45fe` (branche de session).
+État au **20/09/2026**, commit `45c7aa3` (branche de session).
 
 Ce fichier existe pour qu'une session qui démarre sans historique sache où en
 est le projet. **Il ne se supprime pas.** Ce qui s'efface, ce sont les tâches,
@@ -25,7 +25,50 @@ comparaison avec un fichier antérieur. Référence actuelle : septembre 2026,
 
 ## Chantiers ouverts
 
-Aucun.
+### Revue de pertinence des graphes — en cours
+
+Demande du 20/09/2026 : « passe tous les graphes en revue et dis-moi
+lesquels sont les moins pertinents, le but n'étant pas de faire une galerie
+mais que ça soit pertinent. »
+
+**Fait** — deux passes de suppression, sans perte d'information :
+
+1. `25e0b19` — trois redondances pures.
+2. `45c7aa3` — trois visualisations d'états strictement contenues dans
+   d'autres (détail dans le message de commit).
+
+**Reste à trancher — arbitrage utilisateur, pas une redondance.**
+
+Le bloc `#act-dashboard` (index.html, onglet **Import**) est un
+mini-dashboard complet « états des accompagnements » : 4 KPI, évolution
+mensuelle, non réalisés multi-années, table par structure, table par
+conseiller — avec **ses propres filtres** (`act-year`, `act-cms-filter`,
+`act-conum`), indépendants des filtres globaux.
+
+Constats mesurés le 20/09/2026 (lecture du code) :
+
+- Ce n'est **pas** un doublon du Rapport : le Rapport est verrouillé sur
+  1 conseiller × 1 CMS, ce bloc porte l'ensemble et se filtre à part.
+- Ses **deux tables sont uniques dans l'application** : c'est le seul
+  endroit qui compare le taux de réalisation entre CMS et entre conseillers.
+- Son défaut est le **rangement**, pas le contenu : personne ne va chercher
+  un tableau de bord dans l'onglet « Import », et son jeu de filtres
+  parallèle peut afficher des chiffres qui contredisent ceux des autres
+  onglets sans que rien ne le signale.
+
+Trois options à soumettre :
+
+| Option | Effet |
+|---|---|
+| Déplacer le bloc dans un onglet « États » | garde tout, le rend trouvable ; reste le double jeu de filtres |
+| Le brancher sur les filtres globaux et le déplacer | supprime la contradiction possible ; perd le filtrage à part |
+| Le supprimer | perd les deux tables comparatives, non remplacées ailleurs |
+
+**Correction à assumer** : il lui avait été annoncé « une dizaine de graphes
+en moins sur quarante ». C'était un comptage des visualisations *traitant*
+le sujet réalisé/non réalisé, pas des doublons. Après audit, les
+redondances strictement démontrables étaient **trois**. Le reste relève du
+choix d'usage, pas de la duplication.
 
 ## En attente de l'utilisateur
 
@@ -35,6 +78,10 @@ Aucun.
   Corrigé. Les bilans individuels tirés avant cette date sont faux : à
   signaler aux conseillers concernés.
 - **Validation en usage réel de l'onglet Fiabilité** avant d'y toucher.
+- **Arbitrage sur le bloc `#act-dashboard`** (voir « Chantiers ouverts »).
+- **Suppression de la branche `claude/review-markdown-fuxynm`** (SHA
+  `719d623`) via l'interface GitHub : le proxy de développement refuse la
+  suppression de branche distante (403). Son contenu est déjà dans `main`.
 
 ## À porter aux développeurs de l'outil de saisie
 
@@ -104,6 +151,12 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
   devant Agen.
 - **Ne pas revenir à `indexOf()`** pour compter les doublons : 1 547 ms contre
   3 ms, le coût croît au carré.
+- **`ACTIONS_DATA` est dérivé de `DATA`**, pas importé séparément
+  (index.html, `DATA.forEach` sur `type_action` commençant par
+  « accompagnement » et `cms` non vide), et il y ajoute `delai_reactivite`
+  et `delai_total`. Il alimente la Vue globale, le Rapport, le Bilan, le
+  Diapo Global et le Diapo Rapport : **ne pas le supprimer** en croyant
+  nettoyer l'onglet Import.
 - **La synthèse de fiabilité ne se réduit pas au pire indicateur** : afficher
   « faible » quand quatre indicateurs sur neuf sont exacts décrédibilise ce qui
   est solide. Elle nomme le plus sensible.
