@@ -991,10 +991,6 @@ body.pres-mode .tbl th{font-size:11px}
         <span style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">Importer pour</span>
         <select id="import-conum-filter" style="flex:1;max-width:260px">
           <option value="" selected>— Tous les conseillers —</option>
-          <option value="ASWAD Michel">ASWAD Michel</option>
-          <option value="CAPELLE Eva">CAPELLE Eva</option>
-          <option value="PINEAU Cynthia">PINEAU Cynthia</option>
-          <option value="TUAL Corentin">TUAL Corentin</option>
         </select>
         <span id="import-conum-hint" style="font-size:10px;color:var(--muted);font-style:italic"></span>
       </div>
@@ -1151,7 +1147,15 @@ body.pres-mode .tbl th{font-size:11px}
 
 <script>
 const EMBEDDED=[];
-const CONUM_COLORS={'PINEAU Cynthia':'#3b82f6','TUAL Corentin':'#10b981','CAPELLE Eva':'#f97316','ASWAD Michel':'#8b5cf6','MONTOUX PARTHENAY Caroline':'#6b7fa0'};
+// Couleurs dérivées du nom (couleurConum, gdin-pure.js) : le mapping
+// explicite inscrivait cinq noms d'agents dans un dépôt public.
+// Plus aucun conseiller n'est masqué : la règle qui en écartait un de tous les
+// affichages n'était plus d'actualité (arbitrage utilisateur du 20/09/2026).
+// Ses 483 lignes, toutes sur 2022-2023, sont réintégrées — masquer l'activité
+// d'un agent parti fausse l'historique. Ne pas réintroduire d'exclusion par
+// nom : elle inscrirait ce nom dans un dépôt public et se périmerait seule.
+function conumMasque(){return false;}
+const CONUM_COLORS=new Proxy({},{get:(_,k)=>typeof k==='string'?couleurConum(k):undefined,has:()=>true});
 const YEAR_PALETTE=['#3b82f6','#10b981','#f97316','#8b5cf6','#22d3ee','#eab308','#ef4444'];
 const PALETTE=['#3b82f6','#f97316','#10b981','#8b5cf6','#ef4444','#22d3ee','#eab308','#fb7185'];
 const CMS_MAIN=['CMS Agen Montanou','CMS Agen Louis Vivent','CMS Tonneins','CMS Villeneuve/Lot','CMS Fumel','CMS Marmande','CMS Nérac','CMS Agen Tapie','CMS Antenne Aiguillon','CMS Marmande (St-Pardoux)','CMS Casteljaloux','Permanence Castillonnès','DSIAN','France Services Villeneuve/Lot','France Services Confluent','Médiathèque Départementale','France Travail','Autre structure'];
@@ -1183,25 +1187,24 @@ function deriveActionsFromData(){
   if(recs.length){ACTIONS_DATA=recs;ACTIONS_DERIVED=true;try{updateActionsUI('');}catch(e){}}
 }
 // Attribution des conum vides par CMS
-const CONUM_ATTRIB={
-  'CMS Agen Montanou':'PINEAU Cynthia',
-  'CMS Agen Louis Vivent':'PINEAU Cynthia',
-  'CMS Agen Tapie':'TUAL Corentin',
-  'CMS Villeneuve/Lot':'TUAL Corentin',
-  'CMS Tonneins':'CAPELLE Eva',
-  'CMS Nérac':'CAPELLE Eva',
-  'CMS Antenne Aiguillon':'CAPELLE Eva',
-  'CMS Casteljaloux':'CAPELLE Eva',
-  'CMS Marmande':'ASWAD Michel',
-  'CMS Marmande (St-Pardoux)':'ASWAD Michel',
-  'CMS Fumel':'ASWAD Michel',
-  'Permanence Castillonnès':'ASWAD Michel',
-};
-// conum_deduit marque les lignes dont le conseiller n'est pas constaté mais
-// inféré du CMS : l'onglet Fiabilité en a besoin pour annoncer sa marge.
-function applyConumAttrib(arr){(arr||[]).forEach(r=>{const c=(r.conum||'').trim();if(!c||c==='?'){if(r.cms==='DSIAN'&&r.orienteur){r.conum=r.orienteur;r.conum_deduit=true;}else if(CONUM_ATTRIB[r.cms]){r.conum=CONUM_ATTRIB[r.cms];r.conum_deduit=true;}else if(r.orienteur&&ORI_EXCL.has(r.orienteur)){r.conum=r.orienteur;r.conum_deduit=true;}}else r.conum_deduit=false;
-  if(r.date_demande&&r.date_action){const t=bizDays(new Date(r.date_demande),new Date(r.date_action));r.delai=(t===null||t<0)?null:t;}else r.delai=null;});return arr;}
-const ORI_EXCL=new Set(['ASWAD Michel','TUAL Corentin','PINEAU Cynthia','MONTOUX PARTHENAY Caroline','CHIBANE-TARASCON THIBAUD','CAPELLE Eva']);
+// Le mapping CMS → conseiller n'est plus codé en dur : il est dérivé des
+// données à chaque import (attribuerConum, gdin-pure.js). Il inscrivait le
+// nom et le secteur d'affectation de six agents dans un dépôt public, et
+// figé sur l'affectation du moment il l'appliquait à cinq ans d'historique.
+function applyConumAttrib(arr){
+  const base=arr||[];
+  attribuerConum(base);
+  ORI_EXCL=conseillersConnus(base);
+  base.forEach(r=>{
+    if(r.date_demande&&r.date_action){const t=bizDays(new Date(r.date_demande),new Date(r.date_action));r.delai=(t===null||t<0)?null:t;}
+    else r.delai=null;
+  });
+  return base;
+}
+// Dérivé des données par applyConumAttrib : ce sont les conseillers
+// identifiés dans le fichier, qu'on écarte de la liste des orienteurs
+// externes. La liste écrite à la main en omettait un présent dans l'export.
+let ORI_EXCL=new Set();
 const TYPE_EXCL=new Set(['Reservation','Reservation ']);
 // Retourne tous les types présents dans un dataset (hors exclus), triés par fréquence
 function allTypeKeys(arr){
@@ -1313,7 +1316,7 @@ async function initData(){
   else{const EXCL=new Set(['Reservation']);DATA=EMBEDDED.map(r=>({...r,cms:normCms(r.cms),type_action:(r.type_action||[]).filter(t=>!EXCL.has(t))}))
     .filter(r=>r.cms!==null);dataSource='embedded';updateSourceBadge(false,null);}
   applyConumAttrib(DATA);deriveActionsFromData();
-  updateAllYears();updateDateRange();updateCurrentSourceInfo();
+  updateAllYears();updateDateRange();updateCurrentSourceInfo();initImportConumSelect();
 }
 function updateAllYears(){
   const yrs=[...new Set(DATA.map(r=>r.date_demande.slice(0,4)))].sort();
@@ -1419,7 +1422,7 @@ function conumColor(name){
   for(const [k,v] of Object.entries(CONUM_COLORS)){
     if(k.toLowerCase()===lower)return v;
   }
-  // Lookup insensible à l'ordre des tokens (ex: "Michel ASWAD" vs "ASWAD Michel")
+  // Lookup insensible à l'ordre des tokens (ex : « Prénom NOM » vs « NOM Prénom »)
   const tokens=lower.split(/\s+/).sort().join(' ');
   for(const [k,v] of Object.entries(CONUM_COLORS)){
     if(k.toLowerCase().split(/\s+/).sort().join(' ')===tokens)return v;
@@ -1430,7 +1433,7 @@ function conumColor(name){
   return palette[idx];
 }
 // Formate "NOM Prénom" → {prenom:'Prénom', nom:'NOM', full:'Prénom NOM', display:'Prénom NOM'}
-// Gère aussi les noms composés (ex: "MONTOUX PARTHENAY Caroline")
+// Gère aussi les patronymes composés (deux mots avant le prénom)
 function formatConumName(raw){
   if(!raw)return{prenom:'',nom:'',full:raw||'',display:raw||''};
   const parts=raw.trim().split(/\s+/);
@@ -1766,7 +1769,7 @@ function renderEvolution(){
       });
     } else if(evolModeVal==='conum'){
       // One stack per year, subdivided by conseiller — couleur par année, opacité par conum
-      const conums=[...new Set(dataForEvol.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE'));
+      const conums=[...new Set(dataForEvol.map(r=>r.conum))].filter(c=>c&&!conumMasque(c));
       const alphas=['dd','bb','88','66','44'];
       years.forEach(yr=>{
         const yrCol=yearColor(yr);
@@ -1868,7 +1871,7 @@ function renderEvolution(){
       const vals=mKeys.map(k=>mc[k]||0),maxV=vals.length?Math.max(...vals):0;
       datasets=[{label:'Demandes',data:vals,backgroundColor:mKeys.map(k=>(mc[k]||0)===maxV?'rgba(59,130,246,.7)':'rgba(59,130,246,.3)'),borderColor:'#3b82f6',borderRadius:6,borderSkipped:false,borderWidth:1,type:'bar'},{label:'Tendance',data:vals,type:'line',borderColor:'#22d3ee',borderWidth:2,pointRadius:4,pointBackgroundColor:'#22d3ee',tension:.35,fill:false}];
     } else if(evolModeVal==='conum'){
-      const conums=[...new Set(dataForEvol.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE'));
+      const conums=[...new Set(dataForEvol.map(r=>r.conum))].filter(c=>c&&!conumMasque(c));
       datasets=conums.map(cn=>({label:cn.split(' ').pop(),data:mKeys.map(k=>dataForEvol.filter(r=>r.conum===cn&&r.date_demande.startsWith(k)).length),backgroundColor:conumColor(cn)+'88',borderColor:conumColor(cn),borderWidth:1.5,borderRadius:4,borderSkipped:false,type:'bar',stack:'s'}));
     } else {
       datasets=CMS_MAIN.slice(0,6).map((cms,i)=>({label:cms,data:mKeys.map(k=>data.filter(r=>r.cms===cms&&r.date_demande.startsWith(k)).length),backgroundColor:PALETTE[i]+'88',borderColor:PALETTE[i],borderWidth:1.5,borderRadius:4,borderSkipped:false,type:'bar',stack:'s'}));
@@ -1925,7 +1928,7 @@ function renderEvolution(){
   charts['ch-type-monthly']=new Chart(document.getElementById('ch-type-monthly'),{type:'bar',data:{labels:mAll.map(monthLabel),datasets:dynKeys.map((t,i)=>({label:t,data:mAll.map(k=>allF.filter(r=>r.date_demande.startsWith(k)&&r.type_action&&r.type_action.includes(t)).length),backgroundColor:typeColor(i)+'88',borderColor:typeColor(i),borderWidth:1,borderRadius:0,stack:'s',borderSkipped:false}))},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:legendColor(),font:{size:9},padding:5,boxWidth:8}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:9}}},y:{grid:{color:gridColor()},beginAtZero:true,stacked:true,ticks:{color:'#6b7fa0',font:{size:10}}}}}});}
 
   // Tableau mensuel
-  const conumNames=[...new Set(allF.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE'));
+  const conumNames=[...new Set(allF.map(r=>r.conum))].filter(c=>c&&!conumMasque(c));
   let thead=`<thead><tr><th>Mois</th><th>Année</th><th>Total</th><th title="Part des actions à l'état Réalisée">Réalisées</th>`;
   conumNames.forEach(cn=>{thead+=`<th class="${conumClass(cn)}">${cn}</th>`;});
   thead+=`</tr></thead>`;
@@ -2152,7 +2155,7 @@ function renderSaisonCms(cms){
 }
 
 // PAR CONUM
-function initConumSelect(){const sel=document.getElementById('sel-conum'),cur=sel.value;sel.innerHTML='';[...new Set(DATA.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE')).sort().forEach(cn=>{const o=document.createElement('option');o.value=cn;o.textContent=cn;sel.appendChild(o);});if(cur)sel.value=cur;}
+function initConumSelect(){const sel=document.getElementById('sel-conum'),cur=sel.value;sel.innerHTML='';[...new Set(DATA.map(r=>r.conum))].filter(c=>c&&!conumMasque(c)).sort().forEach(cn=>{const o=document.createElement('option');o.value=cn;o.textContent=cn;sel.appendChild(o);});if(cur)sel.value=cur;}
 function renderConum(){
   const conum=document.getElementById('sel-conum').value,allData=getFiltered();
   const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;
@@ -2183,7 +2186,7 @@ function renderConum(){
   const yrs=[...activeYears].sort();
   const ds=yrs.map(yr=>{const col=yearColor(yr);return{label:String(yr),data:MC.map((_,mi)=>{const mo=String(mi+1).padStart(2,'0');return data.filter(r=>r.date_demande.startsWith(yr+'-'+mo)).length;}),backgroundColor:col+'88',borderColor:col,borderRadius:4,borderSkipped:false,borderWidth:1};});
   charts['ch-conum-types']=new Chart(document.getElementById('ch-conum-types'),{type:'bar',data:{labels:MC,datasets:ds},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:yrs.length>1,labels:{font:{size:10},padding:8,boxWidth:8,color:legendColor()}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}});}
-  const allConums=[...new Set(DATA.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE')).sort();
+  const allConums=[...new Set(DATA.map(r=>r.conum))].filter(c=>c&&!conumMasque(c)).sort();
   let rows='';
   allConums.forEach(cn=>{
     const d=allData.filter(r=>r.conum===cn);if(!d.length)return;
@@ -2292,7 +2295,7 @@ function renderOrienteurs(){
 }
 
 // RAPPORT
-function initRptSelects(){const sc=document.getElementById('sel-rpt-conum');sc.innerHTML='<option value="">— Conseiller —</option>';[...new Set(DATA.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE')).sort().forEach(cn=>{const o=document.createElement('option');o.value=cn;o.textContent=cn;sc.appendChild(o);});}
+function initRptSelects(){const sc=document.getElementById('sel-rpt-conum');sc.innerHTML='<option value="">— Conseiller —</option>';[...new Set(DATA.map(r=>r.conum))].filter(c=>c&&!conumMasque(c)).sort().forEach(cn=>{const o=document.createElement('option');o.value=cn;o.textContent=cn;sc.appendChild(o);});}
 function buildRptCmsChips(conum,keepCms){
   const sel=document.getElementById('sel-rpt-cms');
   const chipsEl=document.getElementById('rpt-cms-chips');
@@ -2548,6 +2551,19 @@ const dropZone=document.getElementById('drop-zone');
 dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('drag-over');});
 dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag-over'));
 dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f)handleAutoImport(f);});
+// Le sélecteur est rempli depuis les conseillers déjà présents en base : la
+// liste était écrite à la main dans le HTML et y inscrivait quatre noms
+// d'agents. Vide au tout premier import, ce qui vaut « tous les conseillers ».
+function initImportConumSelect(){
+  const sel=document.getElementById('import-conum-filter');
+  if(!sel)return;
+  const cur=sel.value;
+  const noms=[...conseillersConnus(DATA||[])].filter(n=>!conumMasque(n)).sort();
+  sel.innerHTML='<option value="">— Tous les conseillers —</option>'+
+    noms.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  if(noms.includes(cur))sel.value=cur;
+}
+
 // Hint dynamique sur le sélecteur CONUM
 const importConumSel=document.getElementById('import-conum-filter');
 if(importConumSel){
@@ -2707,7 +2723,7 @@ function showPreview(pd){
   const dates=records.map(r=>r.date_demande).sort();
   const years=[...new Set(records.map(r=>r.date_demande.slice(0,4)))].sort();
   const months=new Set(records.map(r=>r.date_demande.slice(0,7)));
-  const conums=[...new Set(records.map(r=>r.conum))].filter(c=>c&&!c.includes('CHIBANE'));
+  const conums=[...new Set(records.map(r=>r.conum))].filter(c=>c&&!conumMasque(c));
   const cms=[...new Set(records.map(r=>r.cms))].filter(c=>c);
   document.getElementById('pv-total').textContent=records.length;
   document.getElementById('pv-range').textContent=`${dates[0]} → ${dates[dates.length-1]}`;
@@ -2767,7 +2783,7 @@ async function confirmImport(){
   const saved=await saveToStorage(merged,importMeta);
   updateSourceBadge(true,importMeta);updateAllYears();updateDateRange();updateCurrentSourceInfo();
   pendingData=null;document.getElementById('import-preview').style.display='none';document.getElementById('parse-progress-box').style.display='none';
-  initCmsSelect();initConumSelect();initOriCmsSelect();initRptSelects();refreshAll();
+  initCmsSelect();initConumSelect();initOriCmsSelect();initRptSelects();initImportConumSelect();refreshAll();
   const dot=document.getElementById('cs-dot');dot.style.background='var(--green)';
   const dupMsg=(internalDups+crossDups)>0?` · <span style="color:var(--orange)">${internalDups+crossDups} doublon${internalDups+crossDups>1?'s':''} ignoré${internalDups+crossDups>1?'s':''}</span>`:'';
   const conumFilterLabel=conumFilter?` · filtre : <strong style="color:var(--cyan)">${conumFilter}</strong>`:'';
@@ -4022,7 +4038,7 @@ function getCoordsGlobal(nom){
 // ── HEATMAP CHARGE CONSEILLERS ──
 function renderHeatmapConum(){
   const allYears=[...new Set(DATA.map(r=>r.date_demande.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
-  const allConums=[...new Set(DATA.map(r=>r.conum).filter(c=>c&&!c.includes('CHIBANE')))].sort();
+  const allConums=[...new Set(DATA.map(r=>r.conum).filter(c=>c&&!conumMasque(c)))].sort();
   const container=document.getElementById('heatmap-conum-container');
   if(!container)return;
   if(!allYears.length){container.innerHTML='<div style="color:var(--muted);font-size:11px;padding:10px">Aucune donnée</div>';return;}

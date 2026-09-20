@@ -734,6 +734,78 @@ function compterDoublons(records){
   return n;
 }
 
+// ─── Attribution du conseiller par secteur ────────────────────────────────────
+// Le mapping CMS → conseiller était codé en dur dans le HTML. Deux défauts
+// mesurés le 20/09/2026 sur l'export de septembre :
+//   - il inscrivait nom et secteur d'affectation de six agents dans un dépôt
+//     public, sans aucune finalité de publication ;
+//   - figé sur l'affectation du moment, il était appliqué à cinq ans
+//     d'historique : le CMS de Tonneins est tenu par une conseillère de 2022 à
+//     2024 puis par une autre à partir de 2025, et le mapping attribuait toute
+//     la période à la seconde — 2 853 lignes concernées, 34 % des déductions.
+// La dérivation par année suit les changements d'affectation au lieu de les
+// écraser. Elle reste une inférence : le bandeau de l'onglet Fiabilité doit
+// continuer à l'annoncer.
+// Couvert par les tests « deriverAttributionCms » et « attribuerConum ».
+function conseillersConnus(records){
+  const s=new Set();
+  (records||[]).forEach(r=>{const c=((r&&r.conum)||'').trim();if(c&&c!=='?')s.add(c);});
+  return s;
+}
+
+// { parAnnee: {'<cms>|<année>': nom}, global: {'<cms>': nom} }
+// Le majoritaire l'emporte ; à égalité, le premier rencontré, pour que deux
+// exécutions sur le même fichier donnent le même résultat.
+function deriverAttributionCms(records){
+  const cptAn={},cptCms={};
+  (records||[]).forEach(r=>{
+    const c=((r&&r.conum)||'').trim();
+    if(!c||c==='?'||!r.cms||!r.date_demande)return;
+    const k=`${r.cms}|${r.date_demande.slice(0,4)}`;
+    (cptAn[k]=cptAn[k]||{})[c]=(cptAn[k][c]||0)+1;
+    (cptCms[r.cms]=cptCms[r.cms]||{})[c]=(cptCms[r.cms][c]||0)+1;
+  });
+  const majoritaire=m=>{let nom=null,n=0;for(const[k,v]of Object.entries(m))if(v>n){nom=k;n=v;}return nom;};
+  const parAnnee={},global={};
+  Object.entries(cptAn).forEach(([k,m])=>{parAnnee[k]=majoritaire(m);});
+  Object.entries(cptCms).forEach(([k,m])=>{global[k]=majoritaire(m);});
+  return{parAnnee,global};
+}
+
+// Comble le conseiller manquant depuis le secteur, sans jamais écraser une
+// valeur constatée. Pose conum_deduit, que l'onglet Fiabilité utilise.
+// Rend le nombre de lignes comblées.
+function attribuerConum(records){
+  const base=records||[];
+  const t=deriverAttributionCms(base);
+  const connus=conseillersConnus(base);
+  let n=0;
+  base.forEach(r=>{
+    const c=(r.conum||'').trim();
+    if(c&&c!=='?'){r.conum_deduit=false;return;}
+    let nom=null;
+    // 1. l'orienteur est lui-même un conseiller identifié dans le fichier
+    if(r.orienteur&&connus.has(r.orienteur))nom=r.orienteur;
+    // 2. le conseiller du secteur cette année-là
+    if(!nom&&r.cms&&r.date_demande)nom=t.parAnnee[`${r.cms}|${r.date_demande.slice(0,4)}`]||null;
+    // 3. à défaut, le conseiller du secteur toutes années confondues
+    if(!nom&&r.cms)nom=t.global[r.cms]||null;
+    if(nom){r.conum=nom;r.conum_deduit=true;n++;}
+    else r.conum_deduit=false;
+  });
+  return n;
+}
+
+// Couleur stable d'un conseiller, dérivée de son nom — le mapping explicite
+// inscrivait les noms de cinq agents dans un dépôt public. Même nom, même
+// couleur, sans jamais stocker le nom.
+function couleurConum(nom){
+  const s=String(nom||'');
+  let h=0;
+  for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;
+  return TYPE_PALETTE[h%TYPE_PALETTE.length];
+}
+
 // ─── Sessions d'atelier ───────────────────────────────────────────────────────
 // Une ligne d'atelier est une PARTICIPATION, pas un atelier. Sur l'export de
 // septembre 2026 : 5 478 lignes pour 596 sessions réelles, soit 9,2 participants
@@ -916,7 +988,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,cleFusion,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,cleDoublon,compterDoublons,
