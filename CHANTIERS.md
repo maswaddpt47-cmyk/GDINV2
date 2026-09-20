@@ -64,26 +64,61 @@ La règle ne testait pas la nature du lieu mais **la colonne dans laquelle il
 **Ateliers dans le dashboard : 4 513 → 5 478.** Plus aucune ligne n'est
 écartée faute de lieu.
 
-## À trancher — « Autre structure » pèse 10 %
+## Résolu le 20/09/2026 — dérive des libellés de lieux et de communes
 
-Conséquence directe du chantier 3 : le seau passe de 782 à **1 936 lignes**,
-soit 147 libellés indistincts. Les deux plus gros méritent leur propre entrée
-dans `CMS_MAP` :
+L'utilisateur a soulevé le vrai risque : les saisies restent libres, donc les
+variantes d'un même partenaire et d'une même commune vont continuer à se
+multiplier. Deux réponses, de nature différente.
 
-| Libellé | Lignes |
-|---|---|
-| `IME Montclairjoie` (+ variante en capitales) | 372 |
-| `Collège Lucie AUBRAC` | 264 |
-| `Club des Aînés de la Cascade - Fauillet` | 80 |
-| `Val de Garonne Agglomération` | 62 |
+### Lieux : rattrapage souple, adossé au mapping
 
-Une seule entrée par lieu suffit : `CMS_MAP` est indexé via `normKey()`, les
-variantes de casse suivent.
+`normCms()` a un dernier recours — jamais un premier : une clé qui neutralise
+la ponctuation et les mots qui ne distinguent pas deux lieux (« association »,
+« asso », « permanence », articles). Le mapping explicite garde la priorité,
+il porte les décisions métier.
 
-Trois cas demandent un arbitrage métier, non tranché : `ABRIS` / `Association
-Abris Casseneuil` / `Asso ABRIS (Casseneuil)` sont-ils le même lieu ? que
-recouvre `micro collège` (60 lignes) ? `Villeneuve sur Lot` (55) est une
-commune, pas un lieu — saisie erronée ?
+Vérifié sur les 181 entrées écrites à la main : cette clé n'en met jamais deux
+en conflit, et aurait déduit seule 54 d'entre elles. Une clé qui désignerait
+deux lieux différents n'est pas indexée — un test le vérifie sur tout le
+mapping, donc à chaque ajout futur.
+
+Onze partenaires ont par ailleurs reçu leur entrée nommée, dont ABRIS, éclaté
+en dix graphies pour 181 lignes (confirmé par l'utilisateur : un seul lieu).
+« Autre structure » : 1 936 → 702 lignes, de 10 % à 3 %.
+
+### Communes : référentiel officiel, pas heuristique
+
+Les 319 communes actuelles du département sont embarquées dans `gdin-pure.js`
+(`@etalab/decoupage-administratif` 6.0.0).
+
+**Ne pas remplacer ce référentiel par un rapprochement par ressemblance.**
+Brax et Bias, Layrac et Clairac, Saint-Vite et Saint-Sixte sont à deux
+caractères les unes des autres. Un premier prototype, sans référentiel,
+rattachait Donzac à Dondas et Toulon à Bouglon — des chiffres faux, sans
+alerte. Le référentiel les contient toutes, donc aucune ne peut être écrasée.
+
+`rattacherCommune()` procède du plus sûr au moins sûr et ne tranche jamais une
+ambiguïté. Le nom officiel n'est cherché qu'**en tête** du libellé : « Agen »
+apparaît dans « Passage d'Agen » comme dans « Valence-d'Agen », qui est du 82.
+Le rapprochement à deux caractères près est réservé aux libellés de plus de
+dix caractères ; en deçà la ressemblance ne prouve rien.
+
+Communes distinctes 366 → 325 ; « Le Passage » retrouve ses 440 lignes,
+jusque-là coupées en deux par « LE PASSAGE D'AGEN ». Les communes s'affichent
+désormais sous leur nom officiel, accentué et tireté.
+
+Ce qui reste hors référentiel est légitime et visible : `Inconnu` (109),
+`SOTURAC` (58, commune du Lot), `)` (32), `test` (7). Mieux vaut un libellé
+douteux qui se voit qu'un faux rattachement silencieux.
+
+### Ce que ça ne règle pas
+
+La saisie reste du texte libre. Le jour où l'outil amont proposera des listes
+déroulantes pour le lieu et la commune, ces trois mécanismes deviendront des
+filets de sécurité au lieu d'être la seule défense.
+
+Deux libellés restent sans arbitrage métier : `micro collège` (60 lignes) et
+`Villeneuve sur Lot` (55) saisi comme lieu alors que c'est une commune.
 
 ## Bug d'affichage — les libellés numériques passent en tête des classements
 
