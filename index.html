@@ -1412,6 +1412,20 @@ function getFilteredExceptYears(){
   if(diapoCms){const _cms=normCms(diapoCms)||diapoCms;d=d.filter(r=>r.cms===diapoCms||r.cms===_cms);}
   return d;
 }
+// Périmètre de l'onglet Fiabilité : la période et les années sélectionnées,
+// mais PAS le filtre de type. La fiabilité est une propriété des données de la
+// période, pas du type qu'on regarde à l'instant — filtrer sur
+// « Accompagnement » faisait afficher « Prises de contact : 0 », ce qui est
+// vrai du sous-ensemble et absurde à lire.
+function getFilteredSansType(){
+  const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;
+  const allSelected=activeYears.size===ALL_YEARS.length;
+  let d=DATA.filter(r=>r.date_demande>=f&&r.date_demande<=t);
+  if(!allSelected)d=d.filter(r=>activeYears.has(r.date_demande.slice(0,4)));
+  if(diapoCms){const _cms=normCms(diapoCms)||diapoCms;d=d.filter(r=>r.cms===diapoCms||r.cms===_cms);}
+  return d;
+}
+
 function resetDates(){updateDateRange();document.getElementById('typeFilter').value='';activeYears=new Set(ALL_YEARS);syncYearChipStyles();try{document.getElementById('typeFilterM').value='';document.getElementById('dFromM').value=document.getElementById('dFrom').value;document.getElementById('dToM').value=document.getElementById('dTo').value;}catch(e){}refreshAll();try{document.getElementById('btn-filter-toggle').classList.remove('has-filter');}catch(e){}}
 
 document.getElementById('dFrom').addEventListener('change',refreshAll);
@@ -2890,7 +2904,7 @@ const FIA_MOT={solide:'Solide',bonne:'Bonne',moyenne:'Moyenne',partielle:'Partie
 // décrédibiliserait ceux qui sont exacts — c'est pour ça qu'il n'y en a que
 // sur les indicateurs dont la marge est mesurée et non nulle.
 function pointVigilance(cle){
-  const base=getFiltered();
+  const base=getFilteredSansType();
   if(!base.length)return'';
   const i=indicateursFiabilite(base,(importMeta&&importMeta.stats)||{}).find(x=>x.cle===cle);
   if(!i||i.niveau==='solide')return'';
@@ -2900,7 +2914,7 @@ function pointVigilance(cle){
 }
 
 function ligneSyntheseFiabilite(){
-  const base=getFiltered();
+  const base=getFilteredSansType();
   if(!base.length)return'';
   const syn=syntheseFiabilite(indicateursFiabilite(base,(importMeta&&importMeta.stats)||{}));
   const c=FIA_COULEUR[syn.niveau]||'var(--muted)';
@@ -2919,9 +2933,10 @@ function renderFiabilite(){
   // Les indicateurs suivent le filtre actif — années, type, période — comme
   // tous les autres panneaux. Les constats d'import, eux, portent sur le
   // fichier entier : ils sont annoncés comme tels.
-  const base=getFiltered();
+  const base=getFilteredSansType();
   const stats=(importMeta&&importMeta.stats)||{};
   const filtre=base.length!==(DATA||[]).length;
+  const typeActif=(document.getElementById('typeFilter')||{}).value||'';
   if(!base.length){
     document.getElementById('fia-synthese').innerHTML='<div class="empty-state"><div class="empty-icon">🛡</div><div class="empty-title">Importez un fichier pour mesurer sa fiabilité</div></div>';
     ['fia-indicateurs','fia-defauts','fia-methode'].forEach(id=>document.getElementById(id).innerHTML='');
@@ -2933,7 +2948,7 @@ function renderFiabilite(){
   document.getElementById('fia-synthese').innerHTML=`
     <div style="background:var(--s1);border:1px solid var(--border);border-left:3px solid ${FIA_COULEUR[syn.niveau]||'var(--border)'};border-radius:12px;padding:16px 20px;margin-bottom:22px">
       <div style="font-size:13px;font-weight:600;color:var(--text)">${esc(syn.texte)}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:6px">Sur ${base.length} enregistrement${base.length>1?'s':''}${filtre?` correspondant au filtre actif, sur ${(DATA||[]).length} en base`:' en base'}${stats.lues?` · ${stats.lues} lignes lues dans le fichier`:''}.</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Sur ${base.length} enregistrement${base.length>1?'s':''}${filtre?` correspondant au filtre actif, sur ${(DATA||[]).length} en base`:' en base'}${stats.lues?` · ${stats.lues} lignes lues dans le fichier`:''}.${typeActif?` Le filtre « ${esc(typeActif)} » ne s'applique pas ici : la fiabilité porte sur toute la période.`:''}</div>
     </div>`;
 
   // Tri : l'ordre par défaut est celui du calcul, qui va du plus solide au
