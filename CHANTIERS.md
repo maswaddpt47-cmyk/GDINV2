@@ -22,118 +22,84 @@ l'export de **septembre 2026** (24 410 lignes, 2022→2026), audité le
 l'export de juin (22 934 lignes) ; sur celui de septembre, 6 208 lignes
 sont écartées faute de CMS.
 
-## Décision en attente — les 5 158 lignes restantes sans CMS
+## Résolu le 20/09/2026 — les lignes sans CMS, et la fiabilité des dimensions
 
-**Requalifié le 20/09/2026 après un apport métier de l'utilisateur : les
-ateliers ne se tiennent quasiment jamais en CMS, mais chez des partenaires.**
-Cette phrase change la lecture du problème.
+Trois chantiers menés à la suite, tous mesurés sur l'export de septembre
+(24 410 lignes). Bilan : **18 202 → 20 226 enregistrements**.
 
-### Ce que « Lieu / CMS » contient vraiment
+### 1. Communes regroupées
 
-`CMS_MAP` n'est pas une liste de CMS : c'est une liste de **lieux connus**, CMS
-inclus. Il contient déjà IME Fongrave, APF France Handicap, Cité Scolaire
-Fumel, la Régie de Territoire, les médiathèques. Vérifié sur les 4 513 ateliers
-qui passent l'import : ils ne sont pas en CMS non plus, ils sont chez ces
-partenaires-là.
+497 libellés pour 366 communes réelles ; 95 groupes éclatés par casse,
+accents, tirets et ST/SAINT — « Villeneuve-sur-Lot » sous six graphies. Toute
+statistique par commune était répartie entre les orthographes.
 
-La règle d'exclusion ne teste donc pas « est-ce un CMS ». Elle teste **« la
-case Lieu / CMS est-elle remplie »** — remplie avec n'importe quoi, la ligne
-entre (sous « Autre structure » si le libellé est inconnu) ; vide, elle est
-jetée même si le lieu est écrit dans la colonne d'à côté.
+`normCommuneKey()` regroupe, le libellé affiché reste la graphie la plus
+fréquente du fichier. La carte normalisait déjà de son côté, dans une fonction
+locale de `drawMap()` : les agrégations, elles, comptaient le brut.
 
-D'où une incohérence franche : `Club des Aînés de la Cascade - Fauillet`
-(80 lignes) est **retenu** parce que saisi dans « Lieu / CMS », tandis que
-`IME Montclairjoie` (324 lignes) est **jeté** parce que saisi dans
-« Structure orienteur ». Même nature, sort opposé, pour une raison purement
-administrative.
+### 2. Conseiller lu dans le « Référent »
 
-### Les 5 158 lignes, toutes structures renseignées
+« Conseiller numérique » n'est renseigné qu'à 30 %. `applyConumAttrib()`
+comblait d'abord par `CONUM_ATTRIB` (CMS → conseiller) : une déduction
+géographique primait sur la donnée constatée et **la contredisait sur 782
+lignes**. `comblerConum()` applique le référent à l'import, avant toute
+déduction. Attribution constatée : **30 % → 58 %**.
 
-Aucune n'a les deux colonnes vides : **le lieu est toujours connu**.
+La liste des conseillers est dérivée des données, jamais codée en dur : le
+dépôt est public. `ORI_EXCL`, qui inscrit six noms d'agents en clair dans les
+HTML, en omettait un septième présent dans l'export.
 
-| | Volume | Nature |
-|---|---|---|
-| **Cycle Pass** | 4 033 | `Demande suivi pass (auto)`, `Suivi pass`, `Sondage pass`, `Demande de prescription`. Plomberie du Pass Numérique, pas de l'activité. |
-| **Activité réelle** | 1 125 | 965 ateliers, 86 prises de contact, 74 accompagnements, chez des partenaires non encore mappés. |
+### 3. Cycle Pass écarté, lieux partenaires admis
 
-Le découpage se fait **par type d'action, jamais par nom de structure** :
-`UNA 47` porte 969 lignes de cycle Pass *et* 30 lignes d'activité réelle. Un
-filtre par libellé se tromperait.
+La règle ne testait pas la nature du lieu mais **la colonne dans laquelle il
+était tapé**. Le Club des Aînés de la Cascade entrait, l'IME Montclairjoie
+était jeté.
 
-### Correction proposée, non appliquée
+- Cycle Pass (`Demande suivi pass (auto)`, `Suivi pass`, `Sondage pass`) :
+  4 184 lignes écartées **par type d'action**, jamais par nom de structure —
+  UNA 47 porte 969 lignes du cycle et 30 d'activité réelle. « Demande de
+  prescription de Pass » est conservée, c'est un geste de conseiller.
+- Repli sur la structure élargi aux libellés inconnus → « Autre structure ».
 
-1. Exclure le cycle Pass **par type d'action** (comme `TYPE_EXCLUS` le fait
-   déjà pour `Reservation`).
-2. Puis élargir le repli famille A aux libellés inconnus : ils atterriraient
-   sous « Autre structure », exactement comme ils le font déjà lorsqu'ils sont
-   saisis dans « Lieu / CMS ». La cohérence entre les deux colonnes est
-   rétablie, et les 965 ateliers manquants entrent.
-3. Au passage, mapper nommément les lieux récurrents plutôt que de les laisser
-   en « Autre structure » — et corriger les doublons de casse qui en font des
-   lieux distincts : `IME Montclairjoie` + `IME MONTCLAIRJOIE` (372),
-   `Collège Lucie AUBRAC` (264), `France Services Pays de Lauzun` sous deux
-   graphies (42).
+**Ateliers dans le dashboard : 4 513 → 5 478.** Plus aucune ligne n'est
+écartée faute de lieu.
 
-Problème annexe : le Département apparaît sous **quatre orthographes** dans
-« Structure orienteur » (~1 500 lignes éclatées), toutes dans le cycle Pass.
-Sans objet si le point 1 est fait.
+## À trancher — « Autre structure » pèse 10 %
 
-Le filtre `typeFilter` de l'interface ne peut rien pour ces lignes : il filtre
-l'affichage de ce qui est déjà en base, alors que `ECARTER_SANS_CMS` agit à
-l'import. Ne pas confondre les deux étages.
+Conséquence directe du chantier 3 : le seau passe de 782 à **1 936 lignes**,
+soit 147 libellés indistincts. Les deux plus gros méritent leur propre entrée
+dans `CMS_MAP` :
 
-## Sur quoi peut-on produire des statistiques — mesuré le 20/09/2026
+| Libellé | Lignes |
+|---|---|
+| `IME Montclairjoie` (+ variante en capitales) | 372 |
+| `Collège Lucie AUBRAC` | 264 |
+| `Club des Aînés de la Cascade - Fauillet` | 80 |
+| `Val de Garonne Agglomération` | 62 |
 
-Audit de fiabilité par dimension, sur les 19 252 enregistrements retenus de
-l'export de septembre. À lire **avant** d'ajouter un graphe : une dimension non
-fiable produit un chiffre faux sans prévenir.
+Une seule entrée par lieu suffit : `CMS_MAP` est indexé via `normKey()`, les
+variantes de casse suivent.
 
-| Dimension | Rempli | Libellés | Après normalisation | Verdict |
-|---|---|---|---|---|
-| Lieu / CMS | 100 % | 39 | 39 | **Fiable.** Zéro variante — le mapping fait son travail. |
-| État de l'action | 100 % | 4 | 4 | **Fiable.** |
-| Dates (demande, action) | 100 % | — | — | **Fiable** depuis la réparation d'encodage. |
-| N° de demande | 100 % | 7 206 | — | **Fiable.** |
-| Type d'action | 95 % | 10 | 10 | **Fiable.** |
-| Thématiques | 75 % | 13 | 13 | Propre, mais un quart des lignes sans thématique. |
-| Structure orienteur | 100 % | 133 | 115 | 18 variantes. À normaliser. |
-| Commune | 99 % | 497 | 383 | **88 groupes éclatés** par casse et tirets. |
-| Conseiller numérique | **30 %** | 7 | 7 | **Le plus fragile.** Voir ci-dessous. |
+Trois cas demandent un arbitrage métier, non tranché : `ABRIS` / `Association
+Abris Casseneuil` / `Asso ABRIS (Casseneuil)` sont-ils le même lieu ? que
+recouvre `micro collège` (60 lignes) ? `Villeneuve sur Lot` (55) est une
+commune, pas un lieu — saisie erronée ?
 
-### La commune est réparable mécaniquement
+## Bug d'affichage — les libellés numériques passent en tête des classements
 
-497 libellés pour 383 communes réelles. L'éclatement est purement
-typographique : casse et séparateurs. Une même commune apparaît jusqu'à six
-fois (`VILLENEUVE-SUR-LOT`, `Villeneuve-sur-Lot`, `VILLENEUVE SUR LOT`,
-`Villeneuve sur Lot`, `villeneuve sur lot`, `villeneuve-sur-lot`).
+Découvert le 20/09/2026 en vérifiant le regroupement des communes.
+`count()` renvoie un objet construit par `Object.fromEntries` : JavaScript
+replace les **clés entières** en tête, quel que soit leur volume. Le classement
+des communes affiche donc `47` (2 lignes) avant `AGEN` (4 791).
 
-Contrairement aux partenaires, aucun arbitrage n'est nécessaire : normaliser
-casse, accents et séparateurs suffit. `normKey()` fait déjà ce travail pour les
-CMS. Tant que ce n'est pas fait, **toute statistique par commune est fausse**,
-les volumes étant répartis entre les graphies.
+Trois libellés concernés (`47`, `47000`, `47240`, codes postaux saisis à la
+place du nom). Aucune autre dimension n'a de clé numérique aujourd'hui, mais le
+défaut est dans `count()`, pas dans la donnée : il frappera toute dimension qui
+en recevra une.
 
-### Le conseiller est la dimension la moins sûre, pas la plus sûre
-
-La colonne « Conseiller numérique » n'est remplie que sur **30 %** des lignes.
-L'application comble le reste via `CONUM_ATTRIB`, une inférence CMS →
-conseiller : un rattachement géographique, pas une donnée constatée.
-
-Or la colonne « Référent » est remplie à 99 % et porte le nom d'un conseiller
-sur une grande partie des lignes. Mesures :
-
-| | Lignes | Couverture |
-|---|---|---|
-| Conseiller renseigné à la source | 5 761 | 30 % |
-| + Référent identifié comme conseiller | +5 254 | **57 %** |
-| Restant, aujourd'hui inféré du CMS | 8 237 | 43 % |
-
-**Contrôle de cohérence** : sur les 2 706 lignes où les deux colonnes portent
-un conseiller, elles concordent à **95 %**. Le « Référent » est donc une source
-solide, nettement meilleure qu'une déduction géographique.
-
-Piste : combler depuis « Référent » avant de tomber sur `CONUM_ATTRIB`, et
-distinguer dans l'interface ce qui est constaté de ce qui est déduit. Non
-appliqué — à arbitrer.
+Corriger suppose de changer le type de retour de `count()`, utilisé par tous
+les classements des deux HTML. Non fait pour ne pas élargir les chantiers en
+cours — à arbitrer.
 
 ## Trou de mapping — préfixes de service devant un CMS
 
@@ -184,7 +150,7 @@ oui, tous les rapports tirés avant le 20/09/2026 sous-comptaient les actions.
 
 ## Chantiers restants, par priorité
 
-1. **Arbitrage A/B/C** ci-dessus.
+1. **Mapping nominatif des partenaires** et bug de `count()` — voir ci-dessus.
 2. **Garde-fou sur IndexedDB.** `localStorage` ne tient pas les données
    (quota dépassé dès 6 Mo, un export en fait ~7,7) : le repli IndexedDB est
    le chemin normal, pas l'exception. Or `_idbOpen()` ne gère ni `onblocked`
