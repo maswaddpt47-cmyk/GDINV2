@@ -1,6 +1,6 @@
 # Chantiers en cours — GDINV2
 
-État au **20/09/2026**, commit `78f8737`. Ce fichier existe pour qu'une
+État au **20/09/2026**, commit `eedc3a4`. Ce fichier existe pour qu'une
 session de travail qui démarre sans historique sache où en est le projet et
 ce qui reste à trancher. **Le supprimer quand tout est soldé** — ce n'est pas
 de la documentation permanente, c'est un état transitoire.
@@ -44,34 +44,27 @@ colonne est exploitée.
 
 ## Chantiers restants, par priorité
 
-1. **Rapatrier les librairies CDN dans le dépôt.** Chart.js, Leaflet et
-   SheetJS sont chargés depuis `cdnjs.cloudflare.com`, sans repli. Mesuré le
-   20/09/2026 : sans accès à ce domaine, `Chart` n'est jamais défini, le boot
-   s'arrête et la page reste **blanche** — pas dégradée, blanche. Un réseau
-   de collectivité qui filtre les CDN suffit. Règle au passage le chargement
-   des polices depuis `fonts.googleapis.com`, qui transmet l'IP des visiteurs
-   à Google. ~1,5 Mo de fichiers statiques.
-2. **Arbitrage A/B/C** ci-dessus.
-3. **Garde-fou sur IndexedDB.** `localStorage` ne tient pas les données
+1. **Arbitrage A/B/C** ci-dessus.
+2. **Garde-fou sur IndexedDB.** `localStorage` ne tient pas les données
    (quota dépassé dès 6 Mo, un export en fait ~7,7) : le repli IndexedDB est
    le chemin normal, pas l'exception. Or `_idbOpen()` ne gère ni `onblocked`
    ni délai maximum — si l'ouverture reste en attente, l'import se fige après
    « N enregistrements » sans message. Risque identifié par lecture du code,
    non reproduit.
-4. **Détecteur de doublons quadratique.** `keys.indexOf(k)` dans un `filter`
+3. **Détecteur de doublons quadratique.** `keys.indexOf(k)` dans un `filter`
    (fonction du panneau qualité) : 823 ms mesurés sur 17 015 lignes, 3 ms
    avec un `Set`. Le coût croît au carré du volume.
-5. **Indicateurs de complétion restants.** Trois occurrences encore basées
+4. **Indicateurs de complétion restants.** Trois occurrences encore basées
    sur `!r.date_action`, donc à 100 % constant : colonne `%` du tableau
    mensuel (deux fois) et KPI « Complétion » de la vue par conseiller.
-6. **Types absents du dropdown.** `typeFilter` ne propose que
+5. **Types absents du dropdown.** `typeFilter` ne propose que
    Accompagnement, Prise de contact, Orientation tiers et Atelier. Les types
    Pass, `Orientation vers un CN du 47` et `Autre` ne sont atteignables par
    aucune position du filtre.
-7. **Cache-busting.** Les scripts sont chargés sans `?v=N` : après un
+6. **Cache-busting.** Les scripts sont chargés sans `?v=N` : après un
    correctif, un navigateur peut continuer à servir l'ancienne version. En
    attendant, vérifier les déploiements en navigation privée.
-8. **Suppression de `index.html`.** Décidé : v2 remplace v1. Tant que la
+7. **Suppression de `index.html`.** Décidé : v2 remplace v1. Tant que la
    suppression n'est pas faite, `index.html` reste servi à la racine par
    GitHub Pages et toute correction fonctionnelle doit être appliquée aux
    deux fichiers.
