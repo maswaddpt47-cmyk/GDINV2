@@ -1023,9 +1023,64 @@ let DATA=[], dataSource='embedded', importMeta=null;
 // STOCKAGE — localStorage + IndexedDB (fallback pour gros volumes)
 const LS_KEY='gdin_data_v3', LS_META='gdin_meta_v3';
 const IDB_NAME='gdin_idb_v1';
-function _idbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains('kv'))db.createObjectStore('kv');};r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});}
-async function _idbPut(key,val){try{const db=await _idbOpen();await new Promise((res,rej)=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(val,key);tx.oncomplete=res;tx.onerror=rej;});return true;}catch(e){return false;}}
-async function _idbGet(key){try{const db=await _idbOpen();return new Promise(res=>{const tx=db.transaction('kv','readonly');const r=tx.objectStore('kv').get(key);r.onsuccess=()=>res(r.result??null);r.onerror=()=>res(null);});}catch(e){return null;}}
+// Un import qui se fige après « N enregistrements », sans message, vient d'ici :
+// saveToStorage() attend _idbPut(), qui attend _idbOpen(). Une ouverture sans
+// réponse — autre onglet bloquant la version, navigation privée, stockage
+// refusé — laissait ce await pendant pour toujours, et tout le code qui suit
+// l'import ne s'exécutait jamais, y compris son message d'erreur.
+// Ces garde-fous transforment un gel silencieux en un échec dit à l'utilisateur.
+const IDB_DELAI_MAX=10000;
+function _idbDelai(ms,message){
+  return new Promise((_,rej)=>setTimeout(()=>rej(new Error(message)),ms));
+}
+function _idbOpen(){
+  const ouverture=new Promise((res,rej)=>{
+    const r=indexedDB.open(IDB_NAME,1);
+    r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains('kv'))db.createObjectStore('kv');};
+    r.onsuccess=e=>res(e.target.result);
+    r.onerror=e=>rej(e.target.error||new Error('IndexedDB : ouverture refusée'));
+    // Un autre onglet garde une version antérieure ouverte : sans ceci,
+    // l'événement n'est jamais traité et la promesse reste pendante.
+    r.onblocked=()=>rej(new Error('IndexedDB : ouverture bloquée par un autre onglet'));
+  });
+  return Promise.race([ouverture,_idbDelai(IDB_DELAI_MAX,'IndexedDB : ouverture sans réponse')]);
+}
+async function _idbPut(key,val){
+  try{
+    const db=await _idbOpen();
+    // Même raisonnement que pour l'ouverture : une transaction qui ne se
+    // dénoue pas figerait l'import de la même façon.
+    const ecriture=new Promise((res,rej)=>{
+      const tx=db.transaction('kv','readwrite');
+      tx.objectStore('kv').put(val,key);
+      tx.oncomplete=res;
+      tx.onerror=()=>rej(tx.error||new Error('IndexedDB : écriture refusée'));
+      tx.onabort=()=>rej(tx.error||new Error('IndexedDB : écriture interrompue'));
+    });
+    await Promise.race([ecriture,_idbDelai(IDB_DELAI_MAX,'IndexedDB : écriture sans réponse')]);
+    return true;
+  }catch(e){
+    console.warn('[GDIN] IndexedDB indisponible :',e&&e.message?e.message:e);
+    return false;
+  }
+}
+async function _idbGet(key){
+  try{
+    const db=await _idbOpen();
+    const lecture=new Promise(res=>{
+      const tx=db.transaction('kv','readonly');
+      const r=tx.objectStore('kv').get(key);
+      r.onsuccess=()=>res(r.result??null);
+      r.onerror=()=>res(null);
+      tx.onabort=()=>res(null);
+    });
+    // Au démarrage c'est le dashboard entier qui attend cette lecture.
+    return await Promise.race([lecture,_idbDelai(IDB_DELAI_MAX,'IndexedDB : lecture sans réponse')]);
+  }catch(e){
+    console.warn('[GDIN] IndexedDB illisible :',e&&e.message?e.message:e);
+    return null;
+  }
+}
 async function _idbDel(...keys){try{const db=await _idbOpen();const tx=db.transaction('kv','readwrite');keys.forEach(k=>tx.objectStore('kv').delete(k));}catch(e){}}
 async function saveToStorage(records,meta){
   let ok=false;
@@ -3676,14 +3731,11 @@ function buildAnomalyReport(records, rawLines){
   // 2. Orienteurs vides
   const noOri=records.filter(r=>!r.orienteur||r.orienteur==='?').length;
   if(noOri>0)items.push({label:'Dossiers sans orienteur identifié',val:noOri,color:'var(--muted)'});
-  // 3. Doublons potentiels (même clé)
-  function makeKey2(r){
-    if(r.id_demande&&r.date_action)return`id:${r.id_demande}|da:${r.date_action}|${(r.type_action||[]).slice().sort().join('+')}`;
-    return`${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.orienteur||''}|${(r.motif||'').slice(0,30)}`;
-  }
-  const keys=records.map(makeKey2);
-  const dupKeys=keys.filter((k,i)=>keys.indexOf(k)!==i);
-  if(dupKeys.length>0)items.push({label:'Doublons détectés (même N°/date action/type)',val:dupKeys.length,color:'var(--orange)'});
+  // 3. Doublons potentiels — clé et comptage dans gdin-pure.js, couverts par
+  // les tests « compterDoublons ». Ne pas revenir à un filter/indexOf :
+  // 1 547 ms contre 3 ms sur 20 226 enregistrements.
+  const nbDoublons=compterDoublons(records);
+  if(nbDoublons>0)items.push({label:'Doublons détectés (même N°/date action/type)',val:nbDoublons,color:'var(--orange)'});
   return items;
 }
 

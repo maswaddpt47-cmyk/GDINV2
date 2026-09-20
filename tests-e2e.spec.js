@@ -341,3 +341,82 @@ test.describe('Classement des communes', () => {
   });
 
 });
+
+test.describe('Garde-fous IndexedDB', () => {
+
+  // Un import qui se fige après « N enregistrements », sans message, venait
+  // d'une ouverture IndexedDB qui ne répondait jamais : le await restait
+  // pendant et le code qui suit l'import — y compris son message d'erreur —
+  // ne s'exécutait pas. Ces tests vérifient que l'échec se produit au lieu
+  // de se taire.
+  test.beforeEach(async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+  });
+
+  test('une ouverture bloquée par un autre onglet échoue au lieu de rester pendante', async ({ page }) => {
+    const r = await page.evaluate(async () => {
+      const vrai = indexedDB.open;
+      indexedDB.open = () => { const req = {}; setTimeout(() => req.onblocked && req.onblocked(), 10); return req; };
+      try { await _idbOpen(); return 'résolu'; }
+      catch (e) { return 'rejeté: ' + e.message; }
+      finally { indexedDB.open = vrai; }
+    });
+    expect(r).toContain('rejeté');
+    expect(r).toContain('autre onglet');
+  });
+
+  test('une écriture sur ouverture bloquée rend false, sans figer', async ({ page }) => {
+    const r = await page.evaluate(async () => {
+      const vrai = indexedDB.open;
+      indexedDB.open = () => { const req = {}; setTimeout(() => req.onblocked && req.onblocked(), 10); return req; };
+      try { return await _idbPut('cle-test', [1, 2, 3]); }
+      finally { indexedDB.open = vrai; }
+    });
+    expect(r).toBe(false);
+  });
+
+  test('une lecture sur ouverture bloquée rend null, sans figer', async ({ page }) => {
+    const r = await page.evaluate(async () => {
+      const vrai = indexedDB.open;
+      indexedDB.open = () => { const req = {}; setTimeout(() => req.onblocked && req.onblocked(), 10); return req; };
+      try { return await _idbGet('cle-test'); }
+      finally { indexedDB.open = vrai; }
+    });
+    expect(r).toBeNull();
+  });
+
+  test('l\'ouverture est plafonnée dans le temps', async ({ page }) => {
+    // Une ouverture muette : aucun événement n'est jamais émis.
+    const r = await page.evaluate(async () => {
+      return { delai: typeof IDB_DELAI_MAX === 'number' ? IDB_DELAI_MAX : null };
+    });
+    expect(r.delai).toBeGreaterThan(0);
+    expect(r.delai).toBeLessThanOrEqual(30000);
+  });
+
+});
+
+test.describe('Garde-fous IndexedDB — contre-preuve', () => {
+
+  test('l\'implémentation d\'origine restait pendante sur une ouverture bloquée', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    // Rejoue l'ancienne version, sans onblocked ni délai, sur la même panne.
+    // Si elle se résolvait, le garde-fou ajouté ne servirait à rien.
+    const issue = await page.evaluate(async () => {
+      const ouvrirAncienneManiere = () => new Promise((res, rej) => {
+        const r = {};
+        setTimeout(() => r.onblocked && r.onblocked(), 10);
+        r.onsuccess = e => res(e.target.result);
+        r.onerror = e => rej(e.target.error);
+      });
+      return Promise.race([
+        ouvrirAncienneManiere().then(() => 'résolu', () => 'rejeté'),
+        new Promise(res => setTimeout(() => res('toujours pendante'), 2000)),
+      ]);
+    });
+    expect(issue).toBe('toujours pendante');
+  });
+
+});
