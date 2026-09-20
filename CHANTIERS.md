@@ -1,6 +1,6 @@
 # Chantiers — GDINV2
 
-État au **20/09/2026**, commit `a10d0c7`.
+État au **20/09/2026**, commit `66c45fe` (branche de session).
 
 Ce fichier existe pour qu'une session qui démarre sans historique sache où en
 est le projet. **Il ne se supprime pas.** Ce qui s'efface, ce sont les tâches,
@@ -25,64 +25,25 @@ comparaison avec un fichier antérieur. Référence actuelle : septembre 2026,
 
 ## Chantiers ouverts
 
-### Dériver l'attribution CMS → conseiller des données
+### Règle métier non documentée — conseiller masqué
 
-**Validé par l'utilisateur le 20/09/2026.** `CONUM_ATTRIB` est codé en dur dans
-`index.html` et **périmé** : il diverge des données réelles sur 4 CMS sur 12.
+`CONUM_MASQUES` (dans `index.html`) masque un conseiller de tous les
+affichages par conseiller. La raison n'est écrite nulle part et **483 lignes
+de l'export de septembre sont concernées** — ce n'est pas marginal.
 
-| CMS | Codé en dur | Constaté dans les données |
-|---|---|---|
-| CMS Tonneins | CAPELLE Eva | MONTOUX PARTHENAY Caroline (121) |
-| CMS Nérac | CAPELLE Eva | MONTOUX PARTHENAY Caroline (117) |
-| CMS Antenne Aiguillon | CAPELLE Eva | MONTOUX PARTHENAY Caroline (87) |
-| CMS Agen Tapie | TUAL Corentin | PINEAU Cynthia (126) |
-
-Conséquence mesurée sur l'export de septembre : **2 853 lignes attribuées à un
-conseiller que les données démentent** — 34 % des attributions déduites,
-14,8 % de la base. Le tableau « par conseiller » crédite un agent de l'activité
-d'un autre. À signaler aux conseillers concernés : impossible de savoir depuis
-les données si le code est périmé ou si un agent a ponctuellement couvert le
-secteur d'un collègue.
-
-Dériver le mapping des données règle trois choses à la fois : plus aucun nom
-d'agent dans le code source publié, plus de mapping périmé, et le rattachement
-suit les changements d'affectation.
-
-Points à traiter en le faisant :
-
-- **Rétroactivité** : un mapping global attribuerait l'activité de 2022 au
-  conseiller actuel du secteur. Dériver par année, avec repli sur le global
-  quand l'année manque.
-- **CMS Casteljaloux** n'a aucune donnée : il restera sans attribution, ce qui
-  est plus honnête qu'une déduction fausse.
-- **`ORI_EXCL`** sert un autre usage (six noms d'agents en clair) et demande un
-  traitement séparé.
-
-### RGPD — noms d'agents dans le code source
-
-`CONUM_ATTRIB` et `ORI_EXCL` publient nom, prénom et **secteur d'affectation**
-de six agents sur un dépôt public et un site indexable.
-
-Le fond n'est pas illicite — nom, prénom et fonction d'un agent public ne sont
-pas confidentiels, et ce ne sont pas des données sensibles. Ce qui pose
-problème :
-
-- **la publication n'a aucune finalité** : ce sont des paramètres techniques
-  exposés par accident d'architecture, ce que le principe de minimisation
-  (art. 5.1.c) ne justifie pas ;
-- **l'indexation** : une recherche sur le nom d'un agent peut faire remonter
-  son secteur, ce qui n'est pas le cas d'un organigramme consulté volontairement ;
-- **l'information des personnes** (art. 13) : les six agents n'ont
-  vraisemblablement pas été informés.
-
-Le DPO du Département tranche. La dérivation ci-dessus supprime le sujet pour
-`CONUM_ATTRIB` ; `ORI_EXCL` reste à traiter.
+C'est la seule occurrence de nom d'agent qui reste dans le source. Trois
+issues possibles, à trancher avec l'utilisateur : la règle est justifiée et
+mérite d'être documentée ; elle est périmée et se supprime ; ou elle se
+remplace par un critère dérivable des données.
 
 ## En attente de l'utilisateur
 
-- **Noms d'agents en clair.** `CONUM_ATTRIB` et `ORI_EXCL` inscrivent des noms
-  d'agents dans `index.html`, donc publiés sur GitHub Pages. À arbitrer avec
-  les personnes concernées.
+- **Attributions rectifiées.** Jusqu'au 20/09/2026, 2 853 lignes étaient
+  attribuées au conseiller actuel d'un secteur plutôt qu'à celui en poste à
+  l'époque — principalement Tonneins, Nérac, Antenne Aiguillon et Agen Tapie.
+  Corrigé. Les bilans individuels tirés avant cette date sont faux : à
+  signaler aux conseillers concernés.
+- **Règle `CONUM_MASQUES`** ci-dessus.
 - **Validation en usage réel de l'onglet Fiabilité** avant d'y toucher.
 
 ## À porter aux développeurs de l'outil de saisie
@@ -100,6 +61,15 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
 | ~~Corriger l'encodage de « Date action »~~ | signalé le 20/09/2026 |
 
 ## Décisions à ne pas défaire
+
+**Noms d'agents**
+
+- **Aucun nom d'agent dans le code source.** Le dépôt est public et indexable :
+  une publication sans finalité ne se justifie pas au regard de la
+  minimisation. Le rattachement CMS → conseiller, la liste des conseillers et
+  leurs couleurs sont tous dérivés des données importées.
+- **L'attribution se dérive par année**, jamais globalement : les affectations
+  changent, et un mapping figé réécrit rétroactivement cinq ans d'historique.
 
 **Import et fusion**
 
