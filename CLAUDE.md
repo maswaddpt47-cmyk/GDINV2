@@ -89,6 +89,8 @@ Les chantiers en cours, les décisions en attente et les points à ne pas
 défaire sont dans **`CHANTIERS.md`**. Le lire avant d'attaquer quoi que ce
 soit : une session qui démarre sans historique n'a pas d'autre source.
 Ce fichier-ci porte les règles permanentes, `CHANTIERS.md` l'état du moment.
+Le tenir à jour à chaque avancée significative — pas en fin de session, qui
+peut s'interrompre sans préavis. Le supprimer quand tout est soldé.
 
 ---
 
