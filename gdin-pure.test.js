@@ -352,7 +352,7 @@ describe('parseRows — CMS lu dans la structure orienteur', () => {
     assert.equal(r.records[0].cms, 'CMS Marmande');
   });
   it('accepte une structure inconnue sous « Autre structure »', () => {
-    const r = parseRows([EN_TETES, ligne({ lieu: '', structure: 'UNA 47' })]);
+    const r = parseRows([EN_TETES, ligne({ lieu: '', structure: 'Foyer inconnu de Test' })]);
     assert.equal(r.records.length, 1);
     assert.equal(r.records[0].cms, 'Autre structure');
   });
@@ -485,12 +485,46 @@ describe('parseRows — cycle Pass', () => {
     assert.deepEqual(r.records[0].type_action, ['Suivi pass', 'Accompagnement']);
   });
   it('n\'écarte pas sur le nom de la structure', () => {
-    const r = parseRows([EN_TETES, ligne({ type: 'Atelier', lieu: '', structure: 'UNA 47' })]);
+    const r = parseRows([EN_TETES, ligne({ type: 'Atelier', lieu: '', structure: 'Foyer inconnu de Test' })]);
     assert.equal(r.records.length, 1);
     assert.equal(r.stats.motifs.cycle_pass, 0);
   });
   it('le compte rendu d\'import détaille le motif', () => {
     const r = parseRows([EN_TETES, ligne({ n: '1', type: 'Suivi pass' }), ligne({ n: '2' })]);
     assert.match(formatResumeImport(r.stats), /1 du cycle Pass/);
+  });
+});
+
+// ─── normCms — lieux partenaires ajoutés le 20/09/2026 ────────────────────
+// ABRIS arrivait dans « Autre structure » sous dix graphies pour 181 lignes.
+// normKey() ne neutralise ni ponctuation ni mot surnuméraire : chaque graphie
+// a sa propre clé, et ces tests garantissent qu'aucune ne se reperd.
+describe('normCms — partenaires', () => {
+  const abris = ['ABRIS', 'Association ABRIS', 'Association Abris Casseneuil',
+    'Association ABRIS (Casseneuil)', 'Association ABRIS ( Casseneuil)',
+    'Association ABRIS - Casseneuil', 'Asso ABRIS (Casseneuil)',
+    'Asso ABRIS Casseneuil', 'ABRIS - CASSENEUIL', 'Association ABRIS Casseneuil'];
+  abris.forEach(v => {
+    it(`regroupe « ${v} »`, () => assert.equal(normCms(v), 'Association ABRIS Casseneuil'));
+  });
+  it('regroupe les deux graphies de l\'IME', () => {
+    assert.equal(normCms('IME MONTCLAIRJOIE'), 'IME Montclairjoie');
+    assert.equal(normCms('IME Montclairjoie'), 'IME Montclairjoie');
+  });
+  it('regroupe France Services Pays de Lauzun avec et sans « du »', () => {
+    assert.equal(normCms('FRANCE SERVICES DU PAYS DE LAUZUN'), 'France Services Pays de Lauzun');
+    assert.equal(normCms('France Services Pays de Lauzun'), 'France Services Pays de Lauzun');
+  });
+  it('regroupe Service Environnement avec et sans la commune', () => {
+    assert.equal(normCms('Association Service Environnement - Sainte-Bazeille'), 'Association Service Environnement');
+    assert.equal(normCms('Association  Service Environnement'), 'Association Service Environnement');
+  });
+  it('sort le collège et le club des aînés de « Autre structure »', () => {
+    assert.equal(normCms('collège lucie aubrac'), 'Collège Lucie Aubrac');
+    assert.equal(normCms('Club des Aînés de la Cascade - Fauillet'), 'Club des Aînés Fauillet');
+  });
+  it('laisse inconnu ce qui n\'a pas été tranché', () => {
+    assert.equal(normCms('micro collège'), null);
+    assert.equal(normCms('Villeneuve sur Lot'), null);
   });
 });
