@@ -636,3 +636,84 @@ test.describe('Fond de carte', () => {
   });
 
 });
+
+test.describe('Lisibilité par-dessus la carte', () => {
+
+  // Tout ce qui se pose sur le fond de carte a besoin d'un fond opaque : les
+  // couleurs de la carte ne sont pas maîtrisées. Les variables de thème sont
+  // translucides (--s1 vaut rgba(255,255,255,.028)) et ne conviennent pas.
+  // Le défaut ne s'est vu qu'au passage de CartoDB, presque blanc, à OSM,
+  // coloré : le popup laissait voir la carte au travers.
+  const CLASSES = [
+    'leaflet-popup-content-wrapper',
+    'leaflet-popup-tip',
+    'leaflet-label-dark',
+  ];
+
+  async function opacites(page, clair) {
+    return page.evaluate(({ classes, clair }) => {
+      document.body.classList.toggle('light-mode', clair);
+      return classes.map((cls) => {
+        const d = document.createElement('div');
+        d.className = cls;
+        document.body.appendChild(d);
+        const fond = getComputedStyle(d).backgroundColor;
+        d.remove();
+        const m = fond.match(/[\d.]+/g) || [];
+        return { cls, fond, alpha: fond.startsWith('rgba') ? Number(m[3]) : 1 };
+      });
+    }, { classes: CLASSES, clair });
+  }
+
+  test('les éléments posés sur la carte sont opaques en thème sombre', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    const res = await opacites(page, false);
+    const transparents = res.filter(o => o.alpha < 0.85);
+    expect(transparents, JSON.stringify(transparents, null, 1)).toEqual([]);
+  });
+
+  test('ils le restent en thème clair', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    const res = await opacites(page, true);
+    const transparents = res.filter(o => o.alpha < 0.85);
+    expect(transparents, JSON.stringify(transparents, null, 1)).toEqual([]);
+  });
+
+});
+
+test.describe('Fond de carte neutre', () => {
+
+  // Un fond bavard concurrence les cercles de données au lieu de les porter.
+  // La désaturation ne doit toucher que le calque des tuiles : les cercles et
+  // les étiquettes vivent dans overlay-pane et gardent leurs couleurs.
+  async function filtreDe(page, cls, clair) {
+    return page.evaluate(({ cls, clair }) => {
+      document.body.classList.toggle('light-mode', clair);
+      const d = document.createElement('div');
+      d.className = cls;
+      document.body.appendChild(d);
+      const f = getComputedStyle(d).filter;
+      d.remove();
+      return f;
+    }, { cls, clair });
+  }
+
+  test('les tuiles sont désaturées dans les deux thèmes', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    expect(await filtreDe(page, 'leaflet-tile-pane', false)).toMatch(/grayscale/);
+    expect(await filtreDe(page, 'leaflet-tile-pane', true)).toMatch(/grayscale/);
+  });
+
+  test('les données posées sur la carte gardent leurs couleurs', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    for (const cls of ['leaflet-overlay-pane', 'leaflet-marker-pane', 'leaflet-tooltip-pane']) {
+      const f = await filtreDe(page, cls, false);
+      expect(f, `${cls} ne doit pas être désaturé`).not.toMatch(/grayscale/);
+    }
+  });
+
+});
