@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const {
   pct, esc, excelDate, parseDt, dayDiff, bizDays, monthLabel, typeColor,
   count, countThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
-  normEtat, isRealisee, countDemandes,
+  normEtat, isRealisee, countDemandes, parseRows, mapColonnes,
 } = require('./gdin-pure.js');
 
 // ─── pct ──────────────────────────────────────────────────────────────────
@@ -178,4 +178,105 @@ describe('countDemandes', () => {
   it('ignore les id vides',      () => assert.equal(countDemandes([{id_demande:''},{id_demande:'1'}]), 1));
   it('tableau vide',             () => assert.equal(countDemandes([]), 0));
   it('null',                     () => assert.equal(countDemandes(null), 0));
+});
+
+// ─── parseRows : parseur d'import unique ──────────────────────────────────
+const EN_TETES = ['N° Demande','Nom_Bénéficiaire','Commune','Thématique(s)','Motif','Type Action',
+  'Lieu / CMS','Date action (saisie)','Orienteur / Prescripteur','Date demande','Référent',
+  'Conseiller numérique','Structure orienteur','Téléphone bénéficiaire','Email bénéficiaire',
+  'Observation','Bénéficiaire connu','Urgence',"Libellé de l'état de l'action",
+  'Date planifiée de l\'action','Date de réalisation de l\'action'];
+const ligne = (o={}) => {
+  const c = new Array(21).fill('');
+  c[0]=o.n||'1'; c[1]=o.nom||'DUPONT Jean'; c[2]=o.commune||'AGEN'; c[3]=o.thema||'Logement';
+  c[4]=o.motif||'motif'; c[5]=o.type||'Accompagnement'; c[6]=o.lieu===undefined?'CMS Marmande':o.lieu;
+  c[7]=o.dateAct===undefined?'02/01/2025':o.dateAct;
+  c[9]=o.dateDem===undefined?'01/01/2025':o.dateDem;
+  c[11]=o.conum||'MARTIN Paul';
+  c[12]=o.structure||'CCAS'; c[13]=o.tel||'0600000000'; c[14]=o.email||'a@b.fr';
+  c[15]=o.obs||'observation libre'; c[16]=o.benef||'Oui'; c[17]=o.urgence||'Non';
+  c[18]=o.etat||'Réalisée';
+  return c;
+};
+
+describe('parseRows — comptage et motifs d\'exclusion', () => {
+  it('compte les lignes lues et retenues', () => {
+    const r = parseRows([EN_TETES, ligne(), ligne({n:'2'})]);
+    assert.equal(r.stats.lues, 2);
+    assert.equal(r.stats.retenues, 2);
+    assert.equal(r.stats.ecartees, 0);
+  });
+  it('écarte une ligne sans Lieu / CMS et le dit', () => {
+    const r = parseRows([EN_TETES, ligne(), ligne({n:'2', lieu:''})]);
+    assert.equal(r.stats.retenues, 1);
+    assert.equal(r.stats.ecartees, 1);
+    assert.equal(r.stats.motifs.lieu_cms_vide, 1);
+  });
+  it('écarte une ligne sans date de demande et le dit', () => {
+    const r = parseRows([EN_TETES, ligne(), ligne({n:'2', dateDem:''})]);
+    assert.equal(r.stats.retenues, 1);
+    assert.equal(r.stats.motifs.date_demande_absente, 1);
+  });
+  it('écarte une ligne trop courte et le dit', () => {
+    const r = parseRows([EN_TETES, ligne(), ['1','2']]);
+    assert.equal(r.stats.retenues, 1);
+    assert.equal(r.stats.motifs.ligne_incomplete, 1);
+  });
+  it('lues = retenues + écartées', () => {
+    const r = parseRows([EN_TETES, ligne(), ligne({n:'2',lieu:''}), ligne({n:'3',dateDem:''}), ['x','y']]);
+    assert.equal(r.stats.lues, r.stats.retenues + r.stats.ecartees);
+  });
+  it('signale les colonnes absentes', () => {
+    const h = EN_TETES.slice(); h[12]='Colonne inconnue';
+    const r = parseRows([h, ligne()]);
+    assert.ok(r.stats.colonnes_absentes.includes('structure'));
+  });
+  it('refuse un fichier sans ligne de données', () => {
+    assert.throws(() => parseRows([EN_TETES]), /vide|non reconnu/);
+  });
+});
+
+// ─── RGPD : la minimisation à l'import est vérifiée, pas seulement écrite ──
+// Le fichier source contient nom, téléphone, email et observations du
+// bénéficiaire. Aucun de ces champs ne doit entrer dans l'application.
+describe('parseRows — minimisation RGPD', () => {
+  const INTERDITS = ['nom','prenom','prénom','beneficiaire','bénéficiaire','telephone','téléphone',
+    'tel','email','mail','adresse','naissance','observation','nir','securite_sociale'];
+  it('aucun champ nominatif dans les enregistrements produits', () => {
+    const r = parseRows([EN_TETES, ligne()]);
+    const champs = Object.keys(r.records[0]).map(k => k.toLowerCase());
+    const fautifs = champs.filter(c => INTERDITS.some(i => c.includes(i)));
+    assert.deepEqual(fautifs, [], 'champs nominatifs importés : ' + fautifs.join(', '));
+  });
+  it('aucune valeur nominative du fichier source ne se retrouve dans un enregistrement', () => {
+    const r = parseRows([EN_TETES, ligne({nom:'DUPONT Jean', tel:'0612345678', email:'jean@exemple.fr', obs:'situation personnelle'})]);
+    const dump = JSON.stringify(r.records[0]);
+    ['DUPONT Jean','0612345678','jean@exemple.fr','situation personnelle']
+      .forEach(v => assert.ok(!dump.includes(v), 'donnée personnelle importée : ' + v));
+  });
+  it('benef_connu reste un booléen, pas une identité', () => {
+    const r = parseRows([EN_TETES, ligne({benef:'Oui'})]);
+    assert.equal(r.records[0].benef_connu, true);
+  });
+});
+
+// ─── mapColonnes ──────────────────────────────────────────────────────────
+describe('mapColonnes', () => {
+  it('retrouve les colonnes de l\'export réel', () => {
+    const I = mapColonnes(EN_TETES);
+    assert.equal(I.dateDem, 9);
+    assert.equal(I.lieu, 6);
+    assert.equal(I.type, 5);
+    assert.equal(I.etat, 18);
+    assert.equal(I.nDem, 0);
+  });
+  it('préfère Référent à Orienteur / Prescripteur', () => {
+    assert.equal(mapColonnes(EN_TETES).orienteur, 10);
+  });
+  it('ne confond pas Nom_Bénéficiaire avec Bénéficiaire connu', () => {
+    assert.equal(mapColonnes(EN_TETES).benef, 16);
+  });
+  it('retourne -1 pour une colonne absente', () => {
+    assert.equal(mapColonnes(['A','B','C','D','E']).lieu, -1);
+  });
 });
