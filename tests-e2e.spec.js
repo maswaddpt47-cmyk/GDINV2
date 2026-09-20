@@ -717,3 +717,75 @@ test.describe('Fond de carte neutre', () => {
   });
 
 });
+
+test.describe('Panneau de filtres mobile', () => {
+
+  // Le panneau était enfant du <header>, qui porte un backdrop-filter. Or un
+  // backdrop-filter sur un ancêtre crée un contexte de conteneur pour
+  // position:fixed : le panneau se positionnait par rapport au header au lieu
+  // de l'écran et sortait par le haut (top -216px sur un écran de 915px).
+  // Panneau et croix étaient hors d'atteinte — la croix passait pour cassée.
+  test.use({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
+
+  async function ouvrir(page) {
+    await loadFresh(page);
+    await dismissLanding(page);
+    await page.evaluate(() => openFilterDrawer());
+    await page.waitForTimeout(350);
+  }
+
+  test('le panneau ouvert tient dans l\'écran', async ({ page }) => {
+    await ouvrir(page);
+    const r = await page.evaluate(() => {
+      const d = document.getElementById('filter-drawer').getBoundingClientRect();
+      return { top: d.top, bottom: d.bottom, ecran: window.innerHeight };
+    });
+    expect(r.top, 'le panneau sort par le haut').toBeGreaterThanOrEqual(0);
+    expect(r.bottom, 'le panneau sort par le bas').toBeLessThanOrEqual(r.ecran);
+  });
+
+  test('aucun ancêtre ne détourne le position:fixed du panneau', async ({ page }) => {
+    await ouvrir(page);
+    const coupables = await page.evaluate(() => {
+      const out = [];
+      let n = document.getElementById('filter-drawer').parentElement;
+      while (n && n !== document.documentElement) {
+        const s = getComputedStyle(n);
+        if (s.transform !== 'none' || s.filter !== 'none' || s.backdropFilter !== 'none' || s.perspective !== 'none') {
+          out.push(n.tagName + (n.id ? '#' + n.id : ''));
+        }
+        n = n.parentElement;
+      }
+      return out;
+    });
+    expect(coupables, JSON.stringify(coupables)).toEqual([]);
+  });
+
+  test('la croix offre une cible tactile suffisante', async ({ page }) => {
+    await ouvrir(page);
+    const r = await page.evaluate(() => {
+      const c = document.querySelector('#filter-drawer .drawer-close').getBoundingClientRect();
+      return { w: c.width, h: c.height };
+    });
+    expect(r.w, 'largeur de la croix').toBeGreaterThanOrEqual(44);
+    expect(r.h, 'hauteur de la croix').toBeGreaterThanOrEqual(44);
+  });
+
+  test('la croix ferme réellement le panneau au doigt', async ({ page }) => {
+    await ouvrir(page);
+    await page.locator('#filter-drawer .drawer-close').tap();
+    await page.waitForTimeout(350);
+    const ouvert = await page.evaluate(() => document.getElementById('filter-drawer').classList.contains('open'));
+    expect(ouvert).toBe(false);
+  });
+
+  test('le panneau ne mange pas la moitié de l\'écran', async ({ page }) => {
+    await ouvrir(page);
+    const pct = await page.evaluate(() => {
+      const d = document.getElementById('filter-drawer').getBoundingClientRect();
+      return d.height / window.innerHeight;
+    });
+    expect(pct).toBeLessThan(0.5);
+  });
+
+});

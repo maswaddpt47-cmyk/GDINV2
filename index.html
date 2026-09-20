@@ -431,16 +431,22 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
 /* ── Mobile filter drawer ── */
 .filter-drawer-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300}
 .filter-drawer-backdrop.open{display:block}
-.filter-drawer{position:fixed;bottom:60px;left:0;right:0;background:#080a10;backdrop-filter:blur(32px) saturate(180%);border-top:1px solid rgba(255,255,255,.08);border-radius:20px 20px 0 0;padding:14px 16px 18px;z-index:301;transform:translateY(calc(100% + 60px));transition:transform .25s ease;overflow-y:auto}
+.filter-drawer{position:fixed;bottom:60px;left:0;right:0;background:#080a10;backdrop-filter:blur(32px) saturate(180%);border-top:1px solid rgba(255,255,255,.08);border-radius:20px 20px 0 0;padding:8px 16px 12px;max-height:55vh;z-index:301;transform:translateY(calc(100% + 60px));transition:transform .25s ease;overflow-y:auto}
 .filter-drawer.open{transform:translateY(0)}
-.drawer-handle{width:36px;height:3px;background:var(--dim);border-radius:2px;margin:0 auto 12px}
-.drawer-title{font-size:12px;font-weight:700;margin-bottom:10px;color:var(--text);text-transform:uppercase;letter-spacing:.8px}
-.drawer-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.drawer-handle{width:36px;height:3px;background:var(--dim);border-radius:2px;margin:0 auto 8px}
+/* La croix mesurait 19x18 px : trop petite pour être touchée au doigt, elle
+   passait pour cassée alors qu'elle appelait bien closeFilterDrawer().
+   44x44 est la cible tactile minimale retenue (WCAG 2.5.5). Le décalage
+   négatif compense le rembourrage pour que le × reste aligné visuellement. */
+.drawer-close{background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;line-height:1;width:44px;height:44px;margin:-11px -12px -11px 0;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.drawer-close:active{background:rgba(255,255,255,.08)}
+.drawer-title{font-size:12px;font-weight:700;margin-bottom:0;color:var(--text);text-transform:uppercase;letter-spacing:.8px}
+.drawer-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
 .drawer-row label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:600;min-width:42px;flex-shrink:0}
 .drawer-row input[type=date]{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--text);border-radius:8px;padding:6px 10px;font-family:'Space Grotesk',sans-serif;font-size:12px;outline:none;flex:1;-webkit-appearance:none;appearance:none}
 .drawer-row input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:pointer}
 .drawer-row select{flex:1;padding:6px 10px;font-size:12px}
-.drawer-years{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:10px}
+.drawer-years{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:7px}
 .drawer-years::-webkit-scrollbar{display:none}
 /* ── FAB Import ── */
 #fab-import{position:fixed;bottom:28px;right:20px;z-index:450;background:var(--green);color:#000;border:none;border-radius:50px;padding:13px 22px;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 24px rgba(0,229,160,.45);display:flex;align-items:center;gap:8px;transition:all .2s;white-space:nowrap}
@@ -637,38 +643,6 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
     <!-- theme button moved to sidebar -->
     <button class="btn-import-topbar tab" onclick="switchTab('import',this)" title="Importer un fichier de données">⬆ Import</button>
     <button class="btn-pres" id="btn-pres" onclick="startDiapo()" title="Mode diaporama" aria-label="Lancer le diaporama">▶ Plein Page</button>
-  </div>
-  <!-- Drawer mobile filtres -->
-  <div class="filter-drawer-backdrop" id="drawer-backdrop" onclick="closeFilterDrawer()"></div>
-  <div class="filter-drawer" id="filter-drawer">
-    <div class="drawer-handle"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div class="drawer-title" style="margin:0">Filtres</div>
-      <button onclick="closeFilterDrawer()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 4px;line-height:1">×</button>
-    </div>
-    <div class="drawer-row"><label>Type</label>
-      <select id="typeFilterM" onchange="syncMobileFilter('type',this.value)">
-        <option value="">Tous</option>
-        <option value="Accompagnement" selected>Accompagnement</option>
-        <option value="Prise de contact">Prise de contact</option>
-        <option value="Orientation vers un tiers">Orientation tiers</option>
-        <option value="Atelier">Atelier</option>
-        <option value="Demande de prescription de Pass">Prescription de Pass</option>
-        <option value="Orientation vers un CN du 47">Orientation vers un CN 47</option>
-        <option value="Autre">Autre</option>
-      </select>
-    </div>
-    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:600;margin-bottom:6px">Années</div>
-    <div id="drawer-year-chips" class="drawer-years"></div>
-    <div class="drawer-row"><label>Du</label>
-      <input type="date" id="dFromM" onchange="syncMobileFilter('dFrom',this.value)">
-      <label style="min-width:24px;text-align:center">au</label>
-      <input type="date" id="dToM" onchange="syncMobileFilter('dTo',this.value)">
-    </div>
-    <div style="display:flex;gap:8px;margin-top:6px">
-      <button class="btn-import" style="background:var(--blue);font-size:11px;padding:7px 16px;flex:1" onclick="closeFilterDrawer()">Appliquer</button>
-      <button class="btn-sm" onclick="resetDates();closeFilterDrawer()" style="flex:1;text-align:center">⟲ Réinitialiser</button>
-    </div>
   </div>
 </header>
 
@@ -5169,6 +5143,46 @@ async function exportDiapoPDF(){
 <button id="fab-import" class="tab" onclick="switchTab('import',this)" title="Importer un fichier de données XLSX">
   ⬆ Importer mes données
 </button>
+
+<!-- Drawer mobile filtres — enfant direct de <body>, jamais du <header>.
+     Le header porte un backdrop-filter, et un backdrop-filter sur un ancêtre
+     crée un contexte de conteneur pour position:fixed : le drawer se
+     positionnait alors par rapport au header au lieu de l'écran et sortait
+     par le haut (mesuré le 20/09/2026 : top -216px sur un écran de 915px).
+     Panneau et croix devenaient intouchables. Couvert par les tests e2e
+     « Panneau de filtres mobile ». -->
+  <!-- Drawer mobile filtres -->
+  <div class="filter-drawer-backdrop" id="drawer-backdrop" onclick="closeFilterDrawer()"></div>
+  <div class="filter-drawer" id="filter-drawer">
+    <div class="drawer-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="drawer-title" style="margin:0">Filtres</div>
+      <button onclick="closeFilterDrawer()" aria-label="Fermer les filtres" class="drawer-close">×</button>
+    </div>
+    <div class="drawer-row"><label>Type</label>
+      <select id="typeFilterM" onchange="syncMobileFilter('type',this.value)">
+        <option value="">Tous</option>
+        <option value="Accompagnement" selected>Accompagnement</option>
+        <option value="Prise de contact">Prise de contact</option>
+        <option value="Orientation vers un tiers">Orientation tiers</option>
+        <option value="Atelier">Atelier</option>
+        <option value="Demande de prescription de Pass">Prescription de Pass</option>
+        <option value="Orientation vers un CN du 47">Orientation vers un CN 47</option>
+        <option value="Autre">Autre</option>
+      </select>
+    </div>
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:600;margin-bottom:6px">Années</div>
+    <div id="drawer-year-chips" class="drawer-years"></div>
+    <div class="drawer-row"><label>Du</label>
+      <input type="date" id="dFromM" onchange="syncMobileFilter('dFrom',this.value)">
+      <label style="min-width:24px;text-align:center">au</label>
+      <input type="date" id="dToM" onchange="syncMobileFilter('dTo',this.value)">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button class="btn-import" style="background:var(--blue);font-size:11px;padding:7px 16px;flex:1" onclick="closeFilterDrawer()">Appliquer</button>
+      <button class="btn-sm" onclick="resetDates();closeFilterDrawer()" style="flex:1;text-align:center">⟲ Réinitialiser</button>
+    </div>
+  </div>
 
 </body>
 </html>
