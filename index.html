@@ -1168,6 +1168,10 @@ const EMBEDDED=[];
 // Ses 483 lignes, toutes sur 2022-2023, sont réintégrées — masquer l'activité
 // d'un agent parti fausse l'historique. Ne pas réintroduire d'exclusion par
 // nom : elle inscrirait ce nom dans un dépôt public et se périmerait seule.
+// Fond de carte, défini une seule fois : les deux cartes (Territoire et Diapo
+// Rapport) doivent servir le même fournisseur, sinon l'une casse sans l'autre.
+const TUILES_URL='https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png';
+const TUILES_ATTRIB='© OpenStreetMap France';
 function conumMasque(){return false;}
 const CONUM_COLORS=new Proxy({},{get:(_,k)=>typeof k==='string'?couleurConum(k):undefined,has:()=>true});
 const YEAR_PALETTE=['#3b82f6','#10b981','#f97316','#8b5cf6','#22d3ee','#eab308','#ef4444'];
@@ -3890,11 +3894,14 @@ function getCoordsGlobal(nom){
     const map=L.map('map-territoire',{center:[44.35,0.6],zoom:9,zoomControl:true,attributionControl:true});
     window._leafletMap=map;
 
-    // Tuiles CartoDB Voyager — rendu épuré proche Google Maps
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
-      subdomains:'abcd',maxZoom:19,
-      attribution:'© OpenStreetMap © CartoDB'
-    }).addTo(map);
+    // Fond de carte : OpenStreetMap France.
+    // CARTO a fermé l'accès libre à ses tuiles (constaté le 20/09/2026 en
+    // production) : le serveur renvoyait un filigrane « API KEY REQUIRED » en
+    // travers de la carte. OSM France est libre, sans clé, et hébergé en
+    // France — l'IP des visiteurs ne quitte pas l'UE, contrairement à CARTO.
+    // Toute reprise d'un fournisseur exigeant une clé casserait la carte à
+    // nouveau : vérifier qu'il sert bien sans authentification.
+    L.tileLayer(TUILES_URL,{maxZoom:19,attribution:TUILES_ATTRIB}).addTo(map);
 
     function radius(n){return Math.max(4,Math.sqrt(n/maxVolRef)*42);}
 
@@ -4590,7 +4597,7 @@ function drSlideTerritoire(c,data){
 
     if(window._drMap){try{window._drMap.remove();}catch(e){}}
     const map=L.map('dr-map',{center:[44.35,0.62],zoom:9,zoomControl:true,attributionControl:false});
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19}).addTo(map);
+    L.tileLayer(TUILES_URL,{maxZoom:19,attribution:TUILES_ATTRIB}).addTo(map);
     window._drMap=map;
 
     // Conteneur dimensionné : on cale le moteur de rendu AVANT de poser les vecteurs

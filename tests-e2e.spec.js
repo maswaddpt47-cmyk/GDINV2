@@ -602,3 +602,37 @@ test.describe('Lisibilité des listes déroulantes', () => {
   });
 
 });
+
+test.describe('Fond de carte', () => {
+
+  // CARTO a fermé l'accès libre à ses tuiles : le serveur renvoyait un
+  // filigrane « API KEY REQUIRED » en travers de la carte, en production, sans
+  // qu'aucune ligne du dépôt ait changé. Ces tests verrouillent le fait que le
+  // fond de carte ne dépend d'aucune clé et que les deux cartes servent la
+  // même source.
+  test('aucune tuile ne dépend d\'un fournisseur à clé', async ({ page }) => {
+    await loadFresh(page);
+    const src = await page.evaluate(() => typeof TUILES_URL !== 'undefined' ? TUILES_URL : null);
+    expect(src).toBeTruthy();
+    expect(src).not.toMatch(/cartocdn|apikey|api_key|access[-_]?token|\{key\}/i);
+    expect(src).toMatch(/^https:\/\//);
+  });
+
+  test('les deux cartes partagent la même source', async ({ page }) => {
+    await loadFresh(page);
+    const appels = await page.evaluate(() => {
+      const html = document.documentElement.innerHTML;
+      return (html.match(/L\.tileLayer\(([^,)]+)/g) || []).map(s => s.replace('L.tileLayer(', '').trim());
+    });
+    expect(appels.length).toBeGreaterThanOrEqual(2);
+    expect([...new Set(appels)]).toEqual(['TUILES_URL']);
+  });
+
+  test('l\'attribution du fond de carte est renseignée', async ({ page }) => {
+    await loadFresh(page);
+    const a = await page.evaluate(() => typeof TUILES_ATTRIB !== 'undefined' ? TUILES_ATTRIB : null);
+    expect(a).toBeTruthy();
+    expect(a).toMatch(/OpenStreetMap/i);
+  });
+
+});
