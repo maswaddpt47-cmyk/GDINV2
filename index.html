@@ -694,8 +694,6 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
     <div class="card"><div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Top orienteurs (15 premiers)</div><canvas id="ch-ori-global" style="max-height:320px"></canvas></div>
   </div>
   <div class="g2">
-    <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Thématiques — barres comparatives</div><canvas id="ch-thema-bar" style="max-height:320px"></canvas></div>
-    <div class="card"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Volume par CMS — classement</div><canvas id="ch-cms-rank" style="max-height:320px"></canvas></div>
   </div>
 
   <!-- Saisonnalité — basé sur DATA brut, indépendant des filtres -->
@@ -872,7 +870,6 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
       <div class="card"><div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Évolution mensuelle des ateliers</div><canvas id="ch-atl-evol" style="max-height:260px"></canvas></div>
       <div class="card"><div class="card-title"><span class="dot" style="background:var(--purple)"></span>Comparaison N / N-1 / N-2 — ateliers par mois</div><canvas id="ch-atl-yoy" style="max-height:260px"></canvas></div>
     </div>
-    <div class="card g1"><div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Comparaison N / N-1 / N-2 — courbes mensuelles</div><canvas id="ch-atl-yoy-line" style="max-height:240px"></canvas></div>
     <div class="card g1"><div class="card-title"><span class="dot" style="background:var(--orange)"></span>Top thématiques abordées</div><canvas id="ch-atl-thema" style="max-height:260px"></canvas></div>
     <div class="card">
       <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Top 15 lieux d'ateliers</div>
@@ -1630,27 +1627,6 @@ function renderGlobal(){
     setInsightQ('ch-ori-global',oriEntries[0]?`Orienteur principal : <strong>${oriEntries[0][0]}</strong> (${oriEntries[0][1]} dem. — ${pct(oriEntries[0][1],data.length)}%)`:'Aucune donnée');
   }
 
-  // Thématiques — barres comparatives
-  {
-    const theEnt2=Object.entries(countThemas(data)).slice(0,12);
-    destroyChart('ch-thema-bar');
-    charts['ch-thema-bar']=new Chart(document.getElementById('ch-thema-bar'),{
-      type:'bar',
-      data:{labels:theEnt2.map(t=>t[0]),datasets:[{data:theEnt2.map(t=>t[1]),backgroundColor:PALETTE.map(c=>c+'cc'),borderColor:PALETTE,borderWidth:1,borderRadius:4,borderSkipped:false}]},
-      options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.x} demandes`}}},scales:{x:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}},y:{grid:{display:false},ticks:{color:'var(--text)',font:{size:10}}}}}
-    });
-  }
-
-  // Volume par CMS — classement (horizontal bar)
-  {
-    const cmsEntries=countEntries(noDsian,'cms').sort((a,b)=>b[1]-a[1]).slice(0,12);
-    destroyChart('ch-cms-rank');
-    charts['ch-cms-rank']=new Chart(document.getElementById('ch-cms-rank'),{
-      type:'bar',
-      data:{labels:cmsEntries.map(e=>e[0].replace(/^Centre Médico-Social(?: de)? /,'CMS ')),datasets:[{data:cmsEntries.map(e=>e[1]),backgroundColor:'#10b98188',borderColor:'#10b981',borderWidth:1.5,borderRadius:4,borderSkipped:false}]},
-      options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.x} accompagnements`}}},scales:{x:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}},y:{grid:{display:false},ticks:{color:'var(--text)',font:{size:10}}}}}
-    });
-  }
   renderSaisonGlobal();
 }
 
@@ -3684,19 +3660,6 @@ function renderAteliers(){
     data:{labels:MOIS_COURTS,datasets:yoyDatasets},
     options:{responsive:true,maintainAspectRatio:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:10},padding:10,boxWidth:10,color:legendColor()}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}
   });
-  const yoyLineDatasets=yoyYears.map((yr,i)=>{
-    const vals=Array(12).fill(0);
-    allAtlData.filter(r=>r.date_demande.startsWith(yr)).forEach(r=>{const mo=parseInt(r.date_demande.slice(5,7))-1;if(mo>=0&&mo<12)vals[mo]++;});
-    const col=YOY_COLORS[i%YOY_COLORS.length];
-    return{label:yr,data:vals,borderColor:col,backgroundColor:col+'22',borderWidth:2,pointRadius:3,pointHoverRadius:5,fill:true,tension:.35};
-  });
-  destroyChart('ch-atl-yoy-line');
-  charts['ch-atl-yoy-line']=new Chart(document.getElementById('ch-atl-yoy-line'),{
-    type:'line',
-    data:{labels:MOIS_COURTS,datasets:yoyLineDatasets},
-    options:{responsive:true,maintainAspectRatio:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:10},padding:10,boxWidth:10,color:legendColor()}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}
-  });
-
   // Tableau top lieux
   const lieuAcc={};
   data.forEach(r=>{
