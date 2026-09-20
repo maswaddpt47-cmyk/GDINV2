@@ -195,7 +195,7 @@ const ligne = (o={}) => {
   c[9]=o.dateDem===undefined?'01/01/2025':o.dateDem;
   c[10]=o.orienteur===undefined?'':o.orienteur;
   c[11]=o.conum===undefined?'MARTIN Paul':o.conum;
-  c[12]=o.structure||'CCAS'; c[13]=o.tel||'0600000000'; c[14]=o.email||'a@b.fr';
+  c[12]=o.structure===undefined?'CCAS':o.structure; c[13]=o.tel||'0600000000'; c[14]=o.email||'a@b.fr';
   c[15]=o.obs||'observation libre'; c[16]=o.benef||'Oui'; c[17]=o.urgence||'Non';
   c[18]=o.etat||'Réalisée';
   return c;
@@ -208,8 +208,8 @@ describe('parseRows — comptage et motifs d\'exclusion', () => {
     assert.equal(r.stats.retenues, 2);
     assert.equal(r.stats.ecartees, 0);
   });
-  it('écarte une ligne sans Lieu / CMS et le dit', () => {
-    const r = parseRows([EN_TETES, ligne(), ligne({n:'2', lieu:''})]);
+  it('écarte une ligne sans Lieu / CMS ni structure et le dit', () => {
+    const r = parseRows([EN_TETES, ligne(), ligne({n:'2', lieu:'', structure:''})]);
     assert.equal(r.stats.retenues, 1);
     assert.equal(r.stats.ecartees, 1);
     assert.equal(r.stats.motifs.lieu_cms_vide, 1);
@@ -351,10 +351,10 @@ describe('parseRows — CMS lu dans la structure orienteur', () => {
     const r = parseRows([EN_TETES, ligne({ lieu: '', structure: 'Centre Médico-Social de Marmande' })]);
     assert.equal(r.records[0].cms, 'CMS Marmande');
   });
-  it('écarte toujours une structure non reconnue', () => {
-    const r = parseRows([EN_TETES, ligne({ lieu: '', structure: 'UNA 47' }), ligne({ n: '2' })]);
+  it('accepte une structure inconnue sous « Autre structure »', () => {
+    const r = parseRows([EN_TETES, ligne({ lieu: '', structure: 'UNA 47' })]);
     assert.equal(r.records.length, 1);
-    assert.equal(r.stats.motifs.lieu_cms_vide, 1);
+    assert.equal(r.records[0].cms, 'Autre structure');
   });
   it('écarte toujours une ligne sans lieu ni structure', () => {
     const r = parseRows([EN_TETES, ligne({ lieu: '', structure: '' }), ligne({ n: '2' })]);
@@ -372,7 +372,7 @@ describe('parseRows — CMS lu dans la structure orienteur', () => {
   });
   it('le compte rendu d\'import signale les reprises', () => {
     const r = parseRows([EN_TETES, ligne({ lieu: '', structure: 'CMS Tonneins' })]);
-    assert.match(formatResumeImport(r.stats), /1 CMS lus dans la structure orienteur/);
+    assert.match(formatResumeImport(r.stats), /1 lieux lus dans la structure orienteur/);
   });
 });
 
@@ -455,5 +455,42 @@ describe('comblerConum', () => {
       ligne({ n: '2', conum: '', orienteur: 'MARTIN Paul' })]);
     assert.equal(r.stats.conum_via_referent, 1);
     assert.equal(r.records[1].conum, 'MARTIN Paul');
+  });
+});
+
+// ─── parseRows — cycle de vie du Pass Numérique ───────────────────────────
+// 4 184 lignes de l'export de septembre. Générées par l'outil, sans
+// conseiller ni thématique ni lieu : à écarter par type d'action, jamais par
+// nom de structure (UNA 47 porte les deux).
+describe('parseRows — cycle Pass', () => {
+  it('écarte une ligne purement technique', () => {
+    const r = parseRows([EN_TETES, ligne({ n: '1', type: 'Suivi pass' }), ligne({ n: '2' })]);
+    assert.equal(r.records.length, 1);
+    assert.equal(r.stats.motifs.cycle_pass, 1);
+  });
+  it('écarte le suivi automatique et le sondage', () => {
+    const r = parseRows([EN_TETES,
+      ligne({ n: '1', type: 'Demande suivi pass (auto)' }),
+      ligne({ n: '2', type: 'Sondage pass' }),
+      ligne({ n: '3' })]);
+    assert.equal(r.stats.motifs.cycle_pass, 2);
+  });
+  it('conserve la demande de prescription, qui est un geste de conseiller', () => {
+    const r = parseRows([EN_TETES, ligne({ type: 'Demande de prescription de Pass' })]);
+    assert.equal(r.records.length, 1);
+  });
+  it('conserve une ligne mêlant un type technique et une vraie action', () => {
+    const r = parseRows([EN_TETES, ligne({ type: 'Suivi pass;Accompagnement' })]);
+    assert.equal(r.records.length, 1);
+    assert.deepEqual(r.records[0].type_action, ['Suivi pass', 'Accompagnement']);
+  });
+  it('n\'écarte pas sur le nom de la structure', () => {
+    const r = parseRows([EN_TETES, ligne({ type: 'Atelier', lieu: '', structure: 'UNA 47' })]);
+    assert.equal(r.records.length, 1);
+    assert.equal(r.stats.motifs.cycle_pass, 0);
+  });
+  it('le compte rendu d\'import détaille le motif', () => {
+    const r = parseRows([EN_TETES, ligne({ n: '1', type: 'Suivi pass' }), ligne({ n: '2' })]);
+    assert.match(formatResumeImport(r.stats), /1 du cycle Pass/);
   });
 });

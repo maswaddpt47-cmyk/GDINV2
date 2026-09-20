@@ -310,10 +310,13 @@ function excelDate(v){if(!v&&v!==0)return null;if(typeof v==='string'){const s=d
 // mapping ailleurs — couvert par les tests « parseRows ».
 const ETAT_MAP={'en cours':'En attente','en attente':'En attente','realisee':'Réalisée','réalisée':'Réalisée','non realisee':'Non réalisée','non réalisée':'Non réalisée','annulee':'Annulée','annulée':'Annulée'};
 const TYPE_EXCLUS=new Set(['Reservation']);
-// Règle d'exclusion en vigueur : une ligne sans CMS identifiable est écartée.
-// Décision non tranchée au 20/09/2026 : 5 919 lignes de l'export de juin, dont
-// des ateliers et des accompagnements hors CMS. Passer à false les réintègre —
-// le compte rendu d'import affiche le nombre concerné dans les deux cas.
+// Cycle de vie du Pass Numérique : lignes générées par l'outil, pas des actions.
+const TYPE_CYCLE_PASS=new Set(['Demande suivi pass (auto)','Suivi pass','Sondage pass']);
+// Une ligne dont ni « Lieu / CMS » ni « Structure orienteur » n'est renseigné
+// est écartée : aucun lieu n'est alors rattachable. Depuis le 20/09/2026 le
+// repli sur la structure s'applique d'abord, si bien qu'aucune ligne de
+// l'export de septembre ne tombe plus ici. Le compte rendu d'import affiche le
+// nombre concerné dans les deux cas.
 const ECARTER_SANS_CMS=true;
 
 function normHeader(s){return String(s).toLowerCase().replace(/\s+/g,' ').trim().replace(/[éèê]/g,'e').replace(/[àâ]/g,'a').replace(/[ùû]/g,'u').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/['’]/g,"'");}
@@ -349,29 +352,38 @@ function parseRows(rows){
     return repare.trim();
   };
   const records=[],warnings=[];
-  const stats={lues:rows.length-1,retenues:0,ecartees:0,motifs:{ligne_incomplete:0,date_demande_absente:0,lieu_cms_vide:0},
+  const stats={lues:rows.length-1,retenues:0,ecartees:0,motifs:{ligne_incomplete:0,date_demande_absente:0,lieu_cms_vide:0,cycle_pass:0},
     colonnes_absentes:Object.keys(I).filter(k=>I[k]<0),regle_sans_cms:ECARTER_SANS_CMS?'ecartees':'conservees'};
   for(let i=1;i<rows.length;i++){
     const c=rows[i];
     if(!c||c.length<5){stats.motifs.ligne_incomplete++;stats.ecartees++;continue;}
     const dd=excelDate(cell(c,I.dateDem));
     if(!dd){stats.motifs.date_demande_absente++;stats.ecartees++;continue;}
+    // Le cycle de vie du Pass Numérique génère des lignes sans conseiller ni
+    // thématique ni lieu : de la plomberie, pas de l'activité. 4 184 lignes sur
+    // l'export de septembre. Les écarter par type d'action, jamais par nom de
+    // structure : UNA 47 porte 969 lignes du cycle et 30 d'activité réelle.
+    // « Demande de prescription de Pass » n'en fait pas partie — c'est un geste
+    // de conseiller, pas un automatisme.
+    const typesBruts=cell(c,I.type).split(';').map(t=>t.trim()).filter(Boolean);
+    if(typesBruts.length&&typesBruts.every(t=>TYPE_CYCLE_PASS.has(t))){
+      stats.motifs.cycle_pass++;stats.ecartees++;continue;}
     const lieuRaw=cell(c,I.lieu);
     const structureRaw=cell(c,I.structure);
     const cmsLieu=extractDominantCms(lieuRaw);
-    // Famille A : le CMS est parfois saisi dans « Structure orienteur » au lieu
-    // de « Lieu / CMS ». Le repli utilise normCms(), qui rend null sur un
-    // libellé inconnu — pas extractDominantCms(), qui range tout libellé non
-    // vide sous « Autre structure » et ferait entrer les 5 158 lignes des
-    // familles B et C (mesuré le 20/09/2026 sur l'export de septembre).
-    const cms=cmsLieu||normCms(structureRaw);
+    // Le lieu est parfois saisi dans « Structure orienteur » au lieu de
+    // « Lieu / CMS ». Une structure connue donne son libellé canonique, une
+    // structure inconnue « Autre structure » — exactement ce que fait déjà
+    // « Lieu / CMS » pour un libellé qu'il ne connaît pas. Sans ce repli,
+    // 965 ateliers restaient invisibles : un sur cinq.
+    const cms=cmsLieu||normCms(structureRaw)||(structureRaw?'Autre structure':null);
     if(!cms&&ECARTER_SANS_CMS){stats.motifs.lieu_cms_vide++;stats.ecartees++;continue;}
     if(!cms)stats.motifs.lieu_cms_vide++;
     if(!cmsLieu&&cms)cmsViaStructure++;
     const da=excelDate(cell(c,I.dateAct))||null;
     const themas=cell(c,I.themas).split('/').map(t=>t.trim()).filter(Boolean);
     const seen=new Set(),types=[];
-    for(const p of cell(c,I.type).split(';')){const t=p.trim();
+    for(const t of typesBruts){
       if(t&&!TYPE_EXCLUS.has(t)&&!seen.has(t)){seen.add(t);types.push(t);}
       if(types.length>=4)break;}
     const etatRaw=cell(c,I.etat);
@@ -411,7 +423,7 @@ function formatResumeImport(stats){
   if(stats.regle_sans_cms==='conservees'){
     if(stats.ecartees>0)parts.push(`${stats.ecartees} écartées`);
     if(m.lieu_cms_vide)parts.push(`${m.lieu_cms_vide} sans CMS (conservées)`);
-    if(stats.cms_via_structure)parts.push(`${stats.cms_via_structure} CMS lus dans la structure orienteur`);
+    if(stats.cms_via_structure)parts.push(`${stats.cms_via_structure} lieux lus dans la structure orienteur`);
     if(stats.communes_fusionnees)parts.push(`${stats.communes_fusionnees} communes regroupées`);
     if(stats.conum_via_referent)parts.push(`${stats.conum_via_referent} conseillers lus dans le référent`);
     if(stats.cellules_reparees)parts.push(`${stats.cellules_reparees} cellules réparées (encodage)`);
@@ -422,9 +434,10 @@ function formatResumeImport(stats){
     if(m.lieu_cms_vide)d.push(`${m.lieu_cms_vide} sans CMS`);
     if(m.date_demande_absente)d.push(`${m.date_demande_absente} sans date de demande`);
     if(m.ligne_incomplete)d.push(`${m.ligne_incomplete} incomplètes`);
+    if(m.cycle_pass)d.push(`${m.cycle_pass} du cycle Pass`);
     parts.push(`${stats.ecartees} écartées (${d.join(', ')})`);
   }else parts.push('aucune écartée');
-  if(stats.cms_via_structure)parts.push(`${stats.cms_via_structure} CMS lus dans la structure orienteur`);
+  if(stats.cms_via_structure)parts.push(`${stats.cms_via_structure} lieux lus dans la structure orienteur`);
   if(stats.communes_fusionnees)parts.push(`${stats.communes_fusionnees} communes regroupées`);
   if(stats.conum_via_referent)parts.push(`${stats.conum_via_referent} conseillers lus dans le référent`);
   if(stats.cellules_reparees)parts.push(`${stats.cellules_reparees} cellules réparées (encodage)`);
@@ -472,7 +485,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,ETAT_MAP,TYPE_EXCLUS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,
