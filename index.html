@@ -1231,13 +1231,13 @@ function setNNMode(on,btn){nnModeVal=on;document.querySelectorAll('#nnMode .togg
 // VUE GLOBALE
 function renderGlobal(){
   const data=getFiltered(),noDsian=data.filter(r=>r.cms!=='DSIAN');
-  const noA=data.filter(r=>!r.date_action).length;
+  const nbDemandes=countDemandes(data);
   const conumSet=new Set(data.map(r=>r.conum));
   const cmsSet=new Set(data.map(r=>r.cms));
   const topThema=Object.keys(countThemas(data))[0]||'—';
   document.getElementById('kpi-global').innerHTML=`
     <div class="kpi blue" data-tip="Total des demandes reçues\nsur la période filtrée"><div class="kpi-label">Accompagnements</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">période sélectionnée</div></div>
-    <div class="kpi green" data-tip="% de dossiers avec\nune date d'action renseignée"><div class="kpi-label">Taux complétion</div><div class="kpi-value">${pct(data.length-noA,data.length)}%</div><div class="kpi-sub">${data.length-noA} avec date action</div></div>
+    <div class="kpi green" data-tip="N° de demande distincts.\nUne demande génère plusieurs lignes d'action,\ndonc ce nombre est inférieur au total d'actions."><div class="kpi-label">Demandes distinctes</div><div class="kpi-value">${nbDemandes}</div><div class="kpi-sub">pour ${data.length} actions</div></div>
     <div class="kpi orange"><div class="kpi-label">Conseillers actifs</div><div class="kpi-value">${conumSet.size}</div><div class="kpi-sub">sur la période</div></div>
     <div class="kpi purple"><div class="kpi-label">Structures couvertes</div><div class="kpi-value">${cmsSet.size}</div><div class="kpi-sub">CMS / structures</div></div>
     <div class="kpi cyan"><div class="kpi-label">Thématique dominante</div><div class="kpi-value" style="font-size:13px;line-height:1.5;padding-top:4px">${topThema}</div><div class="kpi-sub">${countThemas(data)[topThema]||0} demandes</div></div>`;
