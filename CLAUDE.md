@@ -48,9 +48,9 @@ Il existe deux diaporamas distincts dans l'application — **ne pas les confondr
 
 ### Tests unitaires — règle obligatoire
 
-Le fichier **`gdin-pure.js`** contient toutes les fonctions pures du projet (calculs, parsing, normalisation CMS). Le fichier **`tests.html`** contient 54 tests unitaires qui les couvrent.
+Le fichier **`gdin-pure.js`** contient les fonctions pures du projet (calculs, parsing, normalisation CMS). Le fichier **`gdin-pure.test.js`** contient 55 tests unitaires (`node:test`) qui les couvrent. Une suite end-to-end Playwright (`tests-e2e.spec.js`, 15 tests) couvre les parcours navigateur.
 
-**Si le projet contient des fonctions de calcul, de parsing ou de normalisation de données → créer `gdin-pure.js` (ou équivalent) + `tests.html` dès la première session significative, sans attendre qu'on le demande.**
+**Toute nouvelle fonction de calcul, de parsing ou de normalisation va dans `gdin-pure.js` avec ses tests, pas dans le HTML.**
 
 Une session est significative si elle touche à la logique métier (pas une simple correction de typo ou de style).
 
