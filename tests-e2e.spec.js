@@ -249,3 +249,46 @@ test.describe('Import JSON → comportement post-import', () => {
   });
 
 });
+
+test.describe('Boot sans réseau externe', () => {
+
+  // Les librairies étaient chargées depuis cdnjs : sans accès à ce domaine,
+  // Chart n'était jamais défini et la page restait blanche. Ce test coupe
+  // tout ce qui n'est pas file:// et vérifie que le dashboard démarre quand
+  // même. Le supprimer revient à rouvrir la panne.
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/*', route => {
+      const url = route.request().url();
+      return url.startsWith('file://') ? route.continue() : route.abort();
+    });
+  });
+
+  test('les librairies sont définies malgré le réseau coupé', async ({ page }) => {
+    await loadFresh(page);
+    const libs = await page.evaluate(() => ({
+      chart: typeof window.Chart,
+      leaflet: typeof window.L,
+      xlsx: typeof window.XLSX,
+    }));
+    expect(libs).toEqual({ chart: 'function', leaflet: 'object', xlsx: 'object' });
+  });
+
+  test('le dashboard affiche ses KPIs malgré le réseau coupé', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    await expect(page.locator('#panel-global')).toHaveClass(/active/);
+    const kpiValues = page.locator('#kpi-global .kpi-value');
+    expect(await kpiValues.count()).toBeGreaterThan(0);
+    expect((await kpiValues.first().textContent())?.trim()).not.toBe('');
+  });
+
+  test('les polices sont servies depuis le dépôt', async ({ page }) => {
+    await loadFresh(page);
+    const loaded = await page.evaluate(async () => {
+      await document.fonts.ready;
+      return document.fonts.check('600 16px "Space Grotesk"');
+    });
+    expect(loaded).toBe(true);
+  });
+
+});

@@ -48,7 +48,7 @@ Il existe deux diaporamas distincts dans l'application — **ne pas les confondr
 
 ### Tests unitaires — règle obligatoire
 
-Le fichier **`gdin-pure.js`** contient les fonctions pures du projet (calculs, parsing, normalisation CMS). Le fichier **`gdin-pure.test.js`** contient 55 tests unitaires (`node:test`) qui les couvrent. Une suite end-to-end Playwright (`tests-e2e.spec.js`, 15 tests) couvre les parcours navigateur.
+Le fichier **`gdin-pure.js`** contient les fonctions pures du projet (calculs, parsing, normalisation CMS). Le fichier **`gdin-pure.test.js`** contient 88 tests unitaires (`node:test`) qui les couvrent. Une suite end-to-end Playwright (`tests-e2e.spec.js`, 19 tests) couvre les parcours navigateur.
 
 **Toute nouvelle fonction de calcul, de parsing ou de normalisation va dans `gdin-pure.js` avec ses tests, pas dans le HTML.**
 
@@ -162,9 +162,18 @@ casser est le risque principal du projet :
 Signaler explicitement en réponse tout écart constaté, même si la question
 n'a pas été posée.
 
-⚠️ Point ouvert au 20/09/2026 : les polices sont chargées depuis
-`fonts.googleapis.com`, ce qui transmet l'IP des visiteurs à Google. Les
-héberger localement supprime le sujet.
+### Librairies servies depuis le dépôt
+
+Chart.js, Leaflet, SheetJS et les polices sont dans `vendor/` et plus sur
+`cdnjs.cloudflare.com` / `fonts.googleapis.com` : un réseau qui filtre les
+CDN laissait la page blanche, et Google Fonts transmettait l'IP des
+visiteurs. Ne pas réintroduire de `<script src="https://…">` dans le
+`<head>` — trois tests e2e (`Boot sans réseau externe`) coupent le réseau
+et échouent si ça arrive. Versions et mise à jour : `vendor/README.md`.
+
+Restent externes à l'exécution : les tuiles `basemaps.cartocdn.com` (qui
+transmettent aussi l'IP des visiteurs) et `geo.api.gouv.fr`. Appelées après
+le boot : sans elles la carte est vide, le reste fonctionne.
 
 ### Si un service worker / une PWA est ajouté un jour
 
