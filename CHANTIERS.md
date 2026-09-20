@@ -1,6 +1,6 @@
 # Chantiers en cours — GDINV2
 
-État au **20/09/2026**, commit `eedc3a4`. Ce fichier existe pour qu'une
+État au **20/09/2026**, commit `d06b5e3`. Ce fichier existe pour qu'une
 session de travail qui démarre sans historique sache où en est le projet et
 ce qui reste à trancher. **Le supprimer quand tout est soldé** — ce n'est pas
 de la documentation permanente, c'est un état transitoire.
@@ -18,9 +18,12 @@ npm run audit -- export.xls   # ce que l'appli retient d'un export réel
 L'export de référence n'est pas dans le dépôt (données personnelles) : il
 faut le redemander à l'utilisateur. Les chiffres ci-dessous viennent de
 l'export de **septembre 2026** (24 410 lignes, 2022→2026), audité le
-20/09/2026. Les volumes de la section « 5 919 lignes sans CMS » datent de
-l'export de juin (22 934 lignes) ; sur celui de septembre, 6 208 lignes
-sont écartées faute de CMS.
+20/09/2026.
+
+**Seul le dernier export fourni fait foi** (décision de l'utilisateur,
+20/09/2026). Les exports antérieurs ne sont plus exploités : ne pas rouvrir
+de comparaison avec eux, ne pas tirer de conclusion d'un écart avec un
+ancien chiffre.
 
 ## Résolu le 20/09/2026 — les lignes sans CMS, et la fiabilité des dimensions
 
@@ -256,8 +259,11 @@ Ne pas assouplir la détection : elle ne décode que si toute la chaîne est dan
 le plan supérieur Unicode et si le résultat est de l'ASCII imprimable.
 Appliquée à tort, elle corromprait une donnée saine.
 
-**Reste à vérifier** : l'export de juin 2026 portait-il déjà le défaut ? Si
-oui, tous les rapports tirés avant le 20/09/2026 sous-comptaient les actions.
+**Signalé à l'équipe de développement de l'outil de saisie** le 20/09/2026.
+Tant qu'un correctif à la source n'est pas livré, `demojibakeUtf16()` reste
+indispensable : ne pas le retirer tant que le compte rendu d'import affiche
+des cellules réparées. Le jour où le compte rendu affichera zéro réparation
+sur un export complet, la fonction pourra être retirée — pas avant.
 
 ## CHANTIER EN COURS — Onglet « Fiabilité des données »
 
@@ -337,7 +343,7 @@ conseillers lus dans le référent.
 | Identifiant de session d'atelier, ou champ « nombre de participants » | rend le comptage des ateliers défendable |
 | Liste déroulante pour « Lieu / CMS » | supprime les 3,1 % de « Autre structure » et la dérive continue |
 | Liste déroulante communes (référentiel INSEE) | supprime les 1,9 % hors référentiel |
-| Corriger l'encodage de « Date action » | supprime une réparation faite à l'import sur 100 % des lignes |
+| ~~Corriger l'encodage de « Date action »~~ — **signalé aux devs le 20/09/2026** | supprime une réparation faite à l'import sur 100 % des lignes |
 | Contrôle de cohérence des dates à la saisie | supprime les 6,9 % d'incohérences chronologiques |
 | Thématique obligatoire | comble 24,5 % de trous |
 
@@ -371,12 +377,14 @@ contraire de ce que l'utilisateur demande.
 
 ## Points à ne pas défaire
 
-- **L'attribution des conseillers est déduite à 74 %.** 12 618 lignes sur
-  17 015 n'ont aucun conseiller renseigné ; `applyConumAttrib()` les comble
-  via `CONUM_ATTRIB`, un mapping CMS → conseiller codé en dur. Le tableau
-  « par conseiller » repose donc majoritairement sur une inférence, et un
-  changement de secteur réécrit l'historique rétroactivement. À assumer dans
-  l'interface ou à corriger à la source, pas à ignorer.
+- **L'attribution des conseillers reste déduite à 42,3 %** — 8 555 lignes sur
+  20 226 (export de septembre). `comblerConum()` applique d'abord le référent
+  réellement saisi, puis `applyConumAttrib()` comble le reste via
+  `CONUM_ATTRIB`, un mapping CMS → conseiller codé en dur. Le tableau « par
+  conseiller » repose donc encore largement sur une inférence, et un
+  changement de secteur réécrit l'historique rétroactivement. Réponse
+  retenue : le bandeau de l'onglet Fiabilité. Ne pas présenter ces chiffres
+  comme une mesure individuelle.
 - **`CONUM_ATTRIB` et `ORI_EXCL` contiennent des noms d'agents en clair**
   dans les HTML, donc publiés sur GitHub Pages. À arbitrer avec eux.
 - **Les tests de minimisation RGPD** (`parseRows — minimisation RGPD`) sont
