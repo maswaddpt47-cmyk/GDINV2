@@ -276,13 +276,59 @@ Toutes les mesures ci-dessous viennent de l'export de **septembre 2026**
 (24 410 lignes, 20 226 retenues). L'export n'est pas dans le dépôt — le
 redemander à l'utilisateur pour rejouer les chiffres.
 
+### BLOQUANT — la fusion supprime les participants d'atelier
+
+Découvert le 20/09/2026 en vérifiant l'affichage des sessions dans le
+navigateur : les chiffres de la page ne correspondaient pas au fichier.
+
+`confirmImport()` déduplique sur
+`date_demande | date_action | conum | cms | commune | orienteur | thématiques | types`.
+Deux participants d'une même séance portent exactement les mêmes valeurs sur
+tous ces champs — **le nom du bénéficiaire n'est pas importé** (minimisation
+RGPD) — donc la fusion les prend pour une ligne importée deux fois et les
+**supprime**. Ce n'est pas le détecteur du panneau qualité, qui se contente de
+signaler : c'est une suppression effective avant mise en base.
+
+| | Fichier | Après fusion | Perdu |
+|---|---|---|---|
+| Sessions d'atelier | 596 | 570 | 26 |
+| **Participations** | **5 478** | **1 225** | **4 253 — 78 %** |
+| Accompagnements | 8 047 | 7 764 | 283 (4 %) |
+| Prises de contact | 5 444 | 5 320 | 124 (2 %) |
+
+Aucun champ importé ne permet de trancher : sur les 478 groupes de
+participants, le motif et les thématiques sont identiques dans 100 % des cas,
+la commune diffère dans 316 groupes, et **130 groupes ont tous leurs champs
+importés rigoureusement identiques**. Sans identifiant de participant ou de
+séance dans le fichier source, l'application ne peut pas distinguer « dix
+personnes à un atelier » de « la même ligne importée dix fois ».
+
+Trois options soumises à l'utilisateur le 20/09/2026, **décision en attente** :
+
+1. Ne pas dédupliquer les lignes d'atelier. Chiffres justes, mais un
+   ré-import du même fichier double les ateliers.
+2. **(recommandée)** Dédupliquer les ateliers sur le rang de la ligne dans le
+   fichier — 1er, 2e, 3e participant d'une même séance. Reste idempotent au
+   ré-import, préserve les participations, ne touche aucun autre type.
+3. Ne rien changer et afficher que les participations sont sous-comptées de
+   78 %. Rend le volet Ateliers inexploitable.
+
+Tant que ce point n'est pas tranché, **ne pas merger le chantier atelier dans
+`main`** : `statsAteliers()` est juste, mais il compte sur des données déjà
+amputées. Commit `981a06d`, sur la branche de session.
+
+Conséquence pour les propositions à la source : « identifiant de session
+d'atelier, ou champ nombre de participants » passe juste derrière
+l'obligation du conseiller numérique. À remonter aux devs avec l'encodage.
+
 ### À corriger AVANT de construire l'onglet — sinon il affichera du faux
 
-**1. « Ateliers » compte des participations, pas des sessions.**
-5 478 lignes d'atelier correspondent à **596 sessions**, soit 9,2 participants
-en moyenne. Annoncer « 5 478 ateliers » devant des élus est indéfendable.
-→ Afficher les deux : « 596 ateliers · 5 478 participations ». Le calcul des
-sessions distinctes va dans `gdin-pure.js` avec ses tests.
+**1. ~~« Ateliers » compte des participations, pas des sessions.~~ FAIT**
+`statsAteliers()` (`gdin-pure.js`, 15 tests) rend les deux chiffres ensemble.
+Affiché dans le panneau Ateliers, la popup de carte et le KPI de la vue
+globale, qui ne dit plus « Accompagnements » sous le filtre Atelier.
+Commit `981a06d` — **en attente du point bloquant ci-dessus** : les valeurs
+affichées seront justes le jour où la fusion cessera d'amputer les données.
 
 **2. Le détecteur de doublons est faux et dessert l'utilisateur.**
 Il annonce 5 693 doublons (28,1 %), dont 4 882 ateliers. Vérifié sur les
@@ -349,8 +395,10 @@ conseillers lus dans le référent.
 
 ### Ordre de travail
 
-1. Sessions d'atelier distinctes → `gdin-pure.js` + tests, puis affichage
-   « N ateliers · M participations » partout où « Atelier » apparaît.
+0. **Trancher la déduplication des ateliers** (section bloquante ci-dessus).
+   Rien d'autre ne peut être chiffré tant que la base est amputée de 78 % des
+   participations.
+1. ~~Sessions d'atelier distinctes~~ — fait, commit `981a06d`.
 2. `compterDoublons()` exclut les ateliers → mettre à jour les tests existants
    (`compterDoublons`), le panneau qualité, et dire pourquoi dans l'onglet.
 3. Calcul des indicateurs de fiabilité → `gdin-pure.js`, alimenté par
