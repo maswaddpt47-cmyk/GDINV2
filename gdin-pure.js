@@ -237,6 +237,41 @@ function demojibakeUtf16(s){
   return /^[\x20-\x7E]+$/.test(o)?o:t;
 }
 
+// ─── Normalisation des communes ──────────────────────────────────────────────
+// La même commune est saisie sous plusieurs graphies : casse, accents, tirets,
+// ST/SAINT. Mesuré le 20/09/2026 sur l'export de septembre : 497 libellés pour
+// 364 communes réelles, « Villeneuve-sur-Lot » à lui seul sous six graphies.
+// Toute statistique par commune était donc éclatée entre les orthographes.
+//
+// La clé sert au regroupement uniquement ; le libellé affiché reste la graphie
+// la plus fréquente du fichier, ce qui conserve tirets et accents réels sans
+// exiger un référentiel INSEE. Même règle que l'index de la carte, qui
+// normalisait déjà de son côté sans que les agrégations en profitent.
+// Couvert par les tests « normCommuneKey » et « parseRows — communes ».
+function normCommuneKey(s){
+  return String(s).toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[-'’]/g,' ').replace(/\bST\b/g,'SAINT').replace(/\bSTE\b/g,'SAINTE')
+    .replace(/\s+/g,' ').trim();
+}
+
+// Graphie dominante par clé : la plus fréquente, le libellé le plus petit
+// départageant les ex æquo pour que deux imports du même fichier concordent.
+function communesCanoniques(records){
+  const freq={};
+  records.forEach(r=>{
+    if(!r.commune)return;
+    const k=normCommuneKey(r.commune);
+    (freq[k]=freq[k]||{})[r.commune]=(freq[k][r.commune]||0)+1;
+  });
+  const canon={};let fusionnees=0;
+  Object.entries(freq).forEach(([k,graphies])=>{
+    const noms=Object.keys(graphies);
+    if(noms.length>1)fusionnees++;
+    canon[k]=noms.sort((a,b)=>graphies[b]-graphies[a]||(a<b?-1:a>b?1:0))[0];
+  });
+  return{canon,fusionnees};
+}
+
 // ─── Conversion de dates Excel ───────────────────────────────────────────────
 function excelDate(v){if(!v&&v!==0)return null;if(typeof v==='string'){const s=demojibakeUtf16(v).trim();const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;const m2=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m2)return s.slice(0,10);const n2=parseFloat(s);if(isNaN(n2)||n2<1)return null;return new Date((n2-25569)*86400*1000).toISOString().slice(0,10);}const n=parseFloat(v);if(isNaN(n)||n<1)return null;const d=new Date((n-25569)*86400*1000);return d.toISOString().slice(0,10);}
 
@@ -325,6 +360,9 @@ function parseRows(rows){
   if(!records.length)throw new Error('Aucun enregistrement valide. Vérifiez le format.');
   stats.cellules_reparees=cellulesReparees;
   stats.cms_via_structure=cmsViaStructure;
+  const{canon,fusionnees}=communesCanoniques(records);
+  records.forEach(r=>{if(r.commune)r.commune=canon[normCommuneKey(r.commune)];});
+  stats.communes_fusionnees=fusionnees;
   return{records,warnings,stats};
 }
 
@@ -346,6 +384,7 @@ function formatResumeImport(stats){
     if(stats.ecartees>0)parts.push(`${stats.ecartees} écartées`);
     if(m.lieu_cms_vide)parts.push(`${m.lieu_cms_vide} sans CMS (conservées)`);
     if(stats.cms_via_structure)parts.push(`${stats.cms_via_structure} CMS lus dans la structure orienteur`);
+    if(stats.communes_fusionnees)parts.push(`${stats.communes_fusionnees} communes regroupées`);
     if(stats.cellules_reparees)parts.push(`${stats.cellules_reparees} cellules réparées (encodage)`);
     return parts.join(' · ');
   }
@@ -357,6 +396,7 @@ function formatResumeImport(stats){
     parts.push(`${stats.ecartees} écartées (${d.join(', ')})`);
   }else parts.push('aucune écartée');
   if(stats.cms_via_structure)parts.push(`${stats.cms_via_structure} CMS lus dans la structure orienteur`);
+  if(stats.communes_fusionnees)parts.push(`${stats.communes_fusionnees} communes regroupées`);
   if(stats.cellules_reparees)parts.push(`${stats.cellules_reparees} cellules réparées (encodage)`);
   return parts.join(' · ');
 }
@@ -402,7 +442,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,ETAT_MAP,TYPE_EXCLUS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,ETAT_MAP,TYPE_EXCLUS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,

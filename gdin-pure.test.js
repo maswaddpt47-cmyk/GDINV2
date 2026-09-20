@@ -4,7 +4,7 @@ const {
   pct, esc, excelDate, parseDt, dayDiff, bizDays, monthLabel, typeColor,
   count, countThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
   normEtat, isRealisee, countDemandes, parseRows, mapColonnes, demojibakeUtf16,
-  formatResumeImport,
+  formatResumeImport, normCommuneKey,
 } = require('./gdin-pure.js');
 
 // ─── pct ──────────────────────────────────────────────────────────────────
@@ -372,5 +372,48 @@ describe('parseRows — CMS lu dans la structure orienteur', () => {
   it('le compte rendu d\'import signale les reprises', () => {
     const r = parseRows([EN_TETES, ligne({ lieu: '', structure: 'CMS Tonneins' })]);
     assert.match(formatResumeImport(r.stats), /1 CMS lus dans la structure orienteur/);
+  });
+});
+
+// ─── normCommuneKey ───────────────────────────────────────────────────────
+describe('normCommuneKey', () => {
+  it('neutralise la casse',      () => assert.equal(normCommuneKey('agen'), normCommuneKey('AGEN')));
+  it('neutralise les accents',   () => assert.equal(normCommuneKey('Nérac'), normCommuneKey('NERAC')));
+  it('neutralise les tirets',    () => assert.equal(normCommuneKey('VILLENEUVE-SUR-LOT'), normCommuneKey('Villeneuve sur Lot')));
+  it('rapproche ST et SAINT',    () => assert.equal(normCommuneKey('ST-SYLVESTRE-SUR-LOT'), normCommuneKey('Saint-Sylvestre-sur-Lot')));
+  it('rapproche STE et SAINTE',  () => assert.equal(normCommuneKey('STE BAZEILLE'), normCommuneKey('Sainte-Bazeille')));
+  it('ne confond pas deux communes distinctes', () => {
+    assert.notEqual(normCommuneKey('Agen'), normCommuneKey('Nérac'));
+  });
+  it('ne mange pas ST à l\'intérieur d\'un mot', () => {
+    assert.equal(normCommuneKey('ESTILLAC'), 'ESTILLAC');
+  });
+});
+
+// ─── parseRows — regroupement des communes ────────────────────────────────
+describe('parseRows — communes', () => {
+  it('regroupe les graphies sur la plus fréquente', () => {
+    const r = parseRows([EN_TETES,
+      ligne({ n: '1', commune: 'AGEN' }), ligne({ n: '2', commune: 'AGEN' }),
+      ligne({ n: '3', commune: 'agen' })]);
+    assert.deepEqual([...new Set(r.records.map(x => x.commune))], ['AGEN']);
+  });
+  it('conserve tirets et accents de la graphie dominante', () => {
+    const r = parseRows([EN_TETES,
+      ligne({ n: '1', commune: 'Villeneuve-sur-Lot' }), ligne({ n: '2', commune: 'Villeneuve-sur-Lot' }),
+      ligne({ n: '3', commune: 'VILLENEUVE SUR LOT' })]);
+    assert.equal(r.records[2].commune, 'Villeneuve-sur-Lot');
+  });
+  it('compte les regroupements dans les stats', () => {
+    const r = parseRows([EN_TETES, ligne({ n: '1', commune: 'AGEN' }), ligne({ n: '2', commune: 'Agen' })]);
+    assert.equal(r.stats.communes_fusionnees, 1);
+  });
+  it('ne regroupe rien quand les graphies sont déjà cohérentes', () => {
+    const r = parseRows([EN_TETES, ligne({ n: '1', commune: 'AGEN' }), ligne({ n: '2', commune: 'FUMEL' })]);
+    assert.equal(r.stats.communes_fusionnees, 0);
+  });
+  it('départage les ex æquo de façon déterministe', () => {
+    const r = parseRows([EN_TETES, ligne({ n: '1', commune: 'AGEN' }), ligne({ n: '2', commune: 'Agen' })]);
+    assert.equal(r.records[0].commune, 'AGEN');
   });
 });
