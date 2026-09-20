@@ -40,7 +40,10 @@ const ligne = (l, v, s) => console.log('  ' + String(l).padEnd(42) + String(v).p
 const pourcent = (n, t) => t ? Math.round(n / t * 100) + ' %' : '—';
 
 function formeDate(v) {
-  const s = String(v).trim();
+  const brut = String(v);
+  const repare = P.demojibakeUtf16(brut);
+  if (repare !== brut) return formeDate(repare) + ' (encodage réparé)';
+  const s = brut.trim();
   if (s === '') return '(vide)';
   if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) return 'JJ/MM/AAAA';
   if (/^\d{1,2}\/\d{1,2}\/\d{4} \d{1,2}:\d{2}/.test(s)) return 'JJ/MM/AAAA HH:MM';
