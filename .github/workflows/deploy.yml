@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: node --test gdin-pure.test.js
+      - run: npm test
 
   deploy:
     needs: test
@@ -32,6 +32,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Cache-busting : les scripts sont servis sans en-tête de cache court, et
+      # GitHub Pages ne permet pas d'en configurer. Sans ?v=, un navigateur
+      # continue d'exécuter l'ancien gdin-pure.js après un correctif. La version
+      # est injectée ici, au déploiement, et non dans le fichier source : le
+      # dépôt reste lisible et les tests chargent la page sans query.
+      # Le motif est verrouillé par deploy.test.js.
+      - name: Injecter la version dans les URLs locales
+        run: |
+          VERSION="${GITHUB_SHA::7}"
+          sed -i -E 's#(<(script src|link rel="stylesheet" href)="(gdin-pure\.js|vendor/[^"?]+))"#\1?v='"$VERSION"'"#g' index.html
+          echo "Version injectée : $VERSION"
+          grep -c "?v=$VERSION" index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

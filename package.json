@@ -4,7 +4,7 @@
   "description": "",
   "main": "gdin-pure.js",
   "scripts": {
-    "test": "node --test gdin-pure.test.js",
+    "test": "node --test *.test.js",
     "test:e2e": "playwright test",
     "audit": "node audit-export.js"
   },
