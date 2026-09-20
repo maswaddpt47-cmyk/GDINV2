@@ -116,6 +116,14 @@ const CMS_MAP_RAW={
   // graphie qui diffère par la ponctuation ou un mot en plus a besoin de sa
   // propre clé. ABRIS était éclaté en dix graphies pour 181 lignes.
   'IME Montclairjoie':                      'IME Montclairjoie',
+  // Dispositif du collège Saint-Pierre à Casseneuil (précisé par l'utilisateur
+  // le 20/09/2026). « micro collège » nu ne rejoint pas « Micro-collège
+  // Casseneuil » par la clé souple : les deux graphies sont nécessaires.
+  'micro collège':                          'Micro-collège Saint-Pierre Casseneuil',
+  'Micro-collège Casseneuil':               'Micro-collège Saint-Pierre Casseneuil',
+  'COLLEGE GERMILLAC TONNEINS':             'Collège Germillac Tonneins',
+  'Collège Germillac':                      'Collège Germillac Tonneins',
+  'Collège Jasmin - Agen':                  'Collège Jasmin Agen',
   'Collège Lucie AUBRAC':                   'Collège Lucie Aubrac',
   'Club des Aînés de la Cascade - Fauillet':'Club des Aînés Fauillet',
   'Val de Garonne Agglomération':           'Val de Garonne Agglomération',

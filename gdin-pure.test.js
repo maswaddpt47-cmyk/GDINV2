@@ -528,7 +528,8 @@ describe('normCms — partenaires', () => {
     assert.equal(normCms('Club des Aînés de la Cascade - Fauillet'), 'Club des Aînés Fauillet');
   });
   it('laisse inconnu ce qui n\'a pas été tranché', () => {
-    assert.equal(normCms('micro collège'), null);
+    // « Villeneuve sur Lot » est une commune saisie dans la case du lieu :
+    // arbitrage métier non rendu, elle reste en « Autre structure ».
     assert.equal(normCms('Villeneuve sur Lot'), null);
   });
 });
@@ -628,5 +629,26 @@ describe('rattacherCommune', () => {
     assert.equal(rattacherCommune(''), null);
     assert.equal(rattacherCommune(')'), null);
     assert.equal(rattacherCommune('Inconnu'), null);
+  });
+});
+
+// ─── normCms — collèges nommés le 20/09/2026 ──────────────────────────────
+describe('normCms — collèges', () => {
+  it('regroupe les trois graphies du micro-collège', () => {
+    assert.equal(normCms('micro collège'), 'Micro-collège Saint-Pierre Casseneuil');
+    assert.equal(normCms('Micro-collège Casseneuil'), 'Micro-collège Saint-Pierre Casseneuil');
+    assert.equal(normCms('Micro-Collège Casseneuil'), 'Micro-collège Saint-Pierre Casseneuil');
+  });
+  it('regroupe le collège Germillac avec et sans la commune', () => {
+    assert.equal(normCms('COLLEGE GERMILLAC TONNEINS'), 'Collège Germillac Tonneins');
+    assert.equal(normCms('COLLEGE GERMILLAC'), 'Collège Germillac Tonneins');
+    assert.equal(normCms('Collège Germillac'), 'Collège Germillac Tonneins');
+  });
+  it('nomme le collège Jasmin', () => {
+    assert.equal(normCms('Collège Jasmin - Agen'), 'Collège Jasmin Agen');
+  });
+  it('ne confond pas deux collèges différents', () => {
+    assert.equal(normCms('Collège Lucie AUBRAC'), 'Collège Lucie Aubrac');
+    assert.notEqual(normCms('Collège Germillac'), normCms('Collège Lucie AUBRAC'));
   });
 });
