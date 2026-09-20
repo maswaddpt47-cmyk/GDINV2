@@ -274,6 +274,18 @@ function parseDt(v){
 function dayDiff(d1,d2){if(!d1||!d2)return null;const ms=d2.getTime()-d1.getTime();return ms<0?null:Math.round(ms/86400000);}
 function bizDays(d1,d2){if(!d1||!d2)return null;const s=new Date(d1);s.setHours(0,0,0,0);const e=new Date(d2);e.setHours(0,0,0,0);if(e<s)return null;let n=0,cur=new Date(s);while(cur<e){const d=cur.getDay();if(d!==0&&d!==6)n++;cur.setDate(cur.getDate()+1);}return n;}
 
+// ─── État des actions ─────────────────────────────────────────────────────────
+// Ne JAMAIS tester l'état avec includes('réalisée') : "Non réalisée" contient
+// "réalisée", ce qui faisait compter les non-réalisées comme réalisées.
+// Couvert par les tests « isRealisee » de gdin-pure.test.js.
+function normEtat(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
+function isRealisee(etat){return normEtat(etat)==='realisee';}
+
+// ─── Demandes distinctes ──────────────────────────────────────────────────────
+// Une demande (N° Demande) génère plusieurs lignes d'action : compter les lignes
+// n'est pas compter les demandes. Couvert par les tests « countDemandes ».
+function countDemandes(arr){return new Set((arr||[]).map(r=>r&&r.id_demande).filter(Boolean)).size;}
+
 // Compatibilité Node.js (tests) ET navigateur (script tag)
 if(typeof module!=='undefined'){
   module.exports={
@@ -282,5 +294,6 @@ if(typeof module!=='undefined'){
     esc,excelDate,parseXlsText,
     typeColor,pct,monthLabel,count,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
+    normEtat,isRealisee,countDemandes,
   };
 }

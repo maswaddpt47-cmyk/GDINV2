@@ -1459,7 +1459,7 @@ function renderGlobal(){
   const benefConnu=data.filter(r=>r.benef_connu).length;
   const withDelai=data.filter(r=>r.delai!=null&&r.delai>=0);
   const avgDelai=withDelai.length?Math.round(withDelai.reduce((s,r)=>s+r.delai,0)/withDelai.length):null;
-  const realisees=data.filter(r=>(r.etat||'').toLowerCase().includes('réalisée')||r.date_action).length;
+  const realisees=data.filter(r=>isRealisee(r.etat)).length;
   document.getElementById('kpi-global2').innerHTML=`
     <div class="kpi red" data-tip="Demandes marquées urgentes"><div class="kpi-label">Urgences</div><div class="kpi-value">${urgCount}</div><div class="kpi-sub">${pct(urgCount,data.length)}% du total</div></div>
     <div class="kpi green"><div class="kpi-label">Demandes réalisées</div><div class="kpi-value">${realisees}</div><div class="kpi-sub">${pct(realisees,data.length)}% de réalisation</div></div>
