@@ -521,6 +521,10 @@ body.pres-mode .tbl th{font-size:11px}
       <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       <span>Rapport</span>
     </button>
+    <button class="tab sb-item" onclick="switchTab('fiabilite',this)">
+      <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+      <span>Fiabilité</span>
+    </button>
   </nav>
 
   <div class="sb-divider"></div>
@@ -936,6 +940,22 @@ body.pres-mode .tbl th{font-size:11px}
       </div>
     </div>
     <div id="rpt-empty" class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Sélectionne un conseiller et une structure</div><div style="font-size:11px;margin-top:4px">Le rapport sera généré pour la combinaison choisie</div></div>
+  </div>
+
+  <!-- FIABILITÉ DES DONNÉES -->
+  <div id="panel-fiabilite" class="panel">
+    <div style="max-width:1100px;margin:0 auto">
+      <h2 style="font-size:20px;font-weight:600;margin:0 0 6px">Fiabilité des données</h2>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 20px;line-height:1.6;max-width:760px">
+        Tous les écarts ci-dessous sont <strong>mesurés sur le fichier que vous avez importé</strong> —
+        aucune marge n'est estimée. Cette page existe pour que vous puissiez répondre
+        si un chiffre est contesté.
+      </p>
+      <div id="fia-synthese"></div>
+      <div id="fia-indicateurs"></div>
+      <div id="fia-defauts"></div>
+      <div id="fia-methode"></div>
+    </div>
   </div>
 
   <!-- IMPORT -->
@@ -1467,6 +1487,7 @@ function switchTab(id,btn){
   if(id==='par-conum'){initConumSelect();renderConum();}
   if(id==='orienteurs'){initOriCmsSelect();renderOrienteurs();}
   if(id==='ateliers'){buildYearChips();initAtlConumGlobalSelect();renderAteliers();}
+  if(id==='fiabilite')renderFiabilite();
   if(id==='territoire'){
     buildYearChips();
     // Double requestAnimationFrame garantit que le DOM est peint avant Leaflet
@@ -2823,6 +2844,82 @@ document.addEventListener('keydown',e=>{
 });
 
 // REFRESH
+// ── FIABILITÉ DES DONNÉES ────────────────────────────────────────────────────
+// Ne jamais afficher ici une marge qui ne vienne pas d'indicateursFiabilite() :
+// un chiffre estimé ferait exactement l'inverse de ce que cette page promet.
+const FIA_COULEUR={solide:'var(--green)',bonne:'var(--blue)',moyenne:'var(--yellow)',partielle:'var(--orange)',faible:'var(--red)'};
+const FIA_MOT={solide:'Solide',bonne:'Bonne',moyenne:'Moyenne',partielle:'Partielle',faible:'Faible'};
+
+function renderFiabilite(){
+  const base=DATA||[];
+  const stats=(importMeta&&importMeta.stats)||{};
+  if(!base.length){
+    document.getElementById('fia-synthese').innerHTML='<div class="empty-state"><div class="empty-icon">🛡</div><div class="empty-title">Importez un fichier pour mesurer sa fiabilité</div></div>';
+    ['fia-indicateurs','fia-defauts','fia-methode'].forEach(id=>document.getElementById(id).innerHTML='');
+    return;
+  }
+  const ind=indicateursFiabilite(base,stats);
+  const syn=syntheseFiabilite(ind);
+
+  document.getElementById('fia-synthese').innerHTML=`
+    <div style="background:var(--s1);border:1px solid var(--border);border-left:3px solid ${FIA_COULEUR[syn.niveau]||'var(--border)'};border-radius:12px;padding:16px 20px;margin-bottom:22px">
+      <div style="font-size:13px;font-weight:600;color:var(--text)">${esc(syn.texte)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Sur ${base.length} enregistrements en base${stats.lues?` · ${stats.lues} lignes lues dans le fichier`:''}.</div>
+    </div>`;
+
+  document.getElementById('fia-indicateurs').innerHTML=`
+    <div class="card" style="margin-bottom:18px">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Fiabilité par indicateur</div>
+      <table class="tbl"><thead><tr><th>Indicateur</th><th>Valeur</th><th>Fiabilité</th><th>Écart mesuré</th><th>Fait constaté</th></tr></thead><tbody>
+      ${ind.map(i=>`<tr>
+        <td>${esc(i.libelle)}</td>
+        <td class="mono">${i.valeur==null?'—':i.valeur}${i.cle==='ateliers'?` <span style="color:var(--muted);font-size:10px">séances · ${i.participations} participations</span>`:''}</td>
+        <td><span style="color:${FIA_COULEUR[i.niveau]};font-weight:600">${FIA_MOT[i.niveau]}</span></td>
+        <td class="mono">${i.marge?i.marge+' %':'—'}</td>
+        <td style="font-size:11px;color:var(--muted)">${esc(i.fait)}</td>
+      </tr>`).join('')}
+      </tbody></table>
+    </div>`;
+
+  const conseiller=ind.find(i=>i.cle==='conseiller');
+  const bandeau=conseiller&&conseiller.marge>=25?`
+    <div style="background:rgba(239,68,68,.08);border:1px solid var(--red);border-radius:12px;padding:14px 18px;margin-bottom:18px">
+      <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:4px">⚠ Attribution par conseiller</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.6">
+        ${conseiller.marge} % des attributions sont déduites du CMS, faute de conseiller renseigné à la saisie —
+        <strong>à ne pas présenter comme une mesure individuelle</strong>.
+        Un changement de secteur réécrit rétroactivement l'historique.
+      </div>
+    </div>`:'';
+
+  const def=defautsSaisie(base,stats);
+  document.getElementById('fia-defauts').innerHTML=bandeau+(def.length?`
+    <div class="card" style="margin-bottom:18px">
+      <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Ce que l'import a constaté ou corrigé</div>
+      <table class="tbl"><thead><tr><th>Constat</th><th>Lignes</th><th>Part</th></tr></thead><tbody>
+      ${def.map(d=>`<tr><td>${esc(d.libelle)}</td><td class="mono">${d.val}</td><td class="mono">${d.part} %</td></tr>`).join('')}
+      </tbody></table>
+    </div>`:'');
+
+  document.getElementById('fia-methode').innerHTML=`
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--muted)"></span>Méthode et limites connues</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.8;padding:4px 2px">
+        <p style="margin:0 0 10px"><strong style="color:var(--text)">Une ligne d'atelier est une participation, pas un atelier.</strong>
+        Les séances sont comptées par N° de demande et date d'action. Le nom du bénéficiaire
+        n'entre jamais dans l'application (minimisation RGPD), donc rien ne distingue deux
+        participants d'une même séance : ils ne sont pas comptés comme doublons, et le
+        dashboard s'abstient plutôt que d'accuser à tort.</p>
+        <p style="margin:0 0 10px"><strong style="color:var(--text)">Les marges sont des écarts constatés</strong>, jamais des estimations :
+        chacune est recalculée à chaque import depuis le fichier chargé.</p>
+        <p style="margin:0"><strong style="color:var(--text)">Ce qui améliorerait le plus la fiabilité</strong> se joue à la saisie :
+        rendre « Conseiller numérique » obligatoire, ajouter un identifiant de séance
+        ou un nombre de participants pour les ateliers, et proposer des listes déroulantes
+        pour le lieu et la commune.</p>
+      </div>
+    </div>`;
+}
+
 function refreshAll(){
   // Reset carte territoire si données ont changé
   if(window._leafletMap&&!document.getElementById('panel-territoire').classList.contains('active')){
@@ -2836,6 +2933,7 @@ function refreshAll(){
   if(document.getElementById('panel-par-conum').classList.contains('active'))renderConum();
   if(document.getElementById('panel-orienteurs').classList.contains('active'))renderOrienteurs();
   if(document.getElementById('panel-territoire').classList.contains('active'))renderTerritoire();
+  if(document.getElementById('panel-fiabilite').classList.contains('active'))renderFiabilite();
   if(document.getElementById('panel-ateliers').classList.contains('active'))renderAteliers();
   if(document.getElementById('panel-rapport').classList.contains('active')){
     const _rConum=document.getElementById('sel-rpt-conum').value;
