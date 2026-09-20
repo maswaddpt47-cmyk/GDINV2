@@ -615,6 +615,7 @@ function parseRows(rows){
   stats.communes_fusionnees=fusionnees;
   stats.communes_officielles=communesOfficielles;
   stats.conum_via_referent=comblerConum(records);
+  stats.participations_atelier=numeroterParticipants(records);
   return{records,warnings,stats};
 }
 
@@ -726,6 +727,65 @@ function compterDoublons(records){
   return n;
 }
 
+// ─── Sessions d'atelier ───────────────────────────────────────────────────────
+// Une ligne d'atelier est une PARTICIPATION, pas un atelier. Sur l'export de
+// septembre 2026 : 5 478 lignes pour 596 sessions réelles, soit 9,2 participants
+// en moyenne (mesuré le 20/09/2026, max 104). Annoncer « 5 478 ateliers » à des
+// élus est indéfendable — afficher partout « N ateliers · M participations ».
+// Une session = un N° de demande + une date d'action. Le nom du bénéficiaire
+// n'entre pas dans l'application (minimisation RGPD), donc rien d'autre ne
+// permet de distinguer deux participants d'une même séance.
+// Couvert par les tests « compterSessionsAtelier ».
+const TYPE_ATELIER='Atelier';
+function estAtelier(r){return !!r&&(r.type_action||[]).includes(TYPE_ATELIER);}
+function cleSessionAtelier(r){return`${(r&&r.id_demande)||'?'}|${(r&&r.date_action)||'?'}`;}
+function compterSessionsAtelier(records){
+  const vues=new Set();
+  (records||[]).forEach(r=>{if(estAtelier(r))vues.add(cleSessionAtelier(r));});
+  return vues.size;
+}
+// { sessions, participations } — les deux chiffres vont toujours ensemble.
+function statsAteliers(records){
+  const participations=(records||[]).filter(estAtelier).length;
+  return{sessions:compterSessionsAtelier(records),participations};
+}
+
+// Rang du participant dans sa séance, attribué dans l'ordre du fichier.
+// Sans lui, la fusion de confirmImport() supprimait 78 % des participations :
+// deux participants d'une même séance ont les mêmes valeurs sur tous les
+// champs importés — le nom du bénéficiaire n'entre pas dans l'application
+// (minimisation RGPD) — et passaient donc pour la même ligne importée deux
+// fois. Mesuré le 20/09/2026 sur l'export de septembre : 5 478 → 1 225.
+// Le rang rend la fusion idempotente : réimporter le même fichier redonne les
+// mêmes rangs, donc les mêmes clés, donc aucun doublon.
+// Couvert par les tests « numeroterParticipants » et « cleFusion ».
+function numeroterParticipants(records){
+  const compteurs=new Map();
+  let n=0;
+  (records||[]).forEach(r=>{
+    if(!estAtelier(r))return;
+    const k=cleSessionAtelier(r);
+    const rang=(compteurs.get(k)||0)+1;
+    compteurs.set(k,rang);
+    r.rang_atelier=rang;
+    n++;
+  });
+  return n;
+}
+
+// Clé de fusion utilisée à l'import pour écarter une ligne déjà en base.
+// Ne pas la confondre avec cleDoublon(), qui sert au panneau qualité.
+function cleFusion(r){
+  if(!r)return'';
+  // Atelier : la séance est identifiée par son N° de demande et sa date, le
+  // rang distingue les participants. La clé générique ne convient pas — elle
+  // ne porte pas le N° de demande, et deux séances distinctes qui partagent
+  // date, lieu et conseiller entraient en collision (314 participations
+  // perdues, mesuré le 20/09/2026).
+  if(estAtelier(r))return`atl:${cleSessionAtelier(r)}|p:${r.rang_atelier||0}`;
+  return`${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.cms||''}|${r.commune||''}|${r.orienteur||''}|${(r.themas||[]).slice().sort().join('/')}|${(r.type_action||[]).slice().sort().join('+')}`;
+}
+
 // ─── Demandes distinctes ──────────────────────────────────────────────────────
 // Une demande (N° Demande) génère plusieurs lignes d'action : compter les lignes
 // n'est pas compter les demandes. Couvert par les tests « countDemandes ».
@@ -736,7 +796,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,cleFusion,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,cleDoublon,compterDoublons,

@@ -1,6 +1,6 @@
 # Chantiers en cours — GDINV2
 
-État au **20/09/2026**, commit `eedc3a4`. Ce fichier existe pour qu'une
+État au **20/09/2026**, commit `83a78ea` (branche de session, non mergé). Ce fichier existe pour qu'une
 session de travail qui démarre sans historique sache où en est le projet et
 ce qui reste à trancher. **Le supprimer quand tout est soldé** — ce n'est pas
 de la documentation permanente, c'est un état transitoire.
@@ -18,9 +18,12 @@ npm run audit -- export.xls   # ce que l'appli retient d'un export réel
 L'export de référence n'est pas dans le dépôt (données personnelles) : il
 faut le redemander à l'utilisateur. Les chiffres ci-dessous viennent de
 l'export de **septembre 2026** (24 410 lignes, 2022→2026), audité le
-20/09/2026. Les volumes de la section « 5 919 lignes sans CMS » datent de
-l'export de juin (22 934 lignes) ; sur celui de septembre, 6 208 lignes
-sont écartées faute de CMS.
+20/09/2026.
+
+**Seul le dernier export fourni fait foi** (décision de l'utilisateur,
+20/09/2026). Les exports antérieurs ne sont plus exploités : ne pas rouvrir
+de comparaison avec eux, ne pas tirer de conclusion d'un écart avec un
+ancien chiffre.
 
 ## Résolu le 20/09/2026 — les lignes sans CMS, et la fiabilité des dimensions
 
@@ -256,8 +259,11 @@ Ne pas assouplir la détection : elle ne décode que si toute la chaîne est dan
 le plan supérieur Unicode et si le résultat est de l'ASCII imprimable.
 Appliquée à tort, elle corromprait une donnée saine.
 
-**Reste à vérifier** : l'export de juin 2026 portait-il déjà le défaut ? Si
-oui, tous les rapports tirés avant le 20/09/2026 sous-comptaient les actions.
+**Signalé à l'équipe de développement de l'outil de saisie** le 20/09/2026.
+Tant qu'un correctif à la source n'est pas livré, `demojibakeUtf16()` reste
+indispensable : ne pas le retirer tant que le compte rendu d'import affiche
+des cellules réparées. Le jour où le compte rendu affichera zéro réparation
+sur un export complet, la fonction pourra être retirée — pas avant.
 
 ## CHANTIER EN COURS — Onglet « Fiabilité des données »
 
@@ -270,13 +276,68 @@ Toutes les mesures ci-dessous viennent de l'export de **septembre 2026**
 (24 410 lignes, 20 226 retenues). L'export n'est pas dans le dépôt — le
 redemander à l'utilisateur pour rejouer les chiffres.
 
+### Résolu le 20/09/2026 — la fusion supprimait les participants d'atelier
+
+Découvert le 20/09/2026 en vérifiant l'affichage des sessions dans le
+navigateur : les chiffres de la page ne correspondaient pas au fichier.
+
+`confirmImport()` déduplique sur
+`date_demande | date_action | conum | cms | commune | orienteur | thématiques | types`.
+Deux participants d'une même séance portent exactement les mêmes valeurs sur
+tous ces champs — **le nom du bénéficiaire n'est pas importé** (minimisation
+RGPD) — donc la fusion les prend pour une ligne importée deux fois et les
+**supprime**. Ce n'est pas le détecteur du panneau qualité, qui se contente de
+signaler : c'est une suppression effective avant mise en base.
+
+| | Fichier | Après fusion | Perdu |
+|---|---|---|---|
+| Sessions d'atelier | 596 | 570 | 26 |
+| **Participations** | **5 478** | **1 225** | **4 253 — 78 %** |
+| Accompagnements | 8 047 | 7 764 | 283 (4 %) |
+| Prises de contact | 5 444 | 5 320 | 124 (2 %) |
+
+Aucun champ importé ne permet de trancher : sur les 478 groupes de
+participants, le motif et les thématiques sont identiques dans 100 % des cas,
+la commune diffère dans 316 groupes, et **130 groupes ont tous leurs champs
+importés rigoureusement identiques**. Sans identifiant de participant ou de
+séance dans le fichier source, l'application ne peut pas distinguer « dix
+personnes à un atelier » de « la même ligne importée dix fois ».
+
+**Option 2 retenue par l'utilisateur**, commit `83a78ea` :
+`numeroterParticipants()` attribue à chaque ligne d'atelier son rang dans la
+séance, dans l'ordre du fichier, et `cleFusion()` le porte dans la clé.
+
+Pour un atelier la clé est `atl:<N° demande>|<date action>|p:<rang>`. **Ne pas
+revenir à la clé générique pour les ateliers** : elle ne porte pas le N° de
+demande, et deux séances partageant date, lieu et conseiller entraient en
+collision — 314 participations perdues, mesuré avant correction.
+
+| | Avant | Après |
+|---|---|---|
+| Sessions en base | 570 | **596** |
+| Participations en base | 1 225 | **5 478** |
+| Accompagnements | 7 764 | 7 764 (inchangé) |
+| Prises de contact | 5 320 | 5 320 (inchangé) |
+
+La fusion reste **idempotente** : réimporter le même fichier n'ajoute aucune
+ligne (vérifié sur l'export réel, et couvert par un test). `index.html` n'a
+plus de clé locale, `makeKey` pointe sur `cleFusion`.
+
+Vérifié dans le navigateur : « 596 ateliers · 5 478 participations · 9,2 par
+séance ». 215 tests verts.
+
+Conséquence pour les propositions à la source : « identifiant de session
+d'atelier, ou champ nombre de participants » passe juste derrière
+l'obligation du conseiller numérique. À remonter aux devs avec l'encodage.
+
 ### À corriger AVANT de construire l'onglet — sinon il affichera du faux
 
-**1. « Ateliers » compte des participations, pas des sessions.**
-5 478 lignes d'atelier correspondent à **596 sessions**, soit 9,2 participants
-en moyenne. Annoncer « 5 478 ateliers » devant des élus est indéfendable.
-→ Afficher les deux : « 596 ateliers · 5 478 participations ». Le calcul des
-sessions distinctes va dans `gdin-pure.js` avec ses tests.
+**1. ~~« Ateliers » compte des participations, pas des sessions.~~ FAIT**
+`statsAteliers()` (`gdin-pure.js`, 15 tests) rend les deux chiffres ensemble.
+Affiché dans le panneau Ateliers, la popup de carte et le KPI de la vue
+globale, qui ne dit plus « Accompagnements » sous le filtre Atelier.
+Commits `981a06d` et `83a78ea`. Les valeurs affichées sont désormais celles
+du fichier : 596 sessions, 5 478 participations.
 
 **2. Le détecteur de doublons est faux et dessert l'utilisateur.**
 Il annonce 5 693 doublons (28,1 %), dont 4 882 ateliers. Vérifié sur les
@@ -337,14 +398,14 @@ conseillers lus dans le référent.
 | Identifiant de session d'atelier, ou champ « nombre de participants » | rend le comptage des ateliers défendable |
 | Liste déroulante pour « Lieu / CMS » | supprime les 3,1 % de « Autre structure » et la dérive continue |
 | Liste déroulante communes (référentiel INSEE) | supprime les 1,9 % hors référentiel |
-| Corriger l'encodage de « Date action » | supprime une réparation faite à l'import sur 100 % des lignes |
+| ~~Corriger l'encodage de « Date action »~~ — **signalé aux devs le 20/09/2026** | supprime une réparation faite à l'import sur 100 % des lignes |
 | Contrôle de cohérence des dates à la saisie | supprime les 6,9 % d'incohérences chronologiques |
 | Thématique obligatoire | comble 24,5 % de trous |
 
 ### Ordre de travail
 
-1. Sessions d'atelier distinctes → `gdin-pure.js` + tests, puis affichage
-   « N ateliers · M participations » partout où « Atelier » apparaît.
+0. ~~Trancher la déduplication des ateliers~~ — fait, commit `83a78ea`.
+1. ~~Sessions d'atelier distinctes~~ — fait, commit `981a06d`.
 2. `compterDoublons()` exclut les ateliers → mettre à jour les tests existants
    (`compterDoublons`), le panneau qualité, et dire pourquoi dans l'onglet.
 3. Calcul des indicateurs de fiabilité → `gdin-pure.js`, alimenté par
@@ -371,12 +432,14 @@ contraire de ce que l'utilisateur demande.
 
 ## Points à ne pas défaire
 
-- **L'attribution des conseillers est déduite à 74 %.** 12 618 lignes sur
-  17 015 n'ont aucun conseiller renseigné ; `applyConumAttrib()` les comble
-  via `CONUM_ATTRIB`, un mapping CMS → conseiller codé en dur. Le tableau
-  « par conseiller » repose donc majoritairement sur une inférence, et un
-  changement de secteur réécrit l'historique rétroactivement. À assumer dans
-  l'interface ou à corriger à la source, pas à ignorer.
+- **L'attribution des conseillers reste déduite à 42,3 %** — 8 555 lignes sur
+  20 226 (export de septembre). `comblerConum()` applique d'abord le référent
+  réellement saisi, puis `applyConumAttrib()` comble le reste via
+  `CONUM_ATTRIB`, un mapping CMS → conseiller codé en dur. Le tableau « par
+  conseiller » repose donc encore largement sur une inférence, et un
+  changement de secteur réécrit l'historique rétroactivement. Réponse
+  retenue : le bandeau de l'onglet Fiabilité. Ne pas présenter ces chiffres
+  comme une mesure individuelle.
 - **`CONUM_ATTRIB` et `ORI_EXCL` contiennent des noms d'agents en clair**
   dans les HTML, donc publiés sur GitHub Pages. À arbitrer avec eux.
 - **Les tests de minimisation RGPD** (`parseRows — minimisation RGPD`) sont
