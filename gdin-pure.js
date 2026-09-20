@@ -659,7 +659,20 @@ function formatResumeImport(stats){
 }
 
 // ─── Agrégations ─────────────────────────────────────────────────────────────
-function count(arr,key){const m={};arr.forEach(r=>{const v=r[key]||'?';m[v]=(m[v]||0)+1;});return Object.fromEntries(Object.entries(m).sort((a,b)=>b[1]-a[1]));}
+// countEntries — classement fiable, du plus fréquent au moins fréquent.
+// count() renvoie un objet : JavaScript y replace les clés entières en tête,
+// quel que soit leur volume. Un libellé numérique — « 47 », « 47000 », codes
+// postaux saisis à la place du nom — passait donc devant « Agen » et ses
+// 4 791 lignes (mesuré le 20/09/2026). Tout classement affiché passe par
+// countEntries ; count() ne sert plus qu'aux accès par clé, où l'ordre est
+// sans objet. Les ex æquo sont départagés alphabétiquement pour que deux
+// rendus du même jeu de données concordent.
+function countEntries(arr,key){
+  const m={};
+  (arr||[]).forEach(r=>{const v=r[key]||'?';m[v]=(m[v]||0)+1;});
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:a[0]>b[0]?1:0));
+}
+function count(arr,key){return Object.fromEntries(countEntries(arr,key));}
 function countThemas(arr){const m={};arr.forEach(r=>(r.themas||[]).forEach(t=>{m[t]=(m[t]||0)+1;}));return Object.fromEntries(Object.entries(m).sort((a,b)=>b[1]-a[1]));}
 function countTypes(arr){const m={};arr.forEach(r=>(r.type_action||[]).filter(t=>t!=='Reservation').forEach(t=>{m[t]=(m[t]||0)+1;}));return Object.fromEntries(Object.entries(m).sort((a,b)=>b[1]-a[1]));}
 function pct(n,total){return total?Math.round(n/total*100):0;}
@@ -700,7 +713,7 @@ if(typeof module!=='undefined'){
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
     esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
-    typeColor,pct,monthLabel,count,countThemas,countTypes,
+    typeColor,pct,monthLabel,count,countEntries,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,
   };

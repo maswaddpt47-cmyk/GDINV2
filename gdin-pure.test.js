@@ -2,7 +2,7 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const {
   pct, esc, excelDate, parseDt, dayDiff, bizDays, monthLabel, typeColor,
-  count, countThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
+  count, countEntries, countThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
   normEtat, isRealisee, countDemandes, parseRows, mapColonnes, demojibakeUtf16,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
   rattacherCommune, COMMUNES_47,
@@ -651,5 +651,37 @@ describe('normCms — collèges', () => {
   it('ne confond pas deux collèges différents', () => {
     assert.equal(normCms('Collège Lucie AUBRAC'), 'Collège Lucie Aubrac');
     assert.notEqual(normCms('Collège Germillac'), normCms('Collège Lucie AUBRAC'));
+  });
+});
+
+// ─── countEntries ─────────────────────────────────────────────────────────
+// count() renvoie un objet, et JavaScript y replace les clés entières en tête
+// quel que soit leur volume : « 47 » (2 lignes) passait devant « Agen »
+// (4 791). Tout classement affiché doit passer par countEntries.
+describe('countEntries', () => {
+  const jeu = [{ c: 'Agen' }, { c: 'Agen' }, { c: 'Agen' }, { c: '47' }, { c: 'Fumel' }, { c: 'Fumel' }];
+  it('classe du plus fréquent au moins fréquent', () => {
+    assert.deepEqual(countEntries(jeu, 'c'), [['Agen', 3], ['Fumel', 2], ['47', 1]]);
+  });
+  it('ne laisse pas un libellé numérique passer devant', () => {
+    assert.equal(countEntries(jeu, 'c')[0][0], 'Agen');
+  });
+  it('count() souffre du défaut que countEntries corrige', () => {
+    // Vaut comme garde : si un jour count() est corrigé, ce test le signale.
+    assert.equal(Object.keys(count(jeu, 'c'))[0], '47');
+    assert.equal(countEntries(jeu, 'c')[0][0], 'Agen');
+  });
+  it('conserve les mêmes totaux que count()', () => {
+    assert.deepEqual(Object.fromEntries(countEntries(jeu, 'c')), count(jeu, 'c'));
+  });
+  it('départage les ex æquo alphabétiquement', () => {
+    const r = countEntries([{ c: 'Zèbre' }, { c: 'Agen' }], 'c');
+    assert.deepEqual(r.map(e => e[0]), ['Agen', 'Zèbre']);
+  });
+  it('range les valeurs absentes sous « ? »', () => {
+    assert.deepEqual(countEntries([{ c: '' }, { c: null }], 'c'), [['?', 2]]);
+  });
+  it('accepte une liste vide', () => {
+    assert.deepEqual(countEntries([], 'c'), []);
   });
 });

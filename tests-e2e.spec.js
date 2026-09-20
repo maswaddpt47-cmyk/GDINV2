@@ -292,3 +292,52 @@ test.describe('Boot sans réseau externe', () => {
   });
 
 });
+
+test.describe('Classement des communes', () => {
+
+  // Un libellé numérique — « 47 », code postal saisi à la place du nom —
+  // passait devant « Agen » dans tous les classements, JavaScript replaçant
+  // les clés entières en tête des objets. Ce test lit l'ordre tel que la page
+  // le produit, pas seulement la fonction pure.
+  const RECS = ['Agen', 'Agen', 'Agen', 'Agen', 'Agen', 'Fumel', 'Fumel', '47']
+    .map((commune, i) => ({
+      date_demande: '2025-03-10', date_action: '2025-03-12', conum: 'MARTIN Paul',
+      cms: 'CMS Agen', lieu_raw: 'CMS Agen', commune, themas: ['Numérique de base'],
+      type_action: ['Accompagnement'], orienteur: 'CAF', motif: 'x',
+      benef_connu: false, urgence: false, etat: 'Réalisée',
+      date_planifiee: '2025-03-10', date_realisation: '2025-03-12', id_demande: 'id' + i,
+    }));
+  const JSON_COMMUNES = JSON.stringify({
+    type: 'gdin-data', version: 1, source_filename: 'communes.json', data: RECS,
+  });
+
+  test('un libellé numérique ne passe pas devant la commune la plus fréquente', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    await page.evaluate((json) => {
+      const blob = new Blob([json], { type: 'application/json' });
+      window.handleAutoImport(new File([blob], 'communes.json', { type: 'application/json' }));
+    }, JSON_COMMUNES);
+    await page.waitForFunction(() => typeof DATA !== 'undefined' && DATA.length === 8, { timeout: 10000 });
+
+    const classement = await page.evaluate(() => countEntries(DATA, 'commune'));
+    expect(classement[0]).toEqual(['Agen', 5]);
+    expect(classement.map(e => e[0])).toEqual(['Agen', 'Fumel', '47']);
+  });
+
+  test('l\'ancien comportement reste reproductible, donc la correction porte', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    await page.evaluate((json) => {
+      const blob = new Blob([json], { type: 'application/json' });
+      window.handleAutoImport(new File([blob], 'communes.json', { type: 'application/json' }));
+    }, JSON_COMMUNES);
+    await page.waitForFunction(() => typeof DATA !== 'undefined' && DATA.length === 8, { timeout: 10000 });
+
+    // count() rend toujours un objet : « 47 » y remonte en tête. C'est
+    // précisément pourquoi les classements ne doivent plus l'utiliser.
+    const parObjet = await page.evaluate(() => Object.keys(count(DATA, 'commune'))[0]);
+    expect(parObjet).toBe('47');
+  });
+
+});

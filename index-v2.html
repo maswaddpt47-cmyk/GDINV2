@@ -1382,7 +1382,10 @@ function injectConumCss(){
 function conumClass(name){return 'cn-'+(name.split(' ')[0]);}
 function yearColor(yr){return YEAR_PALETTE[ALL_YEARS.indexOf(yr)%YEAR_PALETTE.length];}
 function makeBarList(el,data,color='blue',n=9){
-  el.innerHTML='';const entries=Object.entries(data).slice(0,n),max=entries[0]?entries[0][1]:1;
+  // data : tableau d'entrées déjà classé (countEntries) ou objet. Un objet
+  // replace ses clés entières en tête — un libellé « 47 » passerait devant
+  // « Agen ». Préférer le tableau partout où l'ordre compte.
+  el.innerHTML='';const entries=(Array.isArray(data)?data:Object.entries(data)).slice(0,n),max=entries[0]?entries[0][1]:1;
   const cm={blue:'var(--blue)',orange:'var(--orange)',green:'var(--green)',purple:'var(--purple)',cyan:'var(--cyan)',yellow:'var(--yellow)'};const c=cm[color]||'var(--blue)';
   entries.forEach(([name,n])=>{const p=Math.round(n/max*100);el.innerHTML+=`<div class="bar-item"><div class="bi-head"><span class="bi-name" title="${name}">${name}</span><span class="bi-val" style="color:${c}">${n}</span></div><div class="bar-track"><div class="bar-fill ${color}" style="width:${p}%"></div></div></div>`;});
 }
@@ -1438,11 +1441,11 @@ function renderGlobal(){
   destroyChart('ch-thema');
   charts['ch-thema']=new Chart(document.getElementById('ch-thema'),{type:'doughnut',data:{labels:themas.map(t=>t[0]),datasets:[{data:themas.map(t=>t[1]),backgroundColor:PALETTE,borderWidth:2,borderColor:'#111827',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:8,color:legendColor()}}}}});
 
-  const conumData=Object.entries(count(data,'conum')).filter(([n])=>n&&n!=='?'&&n.trim()!=='');
+  const conumData=countEntries(data,'conum').filter(([n])=>n&&n!=='?'&&n.trim()!=='');
   destroyChart('ch-conum');
   charts['ch-conum']=new Chart(document.getElementById('ch-conum'),{type:'doughnut',data:{labels:conumData.map(c=>c[0].split(' ').pop()),datasets:[{data:conumData.map(c=>c[1]),backgroundColor:conumData.map(c=>conumColor(c[0])),borderWidth:2,borderColor:'#111827',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:8,color:legendColor()}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${pct(ctx.parsed,conumData.reduce((s,c)=>s+c[1],0))}%)`}}}}});
 
-  makeBarList(document.getElementById('bar-cms-global'),Object.fromEntries(Object.entries(count(noDsian,'cms')).slice(0,9)),'blue');
+  makeBarList(document.getElementById('bar-cms-global'),countEntries(noDsian,'cms').slice(0,9),'blue');
 
   destroyChart('ch-types');
   renderTypeChart('ch-types',data);
@@ -1451,7 +1454,7 @@ function renderGlobal(){
   setInsightQ('ch-thema',theEnt[0]?`Thématique dominante : <strong>${theEnt[0][0]}</strong> (${theEnt[0][1]} dem.)<br>Top 3 concentrent <strong>${pct(top3Sh,data.length)}%</strong> du volume.`:'Aucune donnée');
   const topCn=conumData[0];const top2Sh=(conumData[0]?.[1]||0)+(conumData[1]?.[1]||0);
   setInsightQ('ch-conum',topCn?`Conseiller le plus actif : <strong>${topCn[0]}</strong> (${topCn[1]} accomp.)<br>Les 2 premiers : <strong>${pct(top2Sh,data.length)}%</strong> de l'activité.`:'Aucune donnée');
-  const topCmsG=Object.entries(count(noDsian,'cms')).sort((a,b)=>b[1]-a[1])[0];
+  const topCmsG=countEntries(noDsian,'cms').sort((a,b)=>b[1]-a[1])[0];
   setInsightQ('bar-cms-global',topCmsG?`CMS le plus actif (hors DSIAN) : <strong>${topCmsG[0].replace(/^Centre Médico-Social(?: de)? /,'CMS ')}</strong><br>${topCmsG[1]} accompagnements (${pct(topCmsG[1],noDsian.length)}% du total hors DSIAN).`:'Aucune donnée');}
 
   // KPI ligne 2 : urgences, délai moyen, bénéficiaires connus, nouveaux bénéficiaires
@@ -1521,7 +1524,7 @@ function renderGlobal(){
 
   // Volume par CMS — classement (horizontal bar)
   {
-    const cmsEntries=Object.entries(count(noDsian,'cms')).sort((a,b)=>b[1]-a[1]).slice(0,12);
+    const cmsEntries=countEntries(noDsian,'cms').sort((a,b)=>b[1]-a[1]).slice(0,12);
     destroyChart('ch-cms-rank');
     charts['ch-cms-rank']=new Chart(document.getElementById('ch-cms-rank'),{
       type:'bar',
@@ -1626,7 +1629,7 @@ function renderEvolution(){
   const evolCmsSel=document.getElementById('sel-evol-cms');
   const isCmsMode=evolModeVal==='cms';
   const evolCmsCur=isCmsMode?'':evolCmsSel.value;
-  const allCms=Object.keys(count(getFiltered(),'cms')).sort();
+  const allCms=countEntries(getFiltered(),'cms').map(e=>e[0]).sort();
   evolCmsSel.innerHTML='<option value="">Tous</option>';
   allCms.forEach(c2=>{const o=document.createElement('option');o.value=c2;o.textContent=c2.replace('Centre Médico-Social ','CMS ').replace('Centre Médico-Social de ','CMS ');evolCmsSel.appendChild(o);});
   // Appliquer reset APRÈS reconstruction des options pour éviter la restauration navigateur
@@ -1931,7 +1934,7 @@ function initCmsSelect(){const sel=document.getElementById('sel-cms'),cur=sel.va
 function renderCms(){
   const cms=document.getElementById('sel-cms').value;if(!cms)return;
   const data=getFiltered().filter(r=>r.cms===cms),allData=getFiltered();
-  const noA=data.filter(r=>!r.date_action).length,conums=count(data,'conum'),topCN=Object.keys(conums)[0]||'—';
+  const noA=data.filter(r=>!r.date_action).length,conumEntries=countEntries(data,'conum'),conums=Object.fromEntries(conumEntries),topCN=(conumEntries[0]&&conumEntries[0][0])||'—';
   const oriCount=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
   const _f=document.getElementById('dFrom').value,_t=document.getElementById('dTo').value;
   let _rawCms=DATA.filter(r=>r.cms===cms&&r.date_demande>=_f&&r.date_demande<=_t);
@@ -1944,7 +1947,7 @@ function renderCms(){
     <div class="kpi purple"><div class="kpi-label">Orienteurs actifs</div><div class="kpi-value">${oriCount}</div><div class="kpi-sub">TS</div></div>
     <div class="kpi cyan"><div class="kpi-label">Thématique principale</div><div class="kpi-value" style="font-size:13px;line-height:1.5;padding-top:4px">${Object.keys(countThemas(data))[0]||'—'}</div><div class="kpi-sub">${Object.values(countThemas(data))[0]||0} demandes</div></div>
     <div class="kpi red"><div class="kpi-label">Prises de contact</div><div class="kpi-value">${prisesContact}</div><div class="kpi-sub">${pct(prisesContact,data.length)}% des demandes</div></div>`;
-  makeBarList(document.getElementById('bar-cms-conum'),conums,'blue');
+  makeBarList(document.getElementById('bar-cms-conum'),conumEntries,'blue');
   makeBarList(document.getElementById('bar-cms-thema'),countThemas(data),'orange');
   const mKeys=[...new Set(getFiltered().map(r=>r.date_demande.slice(0,7)))].sort();
   destroyChart('ch-cms-evol');
@@ -1966,8 +1969,8 @@ function renderCms(){
   });
   charts['ch-cms-cal']=new Chart(document.getElementById('ch-cms-cal'),{type:'bar',data:{labels:labM,datasets},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:true,labels:{color:legendColor(),font:{size:10},boxWidth:10,padding:6}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}});}
   let rows='';
-  Object.entries(count(data,'orienteur')).filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())).slice(0,15).forEach(([name,n],i)=>{
-    const od=data.filter(r=>r.orienteur===name),topCN2=(Object.keys(count(od,'conum'))[0]||'—');
+  countEntries(data,'orienteur').filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())).slice(0,15).forEach(([name,n],i)=>{
+    const od=data.filter(r=>r.orienteur===name),topCN2=(countEntries(od,'conum').map(e=>e[0])[0]||'—');
     rows+=`<tr><td class="mono">${i+1}</td><td>${name}</td><td class="mono">${n}</td><td class="mono">${pct(n,data.length)}%</td><td class="${conumClass(topCN2)}">${topCN2}</td></tr>`;
   });
   document.getElementById('tbl-cms-ori').innerHTML=rows;
@@ -1976,7 +1979,7 @@ function renderCms(){
   const peakCms=mKeysCms.map(k=>[k,mCntCms[k]||0]).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1])[0];
   const cmsShort=cms.replace(/^Centre Médico-Social(?: de)? /,'CMS ');
   setInsightQ('ch-cms-evol',peakCms?`Pic mensuel <strong>${cmsShort}</strong> : <strong>${monthLabel(peakCms[0])}</strong> (${peakCms[1]} dem.)<br>Complétion globale : <strong>${pct(data.length-data.filter(r=>!r.date_action).length,data.length)}%</strong>.`:'Aucune donnée');
-  const topOriCms=Object.entries(count(data,'orienteur')).filter(([n])=>n&&n!=='?'&&!ORI_EXCL.has(n.trim())).sort((a,b)=>b[1]-a[1])[0];
+  const topOriCms=countEntries(data,'orienteur').filter(([n])=>n&&n!=='?'&&!ORI_EXCL.has(n.trim())).sort((a,b)=>b[1]-a[1])[0];
   setInsightQ('ch-cms-cal',topOriCms?`TS le plus orienteur vers ce CMS : <strong>${topOriCms[0]}</strong> (${topOriCms[1]} dem.)<br>Thématique principale : <strong>${Object.keys(countThemas(data))[0]||'—'}</strong>.`:'Aucune donnée');}
   renderSaisonCms(cms);
 }
@@ -2077,7 +2080,7 @@ function renderConum(){
     <div class="kpi cyan"><div class="kpi-label">Thématique principale</div><div class="kpi-value" style="font-size:13px;line-height:1.5;padding-top:4px">${topThema}</div><div class="kpi-sub">${countThemas(data)[topThema]||0} demandes</div></div>
     ${evolByYear.length>1?`<div class="kpi" style="grid-column:1/-1;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px"><div class="kpi-label">Évolution par année</div><div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px">${evolByYear.map(e=>`<div style="text-align:center;min-width:50px"><div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:var(--blue)">${e.n}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px">${e.y}</div></div>`).join('')}</div></div>`:''}`;
   makeBarList(document.getElementById('bar-conum-thema'),countThemas(data),'orange');
-  makeBarList(document.getElementById('bar-conum-cms'),count(data,'cms'),'blue');
+  makeBarList(document.getElementById('bar-conum-cms'),countEntries(data,'cms'),'blue');
   const mKeys=[...new Set(allData.map(r=>r.date_demande.slice(0,7)))].sort(),col=conumColor(conum);
   destroyChart('ch-conum-evol');
   charts['ch-conum-evol']=new Chart(document.getElementById('ch-conum-evol'),{type:'bar',data:{labels:mKeys.map(monthLabel),datasets:[{data:mKeys.map(k=>data.filter(r=>r.date_demande.startsWith(k)).length),backgroundColor:col+'66',borderColor:col,borderRadius:5,borderSkipped:false,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}});
@@ -2101,7 +2104,7 @@ function renderConum(){
   {const mKC=[...new Set(allData.map(r=>r.date_demande.slice(0,7)))].sort();
   const mCC={};data.forEach(r=>{const k=r.date_demande.slice(0,7);mCC[k]=(mCC[k]||0)+1;});
   const peakC=mKC.map(k=>[k,mCC[k]||0]).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1])[0];
-  const topCmsC=Object.keys(count(data,'cms'))[0]||'—';
+  const topCmsC=countEntries(data,'cms').map(e=>e[0])[0]||'—';
   setInsightQ('ch-conum-evol',peakC?`Pic mensuel : <strong>${monthLabel(peakC[0])}</strong> (${peakC[1]} dem.)<br>CMS principal : <strong>${topCmsC.replace(/^Centre Médico-Social(?: de)? /,'CMS ')}</strong>.`:'Aucune donnée');
   const topThemaC=Object.keys(countThemas(data))[0]||'—';
   const shareTop=data.length?pct(countThemas(data)[topThemaC]||0,data.length):0;
@@ -2115,7 +2118,7 @@ function renderOrienteurs(){
   let data=getFiltered();if(cms)data=data.filter(r=>r.cms===cms);
 
   // Trier par volume desc, exclure vides
-  const oriEntries=Object.entries(count(data,'orienteur')).filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())).sort((a,b)=>b[1]-a[1]);
+  const oriEntries=countEntries(data,'orienteur').filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())).sort((a,b)=>b[1]-a[1]);
 
   // ── Graphe bar horizontal top 15 ──
   const top15=oriEntries.slice(0,15);
@@ -2181,8 +2184,8 @@ function renderOrienteurs(){
   let rows='';
   oriEntries.slice(0,40).forEach(([name,n])=>{
     const od=data.filter(r=>r.orienteur===name);
-    const struct=(Object.keys(count(od,'cms'))[0]||'—');
-    const topCN=(Object.keys(count(od,'conum'))[0]||'—');
+    const struct=(countEntries(od,'cms').map(e=>e[0])[0]||'—');
+    const topCN=(countEntries(od,'conum').map(e=>e[0])[0]||'—');
     const topT=Object.keys(countThemas(od))[0]||'—';
     rows+=`<tr><td>${name}</td><td>${struct}</td><td class="mono" data-val="${n}">${n}</td><td class="${conumClass(topCN)}">${topCN}</td><td><span class="badge badge-blue">${topT}</span></td></tr>`;
   });
@@ -2203,7 +2206,7 @@ function buildRptCmsChips(conum,keepCms){
   chipsEl.innerHTML='';
   sel.value='';
   if(!conum)return;
-  const cmsOptions=Object.keys(count(getFiltered().filter(r=>r.conum===conum),'cms')).filter(c=>c&&c!=='?').sort();
+  const cmsOptions=countEntries(getFiltered().filter(r=>r.conum===conum),'cms').map(e=>e[0]).filter(c=>c&&c!=='?').sort();
   cmsOptions.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
   cmsOptions.forEach(c=>{
     const chip=document.createElement('button');
@@ -2269,8 +2272,8 @@ function renderRapport(){
   const themas=Object.entries(countThemas(data)).slice(0,8);
   destroyChart('ch-rpt-thema');
   charts['ch-rpt-thema']=new Chart(document.getElementById('ch-rpt-thema'),{type:'doughnut',data:{labels:themas.map(t=>t[0]),datasets:[{data:themas.map(t=>t[1]),backgroundColor:PALETTE,borderWidth:2,borderColor:'#111827',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:8,color:legendColor()}}}}});
-  const _oriRpt=Object.fromEntries(Object.entries(count(data,'orienteur')).filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())));makeBarList(document.getElementById('bar-rpt-ori'),_oriRpt,'green');
-  {const cmsEntries=Object.entries(count(dataConum,'cms')).sort((a,b)=>b[1]-a[1]);
+  const _oriRpt=(countEntries(data,'orienteur').filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())));makeBarList(document.getElementById('bar-rpt-ori'),_oriRpt,'green');
+  {const cmsEntries=countEntries(dataConum,'cms').sort((a,b)=>b[1]-a[1]);
   const hasSel=cmsEntries.some(([c])=>c===cms);
   if(!hasSel){const v=(count(dataConum,'cms')[cms]||0);cmsEntries.push([cms,v]);}
   const shortLbl=c=>c.replace(/^CMS /,'').replace(/^Permanence /,'Perm. ').replace(/\(St-Pardoux\)/,'(St-P.)');
@@ -4255,7 +4258,7 @@ function drSlideThemas(c,data,palette){
 
 // ── SLIDE ORIENTEURS ──
 function drSlideOrienteurs(c,data,palette){
-  const oriData=Object.entries(count(data,'orienteur')).filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())).slice(0,10);
+  const oriData=countEntries(data,'orienteur').filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())).slice(0,10);
   const oriTotal=oriData.reduce((s,[,v])=>s+v,0);
   const top1Ori=oriData[0];
   const top1OriPct=top1Ori?pct(top1Ori[1],oriTotal):0;
@@ -4324,7 +4327,7 @@ function drSlideTerritoire(c,data){
       return null;
     }
 
-    const communes=Object.entries(count(data,'commune')).sort((a,b)=>b[1]-a[1]);
+    const communes=countEntries(data,'commune').sort((a,b)=>b[1]-a[1]);
     const maxV=communes[0]?.[1]||1;
     const markers=[];
     communes.forEach(([nom,n])=>{
