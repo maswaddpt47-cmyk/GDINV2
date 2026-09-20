@@ -259,6 +259,104 @@ Appliquée à tort, elle corromprait une donnée saine.
 **Reste à vérifier** : l'export de juin 2026 portait-il déjà le défaut ? Si
 oui, tous les rapports tirés avant le 20/09/2026 sous-comptaient les actions.
 
+## CHANTIER EN COURS — Onglet « Fiabilité des données »
+
+**Validé par l'utilisateur le 20/09/2026, non commencé.** Objectif énoncé :
+protéger celui qui présente le dashboard à des élus ou à une direction. Ne
+jamais inventer de marge : n'afficher que des écarts mesurés sur le fichier
+importé.
+
+Toutes les mesures ci-dessous viennent de l'export de **septembre 2026**
+(24 410 lignes, 20 226 retenues). L'export n'est pas dans le dépôt — le
+redemander à l'utilisateur pour rejouer les chiffres.
+
+### À corriger AVANT de construire l'onglet — sinon il affichera du faux
+
+**1. « Ateliers » compte des participations, pas des sessions.**
+5 478 lignes d'atelier correspondent à **596 sessions**, soit 9,2 participants
+en moyenne. Annoncer « 5 478 ateliers » devant des élus est indéfendable.
+→ Afficher les deux : « 596 ateliers · 5 478 participations ». Le calcul des
+sessions distinctes va dans `gdin-pure.js` avec ses tests.
+
+**2. Le détecteur de doublons est faux et dessert l'utilisateur.**
+Il annonce 5 693 doublons (28,1 %), dont 4 882 ateliers. Vérifié sur les
+lignes brutes : sur 478 groupes d'atelier (même N° de demande + même date),
+**465 ont des bénéficiaires différents** — ce sont les participants d'une même
+session. Seuls 13 groupes ont le même bénéficiaire.
+→ Ne pas compter les ateliers dans les doublons. Hors ateliers : **811 lignes
+suspectes sur 14 748, soit 5,5 %**.
+→ Le nom du bénéficiaire n'entre pas dans l'application (minimisation RGPD) :
+le dashboard ne peut pas distinguer participant et doublon sur les ateliers.
+C'est la raison de fond, à écrire dans l'onglet.
+
+### Fiabilité par indicateur — mesurée, à afficher telle quelle
+
+| Indicateur | Fiabilité | Marge | Fait mesuré |
+|---|---|---|---|
+| Demandes distinctes (7 271) | Solide | ±0 % | N° renseigné sur 100 % des lignes |
+| Accompagnements (8 047) | Solide | −2,7 % | 219 doublons suspects |
+| Prises de contact (5 444) | Solide | −1,2 % | 65 doublons |
+| Ateliers | À reformuler | — | 596 sessions / 5 478 participations |
+| Par lieu / CMS | Bonne | 3,1 % | 635 lignes en « Autre structure » |
+| Par commune | Bonne | 1,9 % | 390 lignes hors référentiel officiel |
+| Thématiques | Partielle | 24,5 % | 4 951 lignes sans thématique |
+| Délais | Moyenne | 6,9 % | 1 398 réalisations antérieures à la demande |
+| **Par conseiller** | **Faible** | **42,3 %** | 8 555 lignes attribuées par déduction |
+
+Autres défauts mesurés, à lister dans l'onglet : référent absent sur 4,0 %
+(813 lignes), commune absente sur 0,8 % (171), action antérieure à sa demande
+sur 0,1 % (30), encodage de « Date action » réparé sur 100 % des lignes,
+95 communes regroupées, 2 033 lieux lus dans la structure orienteur, 5 756
+conseillers lus dans le référent.
+
+### Décisions d'interface — validées, ne pas les rediscuter
+
+- **Pas de marge sur chaque KPI.** Afficher « ±x % » partout décrédibilise ce
+  qui est solide : le nombre de demandes est juste à 100 %. Trois niveaux :
+  rien sur les indicateurs solides ; un point orange discret avec bulle au
+  survol sur les indicateurs à marge connue ; un bandeau explicite sur « par
+  conseiller ».
+- **Bandeau « par conseiller »** : *« 42 % des attributions sont déduites du
+  CMS — à ne pas présenter comme une mesure individuelle »*. Validé, à
+  afficher (point le plus sensible politiquement).
+- **Un onglet dédié** dans la barre latérale, qui porte le détail et la
+  méthode : c'est lui qu'on ouvre si on est challengé.
+- **Une ligne de synthèse sur la landing** après import : « Fiabilité : bonne
+  — 3 points de vigilance ».
+- **Une mention en pied du Diapo Rapport**, puisque c'est ce qui est projeté.
+  `CLAUDE.md` impose la synchronisation CR ↔ Diapo Rapport : tout ajout au CR
+  exige son slide dans `DR_SLIDES` + la fonction `drSlide*()` correspondante.
+
+### Propositions pour le fichier source, par gain décroissant
+
+À porter auprès de l'éditeur ou du service gestionnaire de l'outil de saisie.
+
+| Action à la source | Gain mesuré |
+|---|---|
+| Rendre « Conseiller numérique » obligatoire | supprime 42,3 % de déduction — le plus gros gain |
+| Identifiant de session d'atelier, ou champ « nombre de participants » | rend le comptage des ateliers défendable |
+| Liste déroulante pour « Lieu / CMS » | supprime les 3,1 % de « Autre structure » et la dérive continue |
+| Liste déroulante communes (référentiel INSEE) | supprime les 1,9 % hors référentiel |
+| Corriger l'encodage de « Date action » | supprime une réparation faite à l'import sur 100 % des lignes |
+| Contrôle de cohérence des dates à la saisie | supprime les 6,9 % d'incohérences chronologiques |
+| Thématique obligatoire | comble 24,5 % de trous |
+
+### Ordre de travail
+
+1. Sessions d'atelier distinctes → `gdin-pure.js` + tests, puis affichage
+   « N ateliers · M participations » partout où « Atelier » apparaît.
+2. `compterDoublons()` exclut les ateliers → mettre à jour les tests existants
+   (`compterDoublons`), le panneau qualité, et dire pourquoi dans l'onglet.
+3. Calcul des indicateurs de fiabilité → `gdin-pure.js`, alimenté par
+   `stats` de `parseRows()` + comptages sur les records. Tests obligatoires.
+4. Onglet « Fiabilité des données » + ligne sur la landing.
+5. Points orange et bulles sur les KPI concernés ; bandeau « par conseiller ».
+6. Slide correspondant dans `DR_SLIDES` (règle CR ↔ Diapo Rapport).
+
+**Rappel de méthode** : ne jamais afficher une marge qui ne soit pas calculée
+depuis le fichier réellement importé. Un chiffre inventé ferait exactement le
+contraire de ce que l'utilisateur demande.
+
 ## Chantiers restants, par priorité
 
 1. **Indicateurs de complétion restants.** Trois occurrences basées sur
