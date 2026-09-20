@@ -339,16 +339,19 @@ globale, qui ne dit plus « Accompagnements » sous le filtre Atelier.
 Commits `981a06d` et `83a78ea`. Les valeurs affichées sont désormais celles
 du fichier : 596 sessions, 5 478 participations.
 
-**2. Le détecteur de doublons est faux et dessert l'utilisateur.**
-Il annonce 5 693 doublons (28,1 %), dont 4 882 ateliers. Vérifié sur les
-lignes brutes : sur 478 groupes d'atelier (même N° de demande + même date),
-**465 ont des bénéficiaires différents** — ce sont les participants d'une même
-session. Seuls 13 groupes ont le même bénéficiaire.
-→ Ne pas compter les ateliers dans les doublons. Hors ateliers : **811 lignes
-suspectes sur 14 748, soit 5,5 %**.
-→ Le nom du bénéficiaire n'entre pas dans l'application (minimisation RGPD) :
-le dashboard ne peut pas distinguer participant et doublon sur les ateliers.
-C'est la raison de fond, à écrire dans l'onglet.
+**2. ~~Le détecteur de doublons est faux~~ FAIT** — commit à la suite de
+`83a78ea`. Il annonçait 4 894 doublons (25 % de la base), dont 4 882 étaient
+des participants d'atelier. `compterDoublons()` les exclut désormais.
+
+Mesuré sur l'export de septembre, après la fusion corrigée : **12 doublons sur
+13 812 lignes hors ateliers, soit 0,1 %**. Le libellé du panneau qualité
+devient « Doublons hors ateliers », et une ligne y rappelle le volume de
+participations et le nombre de séances, pour que l'exclusion soit visible.
+
+Raison de fond, à reprendre dans l'onglet Fiabilité : le nom du bénéficiaire
+n'entre pas dans l'application (minimisation RGPD), donc rien ne distingue
+deux participants d'une même séance. Le dashboard ne peut pas trancher, il
+s'abstient plutôt que d'accuser à tort.
 
 ### Fiabilité par indicateur — mesurée, à afficher telle quelle
 
@@ -357,7 +360,7 @@ C'est la raison de fond, à écrire dans l'onglet.
 | Demandes distinctes (7 271) | Solide | ±0 % | N° renseigné sur 100 % des lignes |
 | Accompagnements (8 047) | Solide | −2,7 % | 219 doublons suspects |
 | Prises de contact (5 444) | Solide | −1,2 % | 65 doublons |
-| Ateliers | À reformuler | — | 596 sessions / 5 478 participations |
+| Ateliers | Solide | — | 596 séances / 5 478 participations (affiché) |
 | Par lieu / CMS | Bonne | 3,1 % | 635 lignes en « Autre structure » |
 | Par commune | Bonne | 1,9 % | 390 lignes hors référentiel officiel |
 | Thématiques | Partielle | 24,5 % | 4 951 lignes sans thématique |
@@ -406,8 +409,8 @@ conseillers lus dans le référent.
 
 0. ~~Trancher la déduplication des ateliers~~ — fait, commit `83a78ea`.
 1. ~~Sessions d'atelier distinctes~~ — fait, commit `981a06d`.
-2. `compterDoublons()` exclut les ateliers → mettre à jour les tests existants
-   (`compterDoublons`), le panneau qualité, et dire pourquoi dans l'onglet.
+2. ~~`compterDoublons()` exclut les ateliers~~ — fait. Reste à reprendre
+   l'explication dans l'onglet Fiabilité quand il sera construit.
 3. Calcul des indicateurs de fiabilité → `gdin-pure.js`, alimenté par
    `stats` de `parseRows()` + comptages sur les records. Tests obligatoires.
 4. Onglet « Fiabilité des données » + ligne sur la landing.
