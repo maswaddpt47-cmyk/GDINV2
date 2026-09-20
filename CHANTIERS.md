@@ -1,6 +1,6 @@
 # Chantiers en cours — GDINV2
 
-État au **20/09/2026**, commit `83a78ea` (branche de session, non mergé). Ce fichier existe pour qu'une
+État au **20/09/2026**, commit `270e38f` (branche de session, non mergé). Ce fichier existe pour qu'une
 session de travail qui démarre sans historique sache où en est le projet et
 ce qui reste à trancher. **Le supprimer quand tout est soldé** — ce n'est pas
 de la documentation permanente, c'est un état transitoire.
@@ -411,8 +411,16 @@ conseillers lus dans le référent.
 1. ~~Sessions d'atelier distinctes~~ — fait, commit `981a06d`.
 2. ~~`compterDoublons()` exclut les ateliers~~ — fait. Reste à reprendre
    l'explication dans l'onglet Fiabilité quand il sera construit.
-3. Calcul des indicateurs de fiabilité → `gdin-pure.js`, alimenté par
-   `stats` de `parseRows()` + comptages sur les records. Tests obligatoires.
+3. ~~Calcul des indicateurs de fiabilité~~ — fait, commit `270e38f`.
+   `indicateursFiabilite()`, `defautsSaisie()`, `syntheseFiabilite()` dans
+   `gdin-pure.js`, 18 tests. Mesures sur l'export de septembre dans le message
+   de commit. Deux décisions prises en écrivant, à ne pas défaire :
+   - la synthèse **ne réduit pas l'ensemble au pire indicateur** (afficher
+     « fiabilité faible » quand quatre indicateurs sur neuf sont exacts
+     décrédibilise ce qui est solide) ; elle nomme le plus sensible ;
+   - `defautsSaisie()` utilise **deux dénominateurs** — base pour les défauts
+     constatés, lignes lues ou retenues pour ceux issus de l'import. Les
+     mélanger affichait 104,9 % sur une colonne réparée à 100 %.
 4. Onglet « Fiabilité des données » + ligne sur la landing.
 5. Points orange et bulles sur les KPI concernés ; bandeau « par conseiller ».
 6. Slide correspondant dans `DR_SLIDES` (règle CR ↔ Diapo Rapport).
