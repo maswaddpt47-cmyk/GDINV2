@@ -17,7 +17,10 @@ npm run audit -- export.xls   # ce que l'appli retient d'un export réel
 
 L'export de référence n'est pas dans le dépôt (données personnelles) : il
 faut le redemander à l'utilisateur. Les chiffres ci-dessous viennent de
-l'export de **juin 2026** (22 934 lignes, 2022→2026), mesurés le 20/09/2026.
+l'export de **septembre 2026** (24 410 lignes, 2022→2026), audité le
+20/09/2026. Les volumes de la section « 5 919 lignes sans CMS » datent de
+l'export de juin (22 934 lignes) ; sur celui de septembre, 6 208 lignes
+sont écartées faute de CMS.
 
 ## Décision en attente — les 5 919 lignes sans CMS
 
@@ -41,6 +44,39 @@ donc réalisable sans toucher au mapping.
 Problème annexe : le Département apparaît sous **quatre orthographes** dans
 « Structure orienteur » (~1 460 lignes éclatées). À normaliser si cette
 colonne est exploitée.
+
+## Bug bloquant — « Date action (saisie) » illisible, 100 % des lignes
+
+Mesuré le 20/09/2026 sur l'export de septembre (24 410 lignes). La colonne
+`Date action (saisie)` (indice 7) sort de SheetJS en mojibake UTF-16 :
+`"㠰〯⼳〲㈲"` au lieu de `08/03/2022`. Chaque caractère porte deux octets
+ASCII inversés — `String.fromCharCode(c & 0xff) + String.fromCharCode(c >> 8)`
+restitue la date. Décodage validé sur **24 410 / 24 410** lignes (toutes
+`JJ/MM/AAAA` valides) et cohérent chronologiquement (30 actions antérieures
+à leur demande, soit 0 %).
+
+Aucune autre colonne n'est touchée. Le chemin navigateur
+(`XLSX.read(..., {type:'array'})`) produit exactement le même mojibake que
+`readFile()` : **l'application est affectée à l'identique**.
+
+Conséquence : `date_action` est `null` sur les 18 202 enregistrements
+retenus. Points d'impact :
+
+| Impact | Mesure |
+|---|---|
+| **Sur-fusion des doublons** — la clé de fusion contient `date_action\|\|''`, donc constante | 11 548 lignes en base au lieu de 14 374 : **2 826 actions réelles écrasées** (24 %) |
+| Délais demande → action | `r.delai = null` partout, aucun délai calculable |
+| KPI « Complétion » / « done » | `filter(r => r.date_action)` = 0 |
+| Heatmaps par lieu et par CMS | `allYears` vide, les vues ne s'affichent pas |
+| Export CSV | colonne `date_action` vide |
+
+C'est **la cause** du chantier « indicateurs de complétion à 100 % constant » :
+ce n'était pas un défaut d'indicateur.
+
+Non corrigé : l'audit précède la correction. À trancher avant de coder — le
+décodage doit être conditionné à la détection du mojibake (plage CJK), pas
+appliqué systématiquement, sinon un export sain serait corrompu à son tour.
+Vérifier aussi si l'export de juin 2026 portait déjà le défaut.
 
 ## Chantiers restants, par priorité
 
