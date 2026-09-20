@@ -1149,12 +1149,12 @@ body.pres-mode .tbl th{font-size:11px}
 const EMBEDDED=[];
 // Couleurs dérivées du nom (couleurConum, gdin-pure.js) : le mapping
 // explicite inscrivait cinq noms d'agents dans un dépôt public.
-// Règle métier héritée : ce conseiller est masqué de tous les affichages par
-// conseiller, sans que la raison soit documentée (483 lignes sur l'export de
-// septembre). Centralisé ici en attendant l'arbitrage de l'utilisateur — le
-// nom reste donc dans le source, contrairement aux autres.
-const CONUM_MASQUES=['CHIBANE'];
-function conumMasque(nom){const s=String(nom||'');return CONUM_MASQUES.some(m=>s.includes(m));}
+// Plus aucun conseiller n'est masqué : la règle qui en écartait un de tous les
+// affichages n'était plus d'actualité (arbitrage utilisateur du 20/09/2026).
+// Ses 483 lignes, toutes sur 2022-2023, sont réintégrées — masquer l'activité
+// d'un agent parti fausse l'historique. Ne pas réintroduire d'exclusion par
+// nom : elle inscrirait ce nom dans un dépôt public et se périmerait seule.
+function conumMasque(){return false;}
 const CONUM_COLORS=new Proxy({},{get:(_,k)=>typeof k==='string'?couleurConum(k):undefined,has:()=>true});
 const YEAR_PALETTE=['#3b82f6','#10b981','#f97316','#8b5cf6','#22d3ee','#eab308','#ef4444'];
 const PALETTE=['#3b82f6','#f97316','#10b981','#8b5cf6','#ef4444','#22d3ee','#eab308','#fb7185'];
