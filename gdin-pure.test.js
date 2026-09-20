@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const {
   pct, esc, excelDate, parseDt, dayDiff, bizDays, monthLabel, typeColor,
   count, countThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
+  normEtat, isRealisee, countDemandes,
 } = require('./gdin-pure.js');
 
 // ─── pct ──────────────────────────────────────────────────────────────────
@@ -143,4 +144,38 @@ describe('parseXlsText', () => {
   it('lève erreur si fichier vide', () => {
     assert.throws(() => parseXlsText(''));
   });
+});
+
+// ─── isRealisee ───────────────────────────────────────────────────────────
+// Régression : "Non réalisée".includes("réalisée") === true. Le KPI
+// « Demandes réalisées » affichait 100 % sur toutes les positions du filtre.
+describe('isRealisee', () => {
+  it('Réalisée',                 () => assert.equal(isRealisee('Réalisée'), true));
+  it('realisee sans accent',     () => assert.equal(isRealisee('realisee'), true));
+  it('Non réalisée → FAUX',      () => assert.equal(isRealisee('Non réalisée'), false));
+  it('non realisee → FAUX',      () => assert.equal(isRealisee('non realisee'), false));
+  it('En attente',               () => assert.equal(isRealisee('En attente'), false));
+  it('Annulée',                  () => assert.equal(isRealisee('Annulée'), false));
+  it('Excusée',                  () => assert.equal(isRealisee('Excusée'), false));
+  it('chaîne vide',              () => assert.equal(isRealisee(''), false));
+  it('null',                     () => assert.equal(isRealisee(null), false));
+  it('undefined',                () => assert.equal(isRealisee(undefined), false));
+  it('espaces autour',           () => assert.equal(isRealisee('  Réalisée  '), true));
+});
+
+// ─── normEtat ─────────────────────────────────────────────────────────────
+describe('normEtat', () => {
+  it('minuscule + sans accent',  () => assert.equal(normEtat('Réalisée'), 'realisee'));
+  it('trim',                     () => assert.equal(normEtat(' En attente '), 'en attente'));
+  it('null → chaîne vide',       () => assert.equal(normEtat(null), ''));
+});
+
+// ─── countDemandes ────────────────────────────────────────────────────────
+// Une demande génère plusieurs lignes d'action (jusqu'à 186 sur l'export réel).
+describe('countDemandes', () => {
+  it('3 lignes, 1 demande',      () => assert.equal(countDemandes([{id_demande:'7161'},{id_demande:'7161'},{id_demande:'7161'}]), 1));
+  it('2 demandes distinctes',    () => assert.equal(countDemandes([{id_demande:'1'},{id_demande:'2'}]), 2));
+  it('ignore les id vides',      () => assert.equal(countDemandes([{id_demande:''},{id_demande:'1'}]), 1));
+  it('tableau vide',             () => assert.equal(countDemandes([]), 0));
+  it('null',                     () => assert.equal(countDemandes(null), 0));
 });
