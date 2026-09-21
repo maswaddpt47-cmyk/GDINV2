@@ -893,3 +893,52 @@ test.describe('Onglet États', () => {
   });
 
 });
+
+test.describe('Graphes de types d\'action', () => {
+
+  // Le filtre « Type d'action » vaut « Accompagnement » par défaut. Ces deux
+  // graphes étaient alimentés par getFiltered(), qui applique ce filtre : à
+  // l'ouverture ils ne montraient qu'une seule série, dont la valeur est déjà
+  // le KPI principal. Ils lisent désormais getFilteredSansType().
+
+  test('la répartition par type montre plusieurs types sous le filtre par défaut', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    const vu = await page.evaluate(() => ({
+      filtre: document.getElementById('typeFilter').value,
+      labels: charts['ch-types'].data.labels,
+    }));
+    expect(vu.filtre, 'le filtre par défaut doit bien être un type précis').toBe('Accompagnement');
+    expect(vu.labels.length, 'un seul type affiché').toBeGreaterThan(1);
+  });
+
+  test("l'évolution mensuelle par type empile plusieurs types", async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    await page.evaluate(() => {
+      document.querySelector('[onclick*="\'evolution\'"]').click();
+    });
+    const series = await page.evaluate(() => charts['ch-type-monthly'].data.datasets.map((d) => d.label));
+    expect(series.length, 'une seule série empilée').toBeGreaterThan(1);
+  });
+
+  test('contre-preuve : alimentés par getFiltered() ils retombent à un seul type', async ({ page }) => {
+    // Sans ceci, les deux tests ci-dessus passeraient encore si le correctif
+    // disparaissait et que le filtre par défaut changeait pour « Tous ».
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    const n = await page.evaluate(() => {
+      const keys = allTypeKeys(getFiltered());
+      return keys.length;
+    });
+    expect(n, "l'implémentation d'origine doit bien être fautive").toBe(1);
+  });
+
+  test('les deux graphes suivent quand même la période et les années', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    const avant = await page.evaluate(() =>
+      charts['ch-types'].data.datasets[0].data.reduce((a, b) => a + b, 0));
+    await page.evaluate(() => { activeYears = new Set(['2024']); refreshAll(); });
+    const apres = await page.evaluate(() =>
+      charts['ch-types'].data.datasets[0].data.reduce((a, b) => a + b, 0));
+    expect(apres, 'une seule année doit donner moins').toBeLessThan(avant);
+  });
+
+});
