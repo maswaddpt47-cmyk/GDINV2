@@ -119,6 +119,40 @@ Chaque lancement de la suite e2e coûte du temps et des jetons. Sur ce projet :
   sur une combinaison de valeurs rare passerait inaperçue. Capture avant/après
   à la demande, pas par défaut.
 
+### AGORA — faire contredire une proposition par une autre session
+
+Deux sessions Claude ne partagent ni conversation, ni mémoire, ni conteneur —
+seulement ce dépôt. Elles n'ont pas lu les mêmes fichiers dans le même ordre,
+et c'est ce qui rend leurs raisonnements différents. `AGORA.md` à la racine
+exploite cet écart : la proposition est déposée dans le dépôt, l'autre session
+lit **le vrai code** au lieu d'une reformulation qui porterait déjà le cadrage
+et les angles morts de l'auteur.
+
+**Le déclenchement ne repose pas sur un ressenti** : la confiance de Claude est
+la plus haute là où il raisonne sur ce qu'il n'a pas vérifié. Soumettre dès
+qu'un de ces faits est **constaté**, vérifiable ensuite dans le diff :
+
+1. la décision ferme une porte — format de stockage `gdin_data_v3`, mapping
+   d'import, contrat entre `gdin-pure.js` et `index.html`, nouvelle dépendance
+   dans `vendor/` ;
+2. deux options envisagées, une seule écrite, sans arbitrage extérieur ;
+3. trois itérations sans résolution sur le même problème ;
+4. proposition de défaire un existant dont la raison d'être n'est pas retrouvée
+   (voir « Décisions à ne pas défaire » dans `CHANTIERS.md`) ;
+5. la proposition contredit une note datée du dépôt ;
+6. coût irréversible côté usager — perte du `localStorage` d'un poste, rupture
+   d'un rapport déjà diffusé, changement de comptage déjà communiqué.
+
+**N'y vont pas** : un changement de rendu pur (cf. « Ce que coûte un test »), un
+correctif localisé appuyé sur une preuve, tout ce qui se défait en un commit.
+
+**Soumettre d'office, sans demander l'autorisation**, au moment où le choix est
+fait — pas après l'implémentation, sinon le contradicteur hérite d'un biais de
+statu quo. **Ne jamais bloquer** : le travail continue, rien ne garantit qu'une
+réponse arrive. Le bloc se pousse **directement sur `main`**, immédiatement :
+deux sessions sur deux branches ne se voient pas. C'est l'exception assumée à
+la règle de branche ci-dessus. Gabarit et règles de réponse : `AGORA.md`.
+
 ### Convention de messages de commit
 | Préfixe | Usage |
 |---|---|
