@@ -978,6 +978,25 @@ function syntheseFiabilite(indicateurs){
   return{niveau:pire,solides,vigilance:enVigilance.length,plusFaible,texte};
 }
 
+// ─── Libellé des lignes affichées ────────────────────────────────────────────
+// Un titre qui affirme « Accompagnements » pendant que le filtre de type montre
+// des ateliers est faux. Constaté le 21/09/2026 sur « Accompagnements par CMS »
+// et « Accompagnements — N/N-1/N-2 ». Couvert par les tests « libelleLignes ».
+const LIBELLE_LIGNES={
+  '':'Demandes',
+  'Accompagnement':'Accompagnements',
+  'Prise de contact':'Prises de contact',
+  'Orientation vers un tiers':'Orientations vers un tiers',
+  'Atelier':'Participations',
+  'Demande de prescription de Pass':'Prescriptions de Pass',
+  'Orientation vers un CN du 47':'Orientations vers un CN 47',
+  'Autre':'Autres actions',
+};
+function libelleLignes(typeFiltre){
+  const k=typeFiltre==null?'':String(typeFiltre);
+  return LIBELLE_LIGNES[k]||'Demandes';
+}
+
 // ─── Mois d'une période ───────────────────────────────────────────────────────
 // Les courbes d'évolution construisaient leur axe depuis les mois présents dans
 // les données : un mois sans activité disparaissait au lieu de s'afficher à
@@ -1017,6 +1036,6 @@ if(typeof module!=='undefined'){
     esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
-    normEtat,isRealisee,countDemandes,cleDoublon,compterDoublons,moisDeLaPeriode,
+    normEtat,isRealisee,countDemandes,cleDoublon,compterDoublons,moisDeLaPeriode,libelleLignes,LIBELLE_LIGNES,
   };
 }

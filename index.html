@@ -698,7 +698,7 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
     <div class="card"><div class="card-title"><span class="dot" style="background:var(--orange)"></span>Répartition conseillers</div><canvas id="ch-conum"></canvas></div>
   </div>
   <div class="g2">
-    <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Accompagnements par CMS (hors DSIAN)</div><div id="bar-cms-global" class="bar-list"></div></div>
+    <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span><span id="tt-cms-global">Accompagnements</span> par CMS (hors DSIAN)</div><div id="bar-cms-global" class="bar-list"></div></div>
     <div class="card"><div class="card-title"><span class="dot" style="background:var(--purple)"></span>Types d'action (hors Réservation)<span style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">tous types · ignore le filtre de type</span></div><canvas id="ch-types"></canvas></div>
   </div>
   <div class="g2">
@@ -915,7 +915,7 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
     <div id="rpt-content" style="display:none">
       <div id="kpi-rpt" class="g4"></div>
       <div class="card g1"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Évolution mensuelle</div><canvas id="ch-rpt-evol"></canvas></div>
-      <div class="card g1"><div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Accompagnements — N / N-1 / N-2 <span style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">par mois calendaire</span></div><canvas id="ch-rpt-yoy-main" style="max-height:220px"></canvas></div>
+      <div class="card g1"><div class="card-title"><span class="dot" style="background:var(--yellow)"></span><span id="tt-rpt-yoy">Accompagnements</span> — N / N-1 / N-2 <span style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">par mois calendaire</span></div><canvas id="ch-rpt-yoy-main" style="max-height:220px"></canvas></div>
       <div class="g2">
         <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Orienteurs actifs dans ce CMS</div><div id="bar-rpt-ori" class="bar-list"></div></div>
         <div class="card"><div class="card-title"><span class="dot" style="background:var(--purple)"></span>Activité CN : ce CMS vs autres structures</div><canvas id="ch-rpt-comp"></canvas></div>
@@ -1559,6 +1559,10 @@ function renderGlobal(){
   destroyChart('ch-conum');
   charts['ch-conum']=new Chart(document.getElementById('ch-conum'),{type:'doughnut',data:{labels:conumData.map(c=>c[0].split(' ').pop()),datasets:[{data:conumData.map(c=>c[1]),backgroundColor:conumData.map(c=>conumColor(c[0])),borderWidth:2,borderColor:'#111827',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:8,color:legendColor()}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${pct(ctx.parsed,conumData.reduce((s,c)=>s+c[1],0))}%)`}}}}});
 
+  // Le titre suit le filtre de type : il affirmait « Accompagnements »
+  // pendant que le filtre montrait des ateliers (constaté le 21/09/2026).
+  {const _t=document.getElementById('tt-cms-global');
+   if(_t)_t.textContent=libelleLignes(document.getElementById('typeFilter').value);}
   makeBarList(document.getElementById('bar-cms-global'),countEntries(noDsian,'cms').slice(0,9),'blue');
 
   // Alimenté hors filtre de type : ce filtre vaut « Accompagnement » par
@@ -2381,7 +2385,9 @@ function renderRapport(){
   const mKeys=moisDeLaPeriode(f,t,activeYears);
   destroyChart('ch-rpt-evol');
   charts['ch-rpt-evol']=new Chart(document.getElementById('ch-rpt-evol'),{type:'bar',data:{labels:mKeys.map(monthLabel),datasets:[{data:mKeys.map(k=>data.filter(r=>r.date_demande.startsWith(k)).length),backgroundColor:'rgba(59,130,246,.45)',borderColor:'#3b82f6',borderRadius:5,borderSkipped:false,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}});
-  // Graphe calendaire N / N-1 / N-2
+  // Graphe calendaire N / N-1 / N-2 — titre aligné sur le filtre de type
+  {const _t=document.getElementById('tt-rpt-yoy');
+   if(_t)_t.textContent=libelleLignes(document.getElementById('typeFilter').value);}
   const yoyYears=[...new Set(data.map(r=>r.date_demande.slice(0,4)))].sort();
   destroyChart('ch-rpt-yoy-main');
   charts['ch-rpt-yoy-main']=new Chart(document.getElementById('ch-rpt-yoy-main'),{type:'bar',data:{labels:MONTH_FR,datasets:yoyYears.map((yr,i)=>{const col=YEAR_PALETTE[i%YEAR_PALETTE.length];const vals=Array(12).fill(0);data.filter(r=>r.date_demande.startsWith(yr)).forEach(r=>{const m=parseInt(r.date_demande.slice(5,7))-1;if(m>=0&&m<12)vals[m]++;});return{label:yrLabel(yr),data:vals,backgroundColor:col+'66',borderColor:col,borderWidth:1.5,borderRadius:3,borderSkipped:false};})},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:legendColor(),font:{size:10},boxWidth:7,padding:5}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}}}}});

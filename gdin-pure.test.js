@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const {
   pct, esc, excelDate, parseDt, dayDiff, bizDays, monthLabel, typeColor,
   count, countEntries, countThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
-  normEtat, isRealisee, countDemandes, parseRows, mapColonnes, demojibakeUtf16, moisDeLaPeriode,
+  normEtat, isRealisee, countDemandes, parseRows, mapColonnes, demojibakeUtf16, moisDeLaPeriode, libelleLignes,
   cleDoublon, compterDoublons,
   estAtelier, cleSessionAtelier, compterSessionsAtelier, statsAteliers,
   numeroterParticipants, cleFusion,
@@ -992,5 +992,27 @@ describe('moisDeLaPeriode', () => {
     assert.deepEqual(moisDeLaPeriode('', '2026-01-01'), []);
     assert.deepEqual(moisDeLaPeriode(null, undefined), []);
     assert.deepEqual(moisDeLaPeriode('n/a', 'n/a'), []);
+  });
+});
+
+
+describe('libelleLignes', () => {
+  it('nomme le type filtré au pluriel', () => {
+    assert.equal(libelleLignes('Accompagnement'), 'Accompagnements');
+    assert.equal(libelleLignes('Prise de contact'), 'Prises de contact');
+  });
+
+  it('dit « Participations » pour les ateliers — une ligne est un participant', () => {
+    assert.equal(libelleLignes('Atelier'), 'Participations');
+  });
+
+  it('dit « Demandes » quand aucun type n\'est filtré', () => {
+    assert.equal(libelleLignes(''), 'Demandes');
+    assert.equal(libelleLignes(null), 'Demandes');
+    assert.equal(libelleLignes(undefined), 'Demandes');
+  });
+
+  it('retombe sur « Demandes » devant un type inconnu plutôt que d\'affirmer faux', () => {
+    assert.equal(libelleLignes('Type qui nexiste pas'), 'Demandes');
   });
 });

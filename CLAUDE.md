@@ -74,6 +74,42 @@ La CI bloque le déploiement si un test échoue — ne jamais pousser sans avoir
 
 > Ne jamais modifier `gdin-pure.js` sans vérifier les tests. Ne jamais modifier les tests sans modifier le code correspondant.
 
+### Revue de sens — ce que les tests ne voient pas
+
+Les tests vérifient des calculs et des états du DOM. Ils ne savent pas ce qu'un
+graphe est **censé signifier** : un graphe peut calculer juste et raconter faux,
+et aucun d'eux ne le verra. Les trois défauts du 21/09/2026 étaient de cette
+famille — une barre unique sous le filtre par défaut, une pastille muette au
+doigt, des courbes empilées lues comme des volumes. Tous trouvés à l'œil, aucun
+par la suite de tests.
+
+`revue-sens.test.js` encode les règles qui en sont sorties, par lecture du
+source, sans navigateur : pas de courbe empilée, pas de titre figé sur un type
+d'action que le filtre peut démentir, mention obligatoire sur un graphe qui
+ignore les filtres. Ses exceptions sont nommées une par une avec leur raison —
+c'est ce qui le garde utile plutôt que bruyant.
+
+**Il ne remplace pas de regarder l'écran.** Avant de livrer un graphe, se poser
+les deux questions qu'aucun test ne pose : *qu'est-ce que son titre promet, et
+qu'est-ce qu'il montre réellement ?* Une suite verte ne garantit pas que
+l'affichage est correct, et ne décharge pas l'utilisateur du contrôle visuel.
+
+### Ce que coûte un test
+
+Chaque lancement de la suite e2e coûte du temps et des jetons. Sur ce projet :
+
+- **Suite e2e complète : une seule fois, juste avant le commit.** Jamais à
+  chaque étape intermédiaire. Les tests unitaires, eux, tournent en une
+  fraction de seconde — les lancer librement.
+- **Un ou deux tests ciblés par correctif**, pas quatre à six.
+- **La contre-preuve** — celle qui rejoue l'implémentation fautive — est
+  réservée aux pièges réellement subtils, ceux qu'on remettrait sans s'en
+  apercevoir. Celles déjà en place ne se retirent pas (voir `CHANTIERS.md`).
+- **Avant de conclure à une anomalie, éliminer le harnais** : générateur de
+  données mal distribué, écran d'accueil non fermé, mauvaise sélection. Trois
+  fausses alertes ont été produites ainsi le 21/09/2026. Réutiliser un harnais
+  qui a déjà fonctionné plutôt que le réécrire.
+
 ### Convention de messages de commit
 | Préfixe | Usage |
 |---|---|
@@ -119,8 +155,8 @@ git checkout main && git merge <branche> --no-ff && git push origin main
 ### Déploiement et cache
 
 `.github/workflows/deploy.yml` publie sur GitHub Pages **au push sur `main`
-uniquement**, et seulement si `node --test gdin-pure.test.js` passe. Une
-branche de feature ne déploie rien.
+uniquement**, et seulement si `npm test` (tous les `*.test.js`) et la suite
+Playwright passent. Une branche de feature ne déploie rien.
 
 Le workflow injecte `?v=<sha court>` dans les URLs locales d'`index.html`
 avant de publier, GitHub Pages ne permettant pas de configurer d'en-tête de
