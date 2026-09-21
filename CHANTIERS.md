@@ -1,6 +1,6 @@
 # Chantiers — GDINV2
 
-État au **20/09/2026**, commit `a797367` (branche de session).
+État au **20/09/2026**, commit `fe474e8` (branche de session).
 
 Ce fichier existe pour qu'une session qui démarre sans historique sache où en
 est le projet. **Il ne se supprime pas.** Ce qui s'efface, ce sont les tâches,
@@ -14,7 +14,7 @@ Règles permanentes : `CLAUDE.md`.
 ## Comment reprendre
 
 ```bash
-npm test                      # 243 tests unitaires · 60 e2e
+npm test                      # 250 tests unitaires · 69 e2e
 npm run audit -- export.xls   # ce que l'application retient d'un export réel
 ```
 
@@ -25,7 +25,23 @@ comparaison avec un fichier antérieur. Référence actuelle : septembre 2026,
 
 ## Chantiers ouverts
 
-Aucun.
+### AGORA — à éprouver
+
+`AGORA.md` et la section « AGORA » du `CLAUDE.md` ont été propagés depuis
+MD-LIB le 21/09/2026, **avant le retour du projet pilote ATELIERS_NEWGEN**, sur
+décision de l'utilisateur. Le format n'a donc pas encore servi ici.
+
+Deux points à vérifier au premier usage réel :
+
+- **Auto-suffisance.** Une session qui n'aurait que ce dépôt sous les yeux —
+  autre compte, MD-LIB non attaché — doit pouvoir ouvrir un bloc **et y
+  répondre** avec `AGORA.md` + `CLAUDE.md` seuls. Si elle a besoin d'ouvrir
+  `MD-LIB/agora.md`, la copie est incomplète.
+- **Le point faible est que Claude oublie.** Aucun test n'échoue si un critère
+  est rempli sans signalement. La seule vérification réelle : reprendre la
+  session quand le diff montre un critère rempli resté silencieux.
+
+Ce chantier se ferme quand un bloc a été ouvert, répondu et tranché.
 
 ## À porter aux développeurs de l'outil de saisie
 
@@ -121,6 +137,15 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
   l'onglet États vérifiaient les tables mais pas la visibilité du panneau : ils
   seraient passés sur un écran resté masqué. Le test « le panneau devient
   réellement visible » comble ce trou — ne pas le retirer.
+- **Les courbes ne s'empilent pas, les barres peuvent.** « Volume par CMS »
+  était en aires empilées : la courbe du haut valait le total des six CMS et
+  non le volume du sien, et toutes reprenaient la forme du total. Dans une
+  barre segmentée le découpage reste visible ; dans une courbe, la hauteur se
+  lit comme une valeur. `revue-sens.test.js` refuse le retour de l'empilement
+  sur un graphe en lignes.
+- **Un titre ne fige pas un type d'action** que le filtre peut démentir :
+  `libelleLignes()` rend « Accompagnements par CMS » et « Accompagnements
+  N/N-1/N-2 », qui mentaient sous le filtre « Atelier ». Même test.
 - **`ACTIONS_DATA` est dérivé de `DATA`**, pas importé séparément
   (index.html, `DATA.forEach` sur `type_action` commençant par
   « accompagnement » et `cms` non vide), et il y ajoute `delai_reactivite`
