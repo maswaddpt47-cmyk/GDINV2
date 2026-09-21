@@ -1146,3 +1146,115 @@ test.describe('Info-bulles au doigt', () => {
   });
 
 });
+
+test.describe('Volume par CMS — courbes comparables', () => {
+
+  // Le graphe était en aires empilées : chaque courbe portait le cumul des
+  // précédentes, celle du haut valait le total des six CMS et non le volume du
+  // sien, et toutes reprenaient mécaniquement la forme du total. Impossible de
+  // comparer les CMS, ce qui est pourtant la seule raison d'être du graphe —
+  // le total est déjà donné par l'évolution mensuelle au-dessus.
+
+  async function ouvrirEvolution(page) {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    await page.evaluate(() => document.querySelector('[onclick*="\'evolution\'"]').click());
+    await page.waitForTimeout(600);
+  }
+
+  test("le graphe n'est pas empilé", async ({ page }) => {
+    await ouvrirEvolution(page);
+    const c = await page.evaluate(() => {
+      const ch = charts['ch-cms-monthly'];
+      return {
+        axeEmpile: !!(ch.options.scales.y && ch.options.scales.y.stacked),
+        sériesEmpilées: ch.data.datasets.some((d) => d.stack !== undefined),
+        remplissage: ch.data.datasets.some((d) => d.fill),
+      };
+    });
+    expect(c.axeEmpile, "l'axe Y ne doit pas empiler").toBe(false);
+    expect(c.sériesEmpilées, 'aucune série ne doit déclarer de stack').toBe(false);
+    expect(c.remplissage, 'des aires superposées non empilées seraient illisibles').toBe(false);
+  });
+
+  test('chaque courbe porte le volume de son seul CMS', async ({ page }) => {
+    await ouvrirEvolution(page);
+    const ok = await page.evaluate(() => {
+      const ch = charts['ch-cms-monthly'];
+      const labels = ch.data.labels;
+      // Recalcul indépendant depuis DATA, pour le mois le plus fourni.
+      const parMois = {};
+      getFiltered().forEach((r) => {
+        const m = r.date_demande.slice(0, 7);
+        parMois[m] = (parMois[m] || 0) + 1;
+      });
+      const moisPlein = Object.entries(parMois).sort((a, b) => b[1] - a[1])[0][0];
+      const idx = labels.findIndex((l, i) => {
+        // monthLabel() reformate : on retrouve l'index par recalcul du même libellé
+        return l === monthLabel(moisPlein);
+      });
+      if (idx < 0) return { trouve: false };
+      const ecarts = ch.data.datasets.map((d) => {
+        const attendu = getFiltered()
+          .filter((r) => r.cms === d.label && r.date_demande.startsWith(moisPlein)).length;
+        return { cms: d.label, affiche: d.data[idx], attendu };
+      });
+      return { trouve: true, faux: ecarts.filter((e) => e.affiche !== e.attendu) };
+    });
+    expect(ok.trouve, 'mois de référence introuvable').toBe(true);
+    expect(ok.faux, 'une courbe affiche autre chose que le volume de son CMS').toEqual([]);
+  });
+
+  test('contre-preuve : des courbes qui se croisent sont impossibles en empilé', async ({ page }) => {
+    // En aires empilées, chaque courbe vaut la somme des précédentes : elle
+    // leur est donc supérieure ou égale en TOUT point, et deux courbes ne se
+    // croisent jamais. Un croisement prouve que l'empilement a bien disparu.
+    // Le jeu de test commun ne porte qu'un seul CMS côté accompagnements :
+    // il en faut un dédié pour que la propriété soit observable.
+    await loadFresh(page); await dismissLanding(page);
+    await page.evaluate(() => {
+      const rec = [];
+      // Deux CMS aux courbes volontairement inversées d'un mois sur l'autre.
+      const plan = { 'CMS Marmande': [9, 2, 9, 2], 'CMS Nérac': [2, 9, 2, 9] };
+      Object.entries(plan).forEach(([cms, vals]) => {
+        vals.forEach((n, mi) => {
+          for (let i = 0; i < n; i++) {
+            const m = String(mi + 1).padStart(2, '0');
+            rec.push({
+              date_demande: `2026-${m}-05`, date_action: `2026-${m}-05`,
+              id_demande: `${cms}-${mi}-${i}`, conum: 'NOM-A Prenom',
+              cms, lieu_raw: cms, structure: '', commune: 'Agen',
+              themas: ['Logement'], type_action: ['Accompagnement'],
+              orienteur: 'CAF', motif: '', benef_connu: true, urgence: false,
+              etat: 'Réalisée', date_planifiee: null, date_realisation: `2026-${m}-05`,
+            });
+          }
+        });
+      });
+      importDataJSON({ type: 'gdin-data', data: rec }, 'croisement.json');
+    });
+    await page.waitForFunction(() => dataSource === 'imported', { timeout: 15000 });
+    await page.evaluate(() => document.querySelector('[onclick*="\'evolution\'"]').click());
+    await page.waitForTimeout(600);
+
+    const r = await page.evaluate(() => {
+      const ds = charts['ch-cms-monthly'].data.datasets;
+      if (ds.length < 2) return { series: ds.length, croisement: false };
+      let croisement = false;
+      for (let a = 0; a < ds.length && !croisement; a++) {
+        for (let b = a + 1; b < ds.length && !croisement; b++) {
+          let auDessus = false, auDessous = false;
+          for (let i = 0; i < ds[a].data.length; i++) {
+            if (ds[a].data[i] > ds[b].data[i]) auDessus = true;
+            if (ds[a].data[i] < ds[b].data[i]) auDessous = true;
+          }
+          if (auDessus && auDessous) croisement = true;
+        }
+      }
+      return { series: ds.length, croisement };
+    });
+    expect(r.series, 'il faut au moins deux CMS pour observer un croisement')
+      .toBeGreaterThanOrEqual(2);
+    expect(r.croisement, "aucun croisement : l'empilement est peut-être revenu").toBe(true);
+  });
+
+});
