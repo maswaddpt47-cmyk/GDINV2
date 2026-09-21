@@ -109,6 +109,15 @@ Chaque lancement de la suite e2e coûte du temps et des jetons. Sur ce projet :
   données mal distribué, écran d'accueil non fermé, mauvaise sélection. Trois
   fausses alertes ont été produites ainsi le 21/09/2026. Réutiliser un harnais
   qui a déjà fonctionné plutôt que le réécrire.
+- **Le rendu se vérifie à l'œil, le calcul garde son test.** Un changement de
+  rendu pur — couleur, libellé, position, CSS, mise en page — ne justifie ni
+  test ni capture : dire quoi regarder dans le dashboard déployé et laisser
+  l'utilisateur confirmer coûte moins cher et voit mieux. La ligne de partage
+  est **rendu / calcul**, pas visible / invisible : une fonction de
+  `gdin-pure.js`, un filtre ou un format de données garde son test ciblé,
+  parce que l'œil ne contrôle que le cas affiché ce jour-là — une régression
+  sur une combinaison de valeurs rare passerait inaperçue. Capture avant/après
+  à la demande, pas par défaut.
 
 ### Convention de messages de commit
 | Préfixe | Usage |
