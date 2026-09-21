@@ -978,6 +978,32 @@ function syntheseFiabilite(indicateurs){
   return{niveau:pire,solides,vigilance:enVigilance.length,plusFaible,texte};
 }
 
+// ─── Mois d'une période ───────────────────────────────────────────────────────
+// Les courbes d'évolution construisaient leur axe depuis les mois présents dans
+// les données : un mois sans activité disparaissait au lieu de s'afficher à
+// zéro, et deux points voisins à l'écran pouvaient être séparés de plusieurs
+// mois réels. Mesuré le 21/09/2026 sur le Rapport : 10 points affichés pour une
+// période de 36 mois. Cette fonction rend l'axe complet, bornes incluses.
+// `annees` (Set ou tableau) restreint aux années sélectionnées ; vide = toutes.
+// Couvert par les tests « moisDeLaPeriode ».
+function moisDeLaPeriode(debut,fin,annees){
+  const m=/^(\d{4})-(\d{2})/, a=m.exec(String(debut||'')), b=m.exec(String(fin||''));
+  if(!a||!b)return[];
+  let y=+a[1], mo=+a[2];
+  const yF=+b[1], moF=+b[2];
+  if(y>yF||(y===yF&&mo>moF))return[];
+  const garde=annees&&(annees.size||annees.length)
+    ? (annees instanceof Set?annees:new Set(annees)) : null;
+  const out=[];
+  while(y<yF||(y===yF&&mo<=moF)){
+    const cle=`${y}-${String(mo).padStart(2,'0')}`;
+    if(!garde||garde.has(String(y)))out.push(cle);
+    mo++; if(mo>12){mo=1;y++;}
+    if(out.length>1200)break;  // garde-fou : 100 ans
+  }
+  return out;
+}
+
 // ─── Demandes distinctes ──────────────────────────────────────────────────────
 // Une demande (N° Demande) génère plusieurs lignes d'action : compter les lignes
 // n'est pas compter les demandes. Couvert par les tests « countDemandes ».
@@ -991,6 +1017,6 @@ if(typeof module!=='undefined'){
     esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
-    normEtat,isRealisee,countDemandes,cleDoublon,compterDoublons,
+    normEtat,isRealisee,countDemandes,cleDoublon,compterDoublons,moisDeLaPeriode,
   };
 }

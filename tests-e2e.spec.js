@@ -942,3 +942,93 @@ test.describe('Graphes de types d\'action', () => {
   });
 
 });
+
+test.describe('Axe des courbes d\'évolution', () => {
+
+  // Les courbes tiraient leur axe des mois présents dans les données : un mois
+  // sans activité disparaissait au lieu de s'afficher à zéro, et deux points
+  // voisins à l'écran pouvaient être séparés de plusieurs mois réels. Mesuré
+  // le 21/09/2026 sur le Rapport : 10 points pour une période de 36 mois.
+
+  async function ouvrirRapportSurLaPlusGrosseCombinaison(page) {
+    return page.evaluate(async () => {
+      document.querySelector('[onclick*="\'rapport\'"]').click();
+      await new Promise((r) => setTimeout(r, 300));
+      const c = {};
+      getFiltered().forEach((r) => {
+        if (r.conum && r.cms) c[r.conum + '|' + r.cms] = (c[r.conum + '|' + r.cms] || 0) + 1;
+      });
+      const best = Object.entries(c).sort((a, b) => b[1] - a[1])[0];
+      const [cn, cm] = best[0].split('|');
+      const sc = document.getElementById('sel-rpt-conum');
+      sc.value = cn; sc.dispatchEvent(new Event('change'));
+      await new Promise((r) => setTimeout(r, 400));
+      const sm = document.getElementById('sel-rpt-cms');
+      sm.value = cm; sm.dispatchEvent(new Event('change'));
+      await new Promise((r) => setTimeout(r, 700));
+      return best[1];
+    });
+  }
+
+  test("l'évolution du Rapport couvre toute la période, mois creux compris", async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    await ouvrirRapportSurLaPlusGrosseCombinaison(page);
+    const vu = await page.evaluate(() => {
+      const f = document.getElementById('dFrom').value;
+      const t = document.getElementById('dTo').value;
+      return {
+        attendus: moisDeLaPeriode(f, t, activeYears).length,
+        affiches: charts['ch-rpt-evol'].data.labels.length,
+        mensuelEtats: charts['ch-rpt-act-monthly'].data.labels.length,
+      };
+    });
+    expect(vu.affiches, "l'axe doit couvrir la période entière").toBe(vu.attendus);
+    expect(vu.mensuelEtats, 'même axe pour les réalisés / non réalisés').toBe(vu.attendus);
+  });
+
+  test('le total affiché ne change pas : on ajoute des zéros, pas des dossiers', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    const dossiers = await ouvrirRapportSurLaPlusGrosseCombinaison(page);
+    const total = await page.evaluate(() =>
+      charts['ch-rpt-evol'].data.datasets[0].data.reduce((a, b) => a + b, 0));
+    expect(total).toBe(dossiers);
+  });
+
+  test("contre-preuve : l'axe tiré des données est plus court", async ({ page }) => {
+    // Sans ceci, le test ci-dessus passerait encore si l'axe redevenait celui
+    // des données sur un jeu où tous les mois sont remplis.
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    await ouvrirRapportSurLaPlusGrosseCombinaison(page);
+    const vu = await page.evaluate(() => {
+      const f = document.getElementById('dFrom').value;
+      const t = document.getElementById('dTo').value;
+      const conum = document.getElementById('sel-rpt-conum').value;
+      const cms = document.getElementById('sel-rpt-cms').value;
+      const cmN = normCms(cms) || cms;
+      const data = getFiltered().filter((r) => r.conum === conum && (r.cms === cms || r.cms === cmN));
+      return {
+        depuisLesDonnees: new Set(data.map((r) => r.date_demande.slice(0, 7))).size,
+        depuisLaPeriode: moisDeLaPeriode(f, t, activeYears).length,
+      };
+    });
+    expect(vu.depuisLesDonnees, "l'ancien axe doit bien être plus court")
+      .toBeLessThan(vu.depuisLaPeriode);
+  });
+
+  test('le slide « Non réalisés » du diaporama garde le même axe que le CR', async ({ page }) => {
+    // Règle CR ↔ Diapo : les deux doivent montrer la même chose.
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    const src = await page.evaluate(() => {
+      const fn = String(drSlideNonReal);
+      // Viser l'axe des mois seulement : la liste des ANNÉES se construit
+      // légitimement depuis les données pour le graphe N vs N-1.
+      return {
+        axeComplet: /const months=moisDeLaPeriode/.test(fn),
+        axeDonnees: /const months=\[\.\.\.new Set/.test(fn),
+      };
+    });
+    expect(src.axeComplet, 'le slide doit utiliser moisDeLaPeriode').toBe(true);
+    expect(src.axeDonnees, "l'axe tiré des données ne doit plus s'y trouver").toBe(false);
+  });
+
+});

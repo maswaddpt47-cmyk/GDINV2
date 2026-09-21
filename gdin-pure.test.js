@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const {
   pct, esc, excelDate, parseDt, dayDiff, bizDays, monthLabel, typeColor,
   count, countEntries, countThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
-  normEtat, isRealisee, countDemandes, parseRows, mapColonnes, demojibakeUtf16,
+  normEtat, isRealisee, countDemandes, parseRows, mapColonnes, demojibakeUtf16, moisDeLaPeriode,
   cleDoublon, compterDoublons,
   estAtelier, cleSessionAtelier, compterSessionsAtelier, statsAteliers,
   numeroterParticipants, cleFusion,
@@ -950,5 +950,47 @@ describe('syntheseFiabilite', () => {
     const s = syntheseFiabilite([{ cle: 'a', libelle: 'A', niveau: 'solide', marge: 0 }]);
     assert.equal(s.vigilance, 0);
     assert.ok(s.texte.includes('aucun point de vigilance'));
+  });
+});
+
+describe('moisDeLaPeriode', () => {
+  it('rend tous les mois de la période, bornes incluses', () => {
+    assert.deepEqual(moisDeLaPeriode('2026-01-01', '2026-03-31'),
+      ['2026-01', '2026-02', '2026-03']);
+  });
+
+  it('franchit les années', () => {
+    assert.deepEqual(moisDeLaPeriode('2025-11-15', '2026-02-02'),
+      ['2025-11', '2025-12', '2026-01', '2026-02']);
+  });
+
+  it('inclut les mois sans activité — c\'est sa raison d\'être', () => {
+    // Le défaut corrigé : l'axe venait des données, un mois creux disparaissait.
+    const mois = moisDeLaPeriode('2026-01-01', '2026-06-30');
+    assert.equal(mois.length, 6);
+    assert.ok(mois.includes('2026-04'));
+  });
+
+  it('restreint aux années sélectionnées', () => {
+    assert.deepEqual(moisDeLaPeriode('2025-11-01', '2026-02-01', new Set(['2026'])),
+      ['2026-01', '2026-02']);
+    assert.deepEqual(moisDeLaPeriode('2025-11-01', '2026-02-01', ['2025']),
+      ['2025-11', '2025-12']);
+  });
+
+  it('un Set vide ou absent ne filtre rien', () => {
+    assert.equal(moisDeLaPeriode('2026-01-01', '2026-03-01', new Set()).length, 3);
+    assert.equal(moisDeLaPeriode('2026-01-01', '2026-03-01').length, 3);
+  });
+
+  it('un même mois de début et de fin rend un seul mois', () => {
+    assert.deepEqual(moisDeLaPeriode('2026-05-03', '2026-05-28'), ['2026-05']);
+  });
+
+  it('rend un tableau vide sur des bornes inversées ou illisibles', () => {
+    assert.deepEqual(moisDeLaPeriode('2026-05-01', '2026-01-01'), []);
+    assert.deepEqual(moisDeLaPeriode('', '2026-01-01'), []);
+    assert.deepEqual(moisDeLaPeriode(null, undefined), []);
+    assert.deepEqual(moisDeLaPeriode('n/a', 'n/a'), []);
   });
 });
