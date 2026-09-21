@@ -171,6 +171,12 @@ Ce fichier-ci porte les règles permanentes, `CHANTIERS.md` l'état du moment.
 Le tenir à jour à chaque avancée significative — pas en fin de session, qui
 peut s'interrompre sans préavis.
 
+**Au démarrage, regarder aussi `AGORA.md`** : s'il porte un bloc ouvert sans
+réponse, le signaler à l'utilisateur — sans y répondre soi-même si on l'a
+ouvert (comparer le trailer `Claude-Session:` du commit du bloc). Rien ne
+menait à ce fichier avant le 21/09/2026 : un bloc y restait invisible, et le
+dispositif dépendait entièrement de l'utilisateur pour son second temps.
+
 **Ce fichier ne se supprime pas** : il sert aux sessions suivantes, qui ne
 reprennent jamais le contexte de la précédente. Ce qui s'efface, ce sont les
 **tâches, au fur et à mesure qu'elles sont terminées** — après avoir remonté

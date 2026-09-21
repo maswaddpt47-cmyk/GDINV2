@@ -25,25 +25,7 @@ comparaison avec un fichier antérieur. Référence actuelle : septembre 2026,
 
 ## Chantiers ouverts
 
-### AGORA — à éprouver
-
-`AGORA.md` et la section « AGORA » du `CLAUDE.md` ont été propagés depuis
-MD-LIB le 21/09/2026, après validation du format par le projet pilote
-ATELIERS_NEWGEN — un cycle complet y a corrigé un protocole de mesure, la
-session contradictrice ayant infirmé deux points de l'auteur sur pièces. Le
-format n'a en revanche pas encore servi **ici**.
-
-Deux points à vérifier au premier usage réel :
-
-- **Auto-suffisance.** Une session qui n'aurait que ce dépôt sous les yeux —
-  autre compte, MD-LIB non attaché — doit pouvoir ouvrir un bloc **et y
-  répondre** avec `AGORA.md` + `CLAUDE.md` seuls. Si elle a besoin d'ouvrir
-  `MD-LIB/agora.md`, la copie est incomplète.
-- **Le point faible est que Claude oublie.** Aucun test n'échoue si un critère
-  est rempli sans signalement. La seule vérification réelle : reprendre la
-  session quand le diff montre un critère rempli resté silencieux.
-
-Ce chantier se ferme quand un bloc a été ouvert, répondu et tranché.
+Aucun.
 
 ## À porter aux développeurs de l'outil de saisie
 
@@ -139,6 +121,24 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
   l'onglet États vérifiaient les tables mais pas la visibilité du panneau : ils
   seraient passés sur un écran resté masqué. Le test « le panneau devient
   réellement visible » comble ce trou — ne pas le retirer.
+**AGORA**
+
+- **AGORA a servi une fois, et ça a marché** (AG-001, 21/09/2026). Une seconde
+  session, sans accès à MD-LIB, a confirmé le fond, infirmé un argument et
+  trouvé un défaut que l'auteur n'avait pas vu. L'auto-suffisance d'`AGORA.md`
+  + `CLAUDE.md` est donc **éprouvée, pas supposée** : trois règles hors gabarit
+  ont réellement servi à répondre. Ne pas réduire `AGORA.md` au seul gabarit.
+- **Le trailer `Claude-Session:` distingue deux sessions**, même sous une
+  identité GitHub unique — c'est lui qui vérifie qu'on ne répond pas à son
+  propre bloc, pas le champ `Auteur`, qui n'est qu'un libellé oral. Quand le
+  trailer manque, demander.
+- **Un bloc ouvert est invisible si rien n'y mène.** `CLAUDE.md` envoyait une
+  session qui démarre vers `CHANTIERS.md` et lui seul ; `AGORA.md` est
+  désormais cité dans « Où en est le projet ». Le point faible du dispositif
+  joue des deux côtés : Claude oublie de soumettre, et oublie de répondre.
+
+**Comptages et affichage**
+
 - **Les courbes ne s'empilent pas, les barres peuvent.** « Volume par CMS »
   était en aires empilées : la courbe du haut valait le total des six CMS et
   non le volume du sien, et toutes reprenaient la forme du total. Dans une
