@@ -691,7 +691,7 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
   </div>
   <div class="g2">
     <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Accompagnements par CMS (hors DSIAN)</div><div id="bar-cms-global" class="bar-list"></div></div>
-    <div class="card"><div class="card-title"><span class="dot" style="background:var(--purple)"></span>Types d'action (hors Réservation)</div><canvas id="ch-types"></canvas></div>
+    <div class="card"><div class="card-title"><span class="dot" style="background:var(--purple)"></span>Types d'action (hors Réservation)<span style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">tous types · ignore le filtre de type</span></div><canvas id="ch-types"></canvas></div>
   </div>
   <div class="g2">
     <div class="card"><div class="card-title"><span class="dot" style="background:var(--cyan)"></span>État des demandes</div><canvas id="ch-etat"></canvas></div>
@@ -751,7 +751,7 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
     </div>
     <div class="g2">
       <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Volume par CMS — mensuel (top 6)</div><canvas id="ch-cms-monthly" style="max-height:220px"></canvas></div>
-      <div class="card"><div class="card-title"><span class="dot" style="background:var(--orange)"></span>Types d'action — évolution mensuelle</div><canvas id="ch-type-monthly" style="max-height:220px"></canvas></div>
+      <div class="card"><div class="card-title"><span class="dot" style="background:var(--orange)"></span>Types d'action — évolution mensuelle<span style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">tous types · ignore le filtre de type</span></div><canvas id="ch-type-monthly" style="max-height:220px"></canvas></div>
     </div>
     <div class="card g1">
       <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Tableau mensuel détaillé</div>
@@ -1553,8 +1553,12 @@ function renderGlobal(){
 
   makeBarList(document.getElementById('bar-cms-global'),countEntries(noDsian,'cms').slice(0,9),'blue');
 
+  // Alimenté hors filtre de type : ce filtre vaut « Accompagnement » par
+  // défaut, et le graphe n'affichait alors qu'une barre, dont la valeur est
+  // déjà le KPI principal. Même raison que getFilteredSansType() côté
+  // Fiabilité. Un test e2e verrouille la présence de plusieurs types.
   destroyChart('ch-types');
-  renderTypeChart('ch-types',data);
+  renderTypeChart('ch-types',getFilteredSansType());
   {const theEnt=Object.entries(countThemas(data));
   const top3Sh=theEnt.slice(0,3).reduce((s,[,v])=>s+v,0);
   setInsightQ('ch-thema',theEnt[0]?`Thématique dominante : <strong>${theEnt[0][0]}</strong> (${theEnt[0][1]} dem.)<br>Top 3 concentrent <strong>${pct(top3Sh,data.length)}%</strong> du volume.`:'Aucune donnée');
@@ -1915,9 +1919,15 @@ function renderEvolution(){
   }
 
   // Types monthly (stacked)
+  // Hors filtre de type, pour la même raison que « Types d'action » en Vue
+  // globale : sous le filtre par défaut l'empilement n'avait qu'une couleur.
   destroyChart('ch-type-monthly');
-  {const dynKeys=allTypeKeys(allF);
-  charts['ch-type-monthly']=new Chart(document.getElementById('ch-type-monthly'),{type:'bar',data:{labels:mAll.map(monthLabel),datasets:dynKeys.map((t,i)=>({label:t,data:mAll.map(k=>allF.filter(r=>r.date_demande.startsWith(k)&&r.type_action&&r.type_action.includes(t)).length),backgroundColor:typeColor(i)+'88',borderColor:typeColor(i),borderWidth:1,borderRadius:0,stack:'s',borderSkipped:false}))},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:legendColor(),font:{size:9},padding:5,boxWidth:8}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:9}}},y:{grid:{color:gridColor()},beginAtZero:true,stacked:true,ticks:{color:'#6b7fa0',font:{size:10}}}}}});}
+  {const allT=getFilteredSansType();
+  // Mois propres au graphe : mAll vient du jeu filtré par type et perdrait
+  // les mois sans accompagnement.
+  const mTypes=[...new Set(allT.map(r=>r.date_demande.slice(0,7)))].sort();
+  const dynKeys=allTypeKeys(allT);
+  charts['ch-type-monthly']=new Chart(document.getElementById('ch-type-monthly'),{type:'bar',data:{labels:mTypes.map(monthLabel),datasets:dynKeys.map((t,i)=>({label:t,data:mTypes.map(k=>allT.filter(r=>r.date_demande.startsWith(k)&&r.type_action&&r.type_action.includes(t)).length),backgroundColor:typeColor(i)+'88',borderColor:typeColor(i),borderWidth:1,borderRadius:0,stack:'s',borderSkipped:false}))},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:legendColor(),font:{size:9},padding:5,boxWidth:8}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:9}}},y:{grid:{color:gridColor()},beginAtZero:true,stacked:true,ticks:{color:'#6b7fa0',font:{size:10}}}}}});}
 
   // Tableau mensuel
   const conumNames=[...new Set(allF.map(r=>r.conum))].filter(c=>c&&!conumMasque(c));
