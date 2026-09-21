@@ -48,7 +48,7 @@ Il existe deux diaporamas distincts dans l'application — **ne pas les confondr
 
 ### Tests unitaires — règle obligatoire
 
-Le fichier **`gdin-pure.js`** contient les fonctions pures du projet (calculs, parsing, normalisation CMS). Le fichier **`gdin-pure.test.js`** contient 187 tests unitaires (`node:test`) qui les couvrent. Une suite end-to-end Playwright (`tests-e2e.spec.js`, 26 tests) couvre les parcours navigateur.
+Le fichier **`gdin-pure.js`** contient les fonctions pures du projet (calculs, parsing, normalisation CMS). Le fichier **`gdin-pure.test.js`** contient 243 tests unitaires (`node:test`) qui les couvrent. Une suite end-to-end Playwright (`tests-e2e.spec.js`, 60 tests) couvre les parcours navigateur.
 
 **Toute nouvelle fonction de calcul, de parsing ou de normalisation va dans `gdin-pure.js` avec ses tests, pas dans le HTML.**
 
@@ -57,7 +57,7 @@ Une session est significative si elle touche à la logique métier (pas une simp
 **Règle :** après toute modification de `gdin-pure.js`, vérifier que les tests passent avant de commiter :
 
 ```bash
-npm test          # 187 tests unitaires (gdin-pure + deploy)
+npm test          # 243 tests unitaires (gdin-pure + deploy)
 npm run audit -- export.xls   # audit d'un export avant d'en tirer un rapport
 ```
 
