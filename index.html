@@ -117,6 +117,7 @@ select:focus{border-color:rgba(77,159,255,.5)}
    inutilisables ici : il faut des couleurs opaques. */
 select option{background-color:#10141c;color:#eef2ff}
 body.light-mode select option{background-color:#ffffff;color:#0d1220}
+body.light-mode #dr-insight-tip{background:#ffffff;color:#0d1220}
 .btn-theme{display:none}/* theme button moved to sidebar */
 
 /* ── Content area ── */
@@ -478,6 +479,9 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
 .hm-cell:hover{transform:scale(1.15);z-index:1;position:relative}
 /* ── Tooltip KPI ── */
 .kpi[data-tip]{cursor:help}
+.pt-vig{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:6px;vertical-align:middle;cursor:help;position:relative}
+/* Cible tactile de 24px autour d'une pastille de 7px, sans la déformer. */
+.pt-vig::before{content:'';position:absolute;top:50%;left:50%;width:24px;height:24px;transform:translate(-50%,-50%)}
 .kpi[data-tip]:hover::after{content:attr(data-tip);display:block;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:rgba(10,12,18,.95);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);color:var(--text);font-size:10px;padding:8px 12px;border-radius:10px;white-space:pre-line;max-width:260px;text-align:center;z-index:50;line-height:1.6;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,.6)}
 /* ── Section anomalies import ── */
 .anomaly-block{background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.2);border-radius:8px;padding:10px 14px;margin-top:10px}
@@ -489,7 +493,11 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
 
 .dr-q{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:rgba(107,127,160,.22);color:var(--muted);font-size:10px;font-weight:700;cursor:help;margin-left:7px;flex-shrink:0;transition:background .15s;vertical-align:middle}
 .dr-q:hover{background:rgba(59,130,246,.35);color:var(--blue)}
-#dr-insight-tip{position:fixed;z-index:9999;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 15px;font-size:12px;line-height:1.7;color:var(--text);max-width:290px;box-shadow:0 8px 28px rgba(0,0,0,.35);pointer-events:none;display:none}
+/* Fond opaque écrit en dur : --s2 vaut rgba(255,255,255,.046) en thème
+   sombre, et la bulle laissait lire le KPI au travers (mesuré le
+   21/09/2026). Même piège que les options de <select> et les popups
+   Leaflet. Un test e2e mesure l'opacité réelle dans les deux thèmes. */
+#dr-insight-tip{position:fixed;z-index:9999;background:#10141c;border:1px solid var(--border);border-radius:10px;padding:12px 15px;font-size:12px;line-height:1.7;color:var(--text);max-width:290px;box-shadow:0 8px 28px rgba(0,0,0,.35);pointer-events:none;display:none}
 /* ── Landing overlay bêta ── */
 @keyframes lo-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
 @keyframes lo-blink{0%,49%{opacity:1}50%,100%{opacity:0}}
@@ -2875,7 +2883,9 @@ function pointVigilance(cle){
   if(!i||i.niveau==='solide')return'';
   const c=FIA_COULEUR[i.niveau]||'var(--muted)';
   const bulle=`${FIA_MOT[i.niveau]} — écart mesuré ${i.marge} %\n${i.fait}\nVoir l'onglet Fiabilité`;
-  return`<span title="${esc(bulle)}" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${c};margin-left:6px;vertical-align:middle;cursor:help"></span>`;
+  // `title` pour le survol souris, `data-tip` pour le tap : sur mobile le
+  // premier ne s'affiche jamais, et la pastille restait muette.
+  return`<span class="pt-vig" title="${esc(bulle)}" data-tip="${esc(bulle)}" style="background:${c}"></span>`;
 }
 
 function ligneSyntheseFiabilite(){
@@ -4855,30 +4865,48 @@ document.addEventListener('keydown',e=>{
 
 // ── INSIGHTS ──
 const _drIns={};let _drInsN=0;
-function drShowInsight(e,k){
-  const txt=_drIns[k]||'';
+// Affiche la bulle sous l'élément, en la maintenant dans l'écran. Sur mobile
+// ni `title` ni `:hover` ne s'ouvrent au doigt : tout ce qui porte une
+// explication passe par ici, déclenché au clic. Tests e2e « Info-bulles au
+// doigt ».
+function drAfficherBulle(el,html,cle){
   const tip=document.getElementById('dr-insight-tip');
-  if(!tip)return;
-  if(tip.style.display==='block'&&tip.dataset.k===k){drHideInsight();return;}
-  tip.innerHTML=txt;
-  tip.dataset.k=k;
+  if(!tip||!el)return;
+  if(tip.style.display==='block'&&tip.dataset.k===cle){drHideInsight();return;}
+  tip.innerHTML=html;
+  tip.dataset.k=cle;
   tip.style.display='block';
-  const rect=e.currentTarget.getBoundingClientRect();
+  const rect=el.getBoundingClientRect();
   const tw=Math.min(290,window.innerWidth-20);
   tip.style.maxWidth=tw+'px';
   let left=rect.left-tw/2;
   if(left<8)left=8;
   if(left+tw>window.innerWidth-8)left=window.innerWidth-tw-8;
   tip.style.left=left+'px';
-  tip.style.top=(rect.bottom+8)+'px';
+  let top=rect.bottom+8;
+  const th=tip.offsetHeight||0;
+  if(top+th>window.innerHeight-8)top=Math.max(8,rect.top-th-8);
+  tip.style.top=top+'px';
+}
+function drShowInsight(e,k){
+  drAfficherBulle(e.currentTarget,_drIns[k]||'',k);
   e.stopPropagation();
 }
 function drHideInsight(){
   const tip=document.getElementById('dr-insight-tip');
   if(tip){tip.style.display='none';delete tip.dataset.k;}
 }
+let _tipN=0;
 document.addEventListener('click',e=>{
-  if(!e.target.classList.contains('dr-q'))drHideInsight();
+  if(e.target.classList.contains('dr-q'))return;      // géré par son onclick
+  const porteur=e.target.closest('[data-tip]');
+  if(porteur){
+    if(!porteur.dataset.tipK)porteur.dataset.tipK='t'+(++_tipN);
+    drAfficherBulle(porteur,esc(porteur.getAttribute('data-tip')).replace(/\n/g,'<br>'),porteur.dataset.tipK);
+    e.stopPropagation();
+    return;
+  }
+  drHideInsight();
 });
 function drQ(txt){const k='i'+(++_drInsN);_drIns[k]=txt;return`<span class="dr-q" onclick="drShowInsight(event,'${k}')">?</span>`;}
 function setInsightQ(elId,txt){

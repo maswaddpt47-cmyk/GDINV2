@@ -1032,3 +1032,117 @@ test.describe('Axe des courbes d\'évolution', () => {
   });
 
 });
+
+test.describe('Info-bulles au doigt', () => {
+
+  // Sur mobile, ni l'attribut `title` ni une règle :hover ne s'ouvrent au tap.
+  // Les pastilles de vigilance des KPI portaient leur explication dans un
+  // `title` : sur téléphone on voyait la pastille sans pouvoir lire ce qu'elle
+  // disait. Tout passe désormais par drAfficherBulle(), déclenché au clic.
+
+  test.use({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
+
+  async function preparer(page) {
+    await loadFresh(page);
+    await dismissLanding(page);
+    await importerJeu(page);
+  }
+
+  // La fermeture se teste par un clic réel sur un élément sans info-bulle, pas
+  // par un point de l'écran : la zone de contact d'un tap déborde le point
+  // visé et atterrit sur un KPI voisin, qui porte son propre data-tip et
+  // rouvre la bulle. Le tap réel reste couvert par les tests d'ouverture.
+  async function fermerAilleurs(page) {
+    await page.evaluate(() => {
+      const neutre = [...document.querySelectorAll('.card-title, h2, .sb-divider')]
+        .find((e) => !e.closest('[data-tip]') && !e.closest('.dr-q')) || document.body;
+      neutre.click();
+    });
+    await page.waitForTimeout(200);
+  }
+
+  test('une pastille de vigilance ouvre sa bulle au tap', async ({ page }) => {
+    await preparer(page);
+    const pastille = page.locator('.pt-vig').first();
+    await pastille.waitFor({ state: 'attached', timeout: 5000 });
+    await pastille.scrollIntoViewIfNeeded();
+    await pastille.tap();
+    const vu = await page.evaluate(() => {
+      const t = document.getElementById('dr-insight-tip');
+      return { affichee: getComputedStyle(t).display, texte: t.textContent };
+    });
+    expect(vu.affichee, 'la bulle doit être visible').toBe('block');
+    expect(vu.texte, "elle doit porter l'écart mesuré").toMatch(/écart mesuré/);
+  });
+
+  test('la bulle reste entièrement dans l\'écran', async ({ page }) => {
+    await preparer(page);
+    const pastille = page.locator('.pt-vig').first();
+    await pastille.waitFor({ state: 'attached', timeout: 5000 });
+    await pastille.scrollIntoViewIfNeeded();
+    await pastille.tap();
+    const d = await page.evaluate(() => {
+      const b = document.getElementById('dr-insight-tip').getBoundingClientRect();
+      return { l: b.left, r: b.right, t: b.top, b: b.bottom, w: innerWidth, h: innerHeight };
+    });
+    expect(d.l).toBeGreaterThanOrEqual(0);
+    expect(d.r).toBeLessThanOrEqual(d.w);
+    expect(d.t).toBeGreaterThanOrEqual(0);
+    expect(d.b).toBeLessThanOrEqual(d.h);
+  });
+
+  test('le fond de la bulle est opaque dans les deux thèmes', async ({ page }) => {
+    // --s2 vaut rgba(255,255,255,.046) en thème sombre : la bulle laissait lire
+    // le KPI au travers. Même piège que les options de <select>. Le fond ne
+    // dépend pas de l'ouverture, on mesure la règle appliquée à l'élément.
+    await preparer(page);
+    const pastille = page.locator('.pt-vig').first();
+    await pastille.waitFor({ state: 'attached', timeout: 5000 });
+    await pastille.scrollIntoViewIfNeeded();
+    await pastille.tap();
+    const alpha = () => page.evaluate(() => {
+      const bg = getComputedStyle(document.getElementById('dr-insight-tip')).backgroundColor;
+      const m = bg.match(/[\d.]+/g);
+      return m && m.length > 3 ? parseFloat(m[3]) : 1;
+    });
+    expect(await alpha(), 'fond translucide en thème sombre').toBe(1);
+    await page.evaluate(() => document.body.classList.add('light-mode'));
+    expect(await alpha(), 'fond translucide en thème clair').toBe(1);
+  });
+
+  test('un tap ailleurs referme la bulle', async ({ page }) => {
+    await preparer(page);
+    const pastille = page.locator('.pt-vig').first();
+    await pastille.waitFor({ state: 'attached', timeout: 5000 });
+    await pastille.scrollIntoViewIfNeeded();
+    await pastille.tap();
+    expect(await page.evaluate(() =>
+      getComputedStyle(document.getElementById('dr-insight-tip')).display)).toBe('block');
+    await fermerAilleurs(page);
+    expect(await page.evaluate(() =>
+      getComputedStyle(document.getElementById('dr-insight-tip')).display)).toBe('none');
+  });
+
+  test('un KPI à data-tip ouvre aussi sa bulle au tap', async ({ page }) => {
+    await preparer(page);
+    const kpi = page.locator('.kpi[data-tip]').first();
+    await kpi.scrollIntoViewIfNeeded();
+    await kpi.tap();
+    expect(await page.evaluate(() =>
+      getComputedStyle(document.getElementById('dr-insight-tip')).display)).toBe('block');
+  });
+
+  test("contre-preuve : le seul `title` ne suffisait pas", async ({ page }) => {
+    // Un title reste utile au survol souris, mais il ne doit plus être le seul
+    // porteur de l'explication : la pastille doit aussi exposer data-tip.
+    await preparer(page);
+    const attrs = await page.evaluate(() => {
+      const p = document.querySelector('.pt-vig');
+      return p ? { title: !!p.getAttribute('title'), tip: !!p.getAttribute('data-tip') } : null;
+    });
+    expect(attrs, 'aucune pastille rendue').not.toBeNull();
+    expect(attrs.tip, 'data-tip manquant : illisible sur mobile').toBe(true);
+    expect(attrs.title, 'title conservé pour le survol souris').toBe(true);
+  });
+
+});
