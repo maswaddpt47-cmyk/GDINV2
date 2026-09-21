@@ -46,11 +46,10 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
 **Noms d'agents**
 
 - **Aucun nom d'agent dans le code source**, et aucune exclusion par nom : elle
-  publierait ce nom et se périmerait d'elle-même. Le dépôt est public et indexable :
-  une publication sans finalité ne se justifie pas au regard de la
-  Le dépôt est public et indexable : une publication sans finalité ne se
-  justifie pas au regard de la minimisation. Le rattachement CMS → conseiller,
-  la liste des conseillers et leurs couleurs sont dérivés des données.
+  publierait ce nom et se périmerait d'elle-même. Le dépôt est public et
+  indexable : une publication sans finalité ne se justifie pas au regard de la
+  minimisation. Le rattachement CMS → conseiller, la liste des conseillers et
+  leurs couleurs sont dérivés des données.
 - **L'attribution se dérive par année**, jamais globalement : les affectations
   changent, et un mapping figé réécrit rétroactivement cinq ans d'historique.
 
