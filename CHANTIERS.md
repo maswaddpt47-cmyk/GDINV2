@@ -28,8 +28,10 @@ comparaison avec un fichier antérieur. Référence actuelle : septembre 2026,
 ### AGORA — à éprouver
 
 `AGORA.md` et la section « AGORA » du `CLAUDE.md` ont été propagés depuis
-MD-LIB le 21/09/2026, **avant le retour du projet pilote ATELIERS_NEWGEN**, sur
-décision de l'utilisateur. Le format n'a donc pas encore servi ici.
+MD-LIB le 21/09/2026, après validation du format par le projet pilote
+ATELIERS_NEWGEN — un cycle complet y a corrigé un protocole de mesure, la
+session contradictrice ayant infirmé deux points de l'auteur sur pièces. Le
+format n'a en revanche pas encore servi **ici**.
 
 Deux points à vérifier au premier usage réel :
 
