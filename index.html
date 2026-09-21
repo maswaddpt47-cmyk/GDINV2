@@ -1887,7 +1887,13 @@ function renderEvolution(){
   const allF=getFiltered();
   const mAll=[...new Set(allF.map(r=>r.date_demande.slice(0,7)))].sort();
 
-  // CMS monthly — line area empilé
+  // CMS monthly — six courbes indépendantes, PAS empilées.
+  // En aires empilées, chaque courbe portait le cumul des précédentes : celle
+  // du haut valait le total des six CMS, pas le volume du sien, et toutes
+  // reprenaient mécaniquement la forme du total (constaté le 21/09/2026). Le
+  // total est déjà donné par le graphe d'évolution mensuelle au-dessus ; ici
+  // ce qu'on veut lire, c'est la comparaison entre CMS. Un test e2e refuse le
+  // retour de l'empilement.
   destroyChart('ch-cms-monthly');
   {
     const cmsCounts={};allF.forEach(r=>{if(r.cms)cmsCounts[r.cms]=(cmsCounts[r.cms]||0)+1;});
@@ -1896,13 +1902,12 @@ function renderEvolution(){
       label:cms,
       data:mAll.map(k=>allF.filter(r=>r.cms===cms&&r.date_demande.startsWith(k)).length),
       borderColor:cmsColor(cms),
-      borderWidth:1.5,
-      backgroundColor:cmsColor(cms)+'44',
+      borderWidth:2,
+      backgroundColor:cmsColor(cms),
       pointRadius:1.5,
       pointHoverRadius:5,
       tension:.4,
-      fill:true,
-      stack:'area'
+      fill:false
     }));
     charts['ch-cms-monthly']=new Chart(document.getElementById('ch-cms-monthly'),{
       type:'line',
@@ -1920,7 +1925,7 @@ function renderEvolution(){
         },
         scales:{
           x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:9}}},
-          y:{grid:{color:gridColor()},beginAtZero:true,stacked:true,ticks:{color:'#6b7fa0',font:{size:10}}}
+          y:{grid:{color:gridColor()},beginAtZero:true,ticks:{color:'#6b7fa0',font:{size:10}}}
         }
       }
     });
