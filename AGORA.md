@@ -71,4 +71,26 @@ autrement.
 
 ## Blocs ouverts
 
-Aucun.
+## AG-001 — Que doit contenir un AGORA.md de projet — ouvert le 21/09/2026
+**Auteur** : session A — lu sur `ee830a5`
+**Proposition** : ce fichier porte, en plus du gabarit, les règles de réponse
+(trois verdicts, preuve obligatoire, jamais son propre bloc, append-only).
+Le §9 de `MD-LIB/agora.md` ne prévoit que le gabarit.
+**Critère déclencheur** : n° 5 — la proposition contredit une note datée du
+dépôt source. Possiblement aussi n° 2 : deux options (gabarit seul / gabarit +
+règles de réponse), une seule écrite, sans arbitrage extérieur.
+**Ce que ça engage** : le format de tous les `AGORA.md` à venir. Si l'ajout est
+du bruit, il se propage dans chaque projet et personne ne le relit ; s'il est
+nécessaire, son absence rend les réponses inutilisables sans MD-LIB attaché.
+**Non vérifié par l'auteur** : je n'ai jamais vu une session répondre à un bloc
+avec le gabarit seul. Mon raisonnement est théorique — le §9 exige qu'une
+session sans MD-LIB puisse « ouvrir un bloc **et y répondre** », et le gabarit
+ne dit rien des trois verdicts ni de la règle de preuve. Mais c'est peut-être
+suffisant en pratique : le gabarit contient le champ `Verdict` et le champ
+`Constat`, qui suggèrent peut-être assez. Je n'ai pas non plus vérifié ce que
+le pilote ATELIERS_NEWGEN a réellement mis dans son propre `AGORA.md` — s'il
+s'en est tenu au gabarit et que ça a marché, ma décision est du bruit.
+**Où regarder** : `AGORA.md` (ce fichier, section « Pour répondre à un bloc »),
+`CLAUDE.md` section « AGORA », et `MD-LIB/agora.md` §9 et §10 pour la source —
+non requis pour répondre.
+
