@@ -1,6 +1,6 @@
 # Chantiers — GDINV2
 
-État au **20/09/2026**, commit `373d7f8` (branche de session).
+État au **20/09/2026**, commit `a797367` (branche de session).
 
 Ce fichier existe pour qu'une session qui démarre sans historique sache où en
 est le projet. **Il ne se supprime pas.** Ce qui s'efface, ce sont les tâches,
@@ -14,7 +14,7 @@ Règles permanentes : `CLAUDE.md`.
 ## Comment reprendre
 
 ```bash
-npm test                      # 236 tests unitaires · 36 e2e
+npm test                      # 243 tests unitaires · 60 e2e
 npm run audit -- export.xls   # ce que l'application retient d'un export réel
 ```
 
@@ -90,6 +90,21 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
 - **Ne pas fonder d'indicateur sur `!r.date_action`** : la colonne est
   renseignée à 100 %, la valeur serait constante. Le taux de réalisation, lui,
   varie de 38 % à 83 %.
+- **Un filtre par défaut peut vider un graphe sans que rien ne le signale.**
+  `typeFilter` vaut « Accompagnement » à l'ouverture : les deux graphes de
+  types d'action, alimentés par `getFiltered()`, n'affichaient qu'une barre —
+  déjà le KPI principal. Ils lisent `getFilteredSansType()`. Audit systématique
+  du 21/09/2026 : les 36 autres graphes, listes et tables de neuf onglets ont
+  été relevés sous filtre par défaut puis filtre levé, aucun autre n'est
+  concerné. Ateliers, États et Territoire sont indépendants du type par
+  construction.
+- **L'axe d'une courbe d'évolution vient de la période, pas des données.**
+  `moisDeLaPeriode()` : un mois sans activité s'affiche à zéro au lieu de
+  disparaître. Sans cela deux points voisins à l'écran pouvaient être séparés
+  de plusieurs mois réels — 10 points pour 36 mois sur un Rapport mesuré le
+  21/09/2026. Appliqué au Rapport et au slide « Non réalisés » ; le slide
+  « Évolution » trace déjà 12 mois calendaires. Les autres écrans ne sont pas
+  concernés, leur volume remplit tous les mois.
 - **`countEntries()` pour tout classement affiché**, jamais `count()` : les
   clés entières d'un objet JavaScript repassent en tête et « 47 » s'affichait
   devant Agen.
@@ -157,6 +172,23 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
 - **Ne pas retirer les contre-preuves** des tests e2e (`Garde-fous IndexedDB`,
   `Classement des communes`) : elles rejouent l'implémentation fautive et sans
   elles les autres tests passeraient même si le correctif disparaissait.
+
+**Mesurer l'application, pas son instrument**
+
+- **Ne jamais conclure à une anomalie sans avoir éliminé le jeu de test.** Un
+  audit du 21/09/2026 a signalé « un seul conseiller sur 262 lignes » puis
+  « graphes du Rapport à une seule valeur » : les deux venaient du harnais, pas
+  du code. Le générateur pseudo-aléatoire était un LCG lu en `seed % n`, dont
+  les bits de poids faible se corrèlent — il ne produisait que quatre CMS sur
+  six et presque toujours le même conseiller ; et la combinaison du Rapport
+  avait été choisie par `selectedIndex=1`, qui tombait sur un couple à un seul
+  dossier. Pour un jeu synthétique, utiliser un générateur à bits de poids fort
+  (mulberry32) et vérifier sa distribution avant de l'exploiter ; pour le
+  Rapport, sélectionner la combinaison la plus fournie, jamais la première.
+- **Une capture ne vaut que si l'écran capturé est celui qu'on croit.** Deux
+  captures de l'onglet États ont montré le diaporama et l'écran d'accueil.
+  Fermer le *landing* par `.lo-btn` comme le font les tests e2e, et vérifier
+  dans la même passe que le panneau visé est bien le seul `.panel.active`.
 
 **Limites connues, à assumer plutôt qu'à masquer**
 
