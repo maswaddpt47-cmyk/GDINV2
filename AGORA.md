@@ -11,6 +11,12 @@ rien d'autre sous les yeux.
 
 ## Pour répondre à un bloc
 
+Le contradicteur **complète, il ne réécrit pas** : deux propositions
+concurrentes n'augmentent pas la qualité, elles augmentent la charge
+d'arbitrage de l'utilisateur. Les trois verdicts et l'exigence de preuve sont
+portés par le gabarit ci-dessous, ils ne sont pas répétés ici. Les trois règles
+qui, elles, ne s'en déduisent pas :
+
 - **Jamais un bloc que l'on a soi-même ouvert.** S'auto-répondre produit un
   tampon de validation, pas une contradiction. **Avant de répondre, comparer
   le trailer `Claude-Session:` du commit qui a déposé le bloc
@@ -20,19 +26,22 @@ rien d'autre sous les yeux.
   attribué à l'oral et qui ne survit pas à un compactage de contexte — pas une
   preuve. Quand le trailer est absent (commit fait à la main, session sans
   cette consigne), demander à l'utilisateur avant de répondre.
-- **Compléter, pas réécrire.** Deux propositions concurrentes n'augmentent pas
-  la qualité, elles augmentent la charge d'arbitrage. Trois issues, jamais
-  « d'accord / pas d'accord » : **confirmé** (en disant ce qui n'a pas pu être
-  vérifié), **amendé** (la proposition tient, il manque X — l'issue la plus
-  fréquente et la plus utile), **contredit** (avec le constat qui le prouve).
-- **Une réponse sans `fichier:ligne`, mesure ou log ne compte pas.** Sans
-  preuve, deux textes s'accordent poliment et on obtient une fausse garantie.
 - **Append-only** : on n'édite jamais le bloc d'un autre, on ajoute le sien.
   `git pull --rebase origin main` juste avant de pousser, et on pousse
   **directement sur `main`** — deux sessions sur deux branches ne se voient
   pas. C'est du texte, ça ne casse aucun déploiement.
 - **Rien qui contienne des données d'usagers** dans un bloc : pas de ligne
   d'export, pas de motif, pas de log brut. Le dépôt est public.
+
+## Le cycle, et pourquoi il ne bloque jamais
+
+Une session dépose un bloc et le pousse sur `main`, puis donne à l'utilisateur
+la phrase à coller dans l'autre session ; celle-ci répond ; l'utilisateur
+tranche. **Aucune notification ne passe d'un compte à l'autre** — sessions,
+routines planifiées et messages inter-sessions sont cloisonnés par compte. Le
+relais par l'utilisateur est donc obligatoire, et c'est précisément pour ça que
+l'AGORA ne bloque jamais : le travail continue en parallèle, rien ne garantit
+qu'une réponse arrive un jour.
 
 ## Entretien
 
