@@ -56,6 +56,8 @@ l'utilisateur tranche, la raison est notée, on n'y revient plus.
 **Ce que ça engage** : ce qui serait coûteux à défaire.
 **Non vérifié par l'auteur** : le champ le plus important — où l'auteur est
 faible, pour orienter le contradicteur au lieu de le laisser chercher.
+**Si personne ne répond, je fais quoi ?** — si c'est « je continue pareil », le
+bloc n'avait pas lieu d'être.
 **Où regarder** : gdin-pure.js:120-180
 
 ### Réponse — JJ/MM/AAAA

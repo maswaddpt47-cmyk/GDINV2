@@ -132,6 +132,10 @@ et les angles morts de l'auteur.
 la plus haute là où il raisonne sur ce qu'il n'a pas vérifié. Soumettre dès
 qu'un de ces faits est **constaté**, vérifiable ensuite dans le diff :
 
+Rappel accroché à une habitude qui existe déjà : **toute entrée « décision à
+trancher » écrite dans `CHANTIERS.md` est par définition un candidat.** Au
+moment de l'écrire, dire pourquoi on ouvre un bloc ou non.
+
 1. la décision ferme une porte — format de stockage `gdin_data_v3`, mapping
    d'import, contrat entre `gdin-pure.js` et `index.html`, nouvelle dépendance
    dans `vendor/` ;
