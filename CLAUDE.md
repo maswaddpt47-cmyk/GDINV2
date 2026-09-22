@@ -264,9 +264,19 @@ visiteurs. Ne pas réintroduire de `<script src="https://…">` dans le
 `<head>` — trois tests e2e (`Boot sans réseau externe`) coupent le réseau
 et échouent si ça arrive. Versions et mise à jour : `vendor/README.md`.
 
-Restent externes à l'exécution : les tuiles `basemaps.cartocdn.com` (qui
-transmettent aussi l'IP des visiteurs) et `geo.api.gouv.fr`. Appelées après
-le boot : sans elles la carte est vide, le reste fonctionne.
+Restent externes à l'exécution, appelées après le boot — sans elles la carte
+est vide, le reste fonctionne :
+
+- **les tuiles `tile.openstreetmap.fr/osmfr`** (`TUILES_URL`), libres, sans
+  clé, hébergées en UE. CARTO les servait jusqu'au 20/09/2026, date à laquelle
+  il a fermé son accès libre : un filigrane « API KEY REQUIRED » a barré les
+  deux cartes en production sans qu'une ligne du dépôt ait changé. Trois tests
+  e2e refusent désormais une URL contenant `cartocdn`, `apikey` ou
+  `access_token` ;
+- **`geo.api.gouv.fr`** pour les contours des communes du 47.
+
+Les deux reçoivent l'**adresse IP des visiteurs** et la zone regardée — aucune
+donnée d'accompagnement ne leur est transmise.
 
 ### Si un service worker / une PWA est ajouté un jour
 
