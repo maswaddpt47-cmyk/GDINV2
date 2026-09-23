@@ -688,7 +688,7 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
     </div>
   </div>
   <div id="kpi-global" class="g5"></div>
-  <div id="kpi-global2" class="g4" style="margin-top:0"></div>
+  <div id="kpi-global2" class="g3" style="margin-top:0"></div>
   <div class="card g1">
     <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Évolution mensuelle des demandes</div>
     <canvas id="ch-global-evol" style="max-height:220px"></canvas>
@@ -1579,14 +1579,15 @@ function renderGlobal(){
   const topCmsG=countEntries(noDsian,'cms').sort((a,b)=>b[1]-a[1])[0];
   setInsightQ('bar-cms-global',topCmsG?`CMS le plus actif (hors DSIAN) : <strong>${topCmsG[0].replace(/^Centre Médico-Social(?: de)? /,'CMS ')}</strong><br>${topCmsG[1]} accompagnements (${pct(topCmsG[1],noDsian.length)}% du total hors DSIAN).`:'Aucune donnée');}
 
-  // KPI ligne 2 : urgences, délai moyen, bénéficiaires connus, nouveaux bénéficiaires
-  const urgCount=data.filter(r=>r.urgence).length;
+  // KPI ligne 2 : réalisées, bénéficiaires connus, délai moyen.
+  // Pas de KPI « Urgences » : le champ n'est quasiment plus coché dans l'outil
+  // source depuis août 2024 (mesuré le 23/09/2026 sur l'export du 21/09 :
+  // 101 en 2024, 5 en 2025, 0 en 2026). Le chiffre affiché aurait été faux.
   const benefConnu=data.filter(r=>r.benef_connu).length;
   const withDelai=data.filter(r=>r.delai!=null&&r.delai>=0);
   const avgDelai=withDelai.length?Math.round(withDelai.reduce((s,r)=>s+r.delai,0)/withDelai.length):null;
   const realisees=data.filter(r=>isRealisee(r.etat)).length;
   document.getElementById('kpi-global2').innerHTML=`
-    <div class="kpi red" data-tip="Demandes marquées urgentes"><div class="kpi-label">Urgences</div><div class="kpi-value">${urgCount}</div><div class="kpi-sub">${pct(urgCount,data.length)}% du total</div></div>
     <div class="kpi green"><div class="kpi-label">Demandes réalisées</div><div class="kpi-value">${realisees}</div><div class="kpi-sub">${pct(realisees,data.length)}% de réalisation</div></div>
     <div class="kpi blue"><div class="kpi-label">Bénéficiaires connus</div><div class="kpi-value">${benefConnu}</div><div class="kpi-sub">${pct(benefConnu,data.length)}% bénéf. déjà suivis</div></div>
     <div class="kpi yellow"><div class="kpi-label">Délai moyen${pointVigilance('delais')}</div><div class="kpi-value">${avgDelai!=null?avgDelai+'j':'—'}</div><div class="kpi-sub">${withDelai.length} dossiers renseignés</div></div>`;
