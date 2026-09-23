@@ -40,6 +40,7 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
 | Thématique obligatoire | comble 22,9 % de trous |
 | Contrôle de cohérence des dates à la saisie | supprime les 7,2 % d'incohérences chronologiques |
 | ~~Corriger l'encodage de « Date action »~~ | signalé le 20/09/2026 |
+| Rendre « Urgence » fiable (consigne de saisie, ou champ retiré) | 101 urgences en 2024, 5 en 2025, 0 en 2026 : la case n'est plus cochée depuis août 2024 |
 
 ## Décisions à ne pas défaire
 
@@ -217,6 +218,11 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
   dans la même passe que le panneau visé est bien le seul `.panel.active`.
 
 **Limites connues, à assumer plutôt qu'à masquer**
+
+- **Pas de KPI « Urgences »** (retiré le 23/09/2026). Le champ est toujours
+  importé, mais la saisie s'est effondrée en août 2024 (mesuré sur l'export du
+  21/09/2026). Ne le réafficher que si un nouvel export montre une saisie
+  régulière.
 
 - **Rupture d'historique au 20/09/2026.** Jusqu'à cette date, 2 853 lignes
   étaient attribuées au conseiller en poste aujourd'hui sur un secteur, et non
