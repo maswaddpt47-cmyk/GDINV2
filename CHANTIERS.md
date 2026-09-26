@@ -1,6 +1,6 @@
 # Chantiers — GDINV2
 
-État au **20/09/2026**, commit `fe474e8` (branche de session).
+État au **26/09/2026**, commit `a76d821` sur `main`.
 
 Ce fichier existe pour qu'une session qui démarre sans historique sache où en
 est le projet. **Il ne se supprime pas.** Ce qui s'efface, ce sont les tâches,
@@ -122,24 +122,6 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
   l'onglet États vérifiaient les tables mais pas la visibilité du panneau : ils
   seraient passés sur un écran resté masqué. Le test « le panneau devient
   réellement visible » comble ce trou — ne pas le retirer.
-**AGORA**
-
-- **AGORA a servi une fois, et ça a marché** (AG-001, 21/09/2026). Une seconde
-  session, sans accès à MD-LIB, a confirmé le fond, infirmé un argument et
-  trouvé un défaut que l'auteur n'avait pas vu. L'auto-suffisance d'`AGORA.md`
-  + `CLAUDE.md` est donc **éprouvée, pas supposée** : trois règles hors gabarit
-  ont réellement servi à répondre. Ne pas réduire `AGORA.md` au seul gabarit.
-- **Le trailer `Claude-Session:` distingue deux sessions**, même sous une
-  identité GitHub unique — c'est lui qui vérifie qu'on ne répond pas à son
-  propre bloc, pas le champ `Auteur`, qui n'est qu'un libellé oral. Quand le
-  trailer manque, demander.
-- **Un bloc ouvert est invisible si rien n'y mène.** `CLAUDE.md` envoyait une
-  session qui démarre vers `CHANTIERS.md` et lui seul ; `AGORA.md` est
-  désormais cité dans « Où en est le projet ». Le point faible du dispositif
-  joue des deux côtés : Claude oublie de soumettre, et oublie de répondre.
-
-**Comptages et affichage**
-
 - **Les courbes ne s'empilent pas, les barres peuvent.** « Volume par CMS »
   était en aires empilées : la courbe du haut valait le total des six CMS et
   non le volume du sien, et toutes reprenaient la forme du total. Dans une
@@ -163,6 +145,22 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
   affichait 104,9 % sur une colonne réparée à 100 %.
 - **Aucune marge affichée ne doit être estimée.** Toutes viennent de
   `indicateursFiabilite()`, recalculées depuis le fichier importé.
+
+**AGORA**
+
+- **AGORA a servi une fois, et ça a marché** (AG-001, 21/09/2026). Une seconde
+  session, sans accès à MD-LIB, a confirmé le fond, infirmé un argument et
+  trouvé un défaut que l'auteur n'avait pas vu. L'auto-suffisance d'`AGORA.md`
+  + `CLAUDE.md` est donc **éprouvée, pas supposée** : trois règles hors gabarit
+  ont réellement servi à répondre. Ne pas réduire `AGORA.md` au seul gabarit.
+- **Le trailer `Claude-Session:` distingue deux sessions**, même sous une
+  identité GitHub unique — c'est lui qui vérifie qu'on ne répond pas à son
+  propre bloc, pas le champ `Auteur`, qui n'est qu'un libellé oral. Quand le
+  trailer manque, demander.
+- **Un bloc ouvert est invisible si rien n'y mène.** `CLAUDE.md` envoyait une
+  session qui démarre vers `CHANTIERS.md` et lui seul ; `AGORA.md` est
+  désormais cité dans « Où en est le projet ». Le point faible du dispositif
+  joue des deux côtés : Claude oublie de soumettre, et oublie de répondre.
 
 **Dépendances externes et affichage**
 
