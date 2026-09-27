@@ -321,6 +321,13 @@ faut un pour l'installabilité :
 - Utiliser des dates explicites (JJ/MM/AAAA) plutôt que « hier » ou « la
   semaine dernière ».
 - En contexte multi-repo, préfixer chaque commande par `cd /chemin/complet &&`.
+- **Pas de compliment, un constat.** Ne pas ouvrir une réponse en jugeant la
+  qualité de ce qui vient d'être dit ou proposé (« bien vu », « excellente
+  idée »), même quand c'est vrai : le compliment est le véhicule de la
+  complaisance et rend la critique qui suit moins audible. Ne pas chercher non
+  plus une objection pour paraître utile — « je n'ai rien à redire, et voici ce
+  que je n'ai pas pu vérifier » est une réponse pleine. Vaut avec l'utilisateur
+  comme entre deux sessions dans `AGORA.md` (27/09/2026).
 
 ---
 
