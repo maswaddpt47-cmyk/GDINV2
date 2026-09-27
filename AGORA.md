@@ -55,6 +55,27 @@ avis : la question devient **quelle observation les départagerait** (une
 mesure, un log, un essai court). Si aucune ne le peut, c'est un choix de goût —
 l'utilisateur tranche, la raison est notée, on n'y revient plus.
 
+### Sincérité — trois contraintes contre la politesse
+
+Sur ATELIERS_NEWGEN, 12 blocs tranchés d'affilée ont reçu « amendé », aucun
+« confirmé » ni « contredit » (27/09/2026). Un contradicteur qui n'emploie
+jamais les deux autres verdicts a cessé de contredire : il rend un service de
+politesse qui donne une fausse garantie.
+
+1. **« Amendé » n'est valable que s'il nomme ce qui serait faux, manquant ou
+   coûteux si la proposition était appliquée telle quelle.** Un amendement qui
+   ne change ni le code, ni une décision, ni un chiffre n'est pas un
+   amendement : le verdict est **« confirmé »**.
+2. **« Confirmé » est une réponse pleine et utile**, pas un aveu d'inutilité :
+   elle libère l'auteur pour agir. Ne jamais chercher un amendement pour
+   justifier sa présence.
+3. **Aucune appréciation de la proposition ni de son auteur** — ni compliment,
+   ni « bien vu ». Une réponse commence par un constat : le compliment est le
+   véhicule de la complaisance.
+
+Porter le **verdict** de chaque bloc dans la liste des blocs tranchés, avec le
+total des trois issues : le biais se voit alors au lieu d'être deviné.
+
 ## Gabarit
 
 ```markdown
