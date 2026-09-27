@@ -75,6 +75,10 @@ politesse qui donne une fausse garantie.
 
 Porter le **verdict** de chaque bloc dans la liste des blocs tranchés, avec le
 total des trois issues : le biais se voit alors au lieu d'être deviné.
+**Le total est une alerte, pas un objectif** : ne jamais rendre « confirmé »
+pour casser une série — le verdict découle de la contrainte 1 appliquée au
+bloc. Une série se juge en relisant ce que chaque « amendé » a changé (code,
+décision, chiffre) ; celui qui n'a rien changé était un « confirmé ».
 
 ## Gabarit
 
