@@ -24,7 +24,11 @@ comparaison avec un fichier antérieur. Référence actuelle : septembre 2026,
 24 410 lignes, 20 226 retenues, 19 290 en base après fusion.
 
 ## Chantiers ouverts
-- **Audit du 01/10/2026 (routine) :** `index.html:1497` (`makeBarList`) insère `name` (orienteur, thématique, conum issus du fichier importé) sans `esc()` ; popups Leaflet `~3866` et `~4532` idem pour `nom`. XSS par fichier importé, sur une origine partagée avec le jeton GitHub de SMS-mail. Correctif : `esc()`.
+- **Corrigé le 01/10/2026** : XSS par fichier importé (relevée par la routine
+  d'audit) — `esc()` sur toutes les insertions de valeurs du fichier dans le
+  HTML (barres, tableaux orienteurs/structures, popups et étiquettes de
+  carte, filtre, en-têtes du Diapo Rapport, liste des conseillers,
+  `conumNameHtml`). Reste ouvert : SheetJS 0.18.5 (ligne ci-dessous).
 
 - **Audit trimestriel du 01/10/2026 — important** : SheetJS
   `vendor/xlsx/xlsx.full.min.js` en 0.18.5, vulnérable à la **lecture** d'un
