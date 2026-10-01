@@ -1473,8 +1473,8 @@ function formatConumName(raw){
 function conumNameHtml(raw,color){
   const cn=formatConumName(raw);
   const c=color||'#ffffff';
-  if(!cn.prenom)return `<strong style="color:${c};font-weight:700">${cn.nom}</strong>`;
-  return `<strong style="color:${c};font-weight:700">${cn.prenom} ${cn.nom}</strong>`;
+  if(!cn.prenom)return `<strong style="color:${c};font-weight:700">${esc(cn.nom)}</strong>`;
+  return `<strong style="color:${c};font-weight:700">${esc(cn.prenom)} ${esc(cn.nom)}</strong>`;
 }
 function injectConumCss(){
   const id='gdin-conum-styles';
@@ -1494,7 +1494,7 @@ function makeBarList(el,data,color='blue',n=9){
   // « Agen ». Préférer le tableau partout où l'ordre compte.
   el.innerHTML='';const entries=(Array.isArray(data)?data:Object.entries(data)).slice(0,n),max=entries[0]?entries[0][1]:1;
   const cm={blue:'var(--blue)',orange:'var(--orange)',green:'var(--green)',purple:'var(--purple)',cyan:'var(--cyan)',yellow:'var(--yellow)'};const c=cm[color]||'var(--blue)';
-  entries.forEach(([name,n])=>{const p=Math.round(n/max*100);el.innerHTML+=`<div class="bar-item"><div class="bi-head"><span class="bi-name" title="${name}">${name}</span><span class="bi-val" style="color:${c}">${n}</span></div><div class="bar-track"><div class="bar-fill ${color}" style="width:${p}%"></div></div></div>`;});
+  entries.forEach(([name,n])=>{const p=Math.round(n/max*100);el.innerHTML+=`<div class="bar-item"><div class="bi-head"><span class="bi-name" title="${esc(name)}">${esc(name)}</span><span class="bi-val" style="color:${c}">${n}</span></div><div class="bar-track"><div class="bar-fill ${color}" style="width:${p}%"></div></div></div>`;});
 }
 
 // TABS
@@ -2088,7 +2088,7 @@ function renderCms(){
   let rows='';
   countEntries(data,'orienteur').filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())).slice(0,15).forEach(([name,n],i)=>{
     const od=data.filter(r=>r.orienteur===name),topCN2=(countEntries(od,'conum').map(e=>e[0])[0]||'—');
-    rows+=`<tr><td class="mono">${i+1}</td><td>${name}</td><td class="mono">${n}</td><td class="mono">${pct(n,data.length)}%</td><td class="${conumClass(topCN2)}">${topCN2}</td></tr>`;
+    rows+=`<tr><td class="mono">${i+1}</td><td>${esc(name)}</td><td class="mono">${n}</td><td class="mono">${pct(n,data.length)}%</td><td class="${conumClass(topCN2)}">${esc(topCN2)}</td></tr>`;
   });
   document.getElementById('tbl-cms-ori').innerHTML=rows;
   {const mKeysCms=[...new Set(getFiltered().map(r=>r.date_demande.slice(0,7)))].sort();
@@ -2304,7 +2304,7 @@ function renderOrienteurs(){
     const struct=(countEntries(od,'cms').map(e=>e[0])[0]||'—');
     const topCN=(countEntries(od,'conum').map(e=>e[0])[0]||'—');
     const topT=Object.keys(countThemas(od))[0]||'—';
-    rows+=`<tr><td>${name}</td><td>${struct}</td><td class="mono" data-val="${n}">${n}</td><td class="${conumClass(topCN)}">${topCN}</td><td><span class="badge badge-blue">${topT}</span></td></tr>`;
+    rows+=`<tr><td>${esc(name)}</td><td>${esc(struct)}</td><td class="mono" data-val="${n}">${n}</td><td class="${conumClass(topCN)}">${esc(topCN)}</td><td><span class="badge badge-blue">${topT}</span></td></tr>`;
   });
   document.getElementById('tbl-ori').innerHTML=rows;
   {const topOri=oriEntries[0];
@@ -2791,7 +2791,7 @@ async function confirmImport(){
   initCmsSelect();initConumSelect();initOriCmsSelect();initRptSelects();initImportConumSelect();refreshAll();
   const dot=document.getElementById('cs-dot');dot.style.background='var(--green)';
   const dupMsg=(internalDups+crossDups)>0?` · <span style="color:var(--orange)">${internalDups+crossDups} doublon${internalDups+crossDups>1?'s':''} ignoré${internalDups+crossDups>1?'s':''}</span>`:'';
-  const conumFilterLabel=conumFilter?` · filtre : <strong style="color:var(--cyan)">${conumFilter}</strong>`:'';
+  const conumFilterLabel=conumFilter?` · filtre : <strong style="color:var(--cyan)">${esc(conumFilter)}</strong>`:'';
   const resume=formatResumeImport(statsImport);
   const resumeMsg=(resume?`<br><span style="color:var(--muted);font-size:11px">Fichier : ${resume}</span>`:'')+ligneSyntheseFiabilite();
   document.getElementById('cs-label').innerHTML=`<strong style="color:var(--green)">✓ Fusion réussie —</strong> ${newRecords.length} nouveaux · ${DATA.length} total (${years.join(', ')})${dupMsg}${conumFilterLabel}${resumeMsg}`;
@@ -3635,7 +3635,7 @@ function initAtlConumGlobalSelect(){
   const cur=sel.value;
   const atlData=getFiltered().filter(r=>(r.type_action||[]).includes('Atelier'));
   const conums=[...new Set(atlData.map(r=>r.conum).filter(Boolean))].sort();
-  sel.innerHTML='<option value="">— Tous les conseillers —</option>'+conums.map(c=>`<option value="${c}">${c}</option>`).join('');
+  sel.innerHTML='<option value="">— Tous les conseillers —</option>'+conums.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
   if(cur&&conums.includes(cur))sel.value=cur;
 }
 
@@ -3833,7 +3833,7 @@ function getCoordsGlobal(nom){
         detail=lieuEntries.map(([l,n])=>`
           <div style="margin-bottom:3px">
             <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:1px;gap:6px">
-              <span style="color:#eab308;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px">${l}</span>
+              <span style="color:#eab308;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px">${esc(l)}</span>
               <span style="color:#aaa;flex-shrink:0">${n}</span>
             </div>
             <div style="background:#333;border-radius:2px;height:3px">
@@ -3848,7 +3848,7 @@ function getCoordsGlobal(nom){
         detail=cmsEntries.map(([c,n])=>`
           <div style="margin-bottom:3px">
             <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:1px">
-              <span style="color:${cmsColor(c)};font-weight:600">${c.replace('CMS ','')}</span>
+              <span style="color:${cmsColor(c)};font-weight:600">${esc(c.replace('CMS ',''))}</span>
               <span style="color:#aaa">${n}</span>
             </div>
             <div style="background:#333;border-radius:2px;height:3px">
@@ -3864,7 +3864,7 @@ function getCoordsGlobal(nom){
 
       circle.bindPopup(
         `<div style="font-family:sans-serif;min-width:180px">
-          <div style="font-weight:700;font-size:13px;margin-bottom:2px">${nom}</div>
+          <div style="font-weight:700;font-size:13px;margin-bottom:2px">${esc(nom)}</div>
           <div style="font-size:10px;color:#888;margin-bottom:8px">${total} ${isAteliersMode?`participation${total>1?'s':''}`:`accompagnement${total>1?'s':''}`}</div>
           ${detail}
         </div>`,
@@ -3876,7 +3876,7 @@ function getCoordsGlobal(nom){
       const label=L.tooltip({
         permanent:true,direction:'right',offset:[r+4,0],
         className:'leaflet-label-dark',interactive:false
-      }).setContent(`<span style="font-size:10px;font-weight:600;color:#222;white-space:nowrap">${nomFormate}</span>`);
+      }).setContent(`<span style="font-size:10px;font-weight:600;color:#222;white-space:nowrap">${esc(nomFormate)}</span>`);
 
       circle.bindTooltip(label);
       circle._labelTotal=total;
@@ -4263,7 +4263,7 @@ function drSlideCover(c,data){
       <div style="font-family:'Space Grotesk',sans-serif;line-height:1.1;letter-spacing:-1px">
         <span style="font-size:clamp(22px,3vw,38px);font-weight:400;color:var(--muted)">${cnCover.prenom} </span><span style="font-size:clamp(28px,4vw,52px);font-weight:700;color:${cnCoverColor}">${cnCover.nom||cnCover.full}</span>
       </div>
-      <div style="font-size:15px;color:var(--muted);font-weight:500;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:8px 20px">${drCms}</div>
+      <div style="font-size:15px;color:var(--muted);font-weight:500;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:8px 20px">${esc(drCms)}</div>
       <div style="width:60px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--blue));border-radius:2px"></div>
       <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin-top:10px">
         <div style="text-align:center"><div style="font-size:32px;font-weight:700;color:var(--blue);font-family:'JetBrains Mono',monospace">${data.length}</div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px">Accompagnements</div></div>
@@ -4311,7 +4311,7 @@ function drSlideKpis(c,data,allDataConum){
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px;color:var(--text)">Chiffres clés</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:24px">${drConum} · ${drCms}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:24px">${esc(drConum)} · ${esc(drCms)}</div>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
         ${kpi(data.length,'Accompagnements',`${partCN}% activité CN`,'var(--blue)')}
         ${kpi(oriCount,'Orienteurs actifs','TS','var(--orange)')}
@@ -4349,7 +4349,7 @@ function drSlideEvol(c,data,palette){
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">Évolution mensuelle</div>
-      <div style="display:flex;align-items:center;margin-bottom:24px"><span style="font-size:11px;color:var(--muted)">${drConum} · ${drCms}${yPrevEvol?' · '+yCur+' vs '+yPrevEvol:''}</span>${drQ(insightEvol)}</div>
+      <div style="display:flex;align-items:center;margin-bottom:24px"><span style="font-size:11px;color:var(--muted)">${esc(drConum)} · ${esc(drCms)}${yPrevEvol?' · '+yCur+' vs '+yPrevEvol:''}</span>${drQ(insightEvol)}</div>
       <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px">
         <canvas id="dr-ch-evol" style="max-height:380px"></canvas>
       </div>
@@ -4391,7 +4391,7 @@ function drSlideYoY(c,data,palette){
   c.innerHTML=`
     <div style="font-family:'Space Grotesk',sans-serif;padding:0">
       <div style="font-size:22px;font-weight:700;margin-bottom:4px">Accompagnements — N / N-1 / N-2</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:20px">${drConum} · ${drCms} · volume par mois calendaire</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:20px">${esc(drConum)} · ${esc(drCms)} · volume par mois calendaire</div>
       <canvas id="dr-ch-yoy" style="width:100%;max-height:360px"></canvas>
     </div>`;
   const ctx=document.getElementById('dr-ch-yoy');
@@ -4422,7 +4422,7 @@ function drSlideThemas(c,data,palette){
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">Thématiques traitées</div>
-      <div style="display:flex;align-items:center;margin-bottom:24px"><span style="font-size:11px;color:var(--muted)">${drConum} · ${drCms}</span>${drQ(insightThema)}</div>
+      <div style="display:flex;align-items:center;margin-bottom:24px"><span style="font-size:11px;color:var(--muted)">${esc(drConum)} · ${esc(drCms)}</span>${drQ(insightThema)}</div>
       <div style="display:grid;grid-template-columns:1fr;gap:16px">
         <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px">
           <canvas id="dr-ch-thema-donut" style="max-height:300px"></canvas>
@@ -4461,7 +4461,7 @@ function drSlideOrienteurs(c,data,palette){
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">TS orienteurs</div>
-      <div style="display:flex;align-items:center;margin-bottom:24px"><span style="font-size:11px;color:var(--muted)">${drConum} · ${drCms}</span>${drQ(insightOri)}</div>
+      <div style="display:flex;align-items:center;margin-bottom:24px"><span style="font-size:11px;color:var(--muted)">${esc(drConum)} · ${esc(drCms)}</span>${drQ(insightOri)}</div>
       <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px">
         <canvas id="dr-ch-ori" style="max-height:380px"></canvas>
       </div>
@@ -4482,7 +4482,7 @@ function drSlideTerritoire(c,data){
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">Territoire d'intervention</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:16px">${drConum} · ${drCms}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:16px">${esc(drConum)} · ${esc(drCms)}</div>
       <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;overflow:hidden;position:relative">
         <div id="dr-map" style="height:420px;width:100%"></div>
         <button id="btn-dr-map-fs" onclick="toggleDrMapFullscreen()" title="Plein écran">⤢</button>
@@ -4529,7 +4529,7 @@ function drSlideTerritoire(c,data){
       if(!coords)return;
       const r=Math.max(6,Math.sqrt(n/maxV)*28);
       const circle=L.circleMarker(coords,{radius:r,fillColor:'#2563eb',fillOpacity:.85,color:'#ffffff',weight:2});
-      circle.bindPopup(`<b>${nom}</b><br>${n} accompagnement${n>1?'s':''}`);
+      circle.bindPopup(`<b>${esc(nom)}</b><br>${n} accompagnement${n>1?'s':''}`);
       circle._labelTotal=n;
       circle.addTo(map);
       markers.push(circle);
@@ -4588,7 +4588,7 @@ function drSlideNonReal(c,data){
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px">Non réalisés</div>
-      <div style="display:flex;align-items:center;margin-bottom:20px"><span style="font-size:11px;color:var(--muted)">${drConum} · ${drCms} · Lapins & excusés</span>${drQ(insightNR)}</div>
+      <div style="display:flex;align-items:center;margin-bottom:20px"><span style="font-size:11px;color:var(--muted)">${esc(drConum)} · ${esc(drCms)} · Lapins & excusés</span>${drQ(insightNR)}</div>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px">
         ${[
           [total,'Total accompagnements','var(--blue)'],
@@ -4704,7 +4704,7 @@ function drSlideFiabilite(c,data){
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">Fiabilité des données</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:20px">${drConum} · ${drCms} — écarts mesurés sur le fichier importé, aucune marge estimée</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:20px">${esc(drConum)} · ${esc(drCms)} — écarts mesurés sur le fichier importé, aucune marge estimée</div>
       <div style="background:var(--s2);border-radius:12px;padding:14px 18px;margin-bottom:18px;font-size:14px;font-weight:600">${esc(syn.texte)}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
         ${carte('Chiffres exacts',listeSolides,'var(--green)')}
@@ -4761,7 +4761,7 @@ function drSlideBilan(c,data,allDataConum){
     const col=i===0?'var(--orange)':i===1?'var(--cyan)':'var(--purple)';
     return`<strong style="color:${col}">${t}</strong> (${n} · ${pct(n,total)}%)`;
   }).join(', ');
-  const p1=`Au sein de la structure <strong style="color:var(--blue)">${drCms}</strong>, ${conumNameHtml(drConum,cnColor)} a accompagné <strong>${total} bénéficiaire${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
+  const p1=`Au sein de la structure <strong style="color:var(--blue)">${esc(drCms)}</strong>, ${conumNameHtml(drConum,cnColor)} a accompagné <strong>${total} bénéficiaire${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
   const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>.`;
   const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur l'année ${nYear} vs ${nPrevYear}, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
 
@@ -4773,7 +4773,7 @@ function drSlideBilan(c,data,allDataConum){
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:2px">Bilan &amp; Perspectives</div>
       <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;font-family:'Space Grotesk',sans-serif;font-size:20px">${conumNameHtml(drConum,cnColor)}</div>
-      <div style="display:flex;align-items:center;margin-bottom:16px"><span style="font-size:11px;color:var(--muted)">${drCms} · ${years.join(', ')}</span>${drQ(insightBilan)}</div>
+      <div style="display:flex;align-items:center;margin-bottom:16px"><span style="font-size:11px;color:var(--muted)">${esc(drCms)} · ${years.join(', ')}</span>${drQ(insightBilan)}</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
         ${[[total,'Accompagnements','var(--blue)'],[txC+'%','Taux de complétion','var(--green)'],[trend,`Évol. ${nYear} / ${nPrevYear}`,trendColor],[communes,'Communes couvertes','var(--cyan)'],[orienteurs,'Orienteurs actifs','var(--purple)'],[p48!==null?p48+'%':'—','Réactivité 48h',p48Color]].map(([v,l,col])=>`
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}">
@@ -4781,7 +4781,7 @@ function drSlideBilan(c,data,allDataConum){
             <div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div>
           </div>`).join('')}
       </div>
-      ${evolYears.length>1?`<div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Évolution annuelle — ${drCms}</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px">${evolItems}</div></div>`:''}
+      ${evolYears.length>1?`<div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Évolution annuelle — ${esc(drCms)}</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px">${evolItems}</div></div>`:''}
       <div style="background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(16,185,129,.06));border:1px solid rgba(59,130,246,.2);border-radius:14px;padding:18px 22px;line-height:1.8;font-size:13px;color:var(--text)">
         <p style="margin-bottom:9px">${p1}</p>
         <p style="margin-bottom:9px">${p2}</p>
@@ -4811,7 +4811,7 @@ function drSlideComparaison(c,data,allDataConum){
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px">Comparaison CMS</div>
-      <div style="display:flex;align-items:center;margin-bottom:20px"><span style="font-size:11px;color:var(--muted)">${drConum} · Activité par structure</span>${drQ(insightComp)}</div>
+      <div style="display:flex;align-items:center;margin-bottom:20px"><span style="font-size:11px;color:var(--muted)">${esc(drConum)} · Activité par structure</span>${drQ(insightComp)}</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
         ${[[selCount,shortLbl(drCms),'var(--blue)'],[pct(selCount,total)+'%','Part dans le secteur','var(--purple)'],[rank+' / '+cmsEntries.length,'Rang du CMS','var(--green)']].map(([v,l,col])=>`
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;border-top:2px solid ${col}">
@@ -4983,7 +4983,7 @@ async function exportDiapoPDF(){
       const page=document.createElement('div');
       page.className='dr-print-page';
       page.innerHTML=`
-        <div style="font-size:9px;color:#6b7fa0;margin-bottom:12px;font-family:monospace">${drConum} · ${drCms} · ${slide.title}</div>
+        <div style="font-size:9px;color:#6b7fa0;margin-bottom:12px;font-family:monospace">${esc(drConum)} · ${esc(drCms)} · ${slide.title}</div>
         <div style="display:flex;align-items:center;justify-content:center;min-height:200px;border:2px dashed #d0d5e0;border-radius:12px;color:#5a6a85;font-size:13px;font-family:'Space Grotesk',sans-serif;gap:10px">
           🗺 <span>Carte du territoire non incluse dans l'export PDF — consultez l'onglet <strong>Territoire</strong> dans le dashboard.</span>
         </div>`;
@@ -5025,7 +5025,7 @@ async function exportDiapoPDF(){
     // Cloner le contenu dans le conteneur print
     const page=document.createElement('div');
     page.className='dr-print-page';
-    page.innerHTML=`<div style="font-size:9px;color:#6b7fa0;margin-bottom:12px;font-family:monospace">${drConum} · ${drCms} · ${slide.title}</div>`;
+    page.innerHTML=`<div style="font-size:9px;color:#6b7fa0;margin-bottom:12px;font-family:monospace">${esc(drConum)} · ${esc(drCms)} · ${slide.title}</div>`;
 
     // Convertir les canvas en images pour l'impression
     const clone=c.firstElementChild?c.firstElementChild.cloneNode(true):document.createElement('div');
