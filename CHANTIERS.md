@@ -25,6 +25,14 @@ comparaison avec un fichier antérieur. Référence actuelle : septembre 2026,
 
 ## Chantiers ouverts
 
+- **Audit trimestriel du 01/10/2026 — important** : SheetJS
+  `vendor/xlsx/xlsx.full.min.js` en 0.18.5, vulnérable à la **lecture** d'un
+  fichier piégé (CVE-2023-30533, pollution de prototype, corrigée en 0.19.3 ;
+  CVE-2024-22363, ReDoS, corrigée en 0.20.2). GDINV2 lit les exports avec
+  `XLSX.read` : passer à 0.20.3 ou plus, téléchargé depuis le site de SheetJS
+  (plus publié sur npm). Mineur : 93 `innerHTML` sans fonction d'échappement,
+  alimentés par le fichier importé (risque limité à un export piégé).
+
 Aucun.
 
 ## À porter aux développeurs de l'outil de saisie
