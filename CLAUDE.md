@@ -328,6 +328,17 @@ faut un pour l'installabilité :
   plus une objection pour paraître utile — « je n'ai rien à redire, et voici ce
   que je n'ai pas pu vérifier » est une réponse pleine. Vaut avec l'utilisateur
   comme entre deux sessions dans `AGORA.md` (27/09/2026).
+- **Pistes d'amélioration à moments fixés** (MD-LIB `collaboration.md`, règle
+  22, 03/10/2026). À la fin d'une fonctionnalité livrée et validée, et sur
+  toute demande de revue de l'interface : au plus 3 pistes, classées par
+  utilité, non développées. Chercher **dans** l'outil (écran confus, saisie en
+  double, clics inutiles) **et autour** : ce que les utilisateurs font encore
+  à côté (tableur, mail, papier), ce que la hiérarchie redemande — l'angle
+  qu'on rate en ne lisant que le code. S'appuyer sur des faits (compteurs
+  d'usage, remontées, `CHANTIERS.md`), pas une impression. Consigner chaque
+  piste dans la section « Pistes » de `CHANTIERS.md` : *proposées, en
+  attente*, ou *écartées* avec date et raison ; une piste écartée ne se
+  repropose pas sans fait nouveau.
 
 ---
 

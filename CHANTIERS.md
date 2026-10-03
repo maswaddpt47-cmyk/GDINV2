@@ -261,3 +261,15 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
   Villeneuve/Lot`, `DSIAN / CMS Villeneuve-Fumel`…) : 39 lignes en « Autre
   structure ». Le libellé nu `CMS Marmande` n'est pas non plus une clé du
   mapping. Volume faible, non corrigé.
+
+## Pistes d'amélioration
+
+Règle 22 de MD-LIB `collaboration.md` : au plus 3 pistes, à la fin d'une
+fonctionnalité validée ou sur demande de revue. Une piste écartée ne se
+repropose pas sans fait nouveau.
+
+**Proposées, en attente**
+_(aucune)_
+
+**Écartées** (date — piste — raison)
+_(aucune)_
