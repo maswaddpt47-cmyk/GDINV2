@@ -157,6 +157,12 @@ réponse arrive. Le bloc se pousse **directement sur `main`**, immédiatement :
 deux sessions sur deux branches ne se voient pas. C'est l'exception assumée à
 la règle de branche ci-dessus. Gabarit et règles de réponse : `AGORA.md`.
 
+**Sécurité, mots de passe, données personnelles : contradicteur Codex**
+(OpenAI) au lieu d'une session Claude (06/10/2026, mode d'emploi : `AGORA.md`).
+**Audit Codex** chaque trimestre et après tout changement structurant de
+sécurité, avec le modèle MD-LIB `consigne-audit-externe.md` ; chaque point
+vérifié dans le code avant d'être retenu, rapport hors dépôt public.
+
 ### Convention de messages de commit
 | Préfixe | Usage |
 |---|---|
