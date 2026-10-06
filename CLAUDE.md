@@ -251,6 +251,10 @@ casser est le risque principal du projet :
    nom ou une situation personnelle malgré la troncature. Il est stocké en
    clair dans `localStorage` (`gdin_data_v3`) sur le poste. Acceptable en
    usage local ; à relire avant toute capture, export ou diapo projeté.
+4. **Captures et fichiers envoyés à Claude** (charte IA du CD47 §4,
+   06/10/2026) : jamais un export réel ni une capture du dashboard chargé de
+   données réelles ; fichier de test anonymisé ou capture recadrée. Une
+   capture avec des données réelles se signale en une ligne.
 
 Signaler explicitement en réponse tout écart constaté, même si la question
 n'a pas été posée.
