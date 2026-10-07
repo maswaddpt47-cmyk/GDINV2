@@ -14,7 +14,7 @@ Règles permanentes : `CLAUDE.md`.
 ## Comment reprendre
 
 ```bash
-npm test                      # 250 tests unitaires · 69 e2e
+npm test                      # 251 tests unitaires · 69 e2e
 npm run audit -- export.xls   # ce que l'application retient d'un export réel
 ```
 

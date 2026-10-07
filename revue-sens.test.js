@@ -123,3 +123,19 @@ describe('Revue de sens — lecture des graphes', () => {
   });
 
 });
+
+// Injection de code — même famille de contrôle statique, autre risque.
+// Les libellés affichés par makeBarList (CMS, thématique, conseiller,
+// orienteur) viennent du fichier importé. Échappés depuis le 01/10/2026
+// (dc3040c) ; ce test empêche qu'une retouche retire esc() sans que la CI le voie.
+describe('Injection — libellés importés échappés', () => {
+  it('makeBarList n\'insère jamais `name` sans esc()', () => {
+    const debut = SRC.indexOf('function makeBarList(');
+    assert.ok(debut >= 0, 'makeBarList introuvable dans index.html');
+    const corps = SRC.slice(debut, SRC.indexOf('\n}\n', debut));
+    const insertions = [...corps.matchAll(/\$\{([^}]*\bname\b[^}]*)\}/g)].map((m) => m[1].trim());
+    assert.ok(insertions.length > 0, 'aucune insertion de `name` trouvée : le test ne voit plus rien');
+    assert.deepEqual(insertions.filter((x) => x !== 'esc(name)'), [],
+      'libellé inséré dans le HTML sans esc() : risque d\'injection');
+  });
+});
