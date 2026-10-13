@@ -224,6 +224,11 @@ jamais incrémentée. Si le `<head>` est réécrit dans une forme que
 l'expression du workflow ne reconnaît plus, le remplacement cesse sans erreur
 — `deploy.test.js` verrouille le motif.
 
+**Avant d'écrire « en ligne », « déployé » ou « à recharger »**,
+`MD-LIB/outils/attendre-deploiement.sh` doit avoir répondu ✅ pour le commit
+poussé (❌ : dire l'échec et corriger ; ⏳ : dire que ce n'est pas fini). Règle
+et déclenchement automatique : MD-LIB `deploiement.md` (13/10/2026).
+
 ### Un seul dashboard
 
 `index.html` est le seul fichier servi. Il porte le design system dit « v2» :
