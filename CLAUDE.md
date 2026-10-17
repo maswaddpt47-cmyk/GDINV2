@@ -342,6 +342,20 @@ faut un pour l'installabilité :
 - Utiliser des dates explicites (JJ/MM/AAAA) plutôt que « hier » ou « la
   semaine dernière ».
 - En contexte multi-repo, préfixer chaque commande par `cd /chemin/complet &&`.
+- **Avant de décrire un correctif, suivre la valeur sur tout son chemin**
+  (MD-LIB `collaboration.md`, règle 27) — `then`/`catch`, appelants, valeurs
+  par défaut — pas seulement la ligne à changer. Constat du 23/09/2026 : un
+  correctif annoncé comme suffisant était **inopérant**, le `catch` de fin de
+  chaîne écrasant la décision prise juste avant dans le `then`.
+- **Un nombre annoncé se compte par une commande dont la sortie est le
+  nombre** (règle 29), pas à l'œil sur une liste ; sinon le dire comme une
+  estimation. Constat du 27/09/2026 : « 13 » annoncé d'après une sortie de
+  `grep`, recompté à 12 par une autre session.
+- **Fichier partagé entre sessions** (`AGORA.md`, `CHANTIERS.md`,
+  `CLAUDE.md`) **: refaire un `git fetch` et relire juste avant de rédiger**
+  (règle 30), pas seulement à l'ouverture. Constat du 27/09/2026 : un commit
+  préparé a été rejeté en non-fast-forward, le travail était déjà fait par une
+  autre session, dans un autre format.
 - **Pas de compliment, un constat.** Ne pas ouvrir une réponse en jugeant la
   qualité de ce qui vient d'être dit ou proposé (« bien vu », « excellente
   idée »), même quand c'est vrai : le compliment est le véhicule de la
