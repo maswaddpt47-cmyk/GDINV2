@@ -118,6 +118,11 @@ Chaque lancement de la suite e2e coûte du temps et des jetons. Sur ce projet :
   parce que l'œil ne contrôle que le cas affiché ce jour-là — une régression
   sur une combinaison de valeurs rare passerait inaperçue. Capture avant/après
   à la demande, pas par défaut.
+  **Deux précisions (17/10/2026)** : avant de livrer, *mesurer* le rendu
+  (débordement, contraste, chevauchement) à 390 px et 1280x720 — la mesure
+  précède le contrôle de l'utilisateur, elle ne le remplace pas ; la fonction
+  nouvelle se montre là où il teste (données d'exemple comprises) et la réponse
+  dit **où cliquer** en premier.
 
 ### AGORA — faire contredire une proposition par une autre session
 
@@ -328,7 +333,8 @@ faut un pour l'installabilité :
   confirme.
 - Ne jamais dire « c'est réparé » ou « c'est en ligne » sans avoir vérifié le
   chemin réel (test exécuté, rendu navigateur, déploiement passé) — pas une
-  lecture de code qui « devrait marcher ».
+  lecture de code qui « devrait marcher ». « Validé » ne vaut que pour ce que
+  l'utilisateur a nommé : son « c'est bon » sur un point ne couvre pas le reste.
 - Sur une demande d'audit ou un bug de calcul, livrer l'audit systématique de
   tous les points d'impact **avant** la première correction.
 - Signaler toute déviation d'une consigne ou toute décision de design prise
