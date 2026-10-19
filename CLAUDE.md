@@ -337,8 +337,14 @@ faut un pour l'installabilité :
   l'utilisateur a nommé : son « c'est bon » sur un point ne couvre pas le reste.
 - Sur une demande d'audit ou un bug de calcul, livrer l'audit systématique de
   tous les points d'impact **avant** la première correction.
-- Signaler toute déviation d'une consigne ou toute décision de design prise
-  seul au moment où elle est prise, jamais en note après coup.
+- **L'utilisateur décide, Claude propose** (19/10/2026) : toute déviation d'une
+  consigne ou du cahier des charges, tout choix de garder, retirer ou remplacer
+  un élément demandé, se demande **avant** d'être fait ; l'utilisateur a le
+  dernier mot. Jamais d'« écart assumé » tranché seul. Le travail qui n'en
+  dépend pas continue en attendant.
+- Changement de session annoncé : relever les règles de collaboration nées
+  pendant la session et absentes des `.md`, les présenter à l'utilisateur, puis
+  les inscrire (MD-LIB `collaboration.md`, règle 32).
 - Utiliser des dates explicites (JJ/MM/AAAA) plutôt que « hier » ou « la
   semaine dernière ».
 - En contexte multi-repo, préfixer chaque commande par `cd /chemin/complet &&`.
