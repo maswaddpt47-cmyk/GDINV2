@@ -1133,7 +1133,8 @@ function dateIsoValide(v){
 function validerSauvegardeJSON(payload){
   if(!payload||typeof payload!=='object'||payload.type!=='gdin-data'||!Array.isArray(payload.data))
     throw new Error('Format non reconnu — ce fichier n\'est pas un export GDIN');
-  if(!['1','2',1,2].includes(payload.version))
+  // Les exports d'avant la numérotation de version n'ont pas ce champ : acceptés.
+  if(payload.version!==undefined&&!['1','2',1,2].includes(payload.version))
     throw new Error('Version d\'export non prise en charge : '+String(payload.version).slice(0,20));
   if(!payload.data.length)throw new Error('Le fichier JSON ne contient aucun enregistrement');
   const txt=(v,max,champ,i,obligatoire)=>{

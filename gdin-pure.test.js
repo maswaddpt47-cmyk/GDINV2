@@ -1315,6 +1315,10 @@ describe('validerSauvegardeJSON', () => {
   it('une seule ligne invalide rejette tout le fichier', () => {
     assert.throws(() => validerSauvegardeJSON(payload([ok, { ...ok, cms: 5 }])), /Enregistrement 2/);
   });
+  it('accepte un export sans numéro de version (anciens fichiers)', () => {
+    const p = payload([ok]); delete p.version;
+    assert.equal(validerSauvegardeJSON(p).length, 1);
+  });
   it('conserve rangs et provenance', () => {
     const [r] = validerSauvegardeJSON(payload([{ ...ok, conum: 'A', conum_origine: 'source', rang_ligne: 2 }]));
     assert.equal(r.conum_origine, 'source');
