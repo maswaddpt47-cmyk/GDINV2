@@ -1496,13 +1496,14 @@ test.describe('Diaporamas et PDF', () => {
       document.getElementById('sel-rpt-cms').value = cms;
       startDiapoRapport();
       let pages = [];
-      window.print = () => { pages = [...document.querySelectorAll('#dr-print-container .dr-print-page')].map(p => p.textContent.replace(/\s+/g, ' ').trim()); };
+      window.print = () => { pages = [...document.querySelectorAll('#dr-print-container .dr-print-page')].map(p => ({ txt: p.textContent.replace(/\s+/g, ' ').trim(), img: p.querySelectorAll('img,canvas').length })); };
       await exportDiapoPDF();
       return { titres: DR_SLIDES.map(s => s.id), pages };
     });
     expect(r.pages.length).toBe(r.titres.length);
-    r.pages.forEach((txt, i) => expect(txt.length, `page ${r.titres[i]} vide`).toBeGreaterThan(60));
-    const fia = r.pages[r.titres.indexOf('fiabilite')];
+    // Une page est vide si elle n'a ni texte au-delà de son en-tête ni graphique.
+    r.pages.forEach((p, i) => expect(p.txt.length > 60 || p.img > 0, `page ${r.titres[i]} vide`).toBe(true));
+    const fia = r.pages[r.titres.indexOf('fiabilite')].txt;
     expect(fia).toMatch(/Chiffres exacts|Points de vigilance/);
   });
 });

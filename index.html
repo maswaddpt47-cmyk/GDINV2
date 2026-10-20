@@ -5086,7 +5086,10 @@ async function exportDiapoPDF(){
       let done=0;
       pending.forEach(c=>{
         const orig=c.options.animation?.onComplete;
-        c.options.animation=c.options.animation||{};
+        // Ne jamais réaffecter options.animation à lui-même : c'est un proxy de Chart.js,
+        // l'affectation le fait se référencer et lève « Maximum call stack size exceeded »
+        // (l'export PDF plantait, mesuré le 20/10/2026).
+        if(!c.options.animation)c.options.animation={};
         c.options.animation.onComplete=function(){if(orig)orig.call(this);done++;if(done>=pending.length)resolve();};
         c.update('none');
       });
