@@ -981,9 +981,10 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
               <th onclick="sortActTable('cms',2,this)">%<span class="sort-icon">⇅</span></th>
               <th onclick="sortActTable('cms',3,this)">Non réalisées<span class="sort-icon">⇅</span></th>
               <th onclick="sortActTable('cms',4,this)">%<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('cms',5,this)">En cours<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('cms',6,this)">Total<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('cms',7,this)">Taux réalisation<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('cms',5,this)" title="Inclut les actions « en cours » du fichier source">En attente<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('cms',6,this)" title="Annulée ou tout autre état du fichier source">Autres états<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('cms',7,this)">Total<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('cms',8,this)">Taux réalisation<span class="sort-icon">⇅</span></th>
             </tr></thead>
             <tbody id="tbody-act-cms"></tbody></table>
           </div>
@@ -997,9 +998,10 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
               <th onclick="sortActTable('conum',2,this)">%<span class="sort-icon">⇅</span></th>
               <th onclick="sortActTable('conum',3,this)">Non réalisées<span class="sort-icon">⇅</span></th>
               <th onclick="sortActTable('conum',4,this)">%<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('conum',5,this)">En cours<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('conum',6,this)">Total<span class="sort-icon">⇅</span></th>
-              <th onclick="sortActTable('conum',7,this)">Taux réalisation<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('conum',5,this)" title="Inclut les actions « en cours » du fichier source">En attente<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('conum',6,this)" title="Annulée ou tout autre état du fichier source">Autres états<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('conum',7,this)">Total<span class="sort-icon">⇅</span></th>
+              <th onclick="sortActTable('conum',8,this)">Taux réalisation<span class="sort-icon">⇅</span></th>
             </tr></thead>
             <tbody id="tbody-act-conum"></tbody></table>
           </div>
@@ -1167,31 +1169,15 @@ const YEAR_PALETTE=['#3b82f6','#10b981','#f97316','#8b5cf6','#22d3ee','#eab308',
 const PALETTE=['#3b82f6','#f97316','#10b981','#8b5cf6','#ef4444','#22d3ee','#eab308','#fb7185'];
 const CMS_MAIN=['CMS Agen Montanou','CMS Agen Louis Vivent','CMS Tonneins','CMS Villeneuve/Lot','CMS Fumel','CMS Marmande','CMS Nérac','CMS Agen Tapie','CMS Antenne Aiguillon','CMS Marmande (St-Pardoux)','CMS Casteljaloux','Permanence Castillonnès','DSIAN','France Services Villeneuve/Lot','France Services Confluent','Médiathèque Départementale','France Travail','Autre structure'];
 let ACTIONS_DERIVED=false;
+// Dernière date de demande de la base : borne de la comparaison N / N-1.
+function dateMaxBase(){let m='';DATA.forEach(r=>{if(r.date_demande&&r.date_demande>m)m=r.date_demande;});return m;}
 // Dérive ACTIONS_DATA depuis DATA (le XLS GDIN contient état + dates planifiée/réalisation)
 function deriveActionsFromData(){
-  const today=new Date();today.setHours(23,59,59,999);
-  const pd=v=>{if(!v)return null;const d=new Date(v);return isNaN(d)?null:d;};
-  const reactMap={};
-  DATA.forEach(r=>{
-    if(!(r.type_action||[]).some(t=>t.toLowerCase().includes('prise de contact')))return;
-    const dC=pd(r.date_demande);if(!dC)return;
-    const dR=pd(r.date_realisation),dP=pd(r.date_planifiee);
-    let dContact=null;if(dR&&dR<=today)dContact=dR;else if(dP&&dP<=today)dContact=dP;
-    if(!dContact)return;
-    const dl=bizDays(dC,dContact);if(dl===null||dl<0)return;
-    const key=`${r.conum}|${r.cms}|${r.date_demande}`;
-    if(!(key in reactMap)||dl<reactMap[key])reactMap[key]=dl;
-  });
-  const recs=[];
-  DATA.forEach(r=>{
-    if(!(r.type_action||[]).some(t=>t.toLowerCase().startsWith('accompagnement')))return;
-    if(!r.cms)return;
-    const dC=pd(r.date_demande),dR=pd(r.date_realisation);
-    const date=r.date_demande?r.date_demande.slice(0,7):null,year=date?date.slice(0,4):null;
-    const key=`${r.conum}|${r.cms}|${r.date_demande}`;
-    recs.push({etat:r.etat||'',cms:r.cms,conum:r.conum,date,year,lieu:r.cms,delai_reactivite:key in reactMap?reactMap[key]:null,delai_total:bizDays(dC,dR)});
-  });
-  if(recs.length){ACTIONS_DATA=recs;ACTIONS_DERIVED=true;try{updateActionsUI('');}catch(e){}}
+  // Toujours remplacée, même vide : après une réinitialisation ou un remplacement
+  // sans accompagnement, les anciennes actions restaient affichables.
+  ACTIONS_DATA=deriverActions(DATA,new Date());
+  ACTIONS_DERIVED=ACTIONS_DATA.length>0;
+  try{updateActionsUI('');}catch(e){}
 }
 // Attribution des conum vides par CMS
 // Le mapping CMS → conseiller n'est plus codé en dur : il est dérivé des
@@ -1230,7 +1216,7 @@ function renderTypeChart(canvasId,arr,opts){
 }
 
 let charts={}, evolModeVal='total', nnModeVal=false;
-let activeYears=new Set(), ALL_YEARS=[], pendingData=null, _pendingReset=false;
+let activeYears=new Set(), ALL_YEARS=[], pendingData=null;
 let DATA=[], dataSource='embedded', importMeta=null;
 
 
@@ -1296,30 +1282,103 @@ async function _idbGet(key){
     return null;
   }
 }
-async function _idbDel(...keys){try{const db=await _idbOpen();const tx=db.transaction('kv','readwrite');keys.forEach(k=>tx.objectStore('kv').delete(k));}catch(e){}}
-async function saveToStorage(records,meta){
-  let ok=false;
-  try{localStorage.setItem(LS_KEY,JSON.stringify(records));localStorage.setItem(LS_META,JSON.stringify(meta));ok=true;}
-  catch(e){console.warn('[GDIN] localStorage quota — bascule IndexedDB');}
-  if(ok){
-    // LS réussi : IDB en parallèle (backup), sans attente
-    _idbPut(LS_KEY,records).then(()=>_idbPut(LS_META,meta)).catch(()=>{});
+async function _idbDel(...keys){
+  try{
+    const db=await _idbOpen();
+    // Résout à la fin réelle de la transaction (oncomplete), pas à son
+    // lancement : sinon un rechargement immédiat relisait l'ancienne base.
+    const suppression=new Promise((res,rej)=>{
+      const tx=db.transaction('kv','readwrite');
+      keys.forEach(k=>tx.objectStore('kv').delete(k));
+      tx.oncomplete=res;
+      tx.onerror=()=>rej(tx.error||new Error('IndexedDB : suppression refusée'));
+      tx.onabort=()=>rej(tx.error||new Error('IndexedDB : suppression interrompue'));
+    });
+    await Promise.race([suppression,_idbDelai(IDB_DELAI_MAX,'IndexedDB : suppression sans réponse')]);
     return true;
-  }
-  // LS échoué : attendre IDB — retourner true si IDB réussit
-  const r=await _idbPut(LS_KEY,records);
-  const m=await _idbPut(LS_META,meta);
-  return r&&m;
+  }catch(e){console.warn('[GDIN] IndexedDB : suppression impossible :',e&&e.message?e.message:e);return false;}
 }
-function loadFromStorage(){try{const r=localStorage.getItem(LS_KEY),m=localStorage.getItem(LS_META);if(r&&m)return{records:JSON.parse(r),meta:JSON.parse(m)};}catch(e){}return null;}
-async function loadFromIDB(){const r=await _idbGet(LS_KEY),m=await _idbGet(LS_META);return(r&&m)?{records:r,meta:m}:null;}
-function clearStorage(){localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_META);_idbDel(LS_KEY,LS_META);}
+
+// Sauvegarde = UN instantané {schema, rev, records, meta}, écrit d'un bloc :
+// données, métadonnées et révision ne peuvent plus se désynchroniser.
+// Chaque magasin (localStorage, IndexedDB) peut en porter un ; au démarrage la
+// révision la plus récente gagne. Avant le 20/10/2026 le démarrage préférait
+// toujours localStorage : un import trop gros pour son quota allait dans
+// IndexedDB, mais l'ancienne base de localStorage était rechargée à sa place.
+// Tout passe par une file : les écritures s'exécutent dans l'ordre, et une
+// réinitialisation (epoch) invalide celles qui sont encore en attente — une
+// vieille écriture ne peut ni ressusciter une base effacée, ni écraser un
+// import plus récent.
+const LS_SNAP='gdin_snap_v4', SCHEMA_VERSION=2;
+let _storageEpoch=0,_storageQueue=Promise.resolve(),_derniereRev=0;
+function _enfile(fn){const p=_storageQueue.then(fn);_storageQueue=p.catch(()=>{});return p;}
+function _supprimerAnciennesCles(){try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_META);}catch(e){}return _idbDel(LS_KEY,LS_META);}
+async function saveToStorage(records,meta){
+  const epoch=_storageEpoch;
+  const rev=Math.max(Date.now(),_derniereRev+1);_derniereRev=rev;
+  const snap={schema:SCHEMA_VERSION,rev,records,meta};
+  return _enfile(async()=>{
+    if(epoch!==_storageEpoch)return false;
+    let ok=false;
+    try{localStorage.setItem(LS_SNAP,JSON.stringify(snap));ok=true;}
+    catch(e){console.warn('[GDIN] localStorage quota — bascule IndexedDB');}
+    if(ok){
+      // Le nouvel instantané est écrit : les anciennes copies sont périmées.
+      try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_META);}catch(e){}
+      // Sauvegarde de secours IndexedDB, sans attendre, sauf si un import plus
+      // récent ou une réinitialisation l'a rendue caduque.
+      _enfile(async()=>{if(epoch===_storageEpoch&&rev===_derniereRev){await _idbPut(LS_SNAP,snap);await _idbDel(LS_KEY,LS_META);}}).catch(()=>{});
+      return true;
+    }
+    // localStorage refuse : IndexedDB reçoit le nouvel instantané. Les copies
+    // plus anciennes ne sont supprimées qu'après ce succès.
+    const idb=await _idbPut(LS_SNAP,snap);
+    if(idb){
+      try{localStorage.removeItem(LS_SNAP);localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_META);}catch(e){}
+      await _idbDel(LS_KEY,LS_META);
+    }
+    return idb;
+  });
+}
+function _instantaneValide(x){return x&&Array.isArray(x.records)&&x.meta&&typeof x.meta==='object';}
+function loadFromStorage(){
+  const out=[];
+  try{const s=localStorage.getItem(LS_SNAP);if(s){const x=JSON.parse(s);if(_instantaneValide(x))out.push(x);}}catch(e){}
+  try{const r=localStorage.getItem(LS_KEY),m=localStorage.getItem(LS_META);
+    if(r&&m){const x={schema:1,rev:0,records:JSON.parse(r),meta:JSON.parse(m)};if(_instantaneValide(x))out.push(x);}}catch(e){}
+  return out;
+}
+async function loadFromIDB(){
+  const out=[];
+  const s=await _idbGet(LS_SNAP);
+  if(_instantaneValide(s))out.push(s);
+  const r=await _idbGet(LS_KEY),m=await _idbGet(LS_META);
+  if(Array.isArray(r)&&m&&typeof m==='object')out.push({schema:1,rev:0,records:r,meta:m});
+  return out;
+}
+// La révision la plus récente gagne ; à égalité, la copie localStorage.
+function choisirInstantane(candidats){
+  let best=null;
+  candidats.forEach(c=>{if(!best||(c.rev||0)>(best.rev||0))best=c;});
+  return best;
+}
+// Réinitialisation : invalide les écritures en attente, puis attend la fin
+// réelle des suppressions.
+function clearStorage(){
+  _storageEpoch++;
+  return _enfile(async()=>{
+    try{localStorage.removeItem(LS_SNAP);localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_META);}catch(e){}
+    await _idbDel(LS_SNAP,LS_KEY,LS_META);
+  });
+}
 
 // INIT
 async function initData(){
-  let stored=loadFromStorage();
-  if(!stored){stored=await loadFromIDB();}
-  if(stored){DATA=stored.records;dataSource='imported';importMeta=stored.meta;updateSourceBadge(true,stored.meta);}
+  let stored=choisirInstantane([...loadFromStorage(),...await loadFromIDB()]);
+  if(stored){_derniereRev=Math.max(_derniereRev,stored.rev||0);DATA=stored.records;dataSource='imported';importMeta=stored.meta;
+    // Base d'avant l'identité par rang : complétée sans rien supprimer, et signalée.
+    if(completerRangs(DATA)){importMeta.base_heritee=true;}
+    updateSourceBadge(true,importMeta);}
   else{const EXCL=new Set(['Reservation']);DATA=EMBEDDED.map(r=>({...r,cms:normCms(r.cms),type_action:(r.type_action||[]).filter(t=>!EXCL.has(t))}))
     .filter(r=>r.cms!==null);dataSource='embedded';updateSourceBadge(false,null);}
   applyConumAttrib(DATA);deriveActionsFromData();
@@ -1402,14 +1461,14 @@ function getFiltered(){
   document.getElementById('fpill').classList.toggle('on',f!==dmin||t!==dmax||ty!==''||!allSelected);
   let d=DATA.filter(r=>r.date_demande>=f&&r.date_demande<=t);
   if(!allSelected)d=d.filter(r=>activeYears.has(r.date_demande.slice(0,4)));
-  if(ty){const _nt=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/s$/,'');const nty=_nt(ty);d=d.filter(r=>(r.type_action||[]).some(x=>_nt(x).startsWith(nty)));}
+  d=filtrerParType(d,ty);
   if(diapoCms){const _cms=normCms(diapoCms)||diapoCms;d=d.filter(r=>r.cms===diapoCms||r.cms===_cms);}
   return d;
 }
 function getFilteredExceptYears(){
   const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value,ty=document.getElementById('typeFilter').value;
   let d=DATA.filter(r=>r.date_demande>=f&&r.date_demande<=t);
-  if(ty){const _nt=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/s$/,'');const nty=_nt(ty);d=d.filter(r=>(r.type_action||[]).some(x=>_nt(x).startsWith(nty)));}
+  d=filtrerParType(d,ty);
   if(diapoCms){const _cms=normCms(diapoCms)||diapoCms;d=d.filter(r=>r.cms===diapoCms||r.cms===_cms);}
   return d;
 }
@@ -1486,7 +1545,7 @@ function injectConumCss(){
   }).join('');
   document.head.appendChild(style);
 }
-function conumClass(name){return 'cn-'+(name.split(' ')[0]);}
+function conumClass(name){return 'cn-'+String(name).split(' ')[0].replace(/[^\w-]/g,'_');}
 function yearColor(yr){return YEAR_PALETTE[ALL_YEARS.indexOf(yr)%YEAR_PALETTE.length];}
 function makeBarList(el,data,color='blue',n=9){
   // data : tableau d'entrées déjà classé (countEntries) ou objet. Un objet
@@ -1541,15 +1600,18 @@ function renderGlobal(){
   const modeAtelier=atlG.participations>0&&atlG.participations===data.length;
   const kpiPrincipalLabel=modeAtelier?'Participations':'Accompagnements';
   const kpiPrincipalSub=modeAtelier?`${atlG.sessions} ateliers · ${(atlG.participations/atlG.sessions).toFixed(1).replace('.',',')} par séance`:'période sélectionnée';
-  const conumSet=new Set(data.map(r=>r.conum));
+  // Les lignes sans conseiller ne sont pas un conseiller : `new Set(...)` comptait
+  // la valeur vide comme un 8e (20 actions non attribuées, mesuré le 20/10/2026).
+  const conumSet=new Set(data.map(r=>(r.conum||'').trim()).filter(c=>c&&c!=='?'));
+  const nonAttribuees=data.filter(r=>{const c=(r.conum||'').trim();return !c||c==='?';}).length;
   const cmsSet=new Set(data.map(r=>r.cms));
   const topThema=Object.keys(countThemas(data))[0]||'—';
   document.getElementById('kpi-global').innerHTML=`
     <div class="kpi blue" data-tip="Nombre de lignes d'action sur la période filtrée.\nSous le filtre « Atelier » ce sont des participations,\npas des séances."><div class="kpi-label">${kpiPrincipalLabel}</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">${kpiPrincipalSub}</div></div>
     <div class="kpi green" data-tip="N° de demande distincts.\nUne demande génère plusieurs lignes d'action,\ndonc ce nombre est inférieur au total d'actions."><div class="kpi-label">Demandes distinctes</div><div class="kpi-value">${nbDemandes}</div><div class="kpi-sub">pour ${data.length} actions</div></div>
-    <div class="kpi orange"><div class="kpi-label">Conseillers actifs${pointVigilance('conseiller')}</div><div class="kpi-value">${conumSet.size}</div><div class="kpi-sub">sur la période</div></div>
+    <div class="kpi orange"><div class="kpi-label">Conseillers actifs${pointVigilance('conseiller')}</div><div class="kpi-value">${conumSet.size}</div><div class="kpi-sub">sur la période${nonAttribuees?` · ${nonAttribuees} non attribuées`:''}</div></div>
     <div class="kpi purple"><div class="kpi-label">Structures couvertes${pointVigilance('lieu')}</div><div class="kpi-value">${cmsSet.size}</div><div class="kpi-sub">CMS / structures</div></div>
-    <div class="kpi cyan"><div class="kpi-label">Thématique dominante${pointVigilance('themas')}</div><div class="kpi-value" style="font-size:13px;line-height:1.5;padding-top:4px">${topThema}</div><div class="kpi-sub">${countThemas(data)[topThema]||0} demandes</div></div>`;
+    <div class="kpi cyan"><div class="kpi-label">Thématique dominante${pointVigilance('themas')}</div><div class="kpi-value" style="font-size:13px;line-height:1.5;padding-top:4px">${esc(topThema)}</div><div class="kpi-sub">${countThemas(data)[topThema]||0} demandes</div></div>`;
 
   const themas=Object.entries(countThemas(data)).slice(0,9);
   destroyChart('ch-thema');
@@ -1572,12 +1634,15 @@ function renderGlobal(){
   destroyChart('ch-types');
   renderTypeChart('ch-types',getFilteredSansType());
   {const theEnt=Object.entries(countThemas(data));
-  const top3Sh=theEnt.slice(0,3).reduce((s,[,v])=>s+v,0);
-  setInsightQ('ch-thema',theEnt[0]?`Thématique dominante : <strong>${theEnt[0][0]}</strong> (${theEnt[0][1]} dem.)<br>Top 3 concentrent <strong>${pct(top3Sh,data.length)}%</strong> du volume.`:'Aucune donnée');
+  // Union des actions : un accompagnement porte plusieurs thématiques, les
+  // additionner comptait des mentions (74 %) et non des actions (65 %).
+  const top3Noms=new Set(theEnt.slice(0,3).map(([k])=>k));
+  const top3Sh=data.filter(r=>(r.themas||[]).some(t=>top3Noms.has(t))).length;
+  setInsightQ('ch-thema',theEnt[0]?`Thématique dominante : <strong>${theEnt[0][0]}</strong> (${theEnt[0][1]} dem.)<br>Les 3 premières couvrent <strong>${pct(top3Sh,data.length)}%</strong> des lignes (union, une ligne comptée une fois).`:'Aucune donnée');
   const topCn=conumData[0];const top2Sh=(conumData[0]?.[1]||0)+(conumData[1]?.[1]||0);
-  setInsightQ('ch-conum',topCn?`Conseiller le plus actif : <strong>${topCn[0]}</strong> (${topCn[1]} accomp.)<br>Les 2 premiers : <strong>${pct(top2Sh,data.length)}%</strong> de l'activité.`:'Aucune donnée');
+  setInsightQ('ch-conum',topCn?`Conseiller le plus actif : <strong>${esc(topCn[0])}</strong> (${topCn[1]} accomp.)<br>Les 2 premiers : <strong>${pct(top2Sh,data.length)}%</strong> de l'activité.`:'Aucune donnée');
   const topCmsG=countEntries(noDsian,'cms').sort((a,b)=>b[1]-a[1])[0];
-  setInsightQ('bar-cms-global',topCmsG?`CMS le plus actif (hors DSIAN) : <strong>${topCmsG[0].replace(/^Centre Médico-Social(?: de)? /,'CMS ')}</strong><br>${topCmsG[1]} accompagnements (${pct(topCmsG[1],noDsian.length)}% du total hors DSIAN).`:'Aucune donnée');}
+  setInsightQ('bar-cms-global',topCmsG?`CMS le plus actif (hors DSIAN) : <strong>${esc(topCmsG[0].replace(/^Centre Médico-Social(?: de)? /,'CMS '))}</strong><br>${topCmsG[1]} accompagnements (${pct(topCmsG[1],noDsian.length)}% du total hors DSIAN).`:'Aucune donnée');}
 
   // KPI ligne 2 : réalisées, bénéficiaires connus, délai moyen.
   // Pas de KPI « Urgences » : le champ n'est quasiment plus coché dans l'outil
@@ -1813,6 +1878,12 @@ function renderEvolution(){
             stack:`yr_${yr}`
           });
         });
+        // Structures hors des cinq premières : regroupées, jamais omises
+        // (2 971 accompagnements sur 7 764 disparaissaient du graphique).
+        const valsAut=Array(12).fill(0);
+        data.filter(r=>r.date_demande.startsWith(yr)&&!top5.includes(r.cms))
+          .forEach(r=>{valsAut[parseInt(r.date_demande.slice(5,7))-1]++;});
+        datasets.push({label:`Autres structures ${yr}`,data:valsAut,backgroundColor:'#6b7fa077',borderColor:'#6b7fa0',borderWidth:1,borderRadius:0,borderSkipped:false,stack:`yr_${yr}`});
       });
     }
 
@@ -1883,7 +1954,10 @@ function renderEvolution(){
       const conums=[...new Set(dataForEvol.map(r=>r.conum))].filter(c=>c&&!conumMasque(c));
       datasets=conums.map(cn=>({label:cn.split(' ').pop(),data:mKeys.map(k=>dataForEvol.filter(r=>r.conum===cn&&r.date_demande.startsWith(k)).length),backgroundColor:conumColor(cn)+'88',borderColor:conumColor(cn),borderWidth:1.5,borderRadius:4,borderSkipped:false,type:'bar',stack:'s'}));
     } else {
-      datasets=CMS_MAIN.slice(0,6).map((cms,i)=>({label:cms,data:mKeys.map(k=>data.filter(r=>r.cms===cms&&r.date_demande.startsWith(k)).length),backgroundColor:PALETTE[i]+'88',borderColor:PALETTE[i],borderWidth:1.5,borderRadius:4,borderSkipped:false,type:'bar',stack:'s'}));
+      const cmsPrincipaux=CMS_MAIN.slice(0,6);
+      datasets=cmsPrincipaux.map((cms,i)=>({label:cms,data:mKeys.map(k=>data.filter(r=>r.cms===cms&&r.date_demande.startsWith(k)).length),backgroundColor:PALETTE[i]+'88',borderColor:PALETTE[i],borderWidth:1.5,borderRadius:4,borderSkipped:false,type:'bar',stack:'s'}));
+      // Les autres structures sont regroupées : le graphique couvre tout le périmètre.
+      datasets.push({label:'Autres structures',data:mKeys.map(k=>data.filter(r=>!cmsPrincipaux.includes(r.cms)&&r.date_demande.startsWith(k)).length),backgroundColor:'#6b7fa088',borderColor:'#6b7fa0',borderWidth:1.5,borderRadius:4,borderSkipped:false,type:'bar',stack:'s'});
     }
     destroyChart('ch-evol');
     charts['ch-evol']=new Chart(document.getElementById('ch-evol'),{type:'bar',data:{labels:mKeys.map(monthLabel),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:evolModeVal!=='total',labels:{color:legendColor(),font:{size:10},padding:8,boxWidth:8}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0'}},y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'},stacked:evolModeVal!=='total'}}}});
@@ -1950,7 +2024,7 @@ function renderEvolution(){
   // Tableau mensuel
   const conumNames=[...new Set(allF.map(r=>r.conum))].filter(c=>c&&!conumMasque(c));
   let thead=`<thead><tr><th>Mois</th><th>Année</th><th>Total</th><th title="Part des actions à l'état Réalisée">Réalisées</th>`;
-  conumNames.forEach(cn=>{thead+=`<th class="${conumClass(cn)}">${cn}</th>`;});
+  conumNames.forEach(cn=>{thead+=`<th class="${conumClass(cn)}">${esc(cn)}</th>`;});
   thead+=`</tr></thead>`;
   let tbody='<tbody>';
   mAll.forEach(k=>{
@@ -2024,7 +2098,7 @@ function renderYoYByCms(data,years){
     const label=cms2.replace('Centre Médico-Social ','CMS ').replace('Centre Médico-Social de ','CMS ');
     const vals=years.map(yr=>data.filter(r=>r.date_demande.startsWith(yr)&&r.cms===cms2).length);
     const total=vals.reduce((a,b)=>a+b,0);
-    tbody+=`<tr><td style="font-size:11px;font-weight:500">${label}</td>`;
+    tbody+=`<tr><td style="font-size:11px;font-weight:500">${esc(label)}</td>`;
     vals.forEach((v,i)=>{
       tbody+=`<td class="mono" style="color:${yearColor(years[i])}">${v||'—'}</td>`;
       if(i>0){
@@ -2183,7 +2257,7 @@ function renderConum(){
   const cmsCount=new Set(data.map(r=>r.cms)).size;
   const topThema=Object.keys(countThemas(data))[0]||'—';
   // Réactivité 48h depuis ACTIONS_DATA (tous CMS confondus, filtre années actif)
-  const actC=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===conum&&(!activeYears.size||activeYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)):[];
+  const actC=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===conum&&(!activeYears.size||activeYears.has(r.year))&&dansPeriode(r.jour,f,t)):[];
   const totalOri=actC.length;
   const hasAct=ACTIONS_DATA&&ACTIONS_DATA.length>0;
   // Évolution par année
@@ -2194,7 +2268,7 @@ function renderConum(){
     <div class="kpi green"><div class="kpi-label">Orientations TS</div><div class="kpi-value">${hasAct?totalOri:'—'}</div><div class="kpi-sub">${hasAct?'tous CMS confondus':'import requis'}</div></div>
     <div class="kpi orange"><div class="kpi-label">CMS couverts</div><div class="kpi-value">${cmsCount}</div><div class="kpi-sub">structures actives</div></div>
     <div class="kpi purple"><div class="kpi-label">Orienteurs distincts</div><div class="kpi-value">${new Set(data.map(r=>r.orienteur).filter(Boolean)).size}</div><div class="kpi-sub">TS</div></div>
-    <div class="kpi cyan"><div class="kpi-label">Thématique principale</div><div class="kpi-value" style="font-size:13px;line-height:1.5;padding-top:4px">${topThema}</div><div class="kpi-sub">${countThemas(data)[topThema]||0} demandes</div></div>
+    <div class="kpi cyan"><div class="kpi-label">Thématique principale</div><div class="kpi-value" style="font-size:13px;line-height:1.5;padding-top:4px">${esc(topThema)}</div><div class="kpi-sub">${countThemas(data)[topThema]||0} demandes</div></div>
     ${evolByYear.length>1?`<div class="kpi" style="grid-column:1/-1;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px"><div class="kpi-label">Évolution par année</div><div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px">${evolByYear.map(e=>`<div style="text-align:center;min-width:50px"><div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:var(--blue)">${e.n}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px">${e.y}</div></div>`).join('')}</div></div>`:''}`;
   makeBarList(document.getElementById('bar-conum-thema'),countThemas(data),'orange');
   makeBarList(document.getElementById('bar-conum-cms'),countEntries(data,'cms'),'blue');
@@ -2211,9 +2285,9 @@ function renderConum(){
   allConums.forEach(cn=>{
     const d=allData.filter(r=>r.conum===cn);if(!d.length)return;
     const topT=Object.keys(countThemas(d))[0]||'—';
-    const oriRow=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===cn&&(!activeYears.size||activeYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)).length:null;
+    const oriRow=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===cn&&(!activeYears.size||activeYears.has(r.year))&&dansPeriode(r.jour,f,t)).length:null;
     const hl=cn===conum?'background:var(--s3)':'';
-    rows+=`<tr style="${hl}"><td class="${conumClass(cn)}" style="font-weight:600">${cn}</td><td class="mono">${d.length}</td><td class="mono">${oriRow!==null?oriRow:'—'}</td><td><span class="badge badge-blue">${topT}</span></td></tr>`;
+    rows+=`<tr style="${hl}"><td class="${conumClass(cn)}" style="font-weight:600">${esc(cn)}</td><td class="mono">${d.length}</td><td class="mono">${oriRow!==null?oriRow:'—'}</td><td><span class="badge badge-blue">${topT}</span></td></tr>`;
   });
   document.getElementById('tbl-conum-all').innerHTML=rows;
   renderHeatmapConum();
@@ -2309,7 +2383,7 @@ function renderOrienteurs(){
   document.getElementById('tbl-ori').innerHTML=rows;
   {const topOri=oriEntries[0];
   const top3ShOri=oriEntries.slice(0,3).reduce((s,[,v])=>s+v,0);
-  setInsightQ('ch-ori-bar',topOri?`TS le plus orienteur : <strong>${topOri[0]}</strong> (${topOri[1]} dem.)<br>Top 3 = <strong>${pct(top3ShOri,data.length)}%</strong> des orientations.`:'Aucune donnée');
+  setInsightQ('ch-ori-bar',topOri?`TS le plus orienteur : <strong>${esc(topOri[0])}</strong> (${topOri[1]} dem.)<br>Top 3 = <strong>${pct(top3ShOri,data.length)}%</strong> des orientations.`:'Aucune donnée');
   const topThemaOri=Object.entries(countThemas(data)).sort((a,b)=>b[1]-a[1])[0];
   setInsightQ('ch-ori-thema',topThemaOri?`Thématique la plus orientée : <strong>${topThemaOri[0]}</strong> (${topThemaOri[1]} dem., ${pct(topThemaOri[1],data.length)}%)<br>${oriEntries.length} orienteurs actifs sur la période.`:'Aucune donnée');}
 }
@@ -2362,14 +2436,14 @@ function renderRapport(){
   const topThema=Object.keys(countThemas(data))[0]||'—';
   // Délais depuis ACTIONS_DATA
   const cmNormRpt=normCms(cms)||cms;
-  const actRpt=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===conum&&(r.cms===cms||r.cms===cmNormRpt)&&r.etat==='Réalisée'&&(!activeYears.size||activeYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)):[];
+  const actRpt=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===conum&&(r.cms===cms||r.cms===cmNormRpt)&&isRealisee(r.etat)&&(!activeYears.size||activeYears.has(r.year))&&dansPeriode(r.jour,f,t)):[];
   // % dans les 48h (orientation → prise de contact)
   let delR2=actRpt.map(r=>r.delai_total).filter(v=>v!=null&&v>=0);
   // Fallback : si ACTIONS_DATA (import séparé/stocké) ne couvre pas ce conseiller/CMS/période,
   // on calcule le délai directement depuis les accompagnements filtrés courants.
   if(!delR2.length){
     const pdLoc=v=>{if(!v)return null;const d=new Date(v);return isNaN(d)?null:d;};
-    delR2=data.filter(r=>r.etat==='Réalisée'&&r.date_realisation).map(r=>dayDiff(pdLoc(r.date_demande),pdLoc(r.date_realisation))).filter(v=>v!=null&&v>=0);
+    delR2=data.filter(r=>isRealisee(r.etat)&&r.date_realisation).map(r=>dayDiff(pdLoc(r.date_demande),pdLoc(r.date_realisation))).filter(v=>v!=null&&v>=0);
   }
   const moyR2=delR2.length?Math.round(delR2.reduce((a,b)=>a+b,0)/delR2.length):null;
   const hasAct=delR2.length>0;
@@ -2414,11 +2488,10 @@ function renderRapport(){
     actSec.style.display='block';
     // Filter actions by conum + cms
     const cmNorm=normCms(cms)||cms;
-    const actData=ACTIONS_DATA.filter(r=>r.conum===conum&&(r.cms===cms||r.cms===cmNorm)&&(!activeYears.size||activeYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7));
-    const aReal=actData.filter(r=>r.etat==='Réalisée').length;
-    const aNon=actData.filter(r=>r.etat==='Non réalisée').length;
-    const aEnc=actData.filter(r=>r.etat==='En cours').length;
-    const aTot=actData.length;
+    const actData=ACTIONS_DATA.filter(r=>r.conum===conum&&(r.cms===cms||r.cms===cmNorm)&&(!activeYears.size||activeYears.has(r.year))&&dansPeriode(r.jour,f,t));
+    const repA=repartitionEtats(actData);
+    const aReal=repA.realisee,aNon=repA.non_realisee,aEnc=repA.en_attente,aAut=repA.autre;
+    const aTot=repA.total;
 
     // Réalisés / non réalisés par mois
     const mKeys=moisDeLaPeriode(f,t,activeYears);  // axe complet, cf. ch-rpt-evol
@@ -2426,8 +2499,8 @@ function renderRapport(){
     charts['ch-rpt-act-monthly']=new Chart(document.getElementById('ch-rpt-act-monthly'),{
       type:'bar',
       data:{labels:mKeys.map(monthLabel),datasets:[
-        {label:'Non réalisée',data:mKeys.map(m=>actData.filter(r=>r.date&&r.date.startsWith(m.slice(0,7))&&r.etat==='Non réalisée').length),backgroundColor:'rgba(239,68,68,.55)',borderColor:'#ef4444',borderWidth:1,stack:'s',borderSkipped:false,borderRadius:3},
-        {label:'Réalisée',data:mKeys.map(m=>actData.filter(r=>r.date&&r.date.startsWith(m.slice(0,7))&&r.etat==='Réalisée').length),backgroundColor:'rgba(16,185,129,.45)',borderColor:'#10b981',borderWidth:1,stack:'s',borderSkipped:false,borderRadius:0}
+        {label:'Non réalisée',data:mKeys.map(m=>actData.filter(r=>r.date&&r.date.startsWith(m.slice(0,7))&&categorieEtat(r.etat)==='non_realisee').length),backgroundColor:'rgba(239,68,68,.55)',borderColor:'#ef4444',borderWidth:1,stack:'s',borderSkipped:false,borderRadius:3},
+        {label:'Réalisée',data:mKeys.map(m=>actData.filter(r=>r.date&&r.date.startsWith(m.slice(0,7))&&isRealisee(r.etat)).length),backgroundColor:'rgba(16,185,129,.45)',borderColor:'#10b981',borderWidth:1,stack:'s',borderSkipped:false,borderRadius:0}
       ]},
       options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:legendColor(),font:{size:9},boxWidth:7,padding:5}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:9}}},y:{grid:{color:gridColor()},beginAtZero:true,stacked:true,ticks:{color:'#6b7fa0',font:{size:9}}}}}
     });
@@ -2442,8 +2515,8 @@ function renderRapport(){
       actData.filter(r=>r.year===yr&&r.date).forEach(r=>{
         const m=parseInt(r.date.slice(5,7))-1;
         if(m<0||m>11)return;
-        if(r.etat==='Réalisée')vR[m]++;
-        else if(r.etat==='Non réalisée')vN[m]++;
+        if(isRealisee(r.etat))vR[m]++;
+        else if(categorieEtat(r.etat)==='non_realisee')vN[m]++;
       });
       yoyDs.push({label:`Réalisé ${yrLabel(yr)}`,data:vR,backgroundColor:`rgba(16,185,129,${alpha.toFixed(2)})`,borderColor:'#10b981',borderWidth:1,stack:yr,borderRadius:0,borderSkipped:false});
       yoyDs.push({label:`Non réalisé ${yrLabel(yr)}`,data:vN,backgroundColor:`rgba(239,68,68,${alpha.toFixed(2)})`,borderColor:'#ef4444',borderWidth:1,stack:yr,borderRadius:3,borderSkipped:false});
@@ -2464,7 +2537,8 @@ function renderRapport(){
     document.getElementById('tbl-rpt-act').innerHTML=
       `<tr><td style="color:var(--green);font-weight:600">Réalisée</td><td class="mono">${aReal}</td><td style="min-width:80px">${txBar(pct(aReal,aTot),'#10b981')}</td></tr>`+
       `<tr><td style="color:var(--red);font-weight:600">Non réalisée</td><td class="mono">${aNon}</td><td style="min-width:80px">${txBar(pct(aNon,aTot),'#ef4444')}</td></tr>`+
-      `<tr><td style="color:var(--orange);font-weight:600">En cours</td><td class="mono">${aEnc}</td><td style="min-width:80px">${txBar(pct(aEnc,aTot),'#f97316')}</td></tr>`+
+      `<tr><td style="color:var(--orange);font-weight:600">En attente</td><td class="mono">${aEnc}</td><td style="min-width:80px">${txBar(pct(aEnc,aTot),'#f97316')}</td></tr>`+
+      `<tr><td style="color:var(--muted);font-weight:600">Autres états</td><td class="mono">${aAut}</td><td style="min-width:80px">${txBar(pct(aAut,aTot),'#6b7fa0')}</td></tr>`+
       `<tr class="total-row"><td style="font-weight:700">TOTAL</td><td class="mono">${aTot}</td><td></td></tr>`;
   } else {
     actSec.style.display='none';
@@ -2487,20 +2561,18 @@ function buildRptBilan(conum,cms,data,dataConum){
   const cnRpt=formatConumName(conum);
   const cnRptColor=conumColor(conum);
   const conumHtml=conumNameHtml(conum,cnRptColor);
-  const done=data.filter(r=>r.date_action).length;
-  const txC=pct(done,total);
+  const txC=tauxRealisation(data).taux;
   const communes=new Set(data.map(r=>r.commune).filter(Boolean)).size;
   const orienteurs=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
   const partCN=pct(total,dataConum.length);
   // Évolution annuelle — année sélectionnée vs année sélectionnée-1
-  const rawTrend=DATA.filter(r=>r.conum===conum&&r.cms===cms);
+  const rawTrend=filtrerParType(DATA.filter(r=>r.conum===conum&&r.cms===cms),document.getElementById('typeFilter').value);
   const allYrsInData=[...new Set(rawTrend.map(r=>r.date_demande.slice(0,4)))].sort();
   const selYrs=activeYears.size&&activeYears.size<ALL_YEARS.length?allYrsInData.filter(y=>activeYears.has(y)):allYrsInData;
   const nYear=selYrs[selYrs.length-1]||'';
   const nPrevYear=nYear?String(parseInt(nYear)-1):'';
-  const nRec=nYear?rawTrend.filter(r=>r.date_demande.startsWith(nYear)).length:0;
-  const nPre=nPrevYear?rawTrend.filter(r=>r.date_demande.startsWith(nPrevYear)).length:0;
-  const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):null;
+  const EVO=evolutionAnnuelle(rawTrend,nYear,dateMaxBase());
+  const nRec=EVO.nRec,nPre=EVO.nPre,delta=EVO.delta;
   const trend=delta===null?'—':delta>=0?`+${delta}%`:`${delta}%`;
   const trendColor=delta===null?'var(--muted)':delta>=0?'var(--green)':'var(--orange)';
   // Top 3 thématiques
@@ -2511,18 +2583,16 @@ function buildRptBilan(conum,cms,data,dataConum){
   const topThemaPct=pct(topN,total);
   // Réactivité 48h depuis ACTIONS_DATA filtré conum × cms
   const cmNorm=normCms(cms)||cms;
-  const actBil=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===conum&&(r.cms===cms||r.cms===cmNorm)&&r.etat==='Réalisée'&&(!activeYears.size||activeYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)):[];
-  const t48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0).length;
-  const r48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0&&r.delai_reactivite<=2).length;
-  const p48=(t48>=20)?Math.round(r48/t48*100):null;
+  const actBil=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===conum&&(r.cms===cms||r.cms===cmNorm)&&isRealisee(r.etat)&&(!activeYears.size||activeYears.has(r.year))&&dansPeriode(r.jour,f,t)):[];
+  const R48=reactivite48(actBil);const t48=R48.calculables,r48=R48.dans48,p48=R48.taux;
   const p48Color=p48===null?'var(--muted)':p48>=95?'var(--green)':p48>=85?'var(--orange)':'var(--red)';
   document.getElementById('rpt-bilan-grid').innerHTML=[
     [total,'Accompagnements','var(--blue)'],
-    [txC+'%','Taux de complétion','var(--green)'],
-    [trend,`Évol. ${nYear} / ${nPrevYear}`,trendColor],
+    [txC+'%','Accompagnements réalisés','var(--green)'],
+    [trend,`Évol. ${nYear} / ${nPrevYear}${EVO.partielle?` (au ${EVO.coupure})`:''}`,trendColor],
     [communes,'Communes couvertes','var(--cyan)'],
     [orienteurs,'Orienteurs actifs','var(--purple)'],
-    [p48!==null?p48+'%':'—','Réactivité 48h',p48Color],
+    [p48!==null?p48+'%':'—',`Réactivité 48h · ${r48}/${t48} calculables${R48.sansContact?` · ${R48.sansContact} sans contact`:''}`,p48Color],
   ].map(([v,l,col])=>`<div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}"><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:${col}">${v}</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div></div>`).join('');
 
   // Évolution annuelle conum × cms — toujours sur DATA brut (indépendant du filtre années)
@@ -2537,15 +2607,15 @@ function buildRptBilan(conum,cms,data,dataConum){
     return`<div style="text-align:center;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;border-top:2px solid ${col}"><div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:${col}">${n}${arrow}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${yr}</div></div>`;
   }).join('');
   document.getElementById('rpt-bilan-evol').innerHTML=evolYears.length>1
-    ?`<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Évolution annuelle — ${cms}</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px">${evolItems}</div>`
+    ?`<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Évolution annuelle — ${esc(cms)}</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px">${evolItems}</div>`
     :'';
 
-  const p1=`Au sein de la structure <strong style="color:var(--blue)">${cms}</strong>, ${conumHtml} a accompagné <strong>${total} bénéficiaire${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
+  const p1=`Au sein de la structure <strong style="color:var(--blue)">${esc(cms)}</strong>, ${conumHtml} a réalisé <strong>${total} accompagnement${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
   const themasStr=top3Themas.map(([t,n],i)=>{
     const col=i===0?'var(--orange)':i===1?'var(--cyan)':'var(--purple)';
     return`<strong style="color:${col}">${t}</strong> (${n} · ${pct(n,total)}%)`;
   }).join(', ');
-  const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>.`;
+  const p2=`Les thématiques principales sont : ${themasStr}. <strong>${txC}%</strong> des accompagnements sont à l'état « Réalisée ».`;
   const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur l'année ${nYear} vs ${nPrevYear}, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
 
   document.getElementById('rpt-bilan-text').innerHTML=`<p style="margin-bottom:9px">${p1}</p><p style="margin-bottom:9px">${p2}</p><p>${p3}</p>`;
@@ -2581,8 +2651,12 @@ if(importConumSel){
 }
 
 // Détection automatique du type de fichier
-async function handleAutoImport(file){
+async function handleAutoImport(file,opts){
   if(!file)return;
+  // L'intention « réinitialiser puis importer » appartient à CETTE opération :
+  // elle voyage dans pendingData, jamais dans une variable globale qu'une
+  // erreur ou un import JSON laisserait armée pour le fichier suivant.
+  const reinitialiser=!!(opts&&opts.reset);
   document.getElementById('import-error').style.display='none';
   // Fichier JSON — import instantané
   if(file.name.toLowerCase().endsWith('.json')){
@@ -2591,7 +2665,7 @@ async function handleAutoImport(file){
     const r=new FileReader();
     r.onload=e=>{bar.style.width='70%';msg.textContent='Validation…';setTimeout(()=>{
       try{const payload=JSON.parse(e.target.result);bar.style.width='100%';
-        setTimeout(()=>{prog.style.display='none';try{importDataJSON(payload,file.name);}catch(err){showImportError(err.message);}},300);
+        setTimeout(async()=>{prog.style.display='none';try{await importDataJSON(payload,file.name);}catch(err){showImportError(err.message);}},300);
       }catch(err){prog.style.display='none';showImportError('JSON invalide : '+err.message);}
     },200);};
     r.onerror=()=>{prog.style.display='none';showImportError('Impossible de lire le fichier JSON.');};
@@ -2627,7 +2701,7 @@ async function handleAutoImport(file){
             bar.style.width='100%';msg.textContent=`${result.records.length} enregistrements`;
             setTimeout(()=>{
               prog.style.display='none';
-              pendingData={records:result.records,filename:file.name,warnings:result.warnings,stats:result.stats};
+              pendingData={records:result.records,filename:file.name,warnings:result.warnings,stats:result.stats,reset:reinitialiser};
               confirmImport();
             },400);
           }catch(err){
@@ -2737,7 +2811,7 @@ function showPreview(pd){
   document.getElementById('pv-conums').textContent=conums.length;
   document.getElementById('pv-cms').textContent=cms.length;
   const cc={};records.forEach(r=>{if(r.conum)cc[r.conum]=(cc[r.conum]||0)+1;});
-  document.getElementById('pv-conum-list').innerHTML=Object.entries(cc).sort((a,b)=>b[1]-a[1]).map(([cn,n])=>`<div class="cp-item"><span>${cn}</span><span class="mono" style="color:var(--green)">${n}</span></div>`).join('');
+  document.getElementById('pv-conum-list').innerHTML=Object.entries(cc).sort((a,b)=>b[1]-a[1]).map(([cn,n])=>`<div class="cp-item"><span>${esc(cn)}</span><span class="mono" style="color:var(--green)">${n}</span></div>`).join('');
   const pvW=document.getElementById('pv-warnings');pvW.innerHTML='';
   if(warnings.length)warnings.forEach(w=>{pvW.innerHTML+=`<div class="info-box">ℹ ${w}</div>`;});
   const sizeKb=Math.round(JSON.stringify(records).length/1024);
@@ -2765,26 +2839,23 @@ async function confirmImport(){
   if(conumFilter){
     records=records.filter(r=>(r.conum||'').trim()===conumFilter);
   }
-  // Clé de déduplication robuste : date + conum + cms + commune + orienteur + themas triés
-  // La clé de fusion vit dans gdin-pure.js avec ses tests : elle porte le rang
-  // du participant pour les ateliers, sans quoi la fusion supprime 78 % des
-  // participations. Ne pas réécrire une clé locale ici.
-  const makeKey=cleFusion;
-  // Réinitialisation demandée : effacer avant de merger
-  if(_pendingReset){clearStorage();DATA=[];dataSource='embedded';importMeta=null;_pendingReset=false;}
+  // Identité des lignes et fusion : gdin-pure.js (cleFusion, fusionnerImport),
+  // avec leurs tests. Ne pas réécrire de clé locale ici — la clé locale
+  // d'avant le 20/10/2026 contenait le conseiller, déduit après coup.
+  let reset=!!pendingData.reset;
+  const heritee=dataSource==='imported'&&!reset&&!!(importMeta&&importMeta.base_heritee);
+  if(heritee&&confirm('La base enregistrée vient d\'une version antérieure de l\'application : elle est incomplète (des demandes avaient été fusionnées à tort) et la provenance de ses conseillers est inconnue.\n\nOK : la remplacer par ce fichier (recommandé).\nAnnuler : fusionner dans la base actuelle.'))reset=true;
+  pendingData.reset=false;
+  if(reset){await clearStorage();DATA=[];dataSource='embedded';importMeta=null;}
   // Base : si déjà importé on fusionne, sinon on repart de zéro (pas des données intégrées)
   const base=dataSource==='imported'?DATA:[];
-  const existingKeys=new Set(base.map(makeKey));
-  // Dédoublonner aussi en interne le nouveau fichier
-  const seenNew=new Set();
-  const dedupedNew=records.filter(r=>{const k=makeKey(r);if(seenNew.has(k))return false;seenNew.add(k);return true;});
-  const internalDups=records.length-dedupedNew.length;
-  const newRecords=dedupedNew.filter(r=>!existingKeys.has(makeKey(r)));
-  const crossDups=dedupedNew.length-newRecords.length;
-  const merged=[...base,...newRecords];
+  const fus=fusionnerImport(base,records);
+  const merged=fus.records;
+  const newRecords={length:fus.ajoutes};
+  const internalDups=fus.doublonsFichier,crossDups=0;
   DATA=merged;applyConumAttrib(DATA);deriveActionsFromData();dataSource='imported';
   const years=[...new Set(merged.map(r=>r.date_demande.slice(0,4)))].sort();
-  importMeta={filename,count:DATA.length,years,date:new Date().toLocaleDateString('fr-FR'),stats:statsImport};
+  importMeta={filename,count:DATA.length,years,date:new Date().toLocaleDateString('fr-FR'),stats:statsImport,base_heritee:heritee||undefined,fusion:{ajoutes:fus.ajoutes,mis_a_jour:fus.misAJour,identiques:fus.identiques}};
   const saved=await saveToStorage(merged,importMeta);
   updateSourceBadge(true,importMeta);updateAllYears();updateDateRange();updateCurrentSourceInfo();
   pendingData=null;document.getElementById('import-preview').style.display='none';document.getElementById('parse-progress-box').style.display='none';
@@ -2794,7 +2865,7 @@ async function confirmImport(){
   const conumFilterLabel=conumFilter?` · filtre : <strong style="color:var(--cyan)">${esc(conumFilter)}</strong>`:'';
   const resume=formatResumeImport(statsImport);
   const resumeMsg=(resume?`<br><span style="color:var(--muted);font-size:11px">Fichier : ${resume}</span>`:'')+ligneSyntheseFiabilite();
-  document.getElementById('cs-label').innerHTML=`<strong style="color:var(--green)">✓ Fusion réussie —</strong> ${newRecords.length} nouveaux · ${DATA.length} total (${years.join(', ')})${dupMsg}${conumFilterLabel}${resumeMsg}`;
+  document.getElementById('cs-label').innerHTML=`<strong style="color:var(--green)">✓ Fusion réussie —</strong> ${fus.ajoutes} nouveaux${fus.misAJour?` · ${fus.misAJour} mis à jour`:''}${fus.identiques?` · ${fus.identiques} déjà connus`:''} · ${DATA.length} total (${years.join(', ')})${dupMsg}${conumFilterLabel}${resumeMsg}`;
   if(!saved)showImportError('Sauvegarde locale impossible (quota dépassé). Les données seront perdues au prochain rechargement. Utilisez ⬇ Exporter pour sauvegarder manuellement.');
   /* Redirection automatique vers le dashboard après import */
   setTimeout(()=>{
@@ -2803,17 +2874,17 @@ async function confirmImport(){
   },600);
 }
 function cancelImport(){pendingData=null;['import-preview','import-error','parse-progress-box','import-anomalies'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('file-input').value='';}
-function handleResetAndImport(file){if(!file)return;_pendingReset=true;handleAutoImport(file);}
-function resetToEmbedded(){
+function handleResetAndImport(file){if(!file)return;handleAutoImport(file,{reset:true});}
+async function resetToEmbedded(){
   if(!confirm('Supprimer les données importées et revenir aux données intégrées ?'))return;
-  clearStorage();const EXCL_RST=new Set(['Reservation']);DATA=EMBEDDED.map(r=>({...r,cms:normCms(r.cms),type_action:(r.type_action||[]).filter(t=>!EXCL_RST.has(t))}))
+  await clearStorage();const EXCL_RST=new Set(['Reservation']);DATA=EMBEDDED.map(r=>({...r,cms:normCms(r.cms),type_action:(r.type_action||[]).filter(t=>!EXCL_RST.has(t))}))
     .filter(r=>r.cms!==null);applyConumAttrib(DATA);deriveActionsFromData();
   dataSource='embedded';importMeta=null;updateSourceBadge(false,null);updateAllYears();updateDateRange();updateCurrentSourceInfo();
   initCmsSelect();initConumSelect();initOriCmsSelect();initRptSelects();refreshAll();
 }
 
 function exportDataJSON(){
-  const payload={version:'1',type:'gdin-data',exported:new Date().toISOString(),
+  const payload={version:'2',type:'gdin-data',exported:new Date().toISOString(),
     source_filename:importMeta?importMeta.filename:'données-intégrées',
     conum_filter:(document.getElementById('import-conum-filter')||{}).value||null,
     count:DATA.length,data:DATA};
@@ -2824,20 +2895,22 @@ function exportDataJSON(){
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
-function importDataJSON(payload,filename){
-  if(payload.type!=='gdin-data'||!Array.isArray(payload.data))
-    throw new Error('Format non reconnu — ce fichier n\'est pas un export GDIN');
-  const records=payload.data;
-  if(!records.length)throw new Error('Le fichier JSON ne contient aucun enregistrement');
+async function importDataJSON(payload,filename){
+  // Validation COMPLÈTE avant de toucher à la base active : une erreur lève ici
+  // et laisse DATA et le stockage intacts. Les enregistrements sont reconstruits
+  // depuis les seuls champs autorisés (validerSauvegardeJSON, gdin-pure.js).
+  const records=validerSauvegardeJSON(payload);
+  const heritee=completerRangs(records);
   DATA=records;applyConumAttrib(DATA);deriveActionsFromData();dataSource='imported';
   const years=[...new Set(records.map(r=>r.date_demande.slice(0,4)))].sort();
-  importMeta={filename,count:DATA.length,years,date:new Date().toLocaleDateString('fr-FR'),source_filename:payload.source_filename||filename};
-  saveToStorage(DATA,importMeta);
+  importMeta={filename,count:DATA.length,years,date:new Date().toLocaleDateString('fr-FR'),source_filename:String(payload.source_filename||filename).slice(0,200),base_heritee:heritee||undefined};
+  const saved=await saveToStorage(DATA,importMeta);
   updateSourceBadge(true,importMeta);updateAllYears();updateDateRange();updateCurrentSourceInfo();
   initCmsSelect();initConumSelect();initOriCmsSelect();initRptSelects();refreshAll();
   const dot=document.getElementById('cs-dot');if(dot)dot.style.background='var(--green)';
   const label=document.getElementById('cs-label');
-  if(label)label.innerHTML=`<strong style="color:var(--green)">✓ JSON chargé —</strong> ${records.length} enregistrements · ${years.join(', ')}${payload.conum_filter?` · <span style="color:var(--cyan)">${esc(payload.conum_filter)}</span>`:''}`;
+  if(label)label.innerHTML=`<strong style="color:var(--green)">✓ JSON chargé —</strong> ${records.length} enregistrements · ${years.join(', ')}${typeof payload.conum_filter==='string'&&payload.conum_filter?` · <span style="color:var(--cyan)">${esc(payload.conum_filter)}</span>`:''}`;
+  if(!saved)showImportError('Sauvegarde locale impossible (quota dépassé). Les données seront perdues au prochain rechargement. Utilisez ⬇ Exporter pour sauvegarder manuellement.');
   setTimeout(()=>{
     const globalBtn=document.querySelector('.sb-item[onclick*="global"]')||document.querySelector('.tab[onclick*="global"]');
     if(globalBtn)switchTab('global',globalBtn);
@@ -3044,7 +3117,7 @@ function exportCSV(){
     (r.type_action||[]).join(';'),
     r.orienteur||'',
     (r.motif||'').replace(/;/g,',').replace(/\n/g,' ')
-  ].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';'));
+  ].map(celluleCSV).join(';'));
   const csv='\uFEFF'+header+'\n'+rows.join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
@@ -3085,8 +3158,7 @@ function buildBilan(){
   if(!data.length)return;
   const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;
   const total=data.length;
-  const done=data.filter(r=>r.date_action).length;
-  const txCompl=Math.round(done/total*100);
+  const txCompl=tauxRealisation(data).taux;
   const conums=[...new Set(data.map(r=>r.conum).filter(Boolean))];
   const orienteurs=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
   const communes=new Set(data.map(r=>r.commune).filter(Boolean)).size;
@@ -3113,10 +3185,8 @@ function buildBilan(){
   const topConumPct=Math.round(topConumN/total*100);
 
   // Réactivité 48h
-  const actGlobal=ACTIONS_DATA?ACTIONS_DATA.filter(r=>(diapoCms?r.cms===diapoCms||r.cms===normCms(diapoCms):true)&&r.etat==='Réalisée'&&(!activeYears.size||activeYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)):[];
-  const t48=actGlobal.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0).length;
-  const r48=actGlobal.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0&&r.delai_reactivite<=2).length;
-  const p48=t48>=20?Math.round(r48/t48*100):null;
+  const actGlobal=ACTIONS_DATA?ACTIONS_DATA.filter(r=>(diapoCms?r.cms===diapoCms||r.cms===normCms(diapoCms):true)&&isRealisee(r.etat)&&(!activeYears.size||activeYears.has(r.year))&&dansPeriode(r.jour,f,t)):[];
+  const R48=reactivite48(actGlobal);const t48=R48.calculables,r48=R48.dans48,p48=R48.taux;
   const p48Color=p48===null?'var(--muted)':p48>=95?'var(--green)':p48>=85?'var(--orange)':'var(--red)';
   // Période
   const dates=data.map(r=>r.date_demande).sort();
@@ -3133,11 +3203,11 @@ function buildBilan(){
 
   document.getElementById('bilan-grid').innerHTML=`
     <div class="bilan-stat"><div class="bs-val" style="color:var(--blue)">${total}</div><div class="bs-label">Accompagnements</div></div>
-    <div class="bilan-stat"><div class="bs-val" style="color:var(--green)">${txCompl}%</div><div class="bs-label">Taux de complétion</div></div>
+    <div class="bilan-stat"><div class="bs-val" style="color:var(--green)">${txCompl}%</div><div class="bs-label">Accompagnements réalisés</div></div>
     <div class="bilan-stat"><div class="bs-val" style="color:${trendColor}">${trend}</div><div class="bs-label">Évolution trimestrielle</div></div>
     <div class="bilan-stat"><div class="bs-val" style="color:var(--orange)">${communes}</div><div class="bs-label">Communes couvertes</div></div>
     <div class="bilan-stat"><div class="bs-val" style="color:var(--purple)">${orienteurs}</div><div class="bs-label">Orienteurs actifs</div></div>
-    <div class="bilan-stat"><div class="bs-val" style="color:${p48Color}">${p48!==null?p48+'%':'—'}</div><div class="bs-label">Réactivité 48h</div></div>
+    <div class="bilan-stat"><div class="bs-val" style="color:${p48Color}">${p48!==null?p48+'%':'—'}</div><div class="bs-label">${`Réactivité 48h · ${r48}/${t48} calculables${R48.sansContact?` · ${R48.sansContact} sans contact`:''}`}</div></div>
   `;
 
   // Conclusion adaptée CMS ou globale
@@ -3145,13 +3215,13 @@ function buildBilan(){
   if(diapoCms){
     const conumRef=topConum;
     const autresConums=conums.filter(c=>c!==topConum).map(c=>c.split(' ').pop()).join(', ');
-    p1=`Au sein de la structure <strong>${diapoCms}</strong>, le conseiller numérique référent <strong>${conumRef}</strong> a pris en charge <strong>${topConumPct}% des accompagnements</strong>, soit <strong>${topConumN} bénéficiaires</strong> sur un total de <strong>${total}</strong>.${autresConums?` Il est appuyé par ${autresConums}.`:''}`;
-    p2=`La thématique dominante est <strong>${topThema}</strong>, illustrant les besoins prioritaires du public accompagné sur ce secteur. Le taux de complétion des dossiers atteint <strong>${txCompl}%</strong>.${p48!==null?` Réactivité 48h : <strong style="color:${p48Color}">${p48}%</strong>.`:''}`;
+    p1=`Au sein de la structure <strong>${esc(diapoCms)}</strong>, le conseiller numérique référent <strong>${esc(conumRef)}</strong> a pris en charge <strong>${topConumPct}% des accompagnements</strong>, soit <strong>${topConumN} accompagnements</strong> sur un total de <strong>${total}</strong>.${autresConums?` Il est appuyé par ${esc(autresConums)}.`:''}`;
+    p2=`La thématique dominante est <strong>${esc(topThema)}</strong>, illustrant les besoins prioritaires du public accompagné sur ce secteur. <strong>${txCompl}%</strong> des accompagnements sont à l'état « Réalisée ».${p48!==null?` Réactivité 48h : <strong style="color:${p48Color}">${p48}%</strong>.`:''}`;
     p3=`Avec <strong>${orienteurs} TS orienteurs</strong> mobilisés et une présence sur <strong>${communes} communes</strong>, l'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> — témoignant d'un engagement <strong>${delta>=0?'croissant et reconnu':'solide et constant'}</strong> au service des publics fragiles. 🎯`;
   } else {
     const conumsList=conums.map(c=>c.split(' ').pop()).join(', ');
-    p1=`Sur la période analysée, l'équipe des conseillers numériques du Lot-et-Garonne — <strong>${conumsList}</strong> — a accompagné <strong>${total} bénéficiaires</strong> répartis sur <strong>${communes} communes</strong>, avec un taux de complétion de <strong>${txCompl}%</strong>.`;
-    p2=`La thématique la plus traitée est <strong>${topThema}</strong>. L'activité trimestrielle affiche une évolution de <strong style="color:${trendColor}">${trend}</strong>, témoignant d'une dynamique <strong>${delta>=0?'positive et croissante':'solide et constante'}</strong>.`;
+    p1=`Sur la période analysée, l'équipe des conseillers numériques du Lot-et-Garonne — <strong>${esc(conumsList)}</strong> — a réalisé <strong>${total} accompagnements</strong> répartis sur <strong>${communes} communes</strong>, dont <strong>${txCompl}%</strong> à l'état « Réalisée ».`;
+    p2=`La thématique la plus traitée est <strong>${esc(topThema)}</strong>. L'activité trimestrielle affiche une évolution de <strong style="color:${trendColor}">${trend}</strong>, témoignant d'une dynamique <strong>${delta>=0?'positive et croissante':'solide et constante'}</strong>.`;
     p3=`Avec <strong>${orienteurs} TS orienteurs</strong> mobilisés sur <strong>${communes} communes</strong>, le dispositif GDIN démontre son <strong>efficacité opérationnelle</strong> et sa capacité à répondre rapidement aux besoins numériques des publics fragiles. 🎯`;
   }
 
@@ -3276,10 +3346,10 @@ let ACTIONS_DATA = null; // raw parsed records
 
 
 function updateActionsUI(filename){
-  if(!ACTIONS_DATA||!ACTIONS_DATA.length)return;
-  document.getElementById('act-dashboard').style.display='block';
-  const empty=document.getElementById('act-empty');
-  if(empty)empty.style.display='none';
+  const dash=document.getElementById('act-dashboard'),empty=document.getElementById('act-empty');
+  const vide=!ACTIONS_DATA||!ACTIONS_DATA.length;
+  if(dash)dash.style.display=vide?'none':'block';
+  if(empty)empty.style.display=vide?'block':'none';
 }
 
 // Périmètre de l'onglet États : la période, les années et la structure des
@@ -3288,10 +3358,10 @@ function updateActionsUI(filename){
 // dès que « Atelier » est choisi.
 function getActFiltered(){
   if(!ACTIONS_DATA)return[];
-  const f=document.getElementById('dFrom').value.slice(0,7);
-  const t=document.getElementById('dTo').value.slice(0,7);
+  const f=document.getElementById('dFrom').value;
+  const t=document.getElementById('dTo').value;
   const allSelected=activeYears.size===ALL_YEARS.length;
-  let d=ACTIONS_DATA.filter(r=>r.date&&r.date>=f&&r.date<=t);
+  let d=ACTIONS_DATA.filter(r=>dansPeriode(r.jour,f,t));
   if(!allSelected)d=d.filter(r=>activeYears.has(r.year));
   if(diapoCms){const _c=normCms(diapoCms)||diapoCms;d=d.filter(r=>r.cms===diapoCms||r.cms===_c);}
   return d;
@@ -3300,16 +3370,16 @@ function getActFiltered(){
 function renderActions(){
   if(!ACTIONS_DATA)return;
   const data=getActFiltered();
-  const real=data.filter(r=>r.etat==='Réalisée').length;
-  const nonReal=data.filter(r=>r.etat==='Non réalisée').length;
-  const encours=data.filter(r=>r.etat==='En cours').length;
-  const total=data.length;
+  const rep0=repartitionEtats(data);
+  const real=rep0.realisee,nonReal=rep0.non_realisee,encours=rep0.en_attente,autres=rep0.autre;
+  const total=rep0.total;
 
   // KPIs
   document.getElementById('act-kpi').innerHTML=`
     <div class="kpi green"><div class="kpi-label">Réalisées</div><div class="kpi-value">${real}</div><div class="kpi-sub">${pct(real,total)}% des accompagnements</div></div>
     <div class="kpi red"><div class="kpi-label">Non réalisées</div><div class="kpi-value">${nonReal}</div><div class="kpi-sub">${pct(nonReal,total)}% des accompagnements</div></div>
-    <div class="kpi orange"><div class="kpi-label">En cours</div><div class="kpi-value">${encours}</div><div class="kpi-sub">${pct(encours,total)}% des accompagnements</div></div>
+    <div class="kpi orange" data-tip="Inclut les actions « en cours » du fichier source."><div class="kpi-label">En attente</div><div class="kpi-value">${encours}</div><div class="kpi-sub">${pct(encours,total)}% des accompagnements</div></div>
+    <div class="kpi"><div class="kpi-label">Autres états</div><div class="kpi-value">${autres}</div><div class="kpi-sub">${pct(autres,total)}% (annulée, etc.)</div></div>
     <div class="kpi blue"><div class="kpi-label">Total accompagnements</div><div class="kpi-value">${total}</div><div class="kpi-sub">période sélectionnée</div></div>`;
 
   // Monthly stacked bar
@@ -3320,9 +3390,10 @@ function renderActions(){
     data:{
       labels:months.map(m=>{const[y,mo]=m.split('-');return MONTH_FR[parseInt(mo)-1]+' '+y.slice(2);}),
       datasets:[
-        {label:'Réalisée',data:months.map(m=>data.filter(r=>r.date===m&&r.etat==='Réalisée').length),backgroundColor:'rgba(16,185,129,.65)',borderColor:'#10b981',borderWidth:1,stack:'s',borderSkipped:false},
-        {label:'Non réalisée',data:months.map(m=>data.filter(r=>r.date===m&&r.etat==='Non réalisée').length),backgroundColor:'rgba(239,68,68,.65)',borderColor:'#ef4444',borderWidth:1,stack:'s',borderSkipped:false},
-        {label:'En cours',data:months.map(m=>data.filter(r=>r.date===m&&r.etat==='En cours').length),backgroundColor:'rgba(249,115,22,.65)',borderColor:'#f97316',borderWidth:1,stack:'s',borderSkipped:false}
+        {label:'Réalisée',data:months.map(m=>data.filter(r=>r.date===m&&isRealisee(r.etat)).length),backgroundColor:'rgba(16,185,129,.65)',borderColor:'#10b981',borderWidth:1,stack:'s',borderSkipped:false},
+        {label:'Non réalisée',data:months.map(m=>data.filter(r=>r.date===m&&categorieEtat(r.etat)==='non_realisee').length),backgroundColor:'rgba(239,68,68,.65)',borderColor:'#ef4444',borderWidth:1,stack:'s',borderSkipped:false},
+        {label:'En attente',data:months.map(m=>data.filter(r=>r.date===m&&categorieEtat(r.etat)==='en_attente').length),backgroundColor:'rgba(249,115,22,.65)',borderColor:'#f97316',borderWidth:1,stack:'s',borderSkipped:false},
+        {label:'Autres états',data:months.map(m=>data.filter(r=>r.date===m&&categorieEtat(r.etat)==='autre').length),backgroundColor:'rgba(107,127,160,.55)',borderColor:'#6b7fa0',borderWidth:1,stack:'s',borderSkipped:false}
       ]
     },
     options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:legendColor(),font:{size:10},boxWidth:8,padding:6}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:9}}},y:{grid:{color:gridColor()},beginAtZero:true,stacked:true,ticks:{color:'#6b7fa0'}}}}
@@ -3330,8 +3401,8 @@ function renderActions(){
 
   // Table by CMS
   const cmsList=Object.entries(
-    data.reduce((acc,r)=>{acc[r.cms]=(acc[r.cms]||{r:0,n:0,e:0});if(r.etat==='Réalisée')acc[r.cms].r++;else if(r.etat==='Non réalisée')acc[r.cms].n++;else acc[r.cms].e++;return acc;},{})
-  ).map(([cms,v])=>({cms,r:v.r,n:v.n,e:v.e,t:v.r+v.n+v.e}))
+    data.reduce((acc,r)=>{acc[r.cms]=(acc[r.cms]||{r:0,n:0,e:0,a:0});const c=categorieEtat(r.etat);if(c==='realisee')acc[r.cms].r++;else if(c==='non_realisee')acc[r.cms].n++;else if(c==='en_attente')acc[r.cms].e++;else acc[r.cms].a++;return acc;},{})
+  ).map(([cms,v])=>({cms,r:v.r,n:v.n,e:v.e,a:v.a,t:v.r+v.n+v.e+v.a}))
    .sort((a,b)=>b.t-a.t);
 
   function txBar(p,color){
@@ -3339,41 +3410,43 @@ function renderActions(){
   }
 
   let rows='';
-  cmsList.forEach(({cms,r,n,e,t})=>{
+  cmsList.forEach(({cms,r,n,e,a,t})=>{
     const short=cms.replace('Centre Médico-Social ','CMS ').replace('Centre Médico-Social de ','CMS ');
     const pr=pct(r,t),pn=pct(n,t);
     rows+=`<tr>
-      <td style="font-size:11px;font-weight:500">${short}</td>
+      <td style="font-size:11px;font-weight:500">${esc(short)}</td>
       <td class="mono" style="color:var(--green)">${r}</td>
       <td data-val="${pr}" style="min-width:80px">${txBar(pr,'#10b981')}</td>
       <td class="mono" style="color:var(--red)">${n}</td>
       <td data-val="${pn}" style="min-width:80px">${txBar(pn,'#ef4444')}</td>
       <td class="mono" style="color:var(--orange)">${e}</td>
+      <td class="mono" style="color:var(--muted)">${a}</td>
       <td class="mono">${t}</td>
       <td data-val="${pr}" style="min-width:90px">${txBar(pr,'#10b981')}</td>
     </tr>`;
   });
   // Total row
-  const totR=cmsList.reduce((a,r)=>a+r.r,0),totN=cmsList.reduce((a,r)=>a+r.n,0),totE=cmsList.reduce((a,r)=>a+r.e,0),totT=cmsList.reduce((a,r)=>a+r.t,0);
-  rows+=`<tr class="total-row"><td style="font-weight:700">TOTAL</td><td class="mono" style="color:var(--green)">${totR}</td><td>${txBar(pct(totR,totT),'#10b981')}</td><td class="mono" style="color:var(--red)">${totN}</td><td>${txBar(pct(totN,totT),'#ef4444')}</td><td class="mono" style="color:var(--orange)">${totE}</td><td class="mono">${totT}</td><td>${txBar(pct(totR,totT),'#10b981')}</td></tr>`;
+  const totR=cmsList.reduce((a,r)=>a+r.r,0),totN=cmsList.reduce((a,r)=>a+r.n,0),totE=cmsList.reduce((a,r)=>a+r.e,0),totA=cmsList.reduce((a,r)=>a+r.a,0),totT=cmsList.reduce((a,r)=>a+r.t,0);
+  rows+=`<tr class="total-row"><td style="font-weight:700">TOTAL</td><td class="mono" style="color:var(--green)">${totR}</td><td>${txBar(pct(totR,totT),'#10b981')}</td><td class="mono" style="color:var(--red)">${totN}</td><td>${txBar(pct(totN,totT),'#ef4444')}</td><td class="mono" style="color:var(--orange)">${totE}</td><td class="mono" style="color:var(--muted)">${totA}</td><td class="mono">${totT}</td><td>${txBar(pct(totR,totT),'#10b981')}</td></tr>`;
   document.getElementById('tbody-act-cms').innerHTML=rows;
 
   // Table by conseiller
   const cnList=Object.entries(
-    data.reduce((acc,r)=>{if(!r.conum)return acc;acc[r.conum]=(acc[r.conum]||{r:0,n:0,e:0});if(r.etat==='Réalisée')acc[r.conum].r++;else if(r.etat==='Non réalisée')acc[r.conum].n++;else acc[r.conum].e++;return acc;},{})
-  ).map(([cn,v])=>({cn,r:v.r,n:v.n,e:v.e,t:v.r+v.n+v.e}))
+    data.reduce((acc,r)=>{if(!r.conum)return acc;acc[r.conum]=(acc[r.conum]||{r:0,n:0,e:0,a:0});const c=categorieEtat(r.etat);if(c==='realisee')acc[r.conum].r++;else if(c==='non_realisee')acc[r.conum].n++;else if(c==='en_attente')acc[r.conum].e++;else acc[r.conum].a++;return acc;},{})
+  ).map(([cn,v])=>({cn,r:v.r,n:v.n,e:v.e,a:v.a,t:v.r+v.n+v.e+v.a}))
    .sort((a,b)=>b.t-a.t);
 
   let cnRows='';
-  cnList.forEach(({cn,r,n,e,t})=>{
+  cnList.forEach(({cn,r,n,e,a,t})=>{
     const pr=pct(r,t),pn=pct(n,t);
     cnRows+=`<tr>
-      <td class="${conumClass(cn)}" style="font-weight:500">${cn}</td>
+      <td class="${conumClass(cn)}" style="font-weight:500">${esc(cn)}</td>
       <td class="mono" style="color:var(--green)">${r}</td>
       <td data-val="${pr}" style="min-width:80px">${txBar(pr,'#10b981')}</td>
       <td class="mono" style="color:var(--red)">${n}</td>
       <td data-val="${pn}" style="min-width:80px">${txBar(pn,'#ef4444')}</td>
       <td class="mono" style="color:var(--orange)">${e}</td>
+      <td class="mono" style="color:var(--muted)">${a}</td>
       <td class="mono">${t}</td>
       <td data-val="${pr}" style="min-width:90px">${txBar(pr,'#10b981')}</td>
     </tr>`;
@@ -3399,7 +3472,7 @@ function renderActYoY(){
   const datasets=activeYrs.map((yr2,i)=>{
     const col=YEAR_PALETTE[i%YEAR_PALETTE.length];
     const vals=Array(12).fill(0);
-    base.filter(r=>r.year===yr2&&r.etat==='Non réalisée')
+    base.filter(r=>r.year===yr2&&categorieEtat(r.etat)==='non_realisee')
         .forEach(r=>{if(r.date){const m=parseInt(r.date.slice(5,7))-1;if(m>=0&&m<12)vals[m]++;}});
     return{
       label:yrLabel(yr2),data:vals,
@@ -3560,7 +3633,7 @@ function renderAteliers(){
     kpiAtl(communes.size,'Communes','couvertes','var(--blue)')+
     kpiAtl(lieux.size,'Lieux','distincts (médiathèques, écoles…)','var(--purple)')+
     kpiAtl(conumSet.size,'Conseillers','animateurs','var(--orange)')+
-    kpiAtl(`<span style="font-size:18px">${topThema}</span>`,'Thématique principale',`${topThemaN} participations`,'var(--green)');
+    kpiAtl(`<span style="font-size:18px">${esc(topThema)}</span>`,'Thématique principale',`${topThemaN} participations`,'var(--green)');
 
   // Évolution mensuelle — axe complet (tous les mois de la plage, y compris ceux à 0)
   const allMonthsSet=[];
@@ -3622,7 +3695,7 @@ function renderAteliers(){
   document.getElementById('tbl-atl').innerHTML=lieuRows.map(row=>{
     const topConum=Object.entries(row.conums).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
     const topThemaL=Object.entries(row.themasL).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
-    return `<tr><td>${row.lieu}</td><td class="mono">${row.commune}</td><td class="mono">${row.n}</td><td>${conumNameHtml(topConum,conumColor(topConum))}</td><td>${topThemaL}</td></tr>`;
+    return `<tr><td>${esc(row.lieu)}</td><td class="mono">${esc(row.commune)}</td><td class="mono">${row.n}</td><td>${conumNameHtml(topConum,conumColor(topConum))}</td><td>${esc(topThemaL)}</td></tr>`;
   }).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted)">Aucun atelier sur la période sélectionnée</td></tr>';
   initAtlConumGlobalSelect();
   renderHeatmapAteliers();
@@ -3709,7 +3782,7 @@ function buildTerrLegend(cmsPresents){
   el.innerHTML=cmsPresents.map(cms=>`
     <span style="display:flex;align-items:center;gap:4px">
       <span style="width:10px;height:10px;border-radius:50%;background:${cmsColor(cms)};display:inline-block;flex-shrink:0"></span>
-      <span>${cms.replace('CMS ','')}</span>
+      <span>${esc(cms.replace('CMS ',''))}</span>
     </span>`).join('');
 }
 
@@ -4062,13 +4135,13 @@ function renderHeatmapConum(){
     if(!hasVol)return;
     const color=CONUM_COLORS[cn]||'#6b7fa0';
     const shortName=cn.split(' ').pop();
-    tbl+=`<tr><td class="hm-label" title="${cn}">${shortName}</td>`;
+    tbl+=`<tr><td class="hm-label" title="${esc(cn)}">${esc(shortName)}</td>`;
     displayYearsRev.forEach((yr,yi)=>{
       const vals=vol[cn][yr]||Array(12).fill(0);
       vals.forEach((v,mi)=>{
         const bg=cellColor(v,color);
         const txt=v>0?v:'';
-        tbl+=`<td class="hm-cell" style="background:${bg}" title="${cn}\n${MONTH_FR[mi]} ${yr} : ${v} demande${v>1?'s':''}">${txt}</td>`;
+        tbl+=`<td class="hm-cell" style="background:${bg}" title="${esc(cn)}\n${MONTH_FR[mi]} ${yr} : ${v} demande${v>1?'s':''}">${txt}</td>`;
       });
       if(yi<allYears.length-1)tbl+=`<td style="width:10px"></td>`;
     });
@@ -4121,12 +4194,12 @@ function renderHeatmapCmsByConum(conum){
   tbl+=`</tr></thead><tbody>`;
   activeCmsList.forEach(cms=>{
     const shortCms=cms.replace(/^CMS /,'').replace(/^Permanence /,'');
-    tbl+=`<tr><td class="hm-label" title="${cms}" style="min-width:110px">${shortCms}</td>`;
+    tbl+=`<tr><td class="hm-label" title="${esc(cms)}" style="min-width:110px">${esc(shortCms)}</td>`;
     displayYearsRev.forEach((yr,yi)=>{
       const vals=vol[cms][yr]||Array(12).fill(0);
       vals.forEach((v,mi)=>{
         const bg=cellColor(v,col);
-        tbl+=`<td class="hm-cell" style="background:${bg}" title="${cms}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
+        tbl+=`<td class="hm-cell" style="background:${bg}" title="${esc(cms)}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
       });
       if(yi<displayYearsRev.length-1)tbl+=`<td style="width:10px"></td>`;
     });
@@ -4218,6 +4291,22 @@ function drToggleYear(y){
 
 function drNav(dir){const n=drIdx+dir;if(n>=0&&n<DR_SLIDES.length)drGoTo(n);}
 
+// Aiguillage unique des diapositives : la navigation ET l'export PDF passent
+// par lui. L'export avait sa propre copie, qui ignorait « fiabilite » — la page
+// sortait avec son en-tête et un contenu vide (audit du 20/10/2026).
+function drRenderSlide(slide,c,data,allDataConum,palette){
+  if(slide.id==='cover') drSlideCover(c,data,allDataConum);
+  else if(slide.id==='kpis') drSlideKpis(c,data,allDataConum);
+  else if(slide.id==='evolution') drSlideEvol(c,data,palette);
+  else if(slide.id==='yoy') drSlideYoY(c,data,palette);
+  else if(slide.id==='themas') drSlideThemas(c,data,palette);
+  else if(slide.id==='orienteurs') drSlideOrienteurs(c,data,palette);
+  else if(slide.id==='territoire') drSlideTerritoire(c,data);
+  else if(slide.id==='comparaison') drSlideComparaison(c,data,allDataConum);
+  else if(slide.id==='nonreal') drSlideNonReal(c,data);
+  else if(slide.id==='fiabilite') drSlideFiabilite(c,data);
+  else if(slide.id==='bilan') drSlideBilan(c,data,allDataConum);
+}
 function drGoTo(idx){
   drIdx=idx;
   const slide=DR_SLIDES[idx];
@@ -4234,17 +4323,7 @@ function drGoTo(idx){
   const allDataConum=drYears.size?_baseConum.filter(r=>drYears.has(r.date_demande.slice(0,4))):_baseConum;
   const PALETTE_DR=['#3b82f6','#f97316','#10b981','#8b5cf6','#22d3ee','#eab308','#ef4444','#ec4899','#06b6d4','#84cc16'];
 
-  if(slide.id==='cover') drSlideCover(c,data,allDataConum);
-  else if(slide.id==='kpis') drSlideKpis(c,data,allDataConum);
-  else if(slide.id==='evolution') drSlideEvol(c,data,PALETTE_DR);
-  else if(slide.id==='yoy') drSlideYoY(c,data,PALETTE_DR);
-  else if(slide.id==='themas') drSlideThemas(c,data,PALETTE_DR);
-  else if(slide.id==='orienteurs') drSlideOrienteurs(c,data,PALETTE_DR);
-  else if(slide.id==='territoire') drSlideTerritoire(c,data);
-  else if(slide.id==='comparaison') drSlideComparaison(c,data,allDataConum);
-  else if(slide.id==='nonreal') drSlideNonReal(c,data);
-  else if(slide.id==='fiabilite') drSlideFiabilite(c,data);
-  else if(slide.id==='bilan') drSlideBilan(c,data,allDataConum);
+  drRenderSlide(slide,c,data,allDataConum,PALETTE_DR);
 }
 
 // ── SLIDE COUVERTURE ──
@@ -4261,7 +4340,7 @@ function drSlideCover(c,data){
       <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Dispositif GDIN · Rapport d'activité</div>
       <div style="width:60px;height:2px;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:2px"></div>
       <div style="font-family:'Space Grotesk',sans-serif;line-height:1.1;letter-spacing:-1px">
-        <span style="font-size:clamp(22px,3vw,38px);font-weight:400;color:var(--muted)">${cnCover.prenom} </span><span style="font-size:clamp(28px,4vw,52px);font-weight:700;color:${cnCoverColor}">${cnCover.nom||cnCover.full}</span>
+        <span style="font-size:clamp(22px,3vw,38px);font-weight:400;color:var(--muted)">${esc(cnCover.prenom)} </span><span style="font-size:clamp(28px,4vw,52px);font-weight:700;color:${cnCoverColor}">${esc(cnCover.nom||cnCover.full)}</span>
       </div>
       <div style="font-size:15px;color:var(--muted);font-weight:500;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:8px 20px">${esc(drCms)}</div>
       <div style="width:60px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--blue));border-radius:2px"></div>
@@ -4285,7 +4364,7 @@ function drSlideKpis(c,data,allDataConum){
   const communes=new Set(data.map(r=>r.commune).filter(Boolean)).size;
   // Délais ACTIONS_DATA
   const cmNormDR=normCms(drCms)||drCms;
-  const actDR=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormDR)&&r.etat==='Réalisée'&&(!drYears.size||drYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)):[];
+  const actDR=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormDR)&&isRealisee(r.etat)&&(!drYears.size||drYears.has(r.year))&&dansPeriode(r.jour,f,t)):[];
   const totalOrientDR=actDR.length;
   const dR1=actDR.map(r=>r.delai_reactivite).filter(v=>v!=null&&v>=0);
   const dR2=actDR.map(r=>r.delai_total).filter(v=>v!=null&&v>=0);
@@ -4316,13 +4395,13 @@ function drSlideKpis(c,data,allDataConum){
         ${kpi(data.length,'Accompagnements',`${partCN}% activité CN`,'var(--blue)')}
         ${kpi(oriCount,'Orienteurs actifs','TS','var(--orange)')}
         ${kpi(communes,'Communes','couvertes','var(--cyan)')}
-        ${(()=>{const r48=actDR.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0&&r.delai_reactivite<=2).length;const t48=actDR.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0).length;const p48=t48>=20?Math.round(r48/t48*100):null;const col=p48===null?'var(--muted)':p48>=95?'var(--green)':p48>=85?'var(--orange)':'var(--red)';return kpi(hasActDR&&p48!==null?p48+'%':t48<20&&hasActDR?'<20 cas':'—','Réactivité 48h',hasActDR&&p48!==null?r48+'/'+t48+' contacts':'volume insuffisant',col);})()}
+        ${(()=>{const R48=reactivite48(actDR);const r48=R48.dans48,t48=R48.calculables,p48=R48.taux;const col=p48===null?'var(--muted)':p48>=95?'var(--green)':p48>=85?'var(--orange)':'var(--red)';return kpi(hasActDR&&p48!==null?p48+'%':t48<20&&hasActDR?'<20 cas':'—','Réactivité 48h',hasActDR&&p48!==null?r48+'/'+t48+' calculables'+(R48.sansContact?' · '+R48.sansContact+' sans contact':''):'volume insuffisant',col);})()}
         ${kpi(hasActDR&&moyDR2!=null?moyDR2+'j':'—','Délai total','orientation→réalisation','var(--yellow)')}
       </div>
       <div style="margin-top:20px;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px">
         <div style="font-size:28px">🏆</div>
         <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">Thématique dominante</div>
-        <div style="font-size:18px;font-weight:700;color:var(--text)">${topThema}</div>
+        <div style="font-size:18px;font-weight:700;color:var(--text)">${esc(topThema)}</div>
         <div style="font-size:11px;color:var(--muted)">${topN} demandes · ${pct(topN,data.length)}% du total</div></div>
       </div>
     </div>`;
@@ -4452,12 +4531,16 @@ function drSlideThemas(c,data,palette){
 
 // ── SLIDE ORIENTEURS ──
 function drSlideOrienteurs(c,data,palette){
-  const oriData=countEntries(data,'orienteur').filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())).slice(0,10);
-  const oriTotal=oriData.reduce((s,[,v])=>s+v,0);
+  // Effectif et parts calculés sur TOUS les orienteurs externes ; seul
+  // l'affichage est limité à dix barres. Tronquer avant de compter annonçait
+  // 10 actifs au lieu de 36 et 22 % au lieu de 14 % (mesuré le 20/10/2026).
+  const oriTous=countEntries(data,'orienteur').filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim()));
+  const oriData=oriTous.slice(0,10);
+  const oriTotal=oriTous.reduce((s,[,v])=>s+v,0);
   const top1Ori=oriData[0];
   const top1OriPct=top1Ori?pct(top1Ori[1],oriTotal):0;
   const depAlert=top1OriPct>=50?`<br>⚠️ Forte dépendance : 1 TS = ${top1OriPct}% des envois`:'';
-  const insightOri=top1Ori?`🥇 Top TS : <strong>${top1Ori[0]}</strong> — ${top1Ori[1]} envois (${top1OriPct}%)<br>📊 Total TS actifs : <strong>${oriData.length}</strong>${depAlert}`:'Aucune donnée orienteur.';
+  const insightOri=top1Ori?`🥇 Top TS : <strong>${esc(top1Ori[0])}</strong> — ${top1Ori[1]} envois (${top1OriPct}%)<br>📊 Total TS actifs : <strong>${oriTous.length}</strong> (${oriData.length} affichés)${depAlert}`:'Aucune donnée orienteur.';
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">TS orienteurs</div>
@@ -4556,11 +4639,10 @@ function drSlideTerritoire(c,data){
 function drSlideNonReal(c,data){
   const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;
   const cmNormNR=normCms(drCms)||drCms;
-  const actNR=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormNR)&&(!drYears.size||drYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)):[];
-  const real=actNR.filter(r=>r.etat==='Réalisée').length;
-  const nonReal=actNR.filter(r=>r.etat==='Non réalisée').length;
-  const encours=actNR.filter(r=>r.etat==='En cours').length;
-  const total=real+nonReal+encours;
+  const actNR=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormNR)&&(!drYears.size||drYears.has(r.year))&&dansPeriode(r.jour,f,t)):[];
+  const repNR=repartitionEtats(actNR);
+  const real=repNR.realisee,nonReal=repNR.non_realisee,encours=repNR.en_attente,autresNR=repNR.autre;
+  const total=repNR.total;
   const hasAct=actNR.length>0;
 
   if(!hasAct){
@@ -4574,8 +4656,8 @@ function drSlideNonReal(c,data){
 
   // Évolution mensuelle des non réalisés
   const months=moisDeLaPeriode(f,t,drYears);  // axe complet, comme son pendant du CR
-  const nrByMonth=months.map(m=>actNR.filter(r=>r.date===m&&r.etat==='Non réalisée').length);
-  const realByMonth=months.map(m=>actNR.filter(r=>r.date===m&&r.etat==='Réalisée').length);
+  const nrByMonth=months.map(m=>actNR.filter(r=>r.date===m&&categorieEtat(r.etat)==='non_realisee').length);
+  const realByMonth=months.map(m=>actNR.filter(r=>r.date===m&&isRealisee(r.etat)).length);
   const txNR=total>0?pct(nonReal,total):0;
   const txNRColor=txNR<=10?'var(--green)':txNR<=20?'var(--orange)':'var(--red)';
 
@@ -4640,7 +4722,7 @@ function drSlideNonReal(c,data){
     data:{labels:MONTH_FR,datasets:nrYears.map((yr,i)=>{
       const col=YEAR_PALETTE[i%YEAR_PALETTE.length];
       const vals=Array(12).fill(0);
-      actNR.filter(r=>r.year===yr&&r.etat==='Non réalisée').forEach(r=>{if(r.date){const m=parseInt(r.date.slice(5,7))-1;if(m>=0)vals[m]++;}});
+      actNR.filter(r=>r.year===yr&&categorieEtat(r.etat)==='non_realisee').forEach(r=>{if(r.date){const m=parseInt(r.date.slice(5,7))-1;if(m>=0)vals[m]++;}});
       return{label:yrLabel(yr),data:vals,backgroundColor:col+'66',borderColor:col,borderWidth:1.5,borderRadius:3,borderSkipped:false};
     })},
     options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:legendColor(),font:{size:10},boxWidth:8,padding:6}}},scales:{x:{grid:{display:false},ticks:{color:'#6b7fa0',font:{size:10}}},y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0'}}}}
@@ -4654,8 +4736,8 @@ function drSlideNonReal(c,data){
     actNR.filter(r=>r.year===yr&&r.date).forEach(r=>{
       const m=parseInt(r.date.slice(5,7))-1;
       if(m<0||m>11)return;
-      if(r.etat==='Réalisée')valsR[m]++;
-      else if(r.etat==='Non réalisée')valsN[m]++;
+      if(isRealisee(r.etat))valsR[m]++;
+      else if(categorieEtat(r.etat)==='non_realisee')valsN[m]++;
     });
     drRvnDatasets.push({label:`Réalisé ${yrLabel(yr)}`,data:valsR,backgroundColor:`rgba(16,185,129,${alpha.toFixed(2)})`,borderColor:'#10b981',borderWidth:1,stack:yr,borderRadius:0,borderSkipped:false});
     drRvnDatasets.push({label:`Non réalisé ${yrLabel(yr)}`,data:valsN,backgroundColor:`rgba(239,68,68,${alpha.toFixed(2)})`,borderColor:'#ef4444',borderWidth:1,stack:yr,borderRadius:3,borderSkipped:false});
@@ -4720,17 +4802,15 @@ function drSlideBilan(c,data,allDataConum){
   const communes=new Set(data.map(r=>r.commune).filter(Boolean)).size;
   const orienteurs=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
   const partCN=pct(total,allDataConum.length);
-  const done=data.filter(r=>r.date_action).length;
-  const txC=pct(done,total);
+  const txC=tauxRealisation(data).taux;
   // Évolution annuelle — année sélectionnée vs année sélectionnée-1
-  const rawTrendDR=DATA.filter(r=>r.conum===drConum&&r.cms===drCms);
+  const rawTrendDR=filtrerParType(DATA.filter(r=>r.conum===drConum&&r.cms===drCms),document.getElementById('typeFilter').value);
   const allYrsInDataDR=[...new Set(rawTrendDR.map(r=>r.date_demande.slice(0,4)))].sort();
   const selYrsDR=drYears.size?allYrsInDataDR.filter(y=>drYears.has(y)):allYrsInDataDR;
   const nYear=selYrsDR[selYrsDR.length-1]||'';
   const nPrevYear=nYear?String(parseInt(nYear)-1):'';
-  const nRec=nYear?rawTrendDR.filter(r=>r.date_demande.startsWith(nYear)).length:0;
-  const nPre=nPrevYear?rawTrendDR.filter(r=>r.date_demande.startsWith(nPrevYear)).length:0;
-  const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):null;
+  const EVO=evolutionAnnuelle(rawTrendDR,nYear,dateMaxBase());
+  const nRec=EVO.nRec,nPre=EVO.nPre,delta=EVO.delta;
   const trend=delta===null?'—':delta>=0?`+${delta}%`:`${delta}%`;
   const trendColor=delta===null?'var(--muted)':delta>=0?'var(--green)':'var(--orange)';
   // Top 3 thématiques
@@ -4738,10 +4818,8 @@ function drSlideBilan(c,data,allDataConum){
   const top3=themas.slice(0,3);
   // Réactivité 48h depuis ACTIONS_DATA
   const cmNormBil=normCms(drCms)||drCms;
-  const actBil=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormBil)&&r.etat==='Réalisée'&&(!drYears.size||drYears.has(r.year))&&r.date>=f.slice(0,7)&&r.date<=t.slice(0,7)):[];
-  const t48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0).length;
-  const r48=actBil.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0&&r.delai_reactivite<=2).length;
-  const p48=t48>=20?Math.round(r48/t48*100):null;
+  const actBil=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===drConum&&(r.cms===drCms||r.cms===cmNormBil)&&isRealisee(r.etat)&&(!drYears.size||drYears.has(r.year))&&dansPeriode(r.jour,f,t)):[];
+  const R48=reactivite48(actBil);const t48=R48.calculables,r48=R48.dans48,p48=R48.taux;
   const p48Color=p48===null?'var(--muted)':p48>=95?'var(--green)':p48>=85?'var(--orange)':'var(--red)';
   // Évolution annuelle — sur DATA brut (indépendant du filtre années)
   const rawCC=DATA.filter(r=>r.conum===drConum&&r.cms===drCms);
@@ -4761,8 +4839,8 @@ function drSlideBilan(c,data,allDataConum){
     const col=i===0?'var(--orange)':i===1?'var(--cyan)':'var(--purple)';
     return`<strong style="color:${col}">${t}</strong> (${n} · ${pct(n,total)}%)`;
   }).join(', ');
-  const p1=`Au sein de la structure <strong style="color:var(--blue)">${esc(drCms)}</strong>, ${conumNameHtml(drConum,cnColor)} a accompagné <strong>${total} bénéficiaire${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
-  const p2=`Les thématiques principales sont : ${themasStr}. Le taux de complétion des dossiers atteint <strong>${txC}%</strong>.`;
+  const p1=`Au sein de la structure <strong style="color:var(--blue)">${esc(drCms)}</strong>, ${conumNameHtml(drConum,cnColor)} a réalisé <strong>${total} accompagnement${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
+  const p2=`Les thématiques principales sont : ${themasStr}. <strong>${txC}%</strong> des accompagnements sont à l'état « Réalisée ».`;
   const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur l'année ${nYear} vs ${nPrevYear}, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Le taux de réactivité 48h atteint <strong style="color:${p48Color}">${p48}%</strong> des prises de contact dans le délai réglementaire.`:''}`;
 
   const bestYearIdx=evolCounts.length?evolCounts.indexOf(Math.max(...evolCounts)):-1;
@@ -4775,7 +4853,7 @@ function drSlideBilan(c,data,allDataConum){
       <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;font-family:'Space Grotesk',sans-serif;font-size:20px">${conumNameHtml(drConum,cnColor)}</div>
       <div style="display:flex;align-items:center;margin-bottom:16px"><span style="font-size:11px;color:var(--muted)">${esc(drCms)} · ${years.join(', ')}</span>${drQ(insightBilan)}</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-        ${[[total,'Accompagnements','var(--blue)'],[txC+'%','Taux de complétion','var(--green)'],[trend,`Évol. ${nYear} / ${nPrevYear}`,trendColor],[communes,'Communes couvertes','var(--cyan)'],[orienteurs,'Orienteurs actifs','var(--purple)'],[p48!==null?p48+'%':'—','Réactivité 48h',p48Color]].map(([v,l,col])=>`
+        ${[[total,'Accompagnements','var(--blue)'],[txC+'%','Accompagnements réalisés','var(--green)'],[trend,`Évol. ${nYear} / ${nPrevYear}${EVO.partielle?` (au ${EVO.coupure})`:''}`,trendColor],[communes,'Communes couvertes','var(--cyan)'],[orienteurs,'Orienteurs actifs','var(--purple)'],[p48!==null?p48+'%':'—',`Réactivité 48h · ${r48}/${t48} calculables${R48.sansContact?` · ${R48.sansContact} sans contact`:''}`,p48Color]].map(([v,l,col])=>`
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}">
             <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:${col}">${v}</div>
             <div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div>
@@ -4846,8 +4924,8 @@ function startDiapoRapport(){
   const cnBadgeColor=conumColor(drConum);
   document.getElementById('dr-conum-badge').innerHTML=
     cnBadge.prenom
-      ? `${cnBadge.prenom} <strong style="text-transform:uppercase;color:${cnBadgeColor}">${cnBadge.nom}</strong>`
-      : `<strong style="color:${cnBadgeColor}">${cnBadge.full}</strong>`;
+      ? `${esc(cnBadge.prenom)} <strong style="text-transform:uppercase;color:${cnBadgeColor}">${esc(cnBadge.nom)}</strong>`
+      : `<strong style="color:${cnBadgeColor}">${esc(cnBadge.full)}</strong>`;
   document.getElementById('dr-cms-badge').textContent=drCms;
 
   // Dots
@@ -4996,15 +5074,7 @@ async function exportDiapoPDF(){
     const data=drData();
 
     // Rendre la slide dans dr-content
-    if(slide.id==='cover') drSlideCover(c,data,allDataConum);
-    else if(slide.id==='kpis') drSlideKpis(c,data,allDataConum);
-    else if(slide.id==='evolution') drSlideEvol(c,data,PALETTE_DR);
-    else if(slide.id==='yoy') drSlideYoY(c,data,PALETTE_DR);
-    else if(slide.id==='themas') drSlideThemas(c,data,PALETTE_DR);
-    else if(slide.id==='orienteurs') drSlideOrienteurs(c,data,PALETTE_DR);
-    else if(slide.id==='comparaison') drSlideComparaison(c,data,allDataConum);
-    else if(slide.id==='nonreal') drSlideNonReal(c,data);
-    else if(slide.id==='bilan') drSlideBilan(c,data,allDataConum);
+    drRenderSlide(slide,c,data,allDataConum,PALETTE_DR);
 
     // Attendre le rendu des charts (via animation.onComplete ou timeout de sécurité 1s)
     await new Promise(resolve=>{
