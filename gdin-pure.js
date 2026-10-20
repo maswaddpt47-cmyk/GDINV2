@@ -355,7 +355,7 @@ function comblerConum(records){
   records.forEach(r=>{
     const c=(r.conum||'').trim();
     if(c&&c!=='?')return;
-    if(r.orienteur&&connus.has(r.orienteur)){r.conum=r.orienteur;comblees++;}
+    if(r.orienteur&&connus.has(r.orienteur)){r.conum=r.orienteur;r.conum_origine='referent';comblees++;}
   });
   return comblees;
 }
@@ -593,7 +593,9 @@ function parseRows(rows){
       if(types.length>=4)break;}
     const etatRaw=cell(c,I.etat);
     const etat=ETAT_MAP[normEtat(etatRaw)]||(etatRaw||null);
-    records.push({date_demande:dd,date_action:da,id_demande:cell(c,I.nDem),conum:cell(c,I.conum),
+    const conumSource=cell(c,I.conum);
+    records.push({date_demande:dd,date_action:da,id_demande:cell(c,I.nDem),conum:conumSource,
+      conum_origine:conumSource&&conumSource!=='?'?'source':'',
       cms,lieu_raw:lieuRaw,structure:structureRaw,commune:cell(c,I.commune),themas,type_action:types,
       orienteur:cell(c,I.orienteur),motif:cell(c,I.motif).slice(0,120),
       benef_connu:cell(c,I.benef).toLowerCase()==='oui',urgence:cell(c,I.urgence).toLowerCase()==='oui',
@@ -616,6 +618,7 @@ function parseRows(rows){
   stats.communes_officielles=communesOfficielles;
   stats.conum_via_referent=comblerConum(records);
   stats.participations_atelier=numeroterParticipants(records);
+  numeroterLignes(records);
   return{records,warnings,stats};
 }
 
@@ -756,11 +759,17 @@ function conseillersConnus(records){
 // { parAnnee: {'<cms>|<année>': nom}, global: {'<cms>': nom} }
 // Le majoritaire l'emporte ; à égalité, le premier rencontré, pour que deux
 // exécutions sur le même fichier donnent le même résultat.
+const ORIGINES_CONUM=new Set(['source','referent','deduit','inconnu']);
+const ORIGINES_PREUVE=new Set(['source','referent']);
 function deriverAttributionCms(records){
   const cptAn={},cptCms={};
   (records||[]).forEach(r=>{
     const c=((r&&r.conum)||'').trim();
     if(!c||c==='?'||!r.cms||!r.date_demande)return;
+    // Seule une attribution constatée (colonne du fichier, ou référent) vaut
+    // preuve : une valeur déduite ou d'origine inconnue renforcerait le
+    // majoritaire par sa propre déduction.
+    if(!ORIGINES_PREUVE.has(r.conum_origine))return;
     const k=`${r.cms}|${r.date_demande.slice(0,4)}`;
     (cptAn[k]=cptAn[k]||{})[c]=(cptAn[k][c]||0)+1;
     (cptCms[r.cms]=cptCms[r.cms]||{})[c]=(cptCms[r.cms][c]||0)+1;
@@ -773,8 +782,9 @@ function deriverAttributionCms(records){
 }
 
 // Comble le conseiller manquant depuis le secteur, sans jamais écraser une
-// valeur constatée. Pose conum_deduit, que l'onglet Fiabilité utilise.
-// Rend le nombre de lignes comblées.
+// valeur constatée. Pose conum_origine (source | referent | deduit | inconnu)
+// et conum_deduit, que l'onglet Fiabilité utilise. Idempotent : retraiter une
+// base déjà traitée ne change aucune origine. Rend le nombre de lignes comblées.
 function attribuerConum(records){
   const base=records||[];
   const t=deriverAttributionCms(base);
@@ -782,7 +792,14 @@ function attribuerConum(records){
   let n=0;
   base.forEach(r=>{
     const c=(r.conum||'').trim();
-    if(c&&c!=='?'){r.conum_deduit=false;return;}
+    if(c&&c!=='?'){
+      // Base enregistrée avant le champ conum_origine : seule une déduction
+      // posée par l'ancien code est reconnaissable. Un « non déduit » sans
+      // origine peut venir du fichier OU d'une déduction effacée par l'ancien
+      // retraitement — l'origine n'est pas récupérable, on ne l'affirme pas.
+      if(!ORIGINES_CONUM.has(r.conum_origine))r.conum_origine=r.conum_deduit===true?'deduit':'inconnu';
+      r.conum_deduit=r.conum_origine==='deduit';
+      return;}
     let nom=null;
     // 1. l'orienteur est lui-même un conseiller identifié dans le fichier
     if(r.orienteur&&connus.has(r.orienteur))nom=r.orienteur;
@@ -790,8 +807,8 @@ function attribuerConum(records){
     if(!nom&&r.cms&&r.date_demande)nom=t.parAnnee[`${r.cms}|${r.date_demande.slice(0,4)}`]||null;
     // 3. à défaut, le conseiller du secteur toutes années confondues
     if(!nom&&r.cms)nom=t.global[r.cms]||null;
-    if(nom){r.conum=nom;r.conum_deduit=true;n++;}
-    else r.conum_deduit=false;
+    if(nom){r.conum=nom;r.conum_origine='deduit';r.conum_deduit=true;n++;}
+    else{r.conum_origine='';r.conum_deduit=false;}
   });
   return n;
 }
@@ -852,7 +869,42 @@ function numeroterParticipants(records){
   return n;
 }
 
-// Clé de fusion utilisée à l'import pour écarter une ligne déjà en base.
+// ─── Identité d'une ligne et fusion à l'import ───────────────────────────────
+// Une DEMANDE (N° demande) porte plusieurs ACTIONS, et l'export ne donne aucun
+// identifiant d'action. L'identité retenue (20/10/2026) est donc :
+//   N° demande + types + date d'action + CMS, plus un rang qui départage les
+//   lignes strictement identiques d'un même fichier (comme pour les ateliers).
+// Elle exclut tout ce que l'application calcule ou qui peut changer d'un export
+// à l'autre — conseiller (déduit après la fusion : l'ancienne clé le contenait,
+// d'où 2 → 3 → 4 lignes à chaque réimport), état, date planifiée, date de
+// réalisation. Ces trois derniers sont mis à jour par fusionnerImport().
+// Limites : une date d'action corrigée à la source crée une nouvelle ligne et
+// laisse l'ancienne ; le rang suppose le même ordre de lignes d'un export à
+// l'autre (vrai pour le même fichier, pas garanti pour un export partiel ou
+// réordonné). Couvert par les tests « cleFusion » et « fusionnerImport ».
+function cleBaseAction(r){
+  const types=(r.type_action||[]).slice().sort().join('+');
+  if(r.id_demande)return`${r.id_demande}|${types}|${r.date_action||''}|${r.cms||''}`;
+  // Sans N° de demande (jamais constaté sur l'export de septembre) : repli sur
+  // les champs source.
+  return`?|${r.date_demande}|${r.date_action||''}|${r.cms||''}|${r.commune||''}|${r.orienteur||''}|${(r.themas||[]).slice().sort().join('/')}|${types}`;
+}
+// Rang de la ligne parmi celles qui partagent sa clé de base, dans l'ordre du
+// fichier. Les ateliers ont leur propre rang (numeroterParticipants).
+function numeroterLignes(records){
+  const compteurs=new Map();
+  let n=0;
+  (records||[]).forEach(r=>{
+    if(estAtelier(r))return;
+    const k=cleBaseAction(r);
+    const rang=(compteurs.get(k)||0)+1;
+    compteurs.set(k,rang);
+    r.rang_ligne=rang;
+    n++;
+  });
+  return n;
+}
+// Clé de fusion utilisée à l'import pour reconnaître une ligne déjà en base.
 // Ne pas la confondre avec cleDoublon(), qui sert au panneau qualité.
 function cleFusion(r){
   if(!r)return'';
@@ -862,7 +914,34 @@ function cleFusion(r){
   // date, lieu et conseiller entraient en collision (314 participations
   // perdues, mesuré le 20/09/2026).
   if(estAtelier(r))return`atl:${cleSessionAtelier(r)}|p:${r.rang_atelier||0}`;
-  return`${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.cms||''}|${r.commune||''}|${r.orienteur||''}|${(r.themas||[]).slice().sort().join('/')}|${(r.type_action||[]).slice().sort().join('+')}`;
+  return`act:${cleBaseAction(r)}|r:${r.rang_ligne||1}`;
+}
+// Champs qu'un nouvel export peut légitimement corriger sur une ligne connue.
+const CHAMPS_MUTABLES=['etat','date_planifiee','date_realisation'];
+// Fusionne les lignes d'un nouvel import dans la base. Ne modifie ni `base` ni
+// `nouveaux` : rend { records, ajoutes, misAJour, identiques, doublonsFichier }.
+// Une ligne déjà connue garde son enrichissement (conseiller, délai) et reçoit
+// l'état et les dates du nouvel export, qui fait foi.
+function fusionnerImport(base,nouveaux){
+  const out=(base||[]).slice();
+  const index=new Map();
+  out.forEach((r,i)=>{const k=cleFusion(r);if(!index.has(k))index.set(k,i);});
+  const vusFichier=new Set();
+  let ajoutes=0,misAJour=0,identiques=0,doublonsFichier=0;
+  (nouveaux||[]).forEach(r=>{
+    const k=cleFusion(r);
+    if(vusFichier.has(k)){doublonsFichier++;return;}
+    vusFichier.add(k);
+    if(!index.has(k)){index.set(k,out.length);out.push(r);ajoutes++;return;}
+    const i=index.get(k);
+    const diff=CHAMPS_MUTABLES.filter(c=>(out[i][c]||null)!==(r[c]||null));
+    if(diff.length){
+      const maj={...out[i]};
+      diff.forEach(c=>{maj[c]=r[c]||null;});
+      out[i]=maj;misAJour++;
+    }else identiques++;
+  });
+  return{records:out,ajoutes,misAJour,identiques,doublonsFichier};
 }
 
 // ─── Fiabilité des indicateurs ────────────────────────────────────────────────
@@ -930,8 +1009,11 @@ function indicateursFiabilite(records,stats){
   const deduits=base.some(r=>r.conum_deduit!==undefined)
     ? base.filter(r=>r.conum_deduit).length
     : base.filter(r=>!r.conum||r.conum==='?').length;
-  ajoute('conseiller','Par conseiller',new Set(base.map(r=>r.conum).filter(Boolean)).size,deduits,
-    `${deduits} lignes attribuées par déduction depuis le CMS`);
+  // Origine inconnue : base enregistrée avant le suivi de provenance. On ne
+  // peut pas dire qu'elle est exacte, donc elle compte dans la marge.
+  const inconnus=base.filter(r=>r.conum_origine==='inconnu').length;
+  ajoute('conseiller','Par conseiller',new Set(base.map(r=>r.conum).filter(Boolean)).size,deduits+inconnus,
+    `${deduits} lignes attribuées par déduction depuis le CMS`+(inconnus?` · ${inconnus} d'origine inconnue (base d'une version antérieure : réimporter l'export pour la retrouver)`:''));
 
   return ind;
 }
@@ -1023,6 +1105,223 @@ function moisDeLaPeriode(debut,fin,annees){
   return out;
 }
 
+
+// ─── Export CSV : neutraliser les formules ────────────────────────────────────
+// Entourer un champ de guillemets protège la structure du CSV, pas son
+// interprétation : Excel et LibreOffice évaluent une cellule qui commence par
+// = + - @ (ou une tabulation / un retour chariot) comme une formule. Le motif
+// est du texte libre venu de l'export : un fichier piégé suffit. L'apostrophe
+// de tête force le texte. Audit du 20/10/2026, constat 12.
+function neutraliserFormule(v){
+  const t=String(v==null?'':v);
+  return /^[=+\-@\t\r]/.test(t)?"'"+t:t;
+}
+function celluleCSV(v){return`"${neutraliserFormule(v).replace(/"/g,'""')}"`;}
+
+// ─── Sauvegarde JSON : validation avant remplacement de la base ───────────────
+// Un JSON importé ne doit ni contourner la minimisation (champs nominatifs
+// ajoutés à la main) ni remplacer la base par des données mal formées. Chaque
+// enregistrement est RECONSTRUIT depuis la liste des champs autorisés ; tout
+// le reste est ignoré. Une seule ligne invalide rejette le fichier entier : la
+// base active reste alors intacte. Audit du 20/10/2026, constat 10.
+const RE_DATE_ISO=/^\d{4}-\d{2}-\d{2}$/;
+function dateIsoValide(v){
+  if(!RE_DATE_ISO.test(v))return false;
+  const d=new Date(v+'T00:00:00Z');
+  return !isNaN(d)&&d.toISOString().slice(0,10)===v;
+}
+function validerSauvegardeJSON(payload){
+  if(!payload||typeof payload!=='object'||payload.type!=='gdin-data'||!Array.isArray(payload.data))
+    throw new Error('Format non reconnu — ce fichier n\'est pas un export GDIN');
+  if(!['1','2',1,2].includes(payload.version))
+    throw new Error('Version d\'export non prise en charge : '+String(payload.version).slice(0,20));
+  if(!payload.data.length)throw new Error('Le fichier JSON ne contient aucun enregistrement');
+  const txt=(v,max,champ,i,obligatoire)=>{
+    if(v==null||v===''){if(obligatoire)throw new Error(`Enregistrement ${i+1} : « ${champ} » manquant`);return'';}
+    if(typeof v!=='string')throw new Error(`Enregistrement ${i+1} : « ${champ} » n'est pas un texte`);
+    return v.slice(0,max);
+  };
+  const date=(v,champ,i,obligatoire)=>{
+    if(v==null||v===''){if(obligatoire)throw new Error(`Enregistrement ${i+1} : « ${champ} » manquante`);return null;}
+    if(typeof v!=='string'||!dateIsoValide(v))throw new Error(`Enregistrement ${i+1} : « ${champ} » n'est pas une date AAAA-MM-JJ valide`);
+    return v;
+  };
+  const liste=(v,champ,i,max)=>{
+    if(v==null)return[];
+    if(!Array.isArray(v)||v.length>20||v.some(x=>typeof x!=='string'))
+      throw new Error(`Enregistrement ${i+1} : « ${champ} » n'est pas une liste de textes`);
+    return v.map(x=>x.slice(0,max));
+  };
+  const entier=(v,champ,i)=>{
+    if(v==null)return undefined;
+    if(!Number.isInteger(v)||v<0||v>1e6)throw new Error(`Enregistrement ${i+1} : « ${champ} » n'est pas un entier valide`);
+    return v;
+  };
+  const records=payload.data.map((r,i)=>{
+    if(!r||typeof r!=='object'||Array.isArray(r))throw new Error(`Enregistrement ${i+1} : objet attendu`);
+    const o={
+      date_demande:date(r.date_demande,'date_demande',i,true),
+      date_action:date(r.date_action,'date_action',i,false),
+      id_demande:txt(r.id_demande==null?'':String(r.id_demande),40,'id_demande',i,false),
+      conum:txt(r.conum,120,'conum',i,false),
+      conum_origine:ORIGINES_CONUM.has(r.conum_origine)?r.conum_origine:'',
+      cms:txt(r.cms,120,'cms',i,true),
+      lieu_raw:txt(r.lieu_raw,300,'lieu_raw',i,false),
+      structure:txt(r.structure,200,'structure',i,false),
+      commune:txt(r.commune,120,'commune',i,false),
+      themas:liste(r.themas,'themas',i,120),
+      type_action:liste(r.type_action,'type_action',i,120),
+      orienteur:txt(r.orienteur,200,'orienteur',i,false),
+      motif:txt(r.motif,120,'motif',i,false),
+      benef_connu:r.benef_connu===true,
+      urgence:r.urgence===true,
+      etat:r.etat==null||r.etat===''?null:txt(r.etat,40,'etat',i,false),
+      date_planifiee:date(r.date_planifiee,'date_planifiee',i,false),
+      date_realisation:date(r.date_realisation,'date_realisation',i,false),
+    };
+    // Une base exportée avant le suivi de provenance n'a pas conum_origine :
+    // conum_deduit, s'il est présent, permet de reconnaître une déduction.
+    if(!o.conum_origine&&r.conum_deduit===true&&o.conum)o.conum_origine='deduit';
+    const ra=entier(r.rang_atelier,'rang_atelier',i),rl=entier(r.rang_ligne,'rang_ligne',i);
+    if(ra!==undefined)o.rang_atelier=ra;
+    if(rl!==undefined)o.rang_ligne=rl;
+    return o;
+  });
+  return records;
+}
+
+// ─── Bases enregistrées avant l'identité par rang ─────────────────────────────
+// Une base sans rang_ligne vient d'avant le 20/10/2026 : ses doublons ont déjà
+// été fusionnés par l'ancienne clé, donc elle est INCOMPLÈTE (76 demandes
+// disparues sur l'export de septembre) et ses rangs ne peuvent qu'être
+// reconstitués dans l'ordre de la base. Pas de purge : on complète, on le dit,
+// et on propose de réimporter l'export source.
+function baseAncienne(records){
+  return(records||[]).some(r=>r&&!estAtelier(r)&&r.rang_ligne===undefined);
+}
+function completerRangs(records){
+  const ancienne=baseAncienne(records);
+  if(ancienne)numeroterLignes(records);
+  if((records||[]).some(r=>r&&estAtelier(r)&&r.rang_atelier===undefined))numeroterParticipants(records);
+  return ancienne;
+}
+
+
+// ─── États des actions : une seule nomenclature ───────────────────────────────
+// À l'import, ETAT_MAP ramène « En cours » et « En attente » à « En attente ».
+// Les écrans comptaient pourtant « En cours » (toujours 0) et versaient dans
+// cette colonne tout ce qui n'était ni réalisé ni non réalisé (417 lignes dont
+// 145 d'autres états, mesuré le 20/10/2026). Quatre catégories, aucune ne
+// déborde sur une autre : realisee | non_realisee | en_attente | autre.
+function categorieEtat(etat){
+  const e=normEtat(etat);
+  if(e==='realisee')return'realisee';
+  if(e==='non realisee')return'non_realisee';
+  if(e==='en attente'||e==='en cours')return'en_attente';
+  return'autre';
+}
+function repartitionEtats(records){
+  const r={realisee:0,non_realisee:0,en_attente:0,autre:0,total:0};
+  (records||[]).forEach(x=>{r[categorieEtat(x&&x.etat)]++;r.total++;});
+  return r;
+}
+
+// ─── Actions dérivées (onglet États, réactivité, délais) ──────────────────────
+// Réactivité = délai entre la demande et la PREMIÈRE prise de contact valide DE
+// LA MÊME DEMANDE. Le rapprochement se faisait sur conseiller + CMS + date de
+// demande : deux demandes du même jour partageaient le contact de l'une
+// d'elles (délais [1, 10] devenaient [1, 1], mesuré le 20/10/2026 ; 697
+// accompagnements n'avaient aucun contact de leur propre demande). Sans N° de
+// demande, aucun rapprochement : le cas est compté « sans contact », jamais
+// emprunté à une autre demande.
+// `jour` garde la date entière (filtrer au jour) ; `date` est le mois, pour
+// regrouper les graphiques. 48 h = au plus 2 jours ouvrés (lundi-vendredi,
+// fériés non retirés), la source ne donnant pas d'heure.
+// `aujourdhui` : une date planifiée n'est retenue que si elle est passée.
+function deriverActions(records,aujourdhui){
+  const fin=aujourdhui instanceof Date?new Date(aujourdhui):new Date();
+  fin.setHours(23,59,59,999);
+  const pd=v=>{if(!v)return null;const d=new Date(v);return isNaN(d)?null:d;};
+  const delaiContact={};
+  (records||[]).forEach(r=>{
+    if(!r.id_demande)return;
+    if(!(r.type_action||[]).some(t=>t.toLowerCase().includes('prise de contact')))return;
+    const dC=pd(r.date_demande);if(!dC)return;
+    const dR=pd(r.date_realisation),dP=pd(r.date_planifiee);
+    let dContact=null;if(dR&&dR<=fin)dContact=dR;else if(dP&&dP<=fin)dContact=dP;
+    if(!dContact)return;
+    const dl=bizDays(dC,dContact);if(dl===null||dl<0)return;
+    if(!(r.id_demande in delaiContact)||dl<delaiContact[r.id_demande])delaiContact[r.id_demande]=dl;
+  });
+  const out=[];
+  (records||[]).forEach(r=>{
+    if(!(r.type_action||[]).some(t=>t.toLowerCase().startsWith('accompagnement')))return;
+    if(!r.cms)return;
+    const dC=pd(r.date_demande),dR=pd(r.date_realisation);
+    const date=r.date_demande?r.date_demande.slice(0,7):null,year=date?date.slice(0,4):null;
+    const avecContact=!!r.id_demande&&(r.id_demande in delaiContact);
+    out.push({etat:r.etat||'',cms:r.cms,conum:r.conum,date,jour:r.date_demande||null,year,lieu:r.cms,
+      id_demande:r.id_demande||'',
+      delai_reactivite:avecContact?delaiContact[r.id_demande]:null,
+      delai_total:bizDays(dC,dR)});
+  });
+  return out;
+}
+// Réactivité 48 h sur une liste d'actions dérivées. `calculables` = lignes
+// dont la demande a un contact valide ; `sansContact` = les autres, à afficher
+// à côté du taux. Le taux n'est publié qu'à partir de `seuil` cas.
+function reactivite48(actions,seuil){
+  const liste=actions||[];
+  const calc=liste.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0);
+  const dans48=calc.filter(r=>r.delai_reactivite<=2).length;
+  const min=seuil==null?20:seuil;
+  return{calculables:calc.length,dans48,sansContact:liste.length-calc.length,
+    taux:calc.length>=min?Math.round(dans48/calc.length*100):null};
+}
+// Filtre par période au JOUR : les écrans comparaient des mois (YYYY-MM), si
+// bien qu'un filtre du 16/09 au 16/09 reprenait tout septembre.
+function dansPeriode(jour,debut,fin){
+  if(!jour)return false;
+  return(!debut||jour>=debut)&&(!fin||jour<=fin);
+}
+// Taux d'accompagnements réalisés : lignes à l'état « Réalisée » sur les lignes.
+// Ce n'est PAS un taux de demandes closes (une demande porte plusieurs actions).
+function tauxRealisation(records){
+  const liste=records||[];
+  const realisees=liste.filter(r=>isRealisee(r.etat)).length;
+  return{realisees,total:liste.length,taux:liste.length?Math.round(realisees/liste.length*100):0};
+}
+
+
+// ─── Filtre de type d'action ──────────────────────────────────────────────────
+// Même normalisation que le filtre de l'en-tête (casse, accents, pluriel).
+// Les comparaisons annuelles du Bilan l'ignoraient : +557 % calculés sur 230 /
+// 35 actions de tous types, quand le filtre « Accompagnement » en comptait 121
+// / 31 (+290 %, mesuré le 20/10/2026).
+function filtrerParType(records,typeFiltre){
+  const liste=records||[];
+  if(!typeFiltre)return liste;
+  const nt=x=>String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/s$/,'');
+  const cible=nt(typeFiltre);
+  return liste.filter(r=>(r.type_action||[]).some(x=>nt(x).startsWith(cible)));
+}
+// Évolution année N / N-1 À LA MÊME DATE. L'année la plus récente de la base
+// est en général incomplète : la comparer à une année entière donnait −35,3 %
+// là où la même période donne −5,5 % (mesuré le 20/10/2026). `dateMax` est la
+// dernière date de demande de la base ; `partielle` dit si la coupure s'applique.
+function evolutionAnnuelle(records,anneeN,dateMax){
+  const liste=records||[];
+  const anneeP=anneeN?String(parseInt(anneeN)-1):'';
+  const partielle=!!(anneeN&&dateMax&&dateMax.slice(0,4)===anneeN&&dateMax.slice(5)<'12-31');
+  const coupure=partielle?dateMax.slice(5):'12-31';
+  const dans=(r,an)=>r.date_demande&&r.date_demande.startsWith(an)&&r.date_demande.slice(5)<=coupure;
+  const nRec=anneeN?liste.filter(r=>dans(r,anneeN)).length:0;
+  const nPre=anneeP?liste.filter(r=>dans(r,anneeP)).length:0;
+  const delta=nPre>0?Math.round((nRec-nPre)/nPre*100):null;
+  const jj=coupure.slice(3),mm=coupure.slice(0,2);
+  return{nRec,nPre,delta,partielle,coupure:`${jj}/${mm}`,anneeN,anneeP};
+}
+
 // ─── Demandes distinctes ──────────────────────────────────────────────────────
 // Une demande (N° Demande) génère plusieurs lignes d'action : compter les lignes
 // n'est pas compter les demandes. Couvert par les tests « countDemandes ».
@@ -1033,7 +1332,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,deriverActions,reactivite48,dansPeriode,tauxRealisation,validerSauvegardeJSON,baseAncienne,completerRangs,dateIsoValide,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,cleDoublon,compterDoublons,moisDeLaPeriode,libelleLignes,LIBELLE_LIGNES,

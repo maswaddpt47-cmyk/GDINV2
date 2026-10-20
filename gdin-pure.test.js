@@ -6,7 +6,9 @@ const {
   normEtat, isRealisee, countDemandes, parseRows, mapColonnes, demojibakeUtf16, moisDeLaPeriode, libelleLignes,
   cleDoublon, compterDoublons,
   estAtelier, cleSessionAtelier, compterSessionsAtelier, statsAteliers,
-  numeroterParticipants, cleFusion,
+  numeroterParticipants, cleFusion, numeroterLignes, fusionnerImport, attribuerConum, deriverAttributionCms,
+  neutraliserFormule, celluleCSV, validerSauvegardeJSON, baseAncienne, completerRangs,
+  categorieEtat, repartitionEtats, deriverActions, reactivite48, dansPeriode, tauxRealisation, filtrerParType, evolutionAnnuelle,
   indicateursFiabilite, defautsSaisie, syntheseFiabilite, niveauFiabilite,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
   rattacherCommune, COMMUNES_47,
@@ -1014,5 +1016,323 @@ describe('libelleLignes', () => {
 
   it('retombe sur « Demandes » devant un type inconnu plutôt que d\'affirmer faux', () => {
     assert.equal(libelleLignes('Type qui nexiste pas'), 'Demandes');
+  });
+});
+
+// ─── Identité des lignes, fusion, provenance (20/10/2026) ─────────────────
+// Audit Codex du 20/10/2026 : réimporter le même fichier ajoutait 7 977 lignes,
+// et 76 demandes distinctes disparaissaient à la fusion.
+const HDR_F = 'n° demande\tdate demande\tdate action\ttype action\tlieu / cms\tcommune\tconseiller num\tthematique\treferent\tlibelle de l\'etat';
+const ligneF2 = (n, dd, da, type, conum = '', etat = 'Réalisée', ref = '') =>
+  [n, dd, da, type, 'CMS Tonneins', 'Tonneins', conum, 'Internet', ref, etat].join('\t');
+const importer = (lignes) => parseXlsText([HDR_F, ...lignes].join('\n')).records;
+
+describe('identité des lignes', () => {
+  it('deux demandes distinctes aux autres champs identiques ne se confondent pas', () => {
+    const r = importer([
+      ligneF2('100', '01/03/2025', '05/03/2025', 'Accompagnement', 'A B'),
+      ligneF2('101', '01/03/2025', '05/03/2025', 'Accompagnement', 'A B'),
+    ]);
+    assert.equal(new Set(r.map(cleFusion)).size, 2);
+    assert.equal(fusionnerImport([], r).records.length, 2);
+  });
+  it('plusieurs actions d\'une même demande sont toutes conservées', () => {
+    const r = importer([
+      ligneF2('100', '01/03/2025', '05/03/2025', 'Accompagnement', 'A B'),
+      ligneF2('100', '01/03/2025', '09/03/2025', 'Accompagnement', 'A B'),
+      ligneF2('100', '01/03/2025', '', 'Prise de contact', 'A B'),
+    ]);
+    assert.equal(fusionnerImport([], r).records.length, 3);
+  });
+  it('des lignes strictement identiques d\'un fichier restent distinctes (rang)', () => {
+    const r = importer(Array.from({ length: 3 }, () => ligneF2('100', '01/03/2025', '05/03/2025', 'Accompagnement', 'A B')));
+    assert.deepEqual(r.map(x => x.rang_ligne), [1, 2, 3]);
+    assert.equal(fusionnerImport([], r).records.length, 3);
+  });
+  it('la clé ne dépend pas du conseiller', () => {
+    const a = importer([ligneF2('100', '01/03/2025', '05/03/2025', 'Accompagnement', '')])[0];
+    const b = { ...a, conum: 'Quelqu\'un', conum_origine: 'deduit' };
+    assert.equal(cleFusion(a), cleFusion(b));
+  });
+  it('sans N° de demande : repli sur les champs source, sans conseiller', () => {
+    const a = { date_demande: '2025-01-01', date_action: '2025-01-02', cms: 'CMS Tonneins', commune: 'Agen', orienteur: 'Y', themas: ['T'], type_action: ['Accompagnement'], conum: 'X' };
+    assert.equal(cleFusion(a), cleFusion({ ...a, conum: 'Z' }));
+    assert.notEqual(cleFusion(a), cleFusion({ ...a, commune: 'Nérac' }));
+  });
+});
+
+describe('fusionnerImport', () => {
+  const fichier = () => importer([
+    ligneF2('1', '01/03/2025', '05/03/2025', 'Accompagnement', 'A B'),
+    ligneF2('1', '01/03/2025', '09/03/2025', 'Accompagnement', ''),
+    ligneF2('2', '02/03/2025', '06/03/2025', 'Accompagnement', ''),
+    ligneF2('3', '03/03/2025', '', 'Prise de contact', 'A B'),
+  ]);
+  const parcours = (base, nouveaux) => {
+    const f = fusionnerImport(base, nouveaux);
+    attribuerConum(f.records);
+    return f;
+  };
+  it('réimporter le même fichier deux fois n\'ajoute aucune ligne', () => {
+    let base = parcours([], fichier()).records;
+    const n = base.length;
+    for (let i = 0; i < 2; i++) {
+      const f = parcours(base, fichier());
+      assert.equal(f.ajoutes, 0);
+      assert.equal(f.records.length, n);
+      base = f.records;
+    }
+  });
+  it('le réimport survit à une sauvegarde JSON et à un rechargement', () => {
+    const base = JSON.parse(JSON.stringify(parcours([], fichier()).records));
+    attribuerConum(base);
+    assert.equal(parcours(base, fichier()).ajoutes, 0);
+  });
+  it('un nouvel export corrige l\'état et les dates sans doubler la ligne', () => {
+    const base = parcours([], importer([ligneF2('1', '01/03/2025', '05/03/2025', 'Accompagnement', 'A B', 'En cours')])).records;
+    const f = parcours(base, importer([ligneF2('1', '01/03/2025', '05/03/2025', 'Accompagnement', 'A B', 'Réalisée')]));
+    assert.equal(f.records.length, 1);
+    assert.equal(f.misAJour, 1);
+    assert.equal(f.records[0].etat, 'Réalisée');
+  });
+  it('une ligne mise à jour garde son enrichissement', () => {
+    const base = parcours([], importer([
+      ligneF2('1', '01/03/2025', '05/03/2025', 'Accompagnement', 'A B'),
+      ligneF2('2', '01/03/2025', '05/03/2025', 'Accompagnement', '', 'En cours'),
+    ])).records;
+    assert.equal(base[1].conum, 'A B');
+    const f = parcours(base, importer([
+      ligneF2('1', '01/03/2025', '05/03/2025', 'Accompagnement', 'A B'),
+      ligneF2('2', '01/03/2025', '05/03/2025', 'Accompagnement', '', 'Réalisée'),
+    ]));
+    assert.equal(f.records[1].conum, 'A B');
+    assert.equal(f.records[1].conum_origine, 'deduit');
+    assert.equal(f.records[1].etat, 'Réalisée');
+  });
+  it('ne modifie ni la base ni le nouveau fichier', () => {
+    const base = parcours([], fichier()).records;
+    const avant = JSON.stringify(base);
+    const nouveaux = fichier();
+    const avantN = JSON.stringify(nouveaux);
+    fusionnerImport(base, nouveaux);
+    assert.equal(JSON.stringify(base), avant);
+    assert.equal(JSON.stringify(nouveaux), avantN);
+  });
+  it('un doublon interne au fichier est compté, pas ajouté', () => {
+    const r = fichier();
+    const f = fusionnerImport([], [...r, r[0]]);
+    assert.equal(f.doublonsFichier, 1);
+    assert.equal(f.records.length, r.length);
+  });
+  it('les participations d\'atelier gardent leur règle', () => {
+    const at = importer(Array.from({ length: 4 }, () => ligneF2('9', '01/03/2025', '05/03/2025', 'Atelier', 'A B')));
+    const base = fusionnerImport([], at).records;
+    assert.equal(base.length, 4);
+    assert.equal(fusionnerImport(base, importer(Array.from({ length: 4 }, () => ligneF2('9', '01/03/2025', '05/03/2025', 'Atelier', 'A B')))).ajoutes, 0);
+  });
+});
+
+describe('provenance du conseiller', () => {
+  const r0 = (o = {}) => Object.assign({ date_demande: '2025-01-01', cms: 'CMS Tonneins', conum: '', conum_origine: '', orienteur: '' }, o);
+  it('parseRows pose source / referent', () => {
+    const recs = importer([
+      ligneF2('1', '01/03/2025', '05/03/2025', 'Accompagnement', 'A B'),
+      ligneF2('2', '01/03/2025', '05/03/2025', 'Accompagnement', '', 'Réalisée', 'A B'),
+      ligneF2('3', '01/03/2025', '05/03/2025', 'Accompagnement', ''),
+    ]);
+    assert.deepEqual(recs.map(r => r.conum_origine), ['source', 'referent', '']);
+  });
+  it('une valeur déduite le reste après retraitement', () => {
+    const recs = [r0({ conum: 'A', conum_origine: 'source' }), r0()];
+    attribuerConum(recs);
+    assert.equal(recs[1].conum_origine, 'deduit');
+    const rechargees = JSON.parse(JSON.stringify(recs));
+    attribuerConum(rechargees);
+    attribuerConum(rechargees);
+    assert.equal(rechargees[1].conum_deduit, true);
+    assert.equal(rechargees[1].conum_origine, 'deduit');
+    assert.equal(rechargees[0].conum_deduit, false);
+  });
+  it('base d\'avant : déduction connue conservée, le reste d\'origine inconnue', () => {
+    const recs = [r0({ conum: 'A', conum_deduit: true }), r0({ conum: 'B', conum_deduit: false })];
+    attribuerConum(recs);
+    assert.deepEqual(recs.map(r => r.conum_origine), ['deduit', 'inconnu']);
+    assert.deepEqual(recs.map(r => r.conum_deduit), [true, false]);
+  });
+  it('le majoritaire ne s\'appuie que sur des attributions constatées', () => {
+    const recs = [
+      r0({ conum: 'A', conum_origine: 'source' }),
+      r0({ conum: 'B', conum_origine: 'deduit' }), r0({ conum: 'B', conum_origine: 'deduit' }),
+      r0({ conum: 'B', conum_origine: 'inconnu' }),
+    ];
+    assert.equal(deriverAttributionCms(recs).parAnnee['CMS Tonneins|2025'], 'A');
+  });
+  it('l\'origine inconnue apparaît dans la marge de fiabilité', () => {
+    const recs = [r0({ id_demande: '1', conum: 'A', conum_origine: 'inconnu', conum_deduit: false }), r0({ id_demande: '2', conum: 'A', conum_origine: 'source', conum_deduit: false })];
+    const c = indicateursFiabilite(recs).find(i => i.cle === 'conseiller');
+    assert.equal(c.ecart, 1);
+    assert.match(c.fait, /origine inconnue/);
+  });
+});
+
+// ─── Populations des indicateurs (audit du 20/10/2026) ────────────────────
+describe('états : une seule nomenclature', () => {
+  it('« en cours » et « en attente » sont une même catégorie', () => {
+    assert.equal(categorieEtat('En attente'), 'en_attente');
+    assert.equal(categorieEtat('En cours'), 'en_attente');
+  });
+  it('« Non réalisée » n\'est pas « Réalisée »', () => {
+    assert.equal(categorieEtat('Non réalisée'), 'non_realisee');
+    assert.equal(categorieEtat('Réalisée'), 'realisee');
+  });
+  it('un autre état n\'est versé dans aucune colonne par défaut', () => {
+    assert.equal(categorieEtat('Excusée'), 'autre');
+    assert.equal(categorieEtat(null), 'autre');
+  });
+  it('la répartition somme au total, sans débordement', () => {
+    const r = repartitionEtats([{ etat: 'Réalisée' }, { etat: 'En attente' }, { etat: 'Annulée' }, { etat: 'Non réalisée' }, {}]);
+    assert.deepEqual(r, { realisee: 1, non_realisee: 1, en_attente: 1, autre: 2, total: 5 });
+  });
+});
+
+describe('tauxRealisation', () => {
+  it('mesure l\'état, pas la présence d\'une date', () => {
+    const recs = [{ etat: 'Non réalisée', date_action: '2025-01-02' }, { etat: 'Réalisée', date_action: '2025-01-02' }];
+    assert.equal(tauxRealisation(recs).taux, 50);
+  });
+  it('liste vide → 0', () => assert.equal(tauxRealisation([]).taux, 0));
+});
+
+describe('deriverActions : réactivité par demande', () => {
+  const fin = new Date('2025-12-31');
+  const contact = (id, dd, dr) => ({ id_demande: id, date_demande: dd, date_realisation: dr, date_planifiee: null, type_action: ['Prise de contact'], cms: 'CMS Tonneins', conum: 'A' });
+  const accomp = (id, dd, etat = 'Réalisée') => ({ id_demande: id, date_demande: dd, date_realisation: dd, type_action: ['Accompagnement'], cms: 'CMS Tonneins', conum: 'A', etat });
+  it('deux demandes du même jour ne partagent pas leur contact', () => {
+    const recs = [
+      contact('1', '2025-03-03', '2025-03-04'),   // 1 jour ouvré
+      contact('2', '2025-03-03', '2025-03-17'),   // 10 jours ouvrés
+      accomp('1', '2025-03-03'), accomp('2', '2025-03-03'),
+    ];
+    const a = deriverActions(recs, fin);
+    assert.deepEqual(a.map(x => x.delai_reactivite), [1, 10]);
+  });
+  it('sans contact de la même demande : pas de délai emprunté', () => {
+    const a = deriverActions([contact('9', '2025-03-03', '2025-03-04'), accomp('1', '2025-03-03')], fin);
+    assert.equal(a[0].delai_reactivite, null);
+  });
+  it('sans N° de demande, aucun rapprochement', () => {
+    const a = deriverActions([contact('', '2025-03-03', '2025-03-04'), accomp('', '2025-03-03')], fin);
+    assert.equal(a[0].delai_reactivite, null);
+  });
+  it('conserve le jour ET le mois', () => {
+    const a = deriverActions([accomp('1', '2025-03-03')], fin);
+    assert.equal(a[0].jour, '2025-03-03');
+    assert.equal(a[0].date, '2025-03');
+  });
+  it('un jeu sans accompagnement rend une liste vide (pas d\'ancien état)', () => {
+    assert.deepEqual(deriverActions([contact('1', '2025-03-03', '2025-03-04')], fin), []);
+  });
+});
+
+describe('reactivite48', () => {
+  const act = (d) => ({ delai_reactivite: d });
+  it('compte les cas calculables et les sans contact', () => {
+    const r = reactivite48([act(1), act(3), act(null), act(null)], 1);
+    assert.deepEqual(r, { calculables: 2, dans48: 1, sansContact: 2, taux: 50 });
+  });
+  it('pas de taux sous le seuil', () => assert.equal(reactivite48([act(1)]).taux, null));
+});
+
+describe('dansPeriode : filtre au jour', () => {
+  it('un seul jour ne reprend pas le mois', () => {
+    assert.equal(dansPeriode('2026-09-10', '2026-09-16', '2026-09-16'), false);
+    assert.equal(dansPeriode('2026-09-16', '2026-09-16', '2026-09-16'), true);
+  });
+  it('une date absente est exclue', () => assert.equal(dansPeriode(null, '2026-01-01', '2026-12-31'), false));
+});
+
+describe('comparaison annuelle', () => {
+  const r = (d, t = 'Accompagnement') => ({ date_demande: d, type_action: [t] });
+  it('filtrerParType applique le même type que le filtre d\'en-tête', () => {
+    const recs = [r('2026-01-01'), r('2026-01-01', 'Atelier')];
+    assert.equal(filtrerParType(recs, 'Accompagnement').length, 1);
+    assert.equal(filtrerParType(recs, 'Accompagnements').length, 1);
+    assert.equal(filtrerParType(recs, '').length, 2);
+  });
+  it('année partielle comparée à la même date de l\'année précédente', () => {
+    const recs = [r('2025-02-01'), r('2025-08-01'), r('2025-11-01'), r('2026-02-01'), r('2026-03-01')];
+    const e = evolutionAnnuelle(recs, '2026', '2026-04-15');
+    assert.equal(e.partielle, true);
+    assert.equal(e.nRec, 2);
+    assert.equal(e.nPre, 1);
+    assert.equal(e.coupure, '15/04');
+    assert.equal(e.delta, 100);
+  });
+  it('année complète : coupure au 31/12, non partielle', () => {
+    const recs = [r('2024-12-30'), r('2025-12-30')];
+    const e = evolutionAnnuelle(recs, '2025', '2026-04-15');
+    assert.equal(e.partielle, false);
+    assert.equal(e.nPre, 1);
+  });
+  it('pas de référence N-1 → pas de pourcentage', () => {
+    assert.equal(evolutionAnnuelle([r('2026-01-01')], '2026', '2026-02-01').delta, null);
+  });
+});
+
+describe('export CSV : formules neutralisées', () => {
+  it('préfixe =, +, -, @, tabulation', () => {
+    ['=1+1', '+SUM(A1)', '-2+3', '@A1', '\tx'].forEach(v => assert.equal(neutraliserFormule(v)[0], "'"));
+  });
+  it('laisse le texte et les dates intacts', () => {
+    assert.equal(neutraliserFormule('aide tablette'), 'aide tablette');
+    assert.equal(neutraliserFormule('2025-01-02'), '2025-01-02');
+  });
+  it('cellule entre guillemets, guillemets doublés', () => {
+    assert.equal(celluleCSV('=1+1'), '"\'=1+1"');
+    assert.equal(celluleCSV('a"b'), '"a""b"');
+  });
+});
+
+describe('validerSauvegardeJSON', () => {
+  const ok = { date_demande: '2025-01-02', cms: 'CMS Tonneins', themas: ['A'], type_action: ['Accompagnement'], id_demande: 7 };
+  const payload = (data, v = '2') => ({ version: v, type: 'gdin-data', data });
+  it('reconstruit chaque ligne depuis les champs autorisés', () => {
+    const [r] = validerSauvegardeJSON(payload([{ ...ok, nom_beneficiaire: 'X', telephone: '06' }]));
+    assert.equal(r.nom_beneficiaire, undefined);
+    assert.equal(r.telephone, undefined);
+    assert.equal(r.id_demande, '7');
+  });
+  it('tronque le motif à 120 caractères', () => {
+    assert.equal(validerSauvegardeJSON(payload([{ ...ok, motif: 'x'.repeat(500) }]))[0].motif.length, 120);
+  });
+  it('rejette une date invalide, un type erroné, une version inconnue', () => {
+    assert.throws(() => validerSauvegardeJSON(payload([{ ...ok, date_demande: '31/02/2025' }])), /date/);
+    assert.throws(() => validerSauvegardeJSON(payload([{ ...ok, themas: 'texte' }])), /liste/);
+    assert.throws(() => validerSauvegardeJSON(payload([ok], '9')), /Version/);
+    assert.throws(() => validerSauvegardeJSON(payload([])), /aucun/);
+    assert.throws(() => validerSauvegardeJSON({ type: 'autre' }), /Format/);
+  });
+  it('une seule ligne invalide rejette tout le fichier', () => {
+    assert.throws(() => validerSauvegardeJSON(payload([ok, { ...ok, cms: 5 }])), /Enregistrement 2/);
+  });
+  it('conserve rangs et provenance', () => {
+    const [r] = validerSauvegardeJSON(payload([{ ...ok, conum: 'A', conum_origine: 'source', rang_ligne: 2 }]));
+    assert.equal(r.conum_origine, 'source');
+    assert.equal(r.rang_ligne, 2);
+  });
+  it('un ancien export : conum_deduit devient une origine', () => {
+    const [r] = validerSauvegardeJSON(payload([{ ...ok, conum: 'A', conum_deduit: true }]));
+    assert.equal(r.conum_origine, 'deduit');
+  });
+});
+
+describe('base enregistrée avant l\'identité par rang', () => {
+  it('est reconnue et complétée sans rien supprimer', () => {
+    const base = [{ id_demande: '1', type_action: ['Accompagnement'], date_action: '2025-01-01', cms: 'X' }, { id_demande: '1', type_action: ['Accompagnement'], date_action: '2025-01-01', cms: 'X' }];
+    assert.equal(baseAncienne(base), true);
+    assert.equal(completerRangs(base), true);
+    assert.deepEqual(base.map(r => r.rang_ligne), [1, 2]);
+    assert.equal(baseAncienne(base), false);
+    assert.equal(base.length, 2);
   });
 });
