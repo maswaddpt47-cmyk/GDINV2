@@ -1258,3 +1258,208 @@ test.describe('Volume par CMS — courbes comparables', () => {
   });
 
 });
+
+// ── Audit Codex du 20/10/2026 : ce que la suite ne voyait pas ─────────────────
+// Ces tests rejouent des PARCOURS (import → fusion → sauvegarde → rechargement
+// → réimport) et lisent ce que l'écran affiche, au lieu d'appeler une fonction
+// sur un petit jeu d'entrées.
+
+const ENTETE_TSV = ['n° demande', 'date demande', 'date action', 'type action', 'lieu / cms', 'commune', 'conseiller num', 'thematique', 'referent', "libelle de l'etat"].join('\t');
+function fichierTsv() {
+  const l = (...c) => c.join('\t');
+  return [ENTETE_TSV,
+    l('100', '01/03/2025', '05/03/2025', 'Accompagnement', 'CMS Tonneins', 'Tonneins', 'Dupont Jean', 'Internet', '', 'Réalisée'),
+    l('100', '01/03/2025', '09/03/2025', 'Accompagnement', 'CMS Tonneins', 'Tonneins', '', 'Internet', '', 'Non réalisée'),
+    l('100', '01/03/2025', '02/03/2025', 'Prise de contact', 'CMS Tonneins', 'Tonneins', 'Dupont Jean', 'Internet', '', 'Réalisée'),
+    l('101', '01/03/2025', '06/03/2025', 'Accompagnement', 'CMS Tonneins', 'Tonneins', 'Dupont Jean', 'Santé', '', 'Réalisée'),
+    l('101', '01/03/2025', '', 'Prise de contact', 'CMS Tonneins', 'Tonneins', '', 'Santé', '', 'En cours'),
+    l('200', '10/04/2025', '12/04/2025', 'Atelier', 'CMS Tonneins', 'Tonneins', 'Dupont Jean', 'Internet', '', 'Réalisée'),
+    l('200', '10/04/2025', '12/04/2025', 'Atelier', 'CMS Tonneins', 'Tonneins', 'Dupont Jean', 'Internet', '', 'Réalisée'),
+  ].join('\n');
+}
+async function importerFichier(page, filename = 'export.xls') {
+  await page.evaluate(async ({ tsv, filename }) => {
+    const r = parseXlsText(tsv);
+    pendingData = { records: r.records, filename, warnings: r.warnings, stats: r.stats };
+    await confirmImport();
+  }, { tsv: fichierTsv(), filename });
+}
+const nbLignes = (page) => page.evaluate(() => DATA.length);
+
+test.describe('Parcours complet : réimport, rechargement', () => {
+
+  test('importer trois fois le même fichier n\'ajoute aucune ligne', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    await importerFichier(page);
+    const n = await nbLignes(page);
+    expect(n).toBe(7);
+    await importerFichier(page); await importerFichier(page);
+    expect(await nbLignes(page)).toBe(n);
+  });
+
+  test('le réimport après rechargement n\'ajoute rien et garde l\'origine des conseillers', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    await importerFichier(page);
+    const avant = await page.evaluate(() => DATA.map(r => r.conum_origine).join(','));
+    await page.reload();
+    await page.waitForFunction(() => typeof window.switchTab === 'function' && dataSource === 'imported', { timeout: 15000 });
+    expect(await page.evaluate(() => DATA.map(r => r.conum_origine).join(','))).toBe(avant);
+    await dismissLanding(page).catch(() => {});
+    await importerFichier(page);
+    expect(await nbLignes(page)).toBe(7);
+    expect(await page.evaluate(() => DATA.map(r => r.conum_origine).join(','))).toBe(avant);
+  });
+
+  test('un nouvel export corrige l\'état d\'une ligne sans la doubler', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    await importerFichier(page);
+    await page.evaluate(async (tsv) => {
+      const r = parseXlsText(tsv.replace('Non réalisée', 'Réalisée'));
+      pendingData = { records: r.records, filename: 'maj.xls', warnings: [], stats: r.stats };
+      await confirmImport();
+    }, fichierTsv());
+    expect(await nbLignes(page)).toBe(7);
+    expect(await page.evaluate(() => DATA.filter(r => r.etat === 'Non réalisée').length)).toBe(0);
+  });
+
+  test('le réimport est reconnu aussi après un export JSON puis sa réimportation', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    await importerFichier(page);
+    await page.evaluate(async () => {
+      const payload = JSON.parse(JSON.stringify({ version: '2', type: 'gdin-data', data: DATA }));
+      await importDataJSON(payload, 'sauvegarde.json');
+    });
+    await importerFichier(page);
+    expect(await nbLignes(page)).toBe(7);
+  });
+});
+
+test.describe('Sauvegarde et réinitialisation cohérentes', () => {
+
+  test('quota localStorage dépassé : le nouveau jeu est celui rechargé', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    await importerFichier(page);                           // ancienne base : 7 lignes, dans localStorage
+    await page.evaluate(async () => {
+      const set = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (k, v) {
+        if (k === 'gdin_snap_v4') throw new DOMException('quota', 'QuotaExceededError');
+        return set.call(this, k, v);
+      };
+      const nouveau = DATA.concat(DATA.slice(0, 3).map((r, i) => ({ ...r, id_demande: 'N' + i })));
+      const ok = await saveToStorage(nouveau, { filename: 'gros.xls', count: nouveau.length, years: ['2025'], date: 'x' });
+      Storage.prototype.setItem = set;
+      window.__ok = ok;
+    });
+    expect(await page.evaluate(() => window.__ok)).toBe(true);
+    await page.reload();
+    await page.waitForFunction(() => typeof window.switchTab === 'function' && dataSource === 'imported', { timeout: 15000 });
+    expect(await nbLignes(page)).toBe(10);
+  });
+
+  test('échec total de la sauvegarde : l\'ancienne copie reste intacte', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    await importerFichier(page);
+    const ok = await page.evaluate(async () => {
+      const set = Storage.prototype.setItem, open = indexedDB.open;
+      Storage.prototype.setItem = function () { throw new DOMException('quota', 'QuotaExceededError'); };
+      indexedDB.open = function () { throw new Error('refusé'); };
+      const r = await saveToStorage([{ date_demande: '2025-01-01', cms: 'X' }], { filename: 'x', count: 1 });
+      Storage.prototype.setItem = set; indexedDB.open = open;
+      return r;
+    });
+    expect(ok).toBe(false);
+    await page.reload();
+    await page.waitForFunction(() => typeof window.switchTab === 'function' && dataSource === 'imported', { timeout: 15000 });
+    expect(await nbLignes(page)).toBe(7);
+  });
+
+  test('réinitialisation : aucun état ancien, aucune restauration tardive', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    await importerFichier(page);
+    expect(await page.evaluate(() => ACTIONS_DATA.length)).toBeGreaterThan(0);
+    await page.evaluate(async () => {
+      saveToStorage(DATA, importMeta);                      // écriture encore en file
+      await clearStorage();
+      DATA = []; dataSource = 'embedded'; importMeta = null; deriveActionsFromData();
+    });
+    expect(await page.evaluate(() => ACTIONS_DATA.length)).toBe(0);
+    expect(await page.evaluate(() => getActFiltered().length)).toBe(0);
+    await page.reload();
+    await page.waitForFunction(() => typeof window.switchTab === 'function', { timeout: 15000 });
+    await page.waitForFunction(() => document.getElementById('import-banner').style.display === 'block', { timeout: 15000 });
+    expect(await page.evaluate(() => dataSource)).toBe('embedded');
+  });
+
+  test('« réinitialiser et importer » ne reste pas armé après une erreur', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    await importerFichier(page);
+    await page.evaluate(() => { handleAutoImport({ name: 'illisible.json' }, { reset: true }); });
+    await importerFichier(page);                            // import suivant, sans reset
+    expect(await nbLignes(page)).toBe(7);
+  });
+
+  test('un JSON invalide laisse la base active intacte', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    await importerFichier(page);
+    const erreur = await page.evaluate(async () => {
+      try { await importDataJSON({ version: '2', type: 'gdin-data', data: [{ date_demande: 'pas une date', cms: 'X' }] }, 'x.json'); return null; }
+      catch (e) { return e.message; }
+    });
+    expect(erreur).toMatch(/date/);
+    expect(await nbLignes(page)).toBe(7);
+  });
+
+  test('un JSON ne conserve aucun champ nominatif ajouté', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    await page.evaluate(async (rec) => {
+      await importDataJSON({ version: '2', type: 'gdin-data', data: [{ ...rec, nom_beneficiaire: 'DUPONT', telephone: '0600000000', email: 'a@b.fr' }] }, 'x.json');
+    }, TEST_RECORDS[0]);
+    const champs = await page.evaluate(() => Object.keys(DATA[0]).join(','));
+    expect(champs).not.toMatch(/nom_beneficiaire|telephone|email/);
+    const stocke = await page.evaluate(() => localStorage.getItem('gdin_snap_v4'));
+    expect(stocke).not.toMatch(/DUPONT|0600000000|a@b\.fr/);
+  });
+});
+
+test.describe('Contenu importé hostile', () => {
+
+  test('reste du texte dans tous les panneaux, les deux diaporamas et la fiabilité', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    const H = '<img src=x onerror="window.__xss=1"><svg onload="window.__xss=1">';
+    const recs = [];
+    for (let i = 0; i < 24; i++) {
+      recs.push({
+        date_demande: `2025-0${(i % 6) + 1}-1${i % 9}`, date_action: `2025-0${(i % 6) + 1}-2${i % 9}`,
+        id_demande: String(300 + i), conum: i % 2 ? `Ana ${H}` : `Bob ${H}`,
+        cms: `CMS Agen ${H}`, lieu_raw: H, structure: H, commune: `Agen ${H}`,
+        themas: [`Thème ${H}`], type_action: [i % 3 ? 'Accompagnement' : 'Prise de contact'],
+        orienteur: `Orient ${H}`, motif: H, benef_connu: false, urgence: false,
+        etat: i % 4 ? 'Réalisée' : `Autre ${H}`, date_planifiee: null, date_realisation: `2025-0${(i % 6) + 1}-2${i % 9}`,
+      });
+    }
+    await page.evaluate(async (data) => { await importDataJSON({ version: '2', type: 'gdin-data', data }, `fichier ${'<b>x</b>'}.json`); }, recs);
+    const resultat = await page.evaluate(async ({ H }) => {
+      const erreurs = [];
+      const garde = (f) => { try { f(); } catch (e) { erreurs.push(String(e.message || e)); } };
+      for (const o of ['global', 'evolution', 'par-cms', 'par-conum', 'orienteurs', 'ateliers', 'rapport', 'fiabilite', 'etats', 'territoire', 'import']) {
+        garde(() => { const b = document.querySelector(`[onclick*="'${o}'"]`); if (b) b.click(); });
+      }
+      garde(() => { document.getElementById('sel-rpt-conum').selectedIndex = 0; renderRapport(); });
+      // Diapo global
+      garde(() => startDiapo());
+      for (let i = 0; i < DIAPO_SLIDES.length; i++) garde(() => diapoGoTo(i));
+      garde(() => stopDiapo());
+      // Diapo rapport
+      garde(() => {
+        const sc = document.getElementById('sel-rpt-conum'); sc.value = DATA[0].conum;
+        initRptSelects && 0; document.getElementById('sel-rpt-cms').value = DATA[0].cms;
+        startDiapoRapport();
+      });
+      for (let i = 0; i < DR_SLIDES.length; i++) garde(() => drGoTo(i));
+      return { erreurs, xss: window.__xss === undefined ? null : window.__xss,
+        injectes: document.querySelectorAll('img[src="x"], svg[onload]').length };
+    }, { H });
+    expect(resultat.xss, 'un gestionnaire injecté s\'est exécuté').toBeNull();
+    expect(resultat.injectes, 'des éléments injectés existent dans le DOM').toBe(0);
+  });
+});
