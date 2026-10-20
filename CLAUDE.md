@@ -360,7 +360,9 @@ faut un pour l'installabilité :
   pendant la session et absentes des `.md`, les présenter à l'utilisateur, puis
   les inscrire (MD-LIB `collaboration.md`, règle 32).
 - Utiliser des dates explicites (JJ/MM/AAAA) plutôt que « hier » ou « la
-  semaine dernière ».
+  semaine dernière ». Toute heure donnée est en **heure de Paris** :
+  GitHub, les API et les journaux affichent l'UTC (MD-LIB `collaboration.md`
+  8bis, 02/10/2026).
 - En contexte multi-repo, préfixer chaque commande par `cd /chemin/complet &&`.
 - **Avant de décrire un correctif, suivre la valeur sur tout son chemin**
   (MD-LIB `collaboration.md`, règle 27) — `then`/`catch`, appelants, valeurs
@@ -376,6 +378,16 @@ faut un pour l'installabilité :
   (règle 30), pas seulement à l'ouverture. Constat du 27/09/2026 : un commit
   préparé a été rejeté en non-fast-forward, le travail était déjà fait par une
   autre session, dans un autre format.
+- **Un comportement qui change emporte ses textes** (règle 23) : dans la même
+  livraison, chercher tous les textes visibles qui décrivent l'ancien
+  comportement (dialogues, aide, annonces, messages d'erreur) et les corriger,
+  ou les signaler. Constat du 02/10/2026 (ATELIERS) : trois textes disaient
+  encore « passez par l'administrateur » après l'ouverture de la Corbeille.
+- **Une capture envoyée pour valider un point se lit en entier** (règle 24) :
+  toute incohérence visible hors du point demandé (doublon, valeur
+  impossible) se signale, en hypothèse non vérifiée, avec la proposition de
+  vérifier — sans corriger d'office. Constat du 02/10/2026 (ATELIERS) : des
+  numéros en double sur une capture ont révélé une faute de l'API.
 - **Pas de compliment, un constat.** Ne pas ouvrir une réponse en jugeant la
   qualité de ce qui vient d'être dit ou proposé (« bien vu », « excellente
   idée »), même quand c'est vrai : le compliment est le véhicule de la
