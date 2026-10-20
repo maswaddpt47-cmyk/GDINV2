@@ -48,7 +48,7 @@ Il existe deux diaporamas distincts dans l'application — **ne pas les confondr
 
 ### Tests unitaires — règle obligatoire
 
-Le fichier **`gdin-pure.js`** contient les fonctions pures du projet (calculs, parsing, normalisation CMS). Le fichier **`gdin-pure.test.js`** contient 241 tests unitaires (`node:test`) qui les couvrent. Une suite end-to-end Playwright (`tests-e2e.spec.js`, 69 tests) couvre les parcours navigateur.
+Le fichier **`gdin-pure.js`** contient les fonctions pures du projet (calculs, parsing, normalisation CMS). Le fichier **`gdin-pure.test.js`** contient plus de 270 tests unitaires (`node:test`) qui les couvrent. Une suite end-to-end Playwright (`tests-e2e.spec.js`, 82 tests) couvre les parcours navigateur.
 
 **Toute nouvelle fonction de calcul, de parsing ou de normalisation va dans `gdin-pure.js` avec ses tests, pas dans le HTML.**
 
@@ -57,7 +57,7 @@ Une session est significative si elle touche à la logique métier (pas une simp
 **Règle :** après toute modification de `gdin-pure.js`, vérifier que les tests passent avant de commiter :
 
 ```bash
-npm test          # 251 tests unitaires (gdin-pure + deploy + revue-sens)
+npm test          # 300 tests unitaires (gdin-pure + deploy + revue-sens)
 npm run audit -- export.xls   # audit d'un export avant d'en tirer un rapport
 ```
 
@@ -93,6 +93,20 @@ c'est ce qui le garde utile plutôt que bruyant.
 les deux questions qu'aucun test ne pose : *qu'est-ce que son titre promet, et
 qu'est-ce qu'il montre réellement ?* Une suite verte ne garantit pas que
 l'affichage est correct, et ne décharge pas l'utilisateur du contrôle visuel.
+
+### Chiffres diffusés aux élus et à la hiérarchie — Codex avant diffusion
+
+(MD-LIB `chiffres-diffuses.md`, règle 33, 20/10/2026.) Ce tableau de bord
+alimente des bilans lus par des élus : avant qu'un chiffre soit donné,
+**audit Codex sur l'export réel** (lecture seule, hors dépôt public, modèle
+`consigne-audit-externe.md` adapté aux calculs) à la première diffusion, après
+tout changement d'import, de fusion, de calcul ou de filtre, et chaque
+trimestre — plus le tableau « affiché / recompté / écart » (`npm run audit --
+export.xls --suivi ../suivi.json` en fournit les agrégats). Cinq familles de
+tests sont obligatoires pour tout indicateur nouveau : parcours complet
+idempotent, même population sur tous les écrans, recomptage indépendant,
+provenance, unité et dénominateur. 251 tests verts n'ont pas empêché 14 défauts
+de calcul : une suite verte ne vaut pas validation.
 
 ### Ce que coûte un test
 

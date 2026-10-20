@@ -1,6 +1,6 @@
 # Chantiers — GDINV2
 
-État au **26/09/2026**, commit `a76d821` sur `main`.
+État au **20/10/2026** (corrections des audits Codex du 20/10/2026, PR #3).
 
 Ce fichier existe pour qu'une session qui démarre sans historique sache où en
 est le projet. **Il ne se supprime pas.** Ce qui s'efface, ce sont les tâches,
@@ -14,31 +14,47 @@ Règles permanentes : `CLAUDE.md`.
 ## Comment reprendre
 
 ```bash
-npm test                      # 251 tests unitaires · 69 e2e
-npm run audit -- export.xls   # ce que l'application retient d'un export réel
+npm test                      # 300 tests unitaires · 82 e2e (npx playwright test)
+npm run audit -- export.xls [--suivi ../suivi.json]   # parcours réel : lues, exclues, retenues, fusionnées, réimport
 ```
 
 L'export n'est pas dans le dépôt (données personnelles) : le redemander à
 l'utilisateur. **Seul le dernier export fourni fait foi** — ne pas rouvrir de
 comparaison avec un fichier antérieur. Référence actuelle : septembre 2026,
-24 410 lignes, 20 226 retenues, 19 290 en base après fusion.
+24 410 lignes, 4 184 exclues (cycle Pass), 20 226 retenues, 7 271 demandes
+distinctes, **20 226 en base après fusion** (19 290 avant le 20/10/2026 : 76
+demandes perdues par l'ancienne clé), 5 478 participations d'atelier pour 596
+séances (mesuré le 20/10/2026, `audit-export.js`).
 
 ## Chantiers ouverts
-- **Corrigé le 01/10/2026** : XSS par fichier importé (relevée par la routine
-  d'audit) — `esc()` sur toutes les insertions de valeurs du fichier dans le
-  HTML (barres, tableaux orienteurs/structures, popups et étiquettes de
-  carte, filtre, en-têtes du Diapo Rapport, liste des conseillers,
-  `conumNameHtml`). Reste ouvert : SheetJS 0.18.5 (ligne ci-dessous).
 
-- **Audit trimestriel du 01/10/2026 — important** : SheetJS
-  `vendor/xlsx/xlsx.full.min.js` en 0.18.5, vulnérable à la **lecture** d'un
-  fichier piégé (CVE-2023-30533, pollution de prototype, corrigée en 0.19.3 ;
-  CVE-2024-22363, ReDoS, corrigée en 0.20.2). GDINV2 lit les exports avec
-  `XLSX.read` : passer à 0.20.3 ou plus, téléchargé depuis le site de SheetJS
-  (plus publié sur npm). Mineur : 93 `innerHTML` sans fonction d'échappement,
-  alimentés par le fichier importé (risque limité à un export piégé).
-
-Aucun.
+- **SheetJS 0.18.5 → 0.20.3 ou plus** (CVE-2023-30533, CVE-2024-22363). Non
+  fait le 20/10/2026 : `cdn.sheetjs.com`, cdnjs, jsdelivr et unpkg sont refusés
+  par le proxy de la session, et SheetJS n'est plus publié sur npm. À déposer
+  par l'utilisateur dans `vendor/xlsx/xlsx.full.min.js` (et `xlsx` de
+  `package.json` pour l'auditeur), puis `npm test` et la suite e2e.
+- **À trancher par l'utilisateur** (ne pas décider seul) :
+  - **103 lignes strictement identiques** sur tous les champs conservés (hors
+    ateliers, mesuré le 20/10/2026) : gardées et signalées par le panneau
+    qualité ; un doublon de saisie ou deux séances le même jour, la source ne
+    permet pas de le dire.
+  - **« 48 h »** = au plus 2 jours ouvrés du lundi au vendredi, fériés non
+    retirés, date planifiée passée admise comme contact : une mesure
+    disponible, pas une garantie de contact en 48 heures. À redéfinir si les
+    élus attendent cette garantie.
+  - **Taux de demandes closes** : le taux affiché est un taux d'*accompagnements*
+    réalisés (lignes). Un taux par demande demande une règle pour les demandes
+    à plusieurs actions.
+- **Validation sur poste** : le rendu (badges, tableau États à 9 colonnes,
+  regroupement « Autres structures », libellé de réactivité) se contrôle sur le
+  site déployé.
+- **Bases déjà présentes sur les postes** : conservées, complétées (rangs
+  reconstitués dans l'ordre de la base), marquées `base_heritee` ; la
+  provenance du conseiller y est « inconnue » sauf déduction connue. Elles sont
+  incomplètes (demandes fusionnées à tort). Un import dans une telle base
+  propose de la remplacer ; la reconstruction fiable = « Réinitialiser et
+  importer » l'export source, puis comparer les comptes (20 226 pour
+  septembre 2026).
 
 ## À porter aux développeurs de l'outil de saisie
 
@@ -56,6 +72,51 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
 | Rendre « Urgence » fiable (consigne de saisie, ou champ retiré) | 101 urgences en 2024, 5 en 2025, 0 en 2026 : la case n'est plus cochée depuis août 2024 |
 
 ## Décisions à ne pas défaire
+
+**Identité, provenance, stockage, populations (20/10/2026, audits Codex)**
+
+- **Identité d'une ligne** (`cleFusion`, `cleBaseAction`, gdin-pure.js) : N°
+  demande + types + date d'action + CMS + rang de répétition. Elle exclut le
+  conseiller (déduit après la fusion : l'ancienne clé le contenait, d'où 2 → 3 →
+  4 lignes à chaque réimport), l'état et les dates de planification et de
+  réalisation, mis à jour par `fusionnerImport()`. Limites : une date d'action
+  corrigée à la source crée une nouvelle ligne ; le rang suppose le même ordre
+  de lignes d'un export à l'autre. L'export n'a pas d'identifiant d'action.
+- **Provenance du conseiller** : `conum_origine` = source | referent | deduit |
+  inconnu. `attribuerConum()` est idempotent et ne remet jamais `conum_deduit`
+  à faux au seul motif que le nom est rempli. Les majoritaires par secteur ne
+  s'appuient que sur source et referent. « Inconnu » compte dans la marge de
+  l'onglet Fiabilité.
+- **Sauvegarde** : un instantané `{schema, rev, records, meta}` (`gdin_snap_v4`)
+  dans localStorage ET IndexedDB ; au démarrage la révision la plus récente
+  gagne. Écritures en file, invalidées par la réinitialisation (`_storageEpoch`) ;
+  `_idbDel` attend `oncomplete`. Ne pas supprimer l'ancienne copie avant le
+  succès de la nouvelle.
+- **JSON importé** : validé en entier (`validerSauvegardeJSON`), reconstruit
+  champ par champ ; une ligne invalide rejette le fichier, la base active reste
+  intacte. « Réinitialiser et importer » est un paramètre de l'opération
+  (`pendingData.reset`), jamais une variable globale.
+- **États** : `categorieEtat()` → realisee | non_realisee | en_attente |
+  autre. « En cours » de la source est normalisé en « En attente ». Aucun écran
+  ne compte `=== 'En cours'`.
+- **Réactivité** rattachée à la même demande (`deriverActions`), jamais à
+  conseiller + CMS + date ; sans contact valide, le cas est compté « sans
+  contact ». Les actions dérivées gardent `jour` (filtre) et `date` (mois,
+  graphiques) ; ne jamais comparer des mois pour filtrer une période.
+- **Taux de réalisation** = lignes à l'état Réalisée sur les lignes, jamais la
+  présence de `date_action`. **Comparaison N/N−1** à même date, avec le type
+  du filtre (`evolutionAnnuelle`, `filtrerParType`).
+- **Un seul aiguillage des diapositives du Rapport** : `drRenderSlide()`,
+  appelé par la navigation et par l'export PDF. Le conteneur `#diapo-overlay`
+  du Diapo Global doit exister (il manquait : le bouton plantait) ; l'export PDF
+  ne doit jamais faire `options.animation = options.animation || {}` (proxy
+  Chart.js, « Maximum call stack »).
+- **Tout texte importé est échappé** à l'insertion (`esc()`), `conumClass()`
+  assainit le nom de classe. Un e2e injecte du HTML dans tous les champs et
+  parcourt les onglets et les deux diaporamas.
+- **Les chiffres diffusés passent par Codex avant d'être donnés** aux élus ou à
+  la hiérarchie : MD-LIB `chiffres-diffuses.md` (règle 33 de `collaboration.md`).
+  251 tests verts n'ont pas empêché 14 défauts de calcul sur le fichier réel.
 
 **Noms d'agents**
 
