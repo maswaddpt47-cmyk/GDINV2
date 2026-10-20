@@ -1463,3 +1463,46 @@ test.describe('Contenu importé hostile', () => {
     expect(resultat.injectes, 'des éléments injectés existent dans le DOM').toBe(0);
   });
 });
+
+// Le Diapo Global plantait à son lancement : l'élément #diapo-overlay n'existait
+// pas dans la page (constaté le 20/10/2026 en rejouant le parcours, aucun test
+// ne le lançait). Et l'export PDF sortait la page « Fiabilité » vide.
+test.describe('Diaporamas et PDF', () => {
+  async function preparer(page) {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+  }
+  test('le Diapo Global démarre et chaque diapositive a du contenu', async ({ page }) => {
+    await preparer(page);
+    const r = await page.evaluate(() => {
+      const erreurs = [], vides = [];
+      try { startDiapo(); } catch (e) { erreurs.push('start: ' + e.message); }
+      for (let i = 0; i < DIAPO_SLIDES.length; i++) {
+        try { diapoGoTo(i); } catch (e) { erreurs.push(DIAPO_SLIDES[i].id + ': ' + e.message); }
+        const c = document.getElementById('diapo-content') || document.querySelector('[id^="diapo-"][class*="content"]');
+        if (c && c.textContent.replace(/\s+/g, ' ').trim().length < 20) vides.push(DIAPO_SLIDES[i].id);
+      }
+      return { erreurs, vides, actif: document.getElementById('diapo-overlay').classList.contains('on') };
+    });
+    expect(r.erreurs).toEqual([]);
+    expect(r.actif).toBe(true);
+    expect(r.vides).toEqual([]);
+  });
+
+  test('le Diapo Rapport et son PDF : toutes les pages ont un contenu, Fiabilité comprise', async ({ page }) => {
+    await preparer(page);
+    const r = await page.evaluate(async () => {
+      const conum = DATA[0].conum, cms = DATA[0].cms;
+      document.getElementById('sel-rpt-conum').value = conum;
+      document.getElementById('sel-rpt-cms').value = cms;
+      startDiapoRapport();
+      let pages = [];
+      window.print = () => { pages = [...document.querySelectorAll('#dr-print-container .dr-print-page')].map(p => p.textContent.replace(/\s+/g, ' ').trim()); };
+      await exportDiapoPDF();
+      return { titres: DR_SLIDES.map(s => s.id), pages };
+    });
+    expect(r.pages.length).toBe(r.titres.length);
+    r.pages.forEach((txt, i) => expect(txt.length, `page ${r.titres[i]} vide`).toBeGreaterThan(60));
+    const fia = r.pages[r.titres.indexOf('fiabilite')];
+    expect(fia).toMatch(/Chiffres exacts|Points de vigilance/);
+  });
+});

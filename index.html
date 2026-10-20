@@ -1137,6 +1137,8 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
   </div>
 
 </div>
+<!-- Conteneur du Diapo Global : sans lui startDiapo() levait une erreur (élément absent) -->
+<div id="diapo-overlay">
   <div id="diapo-topbar">
     <span id="diapo-title">Vue globale</span>
     <span id="diapo-context"></span>
@@ -2287,7 +2289,7 @@ function renderConum(){
     const topT=Object.keys(countThemas(d))[0]||'—';
     const oriRow=ACTIONS_DATA?ACTIONS_DATA.filter(r=>r.conum===cn&&(!activeYears.size||activeYears.has(r.year))&&dansPeriode(r.jour,f,t)).length:null;
     const hl=cn===conum?'background:var(--s3)':'';
-    rows+=`<tr style="${hl}"><td class="${conumClass(cn)}" style="font-weight:600">${esc(cn)}</td><td class="mono">${d.length}</td><td class="mono">${oriRow!==null?oriRow:'—'}</td><td><span class="badge badge-blue">${topT}</span></td></tr>`;
+    rows+=`<tr style="${hl}"><td class="${conumClass(cn)}" style="font-weight:600">${esc(cn)}</td><td class="mono">${d.length}</td><td class="mono">${oriRow!==null?oriRow:'—'}</td><td><span class="badge badge-blue">${esc(topT)}</span></td></tr>`;
   });
   document.getElementById('tbl-conum-all').innerHTML=rows;
   renderHeatmapConum();
@@ -2378,7 +2380,7 @@ function renderOrienteurs(){
     const struct=(countEntries(od,'cms').map(e=>e[0])[0]||'—');
     const topCN=(countEntries(od,'conum').map(e=>e[0])[0]||'—');
     const topT=Object.keys(countThemas(od))[0]||'—';
-    rows+=`<tr><td>${esc(name)}</td><td>${esc(struct)}</td><td class="mono" data-val="${n}">${n}</td><td class="${conumClass(topCN)}">${esc(topCN)}</td><td><span class="badge badge-blue">${topT}</span></td></tr>`;
+    rows+=`<tr><td>${esc(name)}</td><td>${esc(struct)}</td><td class="mono" data-val="${n}">${n}</td><td class="${conumClass(topCN)}">${esc(topCN)}</td><td><span class="badge badge-blue">${esc(topT)}</span></td></tr>`;
   });
   document.getElementById('tbl-ori').innerHTML=rows;
   {const topOri=oriEntries[0];

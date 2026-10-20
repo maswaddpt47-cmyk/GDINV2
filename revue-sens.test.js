@@ -139,3 +139,23 @@ describe('Injection — libellés importés échappés', () => {
       'libellé inséré dans le HTML sans esc() : risque d\'injection');
   });
 });
+
+// Un seul aiguillage pour les diapositives du Rapport : la navigation et
+// l'export PDF passent par drRenderSlide(). L'export avait sa propre copie,
+// qui ignorait « fiabilite » (audit du 20/10/2026).
+describe('Diapo Rapport — un seul aiguillage', () => {
+  it('l\'export PDF et la navigation appellent drRenderSlide', () => {
+    const exp = SRC.slice(SRC.indexOf('async function exportDiapoPDF'));
+    const d = SRC.indexOf('function drGoTo(');
+    const nav = SRC.slice(d, SRC.indexOf('\n}\n', d));
+    assert.match(exp.slice(0, exp.indexOf('\n}\n')), /drRenderSlide\(/);
+    assert.match(nav, /drRenderSlide\(/);
+  });
+  it('chaque diapositive déclarée est rendue par l\'aiguillage', () => {
+    const bloc = SRC.slice(SRC.indexOf('const DR_SLIDES=['), SRC.indexOf('];', SRC.indexOf('const DR_SLIDES=[')));
+    const ids = [...bloc.matchAll(/\{id:'(\w+)'/g)].map(m => m[1]);
+    assert.ok(ids.length >= 10, 'DR_SLIDES introuvable');
+    const corps = SRC.slice(SRC.indexOf('function drRenderSlide('), SRC.indexOf('function drGoTo('));
+    ids.forEach(id => assert.ok(corps.includes(`'${id}'`), `diapositive « ${id} » absente de drRenderSlide`));
+  });
+});
