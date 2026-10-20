@@ -156,15 +156,48 @@ function main() {
   ligne('CMS distincts', Object.keys(cms).length);
   if (cms['Autre structure']) ligne('⚠ « Autre structure » (libellé non reconnu)', cms['Autre structure']);
 
-  // ── Doublons ───────────────────────────────────────────────────────────
-  titre('Doublons potentiels');
-  const vus = new Set(); let dup = 0;
-  recs.forEach(r => {
-    const k = `${r.date_demande}|${r.date_action || ''}|${r.conum || ''}|${r.cms || ''}|${r.commune || ''}|${r.orienteur || ''}|${(r.themas || []).slice().sort().join('/')}|${(r.type_action || []).slice().sort().join('+')}`;
-    if (vus.has(k)) dup++; else vus.add(k);
-  });
-  ligne('Lignes identiques (clé de fusion)', dup, pourcent(dup, recs.length));
-  console.log('  L\'application les ignore à l\'import : ' + (recs.length - dup) + ' entreront en base.');
+  // ── Fusion : le parcours réel de l'application ────────────────────────
+  // Ni clé ni règle recopiées ici : fusionnerImport() et attribuerConum() sont
+  // celles de confirmImport(). Avant le 20/10/2026 l'auditeur avait sa propre
+  // clé et prédisait 15 037 lignes là où l'application en conservait 19 290.
+  titre('Fusion à l\'import (parcours de l\'application)');
+  const f1 = P.fusionnerImport([], recs);
+  const base = f1.records;
+  P.attribuerConum(base);
+  ligne('Lignes retenues par le parseur', recs.length);
+  ligne('Doublons internes écartés', f1.doublonsFichier);
+  ligne('Lignes en base après premier import', base.length);
+  ligne('Demandes distinctes en base', P.countDemandes(base));
+  const rebase = JSON.parse(JSON.stringify(base));          // sauvegarde + rechargement
+  P.attribuerConum(rebase);
+  const f2 = P.fusionnerImport(rebase, P.parseRows(rows).records);
+  ligne('Réimport du même fichier : lignes ajoutées', f2.ajoutes, f2.ajoutes === 0 ? '✓ idempotent' : '✗ NON idempotent');
+  ligne('Réimport : lignes mises à jour', f2.misAJour);
+  if (f2.ajoutes !== 0) process.exitCode = 2;
+  const doublonsQualite = P.compterDoublons(base);
+  ligne('Lignes identiques suspectes (hors ateliers)', doublonsQualite, 'signalées, conservées');
+  const origines = {};
+  base.forEach(r => { const o = r.conum_origine || '(sans conseiller)'; origines[o] = (origines[o] || 0) + 1; });
+  titre('Origine du conseiller');
+  Object.entries(origines).sort((a, b) => b[1] - a[1]).forEach(([k, v]) => ligne(k, v, pourcent(v, base.length)));
+
+  // Suivi agrégé, sans aucune donnée personnelle, à ranger HORS du dépôt public :
+  //   node audit-export.js export.xls --suivi ../suivi.json
+  const iSuivi = process.argv.indexOf('--suivi');
+  if (iSuivi > 0 && process.argv[iSuivi + 1]) {
+    const suivi = {
+      date: new Date().toISOString().slice(0, 10),
+      lues: st.lues, exclusions: st.motifs, retenues: st.retenues,
+      doublons_internes: f1.doublonsFichier, en_base: base.length,
+      demandes_distinctes_retenues: P.countDemandes(recs), demandes_distinctes_en_base: P.countDemandes(base),
+      reimport: { ajoutes: f2.ajoutes, mis_a_jour: f2.misAJour, identiques: f2.identiques },
+      ateliers: P.statsAteliers(base), origines_conseiller: origines,
+      par_type: Object.fromEntries(Object.entries(base.reduce((m, r) => { (r.type_action || []).forEach(t => m[t] = (m[t] || 0) + 1); if (!(r.type_action || []).length) m['(sans type)'] = (m['(sans type)'] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1])),
+      etats: P.repartitionEtats(base.filter(r => (r.type_action || []).includes('Accompagnement'))),
+    };
+    fs.writeFileSync(process.argv[iSuivi + 1], JSON.stringify(suivi, null, 2));
+    console.log('\n  Suivi agrégé écrit : ' + process.argv[iSuivi + 1]);
+  }
 
   // ── Délais ─────────────────────────────────────────────────────────────
   titre('Délais (jours ouvrés, demande → action)');
