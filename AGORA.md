@@ -235,6 +235,34 @@ dans cette session : leurs valeurs rapportées ne sont pas recomptées et la
 cause reste non vérifiée. Choix de présentation à trancher par l'utilisateur ;
 aucun changement de code effectué.
 
+### Décision de l'utilisateur — 22/10/2026
+**Volet A retenu et posé** : la mention s'affiche sur les trois écrans où un
+chiffre se lit ou se projette — Vue globale (au-dessus des KPI), sous-titre du
+Rapport, pied de la couverture du Diapo Rapport, donc aussi dans le PDF
+exporté. Libellé construit par `mentionRevisabilite()` (`gdin-pure.js`, 13
+tests) : période couverte, date du dernier import, « chiffres susceptibles
+d'être révisés ». Une borne illisible est traitée comme absente plutôt que
+recopiée ; sans date d'import la mention dit « source non datée » au lieu de
+laisser un blanc.
+
+**Volet B (archivage) non engagé**, et ce n'est pas un oubli. Mesuré le
+22/10/2026 : `exportDataJSON()` (`index.html:2888`) porte `version`, `type`,
+`exported`, `source_filename`, `conum_filter`, `count`, `data` — de quoi
+rejouer les **données**, pas le **bilan**. Manquent les filtres de lecture
+(seul `conum_filter`, qui est un filtre d'import, est conservé), la version du
+calcul (le workflow injecte `?v=<sha>` dans les URLs mais aucune variable JS
+ne le porte, donc l'app ne peut pas écrire sa propre version) et la date
+d'import. Deux questions précèdent l'implémentation, et elles n'appartiennent
+pas à une session Claude : **où** ces dossiers vivent — le `motif` est du texte
+libre pouvant contenir un nom malgré la troncature à 120 caractères, un stock
+d'instantanés sort les données du poste — et **combien de temps**, la durée
+devant figurer au tableau de gestion, toute élimination passant par le visa
+des Archives départementales, purge automatique comprise (MD-LIB
+`archivage-cd47.md`). B sans ces réponses crée un stock de données
+personnelles non déclaré. Le volet C (mode « arrêté au » dans l'app) dépend
+entièrement de B : sans archive préalable, il n'y a rien à rejouer.
+**Le bloc reste ouvert sur B.**
+
 ---
 
 ## Blocs tranchés

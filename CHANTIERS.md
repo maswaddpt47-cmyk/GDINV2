@@ -29,23 +29,26 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 
 ## Chantiers ouverts
 
-- **AG-002 — chiffres révisables** : réponse de session B (Codex) ajoutée
-  dans `AGORA.md` le 22/10/2026, sur `24dbbcf` : amendé. La période filtre
-  la date de demande ; la cause des écarts réels reste non vérifiée. À
-  trancher : présentation de la date des données et archivage des bilans
-  diffusés. Aucun code modifié ; 300 tests passent et reproductions
-  synthétiques exécutées. Export réel et contrôle navigateur non exécutés.
-- **AG-003 — unité des thématiques** : réponse de session B (Codex) ajoutée
-  dans `AGORA.md` le 22/10/2026, sur `f432eaf` : confirmé. Le calcul compte
-  des mentions, pas des demandes distinctes. Libellés à corriger dans le KPI
-  global et ses miroirs (CMS, conseiller, diapo, commentaires automatiques),
-  sans changer le calcul. Reproductions synthétiques exécutées ; code laissé
-  intact. Les deux blocs restent ouverts jusqu'à décision de l'utilisateur.
-- **SheetJS 0.18.5 → 0.20.3 ou plus** (CVE-2023-30533, CVE-2024-22363). Non
-  fait le 20/10/2026 : `cdn.sheetjs.com`, cdnjs, jsdelivr et unpkg sont refusés
-  par le proxy de la session, et SheetJS n'est plus publié sur npm. À déposer
-  par l'utilisateur dans `vendor/xlsx/xlsx.full.min.js` (et `xlsx` de
-  `package.json` pour l'auditeur), puis `npm test` et la suite e2e.
+- **AG-002 — archivage des bilans diffusés** (volet A fait le 22/10/2026,
+  volet B en attente). La mention « chiffres susceptibles d'être révisés »,
+  avec la période et la date du dernier import, est posée sur la Vue globale,
+  le sous-titre du Rapport et la couverture du Diapo Rapport
+  (`mentionRevisabilite()`, `gdin-pure.js`, 13 tests). Elle prévient, elle
+  n'archive rien.
+  **Volet B — bloqué sur une question qui n'est pas technique** : reproduire un
+  bilan déjà diffusé demande de conserver ses données, ses filtres et sa
+  version de calcul. L'export JSON actuel ne porte ni les filtres de lecture,
+  ni la version (le `?v=<sha>` du workflow n'est lisible par aucune variable
+  JS), ni la date d'import. Avant d'écrire une ligne, deux réponses à obtenir
+  auprès du référent archives et du DPO : **où** ces dossiers sont déposés
+  (hors dépôt public, et le `motif` peut contenir un nom malgré la troncature)
+  et **combien de temps** ils sont conservés — la durée doit figurer au tableau
+  de gestion et toute élimination passe par le visa des Archives
+  départementales, purge automatique comprise (MD-LIB `archivage-cd47.md`).
+  Sans ces réponses, l'archivage créerait un stock de données personnelles non
+  déclaré. Le volet C (mode « arrêté au ») en dépend entièrement.
+  Reste aussi non vérifiée : la cause des écarts réels constatés sur l'export
+  (7 881 → 8 313 à période identique).
 - **À trancher par l'utilisateur** (ne pas décider seul) :
   - **103 lignes strictement identiques** sur tous les champs conservés (hors
     ateliers, mesuré le 20/10/2026) : gardées et signalées par le panneau
