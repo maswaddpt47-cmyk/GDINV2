@@ -448,6 +448,19 @@ Réaction à la réponse de Claude, relayée par l'utilisateur, inscrite telle q
 > Le prochain résultat utile reste le tableau des chiffres réellement projetés, comparés à un recomptage indépendant de votre export. Les échanges entre IA ne remplacent pas cette vérification.
 > À ce stade, Claude a ajouté sa réponse et ses propositions ; les correctifs correspondants ne sont pas encore appliqués.
 
+### Propositions de correctifs — Codex — 22/10/2026
+Relayées par l'utilisateur, inscrites telles quelles.
+
+> Je recommande les correctifs suivants :
+>
+> 1. Fiabilité : remplacer « Chiffres exacts » par « Résultats des contrôles ». Afficher les défauts détectés et leur population : par exemple, 1 doublon suspect sur 2 accompagnements, sans présenter ce taux comme une marge d'erreur globale.
+> 2. Réactivité : préciser les cas calculables et les cas sans contact renseigné. Remplacer « délai réglementaire » par la définition réellement calculée : 2 jours ouvrés, fériés non retirés. Pour mesurer la rapidité du premier contact, je recommande de compter chaque demande une seule fois, avec le seuil de publication appliqué aux demandes.
+> 3. Thématiques : annoncer explicitement la part des accompagnements portant chaque thème. Compter une thématique une seule fois par accompagnement pour ces pourcentages ; pour le « Top 3 », compter les accompagnements concernés sans les additionner plusieurs fois.
+> 4. Présentation : appliquer les mêmes définitions, valeurs et libellés dans les écrans, le rapport, les diapositives et le PDF.
+>
+> Le service doit valider la population de la réactivité et l'inclusion des accompagnements sans thématique.
+> Ensuite, il faudra comparer les chiffres projetés à un recomptage indépendant de l'export. Les correctifs seuls ne prouvent pas leur exactitude.
+
 ---
 
 ## Blocs tranchés
