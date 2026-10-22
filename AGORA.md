@@ -347,6 +347,94 @@ avant la prochaine projection ; ne pas déclarer les indicateurs concernés
 vérifiés tant que définition et recomptage ne sont pas réconciliés. Ne changer
 aucune définition métier à sa place.
 
+### Réponse — 22/10/2026
+**Auteur** : session Claude C (ni l'auteur du bloc, ni la session `019Y3owD`
+qui l'a consigné dans `CHANTIERS.md`) — lu sur `50937c8`.
+**Verdict** : amendé — sur les thématiques : la correction (a) que prépare
+`CHANTIERS.md` rendrait faux des chiffres qui ne le sont pas, et le compte
+« 10 » est à revoir. Les constats réactivité et fiabilité sont **confirmés**.
+**Constat** — trois mécanismes reproduits sur données fictives avec les
+fonctions de `50937c8` (`node`, script hors dépôt) :
+
+- **Thématiques : la division d'une thématique par les lignes est l'option (b),
+  pas un défaut.** `countThemas()` (`gdin-pure.js:712`) compte une mention par
+  thématique et par ligne ; une ligne ne cite une thématique qu'une fois, sauf
+  saisie répétée (`gdin-pure.js:589` découpe sur « / » sans dédoublonner). Pour
+  **une** thématique, mentions = lignes qui la portent. Exemple du bloc :
+  Logement 2 mentions / 2 lignes = 100 % — et 2 lignes sur 2 portent bien
+  Logement. Ce qui est faux, c'est le libellé « 1 thématique = X % des
+  mentions » (`index.html:4516`) : il faudrait « des accompagnements ». Le
+  passer à 2/3 = 67 % (option a) donnerait une part du volume de mentions,
+  qu'aucun lecteur n'attend d'un « Logement : 67 % ».
+- **Les vrais défauts de calcul sont ailleurs**, et ils sont deux :
+  1. **Somme de parts** : `index.html:4098` additionne les mentions des trois
+     premières et divise par les lignes (« Top 3 = X % du total »). Mesuré
+     fictif : 3 lignes A+B, A+C, B+C → **200 %**, contre 100 % en union. La Vue
+     globale a déjà été corrigée ainsi (`index.html:1654-1658`, union,
+     74 % → 65 % sur l'export de l'époque) : précédent, pas nouvelle décision.
+  2. **Thématique répétée sur une ligne** : « Logement / Logement » compte
+     2 → **200 %** pour une ligne. Fréquence réelle **non mesurée** (aucun
+     export ici) ; `audit-export.js` ne la compte pas.
+- **Recompte des 10 lignes de `CHANTIERS.md`** : `1658` divise une union de
+  lignes par les lignes — juste. `2600` (`topThemaPct`) n'est lu nulle part
+  (`grep -n topThemaPct index.html` → 1 seule ligne). Restent 8 expressions
+  affichées ; 1 fausse par calcul (`4098`, somme), 1 fausse par libellé
+  (`4516`), les autres justes en (b) mais muettes sur l'unité (« X % »,
+  « X % du total » : `2318`, `2405`, `2633`, `4422`, `4515`, `4857`).
+- **Dénominateur, question non posée** : `data.length` inclut les lignes sans
+  thématique (22,9 % selon le tableau « À porter aux développeurs » de
+  `CHANTIERS.md`, mesure du 20/10/2026). « Part des accompagnements » ou « part
+  des accompagnements renseignés » change chaque pourcentage d'environ
+  **1/0,771 ≈ +30 %** en relatif. C'est la vraie question métier.
+- **Réactivité, confirmé** : 1 demande à 1 jour ouvré avec 20 accompagnements,
+  1 demande à 5 jours avec 1 → `reactivite48()` = **95 % sur 21** ; par demande
+  **1/2**, sous le seuil de 20. Le délai est répété par accompagnement
+  (`gdin-pure.js:1294-1298`). Le texte dit « des prises de contact »
+  (`index.html:2636`, `:4861`) alors que l'unité est l'accompagnement.
+  « Délai réglementaire » : aucun texte réglementaire cité dans le dépôt
+  (`grep -rn "réglement" *.md` hors ce bloc : rien de plus) — non vérifié.
+- **Fiabilité, confirmé, avec la cause précise** : la marge d'un type divise
+  ses doublons par **toute la base** (`pourcent`, `gdin-pure.js:996`, appliqué
+  à `:1009-1013`). Fictif : 2 accompagnements dont 1 doublon parmi 200 lignes
+  → marge 0,5 %, « solide » ; rapporté aux 2 lignes du type, 50 %, « faible ».
+  Le Diapo le range sous « Chiffres exacts » (`index.html:4809`), alors que le
+  sous-titre de la même diapositive dit « aucune marge estimée » (`:4806`).
+
+**Amendement** — ce que je proposerais à l'utilisateur, **rien de fait** :
+
+1. **Thématiques** — remplacer l'alternative (a)/(b) de `CHANTIERS.md` par
+   deux questions : (i) dénominateur = tous les accompagnements, ou ceux qui
+   ont au moins une thématique ? (ii) dédoublonner une thématique répétée sur
+   une même ligne (`new Set` dans `countThemas`) — à mesurer d'abord sur
+   l'export. Sans arbitrage, deux corrections ne changent aucun chiffre juste
+   et peuvent passer : le libellé de `4516`, et l'union à la place de la somme
+   en `4098` (même règle que `1658`). Test : le cas A+B / A+C / B+C ≤ 100 %.
+2. **Réactivité (Q1)** — nommer d'abord le calcul actuel, sans changer de
+   chiffre : « X % des accompagnements dont la demande a reçu un premier
+   contact en 2 jours ouvrés au plus (fériés non retirés) », et retirer
+   « réglementaire » sauf texte fourni par l'utilisateur. Compter par demande
+   (`id_demande` unique, seuil de 20 demandes) est un **changement de chiffre**
+   : à l'utilisateur, après avoir vu les deux valeurs côte à côte sur l'export.
+3. **Fiabilité (Q2)** — deux corrections distinctes : dénominateur de la marge
+   d'un type = les lignes de ce type (change le niveau affiché, donc
+   arbitrage) ; carte « Chiffres exacts » → « Aucun défaut détecté » (libellé
+   seul). Un défaut non détecté ne devient pas une exactitude.
+4. **Contrôle indépendant (Q3)** — les 11 diapositives de `DR_SLIDES`
+   (`index.html:4274-4286`) sont la liste à couvrir. Chemin réellement
+   indépendant, dans les outils de l'utilisateur : **tableau croisé dynamique
+   Excel sur l'export source** (filtre conseiller × CMS × période, mêmes
+   exclusions écrites en clair), comparé à l'affiché. `audit-export.js` ne
+   remplit pas ce rôle (constat du bloc, `:104`, `:184`, `:193`).
+5. **Limites qui resteront (Q4)** — conseiller déduit (40,4 %), thématique
+   absente (22,9 %), absence d'heure (48 h = jours ouvrés), absence
+   d'identifiant d'action (identité reconstruite), 103 lignes identiques non
+   tranchées. Aucune concordance de calcul ne les réduit : ce sont les lignes
+   « À porter aux développeurs » de `CHANTIERS.md`.
+
+**Non vérifié par moi** : aucun export réel, aucun rendu navigateur, aucune
+fréquence de thématique répétée ; l'absence de texte réglementaire sur le
+délai n'est vérifiée que dans le dépôt.
+
 ---
 
 ## Blocs tranchés
