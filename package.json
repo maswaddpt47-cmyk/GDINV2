@@ -20,7 +20,6 @@
   },
   "homepage": "https://github.com/maswaddpt47-cmyk/GDINV2#readme",
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
-    "xlsx": "^0.18.5"
+    "@playwright/test": "^1.61.1"
   }
 }

@@ -15,12 +15,32 @@ const P = require('./gdin-pure.js');
 
 const NOMINATIVES = ['nom','prenom','prénom','telephone','téléphone','email','mail','adresse','naissance','observation'];
 
+// SheetJS n'est plus publié sur npm au-delà de 0.18.5, qui porte
+// CVE-2023-30533 et CVE-2024-22363. La version servie au navigateur est
+// vendorisée (`vendor/xlsx/`, 0.20.3 au 22/10/2026) : cet outil lit le même
+// fichier, pour que l'audit et le dashboard ne puissent pas diverger sur la
+// lecture d'un même .xls. Couvert par les tests « audit-export — SheetJS ».
+let _xlsx = null;
+function chargerXlsx() {
+  if (_xlsx) return _xlsx;
+  const chemin = path.join(__dirname, 'vendor', 'xlsx', 'xlsx.full.min.js');
+  let code;
+  try { code = fs.readFileSync(chemin, 'utf-8'); }
+  catch (e) { erreur(`SheetJS introuvable : ${chemin}`); }
+  const m = { exports: {} };
+  try { new Function('module', 'exports', code)(m, m.exports); }
+  catch (e) { erreur(`SheetJS illisible (${chemin}) : ${e.message}`); }
+  if (!m.exports || typeof m.exports.read !== 'function') {
+    erreur(`SheetJS chargé mais inutilisable : ${chemin}`);
+  }
+  _xlsx = m.exports;
+  return _xlsx;
+}
+
 function lireLignes(fichier) {
   const ext = path.extname(fichier).toLowerCase();
   if (ext === '.xls' || ext === '.xlsx') {
-    let X;
-    try { X = require('xlsx'); }
-    catch (e) { erreur("le module 'xlsx' est absent. Lancez : npm install"); }
+    const X = chargerXlsx();
     const buf = fs.readFileSync(fichier);
     const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
     const wb = X.read(ab, { type: 'array', cellDates: false });
