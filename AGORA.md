@@ -124,7 +124,74 @@ autrement.
 
 ## Blocs ouverts
 
-Aucun.
+## AG-002 — Un total arrêté à une date n'est pas stable — ouvert le 22/10/2026
+**Auteur** : session A — lu sur `1438398`
+**Proposition** : le dashboard doit dire, à côté de tout total filtré par
+période, que ce total continuera de monter pour la même période au fil des
+imports — ou bien proposer un mode « arrêté au » qui fige ce qui a été
+communiqué. Rien n'est fait aujourd'hui.
+**Critère déclencheur** : n° 6 — coût irréversible côté usager : un chiffre
+déjà communiqué à la hiérarchie ou aux élus change sans que personne ne soit
+prévenu.
+**Ce que ça engage** : la manière dont tout chiffre de ce tableau de bord est
+présenté, et la confiance dans ceux déjà diffusés.
+
+**Le fait, mesuré le 22/10/2026** (deux captures de l'utilisateur, filtre
+identique `11/02/2022 → 02/10/2026`) :
+
+| | relevé le 20/10 | relevé le 22/10 | écart |
+|---|---|---|---|
+| Accompagnements | 7 881 | 8 217 | **+336** |
+| Demandes distinctes | 5 540 | 5 610 | +70 |
+| Demandes réalisées | 5 518 | 5 791 | +273 |
+
+336 lignes de plus sur une période close, pour 70 demandes nouvelles
+seulement : 4,8 actions par demande, contre 1,46 en moyenne dans la base. Ce
+sont donc des actions saisies après le 02/10 et rattachées à des demandes
+antérieures. Le filtre portant sur la **date de demande**, elles se répartissent
+sur quatre ans d'historique et restent invisibles sur le mois en cours.
+Pour comparaison, les 19 jours réellement nouveaux (03→21/10) n'apportent que
+96 lignes, soit ~7 par jour ouvré : l'activité du mois est normale.
+
+**Non vérifié par l'auteur** : je n'ai pas accès aux données (dépôt sans
+export, charte IA du CD47 §4). Je ne peux donc pas distinguer les deux causes
+possibles — suivi normal de dossiers ouverts, ou rattrapage de saisie — ni
+dire si 4,8 actions par dossier ancien en trois semaines est plausible dans ce
+service. Je n'ai pas non plus vérifié si un écart comparable existe sur des
+périodes plus anciennes, ce qui dirait si le phénomène est permanent ou lié à
+un rattrapage ponctuel. Enfin, je n'ai pas cherché si l'onglet Fiabilité
+couvre déjà ce point sous un autre angle.
+**Où regarder** : `getFiltered()` et `moisDeLaPeriode()` dans `index.html`,
+la section « Chiffres diffusés aux élus » de `CLAUDE.md`, l'onglet Fiabilité.
+**Si personne ne répond** : en parler à l'utilisateur avant toute prochaine
+diffusion de chiffres, sans rien changer au code.
+
+---
+
+## AG-003 — « Thématique dominante » compte-t-il des demandes ? — ouvert le 22/10/2026
+**Auteur** : session A — lu sur `1438398`
+**Proposition** : le sous-titre de ce KPI dit « N demandes » alors qu'il
+compte vraisemblablement des lignes ou des occurrences de thématique. Si c'est
+confirmé, corriger le libellé.
+**Critère déclencheur** : n° 5 — contredit une note datée du dépôt
+(`CHANTIERS.md` : « un titre ne fige pas ce que le filtre peut démentir », et
+la règle de la revue de sens : un graphe peut calculer juste et raconter faux).
+**Ce que ça engage** : un chiffre lisible en première page, repris tel quel
+dans un bilan.
+
+**Le fait, mesuré le 22/10/2026**, à période identique : « Logement » passe de
+3 727 à 3 847 (**+120**) pendant que les demandes distinctes ne gagnent que
+**+70**. Une thématique ne peut pas gagner plus de demandes que le total n'en
+gagne.
+
+**Non vérifié par l'auteur** : je n'ai pas lu le code qui alimente ce KPI —
+`countThemas()` et son appelant. Il se peut que le comptage soit juste et que
+seul le mot « demandes » soit en cause, ou que les thématiques multiples d'une
+même ligne soient additionnées, ce qui serait défendable mais devrait se dire.
+**Où regarder** : `countThemas()` dans `gdin-pure.js`, le KPI « Thématique
+dominante » de `renderGlobal()` dans `index.html`.
+**Si personne ne répond** : vérifier le code et, si le libellé est faux, le
+corriger — c'est un défaut de rendu, pas une décision.
 
 ## Blocs tranchés
 
