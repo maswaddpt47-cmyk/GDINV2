@@ -677,6 +677,14 @@ function countEntries(arr,key){
   return Object.entries(m).sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:a[0]>b[0]?1:0));
 }
 function count(arr,key){return Object.fromEntries(countEntries(arr,key));}
+// L'unité de countThemas est LA MENTION D'UNE THÉMATIQUE, ni une demande ni une
+// ligne : une ligne portant trois thématiques compte trois fois, et il n'y a
+// aucune déduplication par N° de demande. La somme des valeurs dépasse donc le
+// nombre de lignes, et un pourcentage rapporté à data.length peut passer 100 %.
+// Tout libellé affiché à partir de ce compteur dit « mentions » — jamais
+// « demandes », « accompagnements » ni « participations » (AG-003 d'AGORA.md,
+// confirmé par Codex le 22/10/2026). Dire « actions portant cette thématique »
+// exigerait de dédupliquer par ligne, ce que cette fonction ne fait pas.
 function countThemas(arr){const m={};arr.forEach(r=>(r.themas||[]).forEach(t=>{m[t]=(m[t]||0)+1;}));return Object.fromEntries(Object.entries(m).sort((a,b)=>b[1]-a[1]));}
 function countTypes(arr){const m={};arr.forEach(r=>(r.type_action||[]).filter(t=>t!=='Reservation').forEach(t=>{m[t]=(m[t]||0)+1;}));return Object.fromEntries(Object.entries(m).sort((a,b)=>b[1]-a[1]));}
 function pct(n,total){return total?Math.round(n/total*100):0;}

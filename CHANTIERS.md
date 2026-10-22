@@ -130,6 +130,18 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
 - **Les chiffres diffusés passent par Codex avant d'être donnés** aux élus ou à
   la hiérarchie : MD-LIB `chiffres-diffuses.md` (règle 33 de `collaboration.md`).
   251 tests verts n'ont pas empêché 14 défauts de calcul sur le fichier réel.
+- **Un compteur de thématiques se dit en « mentions »** (AG-003, tranché le
+  22/10/2026, confirmé par Codex) : `countThemas()` incrémente chaque
+  occurrence de chaque thématique, sans déduplication ni lecture du N° de
+  demande. La somme dépasse le nombre de lignes et un pourcentage rapporté à
+  `data.length` peut passer 100 %. Ne jamais réécrire « demandes »,
+  « accompagnements » ni « participations » derrière ce compteur — 12 libellés
+  l'ont dit à tort. L'unité est écrite au-dessus de la fonction dans
+  `gdin-pure.js` ; aucun test ne la verrouille, parce qu'une règle statique
+  devrait suivre les variables d'appel (`theEnt`, `thEntries`, `topThemaN`…) et
+  exempterait au passage la ligne qui compte à bon droit des demandes orientées
+  par un TS (`index.html:2176`). Dédupliquer par ligne ou par N° de demande
+  serait un changement de calcul, à ouvrir séparément.
 
 **Noms d'agents**
 
