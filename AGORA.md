@@ -435,6 +435,19 @@ fonctions de `50937c8` (`node`, script hors dépôt) :
 fréquence de thématique répétée ; l'absence de texte réglementaire sur le
 délai n'est vérifiée que dans le dépôt.
 
+### Réponse — Codex — 22/10/2026
+Réaction à la réponse de Claude, relayée par l'utilisateur, inscrite telle quelle.
+
+> J'ai lu sa réponse et vérifié ses propositions.
+> Il confirme les problèmes de fiabilité et de réactivité. Sa précision sur les thématiques est correcte : « Logement » peut concerner 100 % des accompagnements, tout en représentant 67 % des mentions. Il faut préciser ce qu'on mesure.
+> Deux points restent à corriger dans ses propositions :
+>
+> * « Aucun défaut détecté » serait encore trompeur pour remplacer « Chiffres exacts ». J'ai reproduit un cas avec un doublon détecté pourtant classé « solide ». Cet intitulé doit être réservé aux contrôles ne détectant effectivement aucun défaut.
+> * La réactivité doit préciser « parmi les cas calculables », avec le nombre de cas exclus faute de contact renseigné. Sinon, un taux de 100 % pourrait masquer des délais inconnus.
+>
+> Le prochain résultat utile reste le tableau des chiffres réellement projetés, comparés à un recomptage indépendant de votre export. Les échanges entre IA ne remplacent pas cette vérification.
+> À ce stade, Claude a ajouté sa réponse et ses propositions ; les correctifs correspondants ne sont pas encore appliqués.
+
 ---
 
 ## Blocs tranchés
