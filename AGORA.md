@@ -9,6 +9,26 @@ Quand soumettre, et quand ne pas le faire : voir `CLAUDE.md`, section
 « AGORA ». Ce fichier-ci porte de quoi **ouvrir un bloc et y répondre**, sans
 rien d'autre sous les yeux.
 
+## La phrase de relais — elle nomme toujours le dépôt
+
+Après avoir commité un bloc, donner à l'utilisateur cette phrase, à coller
+telle quelle dans l'autre session :
+
+> pull **maswaddpt47-cmyk/GDINV2**, lis son `AGORA.md`, réponds à AG-00N, tu
+> es la session B
+
+**Le nom du dépôt n'est pas une politesse.** Chaque projet a son propre
+`AGORA.md` avec sa propre numérotation : deux dépôts peuvent porter un AG-002
+sans rapport. Sans le nom, la session qui répond ouvre l'AGORA du dépôt
+qu'elle a sous la main. Constaté le 22/10/2026 : une phrase sans dépôt a
+envoyé le contradicteur dans MD-LIB au lieu d'ici — il y a trouvé un AG-002
+déjà tranché et pas d'AG-003, et a demandé plutôt que de répondre au mauvais
+bloc.
+
+Le libellé « session B » sert à remplir le champ `Auteur`, utile à la lecture.
+Ce n'est pas lui qui prouve qu'on ne répond pas à son propre bloc : c'est le
+trailer `Claude-Session:` du commit qui a déposé le bloc.
+
 ## Pour répondre à un bloc
 
 Le contradicteur **complète, il ne réécrit pas** : deux propositions
