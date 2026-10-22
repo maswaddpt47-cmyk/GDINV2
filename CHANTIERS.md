@@ -30,10 +30,9 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 ## Chantiers ouverts
 
 - **Contrôle visuel de la mention de révisabilité** (posée le 22/10/2026,
-  `3280ec2`). Le déploiement de `89391f7` **n'a pas été confirmé vert** avant
-  la fin de la session : le vérifier avant de conclure que c'est en ligne
-  (`MD-LIB/outils/attendre-deploiement.sh /home/user/GDINV2 main`). Puis
-  regarder, dans cet ordre : bandeau gris au-dessus des KPI de la Vue globale,
+  `3280ec2`). **En ligne** : déploiement de `89391f7` vérifié vert le
+  22/10/2026 (`c93dee9`, poussé après, ne touche que ce fichier). Reste le
+  contrôle à l'œil, après un Ctrl+F5, dans cet ordre : bandeau gris au-dessus des KPI de la Vue globale,
   sous-titre du Rapport après avoir choisi un conseiller et un CMS, pied de la
   première diapositive du Diapo Rapport (c'est elle qui part en PDF). Sur les
   données de démonstration la mention dit « source non datée » — voulu, pas un
