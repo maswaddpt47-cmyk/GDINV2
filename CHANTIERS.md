@@ -4,15 +4,12 @@
 audits du 20/10/2026, PR #3, conservées à leur date.
 
 **À faire en premier, dans cet ordre** :
-1. Trancher les **pourcentages de thématiques** (AG-004, premier chantier
-   ci-dessous) **à partir de la réponse de Claude du 22/10/2026 dans
-   `AGORA.md`**, qui remplace l'alternative (a)/(b). Rien d'autre ne doit
-   toucher ces libellés avant.
+1. Faire contrôler à l'œil par l'utilisateur les **correctifs d'AG-004**
+   (`6b77162`, premier chantier ci-dessous), puis établir avec lui le
+   **tableau « affiché / recompté / écart »** sur son export. Aucun chiffre
+   concerné n'est « vérifié » avant ce tableau.
 2. Contrôler à l'œil la **mention de révisabilité**, déjà en ligne (deuxième
    chantier).
-3. Lire les deux autres constats d'**AG-004** dans `AGORA.md` (fiabilité
-   présentée comme « chiffres exacts », réactivité pondérée par accompagnement)
-   et les mettre à l'arbitrage de l'utilisateur sans rien corriger.
 
 **Hors dépôt, pour l'utilisateur seul** : les deux questions au référent
 archives et au DPO — où les dossiers de bilan sont déposés, combien de temps
@@ -33,7 +30,7 @@ Règles permanentes : `CLAUDE.md`.
 ## Comment reprendre
 
 ```bash
-npm test                      # 313 tests unitaires · 82 e2e (npx playwright test)
+npm test                      # 318 tests unitaires · 82 e2e (npx playwright test)
 npm run audit -- export.xls [--suivi ../suivi.json]   # parcours réel : lues, exclues, retenues, fusionnées, réimport
 ```
 
@@ -47,42 +44,27 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 
 ## Chantiers ouverts
 
-- **AG-004 / dénominateur des pourcentages de thématiques — À TRANCHER PAR
-  L'UTILISATEUR, ne pas décider seul.** Ouvert par Codex le 22/10/2026 sur
-  `89391f7`, constat confirmé et élargi le même jour : **10 pourcentages**
-  divisent un compte de *mentions* par un nombre de *lignes*
-  (`index.html` 1658, 2318, 2405, 2600, 2633, 4098, 4422, 4514, 4515, 4857 —
-  mesuré par grep, pas à l'œil). Une ligne portant « Logement, Web » et une
-  portant « Logement » donnent 2/2 = 100 % au lieu de 2/3 = 67 %.
-  Le défaut **préexistait** à la correction d'AG-003 : le numérateur comptait
-  déjà des mentions et le dénominateur déjà des lignes. Nommer correctement le
-  numérateur (« mentions ») a rendu l'incohérence lisible, il ne l'a pas créée
-  — mais la session qui a corrigé les libellés ne l'a pas vue alors qu'elle
-  travaillait sur ces lignes mêmes.
-  **Réponse de Claude (22/10/2026, `AGORA.md`, verdict « amendé »)** : pour
-  une thématique, mentions / lignes *est* déjà l'option (b) — seuls le libellé
-  de `4516` et la somme de `4098` (jusqu'à 200 %) sont faux ; `1658` est juste,
-  `2600` jamais lu. Les deux questions qui restent à l'utilisateur :
-  dénominateur avec ou sans les 22,9 % de lignes sans thématique, et
-  dédoublonner une thématique répétée sur une ligne (à mesurer d'abord).
-  **Codex (22/10/2026) corrige deux propositions de Claude**, vérifié dans le
-  code : « Aucun défaut détecté » serait faux pour un indicateur « solide »
-  qui a des défauts (`index.html:4793` ne filtre que sur le niveau) ; la
-  phrase de conclusion sur la réactivité (`index.html:2636`, `:4861`) doit dire
-  « parmi les N cas calculables, M sans contact », comme les KPI le font déjà
-  (`:2612`, `:4415`). Les
-  deux options d'origine, pour mémoire :
-  - **(a) dénominateur = total des mentions.** Cohérent avec le calcul actuel,
-    aucun changement de comptage. Les pourcentages baissent partout où une
-    ligne porte plusieurs thématiques.
-  - **(b) « part des accompagnements portant cette thématique ».** Exige de
-    dédupliquer par ligne — donc un changement de comptage, celui que Codex
-    avait déjà écarté dans AG-003.
-  Critère AGORA n° 6 : des pourcentages peuvent avoir déjà été communiqués.
-  Ne pas corriger avant l'arbitrage. Les autres constats d'AG-004 (fiabilité
-  présentée comme « chiffres exacts », réactivité pondérée par accompagnement
-  et non par demande) attendent le même arbitrage et sont détaillés dans
-  `AGORA.md`.
+- **AG-004 — correctifs appliqués le 22/10/2026 (`6b77162`), recomptage à
+  faire.** Décisions de l'utilisateur sur les propositions de Codex (détail
+  dans `AGORA.md`) : réactivité **par demande**, pourcentages de thématiques
+  en **part de tous les accompagnements** (sans thématique compris),
+  correctifs de libellé appliqués. 318 tests unitaires et 82 e2e passent.
+  Reste :
+  - **Contrôle visuel** après Ctrl+F5 : Rapport et Diapo Rapport d'un
+    conseiller × CMS (KPI réactivité « X/N demandes calculables · M sans
+    contact renseigné », phrase de conclusion, diapositive Thématiques,
+    diapositive Fiabilité « Résultats des contrôles ») ; onglet Territoire
+    (« Top 3 : X % des accompagnements »).
+  - **Tableau « affiché / recompté / écart »** : tableau croisé dynamique
+    Excel sur l'export source, comparé aux 11 diapositives du Diapo Rapport
+    pour la période et le couple conseiller × CMS projetés. C'est la seule
+    preuve d'exactitude ; les correctifs n'en sont pas une (Codex).
+  - **Non traité, à proposer** : le graphe en anneau des thématiques du
+    Territoire (`index.html`, `ch-terr-thema`) découpe un cercle en parts
+    qui se chevauchent (une ligne à deux thématiques est dans deux parts) ;
+    un anneau promet un tout. Barres horizontales à proposer à l'utilisateur.
+  - Les chiffres de réactivité et de fiabilité déjà projetés avant
+    `6b77162` ne sont plus comparables : signalé à l'utilisateur.
 
 - **Contrôle visuel de la mention de révisabilité** (posée le 22/10/2026,
   `3280ec2`). **En ligne** : déploiement de `89391f7` vérifié vert le
@@ -104,13 +86,6 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     « en ligne » sans nommer le commit laisse croire que le travail poussé
     ensuite l'est aussi. Nommer le sha dans l'annonce.
 
-- **AG-004 — contrôle des chiffres avant projection** : bloc ouvert par
-  Codex le 22/10/2026, sur `89391f7`, à la demande de l'utilisateur pour
-  contradiction par Claude. Fiabilité, pondération de la réactivité et
-  dénominateur du pourcentage des mentions reproduits sur données fictives ;
-  313 tests passent. Arbitrage métier et tableau indépendant
-  « affiché / recompté / écart » à établir avant de déclarer les chiffres
-  concernés vérifiés. Aucun code modifié par Codex, aucun export réel audité.
 - **AG-002 — archivage des bilans diffusés** (volet A fait le 22/10/2026,
   volet B en attente). La mention « chiffres susceptibles d'être révisés »,
   avec la période et la date du dernier import, est posée sur la Vue globale,
@@ -136,10 +111,6 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     ateliers, mesuré le 20/10/2026) : gardées et signalées par le panneau
     qualité ; un doublon de saisie ou deux séances le même jour, la source ne
     permet pas de le dire.
-  - **« 48 h »** = au plus 2 jours ouvrés du lundi au vendredi, fériés non
-    retirés, date planifiée passée admise comme contact : une mesure
-    disponible, pas une garantie de contact en 48 heures. À redéfinir si les
-    élus attendent cette garantie.
   - **Taux de demandes closes** : le taux affiché est un taux d'*accompagnements*
     réalisés (lignes). Un taux par demande demande une règle pour les demandes
     à plusieurs actions.
@@ -199,7 +170,11 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
   ne compte `=== 'En cours'`.
 - **Réactivité** rattachée à la même demande (`deriverActions`), jamais à
   conseiller + CMS + date ; sans contact valide, le cas est compté « sans
-  contact ». Les actions dérivées gardent `jour` (filtre) et `date` (mois,
+  contact ». **Le taux 48 h compte des demandes** (`delaisParDemande`, seuil
+  de 20 demandes, AG-004, décision de l'utilisateur du 22/10/2026) : par
+  accompagnement, une demande à 20 accompagnements pesait 20 fois. « 48 h » =
+  au plus 2 jours ouvrés, fériés non retirés : ne jamais écrire « délai
+  réglementaire ». Les actions dérivées gardent `jour` (filtre) et `date` (mois,
   graphiques) ; ne jamais comparer des mois pour filtrer une période.
 - **Taux de réalisation** = lignes à l'état Réalisée sur les lignes, jamais la
   présence de `date_action`. **Comparaison N/N−1** à même date, avec le type
@@ -215,18 +190,17 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
 - **Les chiffres diffusés passent par Codex avant d'être donnés** aux élus ou à
   la hiérarchie : MD-LIB `chiffres-diffuses.md` (règle 33 de `collaboration.md`).
   251 tests verts n'ont pas empêché 14 défauts de calcul sur le fichier réel.
-- **Un compteur de thématiques se dit en « mentions »** (AG-003, tranché le
-  22/10/2026, confirmé par Codex) : `countThemas()` incrémente chaque
-  occurrence de chaque thématique, sans déduplication ni lecture du N° de
-  demande. La somme dépasse le nombre de lignes et un pourcentage rapporté à
-  `data.length` peut passer 100 %. Ne jamais réécrire « demandes »,
-  « accompagnements » ni « participations » derrière ce compteur — 12 libellés
-  l'ont dit à tort. L'unité est écrite au-dessus de la fonction dans
-  `gdin-pure.js` ; aucun test ne la verrouille, parce qu'une règle statique
-  devrait suivre les variables d'appel (`theEnt`, `thEntries`, `topThemaN`…) et
-  exempterait au passage la ligne qui compte à bon droit des demandes orientées
-  par un TS (`index.html:2176`). Dédupliquer par ligne ou par N° de demande
-  serait un changement de calcul, à ouvrir séparément.
+- **Une valeur de thématique compte des lignes** (AG-004, décision de
+  l'utilisateur du 22/10/2026, remplace la règle « mentions » d'AG-003) :
+  `countThemas()` compte une thématique une fois par ligne ; son pourcentage
+  se rapporte à **toutes** les lignes, sans thématique comprises (« % des
+  accompagnements »). La **somme** des valeurs dépasse le nombre de lignes :
+  un Top 3 se compte en union (`lignesAvecThemas`), jamais en additionnant.
+  Jamais « demandes » : aucune déduplication par N° de demande.
+- **Fiabilité** (AG-004) : la marge d'un indicateur se rapporte à sa propre
+  population (les doublons d'un type aux lignes de ce type), et chaque constat
+  la nomme. « Solide » = moins de 1 % de défauts *détectés* : jamais
+  « chiffres exacts », jamais « aucun défaut » s'il y en a un.
 
 **Noms d'agents**
 

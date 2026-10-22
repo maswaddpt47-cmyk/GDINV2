@@ -1504,6 +1504,8 @@ test.describe('Diaporamas et PDF', () => {
     // Une page est vide si elle n'a ni texte au-delà de son en-tête ni graphique.
     r.pages.forEach((p, i) => expect(p.txt.length > 60 || p.img > 0, `page ${r.titres[i]} vide`).toBe(true));
     const fia = r.pages[r.titres.indexOf('fiabilite')].txt;
-    expect(fia).toMatch(/Chiffres exacts|Points de vigilance/);
+    expect(fia).toMatch(/Résultats des contrôles/);
+    // AG-004 : un contrôle sans défaut détecté n'est pas une exactitude.
+    expect(fia).not.toMatch(/Chiffres exacts/);
   });
 });
