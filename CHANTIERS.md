@@ -64,7 +64,13 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   de `4516` et la somme de `4098` (jusqu'à 200 %) sont faux ; `1658` est juste,
   `2600` jamais lu. Les deux questions qui restent à l'utilisateur :
   dénominateur avec ou sans les 22,9 % de lignes sans thématique, et
-  dédoublonner une thématique répétée sur une ligne (à mesurer d'abord). Les
+  dédoublonner une thématique répétée sur une ligne (à mesurer d'abord).
+  **Codex (22/10/2026) corrige deux propositions de Claude**, vérifié dans le
+  code : « Aucun défaut détecté » serait faux pour un indicateur « solide »
+  qui a des défauts (`index.html:4793` ne filtre que sur le niveau) ; la
+  phrase de conclusion sur la réactivité (`index.html:2636`, `:4861`) doit dire
+  « parmi les N cas calculables, M sans contact », comme les KPI le font déjà
+  (`:2612`, `:4415`). Les
   deux options d'origine, pour mémoire :
   - **(a) dénominateur = total des mentions.** Cohérent avec le calcul actuel,
     aucun changement de comptage. Les pourcentages baissent partout où une
