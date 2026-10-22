@@ -4,9 +4,10 @@
 audits du 20/10/2026, PR #3, conservées à leur date.
 
 **À faire en premier, dans cet ordre** :
-1. Trancher le **dénominateur des pourcentages de thématiques** (AG-004,
-   premier chantier ci-dessous). Rien d'autre ne doit toucher ces libellés
-   avant.
+1. Trancher les **pourcentages de thématiques** (AG-004, premier chantier
+   ci-dessous) **à partir de la réponse de Claude du 22/10/2026 dans
+   `AGORA.md`**, qui remplace l'alternative (a)/(b). Rien d'autre ne doit
+   toucher ces libellés avant.
 2. Contrôler à l'œil la **mention de révisabilité**, déjà en ligne (deuxième
    chantier).
 3. Lire les deux autres constats d'**AG-004** dans `AGORA.md` (fiabilité
@@ -58,8 +59,13 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   numérateur (« mentions ») a rendu l'incohérence lisible, il ne l'a pas créée
   — mais la session qui a corrigé les libellés ne l'a pas vue alors qu'elle
   travaillait sur ces lignes mêmes.
-  Deux options, et c'est un arbitrage métier parce que les chiffres projetés
-  changent :
+  **Réponse de Claude (22/10/2026, `AGORA.md`, verdict « amendé »)** : pour
+  une thématique, mentions / lignes *est* déjà l'option (b) — seuls le libellé
+  de `4516` et la somme de `4098` (jusqu'à 200 %) sont faux ; `1658` est juste,
+  `2600` jamais lu. Les deux questions qui restent à l'utilisateur :
+  dénominateur avec ou sans les 22,9 % de lignes sans thématique, et
+  dédoublonner une thématique répétée sur une ligne (à mesurer d'abord). Les
+  deux options d'origine, pour mémoire :
   - **(a) dénominateur = total des mentions.** Cohérent avec le calcul actuel,
     aucun changement de comptage. Les pourcentages baissent partout où une
     ligne porte plusieurs thématiques.
