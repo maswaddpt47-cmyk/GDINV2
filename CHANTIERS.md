@@ -15,7 +15,7 @@ Règles permanentes : `CLAUDE.md`.
 ## Comment reprendre
 
 ```bash
-npm test                      # 300 tests unitaires · 82 e2e (npx playwright test)
+npm test                      # 313 tests unitaires · 82 e2e (npx playwright test)
 npm run audit -- export.xls [--suivi ../suivi.json]   # parcours réel : lues, exclues, retenues, fusionnées, réimport
 ```
 
@@ -28,6 +28,27 @@ demandes perdues par l'ancienne clé), 5 478 participations d'atelier pour 596
 séances (mesuré le 20/10/2026, `audit-export.js`).
 
 ## Chantiers ouverts
+
+- **Contrôle visuel de la mention de révisabilité** (posée le 22/10/2026,
+  `3280ec2`). Le déploiement de `89391f7` **n'a pas été confirmé vert** avant
+  la fin de la session : le vérifier avant de conclure que c'est en ligne
+  (`MD-LIB/outils/attendre-deploiement.sh /home/user/GDINV2 main`). Puis
+  regarder, dans cet ordre : bandeau gris au-dessus des KPI de la Vue globale,
+  sous-titre du Rapport après avoir choisi un conseiller et un CMS, pied de la
+  première diapositive du Diapo Rapport (c'est elle qui part en PDF). Sur les
+  données de démonstration la mention dit « source non datée » — voulu, pas un
+  défaut : la date vient de `importMeta.date`, absent sans import.
+
+- **À porter à MD-LIB** (deux constats de la session du 22/10/2026, propagation
+  à demander à l'utilisateur) :
+  - `outils/attendre-deploiement.sh` attend `[dossier] [branche]`, pas un sha.
+    Lancé avec un sha il fait `cd <sha>`, échoue — et **sort tout de même 0**,
+    avec pour seule trace un message sur stderr. Une session pressée lit le
+    code 0 comme un déploiement vert. Le `cd` doit faire sortir le script en
+    erreur. Constaté en réel ce jour (`deploiement.md`).
+  - Le ✅ d'un déploiement **porte sur un sha, pas sur une session**. Annoncer
+    « en ligne » sans nommer le commit laisse croire que le travail poussé
+    ensuite l'est aussi. Nommer le sha dans l'annonce.
 
 - **AG-002 — archivage des bilans diffusés** (volet A fait le 22/10/2026,
   volet B en attente). La mention « chiffres susceptibles d'être révisés »,
