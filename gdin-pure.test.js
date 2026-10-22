@@ -2,13 +2,13 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const {
   pct, esc, excelDate, parseDt, dayDiff, bizDays, monthLabel, typeColor,
-  count, countEntries, countThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
+  count, countEntries, countThemas, lignesAvecThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
   normEtat, isRealisee, countDemandes, dateFr, mentionRevisabilite, parseRows, mapColonnes, demojibakeUtf16, moisDeLaPeriode, libelleLignes,
   cleDoublon, compterDoublons,
   estAtelier, cleSessionAtelier, compterSessionsAtelier, statsAteliers,
   numeroterParticipants, cleFusion, numeroterLignes, fusionnerImport, attribuerConum, deriverAttributionCms,
   neutraliserFormule, celluleCSV, validerSauvegardeJSON, baseAncienne, completerRangs,
-  categorieEtat, repartitionEtats, deriverActions, reactivite48, dansPeriode, tauxRealisation, filtrerParType, evolutionAnnuelle,
+  categorieEtat, repartitionEtats, deriverActions, delaisParDemande, reactivite48, dansPeriode, tauxRealisation, filtrerParType, evolutionAnnuelle,
   indicateursFiabilite, defautsSaisie, syntheseFiabilite, niveauFiabilite,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
   rattacherCommune, COMMUNES_47,
@@ -87,6 +87,16 @@ describe('countThemas', () => {
     {Web:2,Emploi:1}
   ));
   it('aucune → vide',    () => assert.deepEqual(countThemas([{themas:[]}]), {}));
+  // AG-004 : une valeur se rapporte aux lignes, une saisie répétée donnait 200 %.
+  it('thématique répétée sur une ligne → comptée une fois', () =>
+    assert.deepEqual(countThemas([{themas:['Logement','Logement']}]), {Logement:1}));
+});
+describe('lignesAvecThemas', () => {
+  // AG-004 : additionner les parts du Top 3 donnait 200 % sur ce jeu.
+  it('union : une ligne portant deux thématiques du top compte une fois', () => {
+    const l = [{themas:['A','B']},{themas:['A','C']},{themas:['B','C']},{themas:[]}];
+    assert.equal(lignesAvecThemas(l, ['A','B','C']), 3);
+  });
 });
 
 // ─── countTypes ───────────────────────────────────────────────────────────
@@ -900,6 +910,19 @@ describe('indicateursFiabilite', () => {
     const recs = [ligneF({ conum: '' }), ligneF({ id_demande: '2' })];
     assert.equal(indicateursFiabilite(recs, {}).find(i => i.cle === 'conseiller').ecart, 1);
   });
+  // AG-004 : 1 doublon sur 2 accompagnements, noyé dans 200 lignes, sortait à
+  // 0,5 % « solide ».
+  it('les doublons d\'un type se rapportent aux lignes de ce type', () => {
+    const recs = [];
+    for (let i = 0; i < 198; i++) recs.push(ligneF({ id_demande: 'N' + i, type_action: ['Prise de contact'] }));
+    recs.push(ligneF({ id_demande: 'Z' }), ligneF({ id_demande: 'Z' }));
+    const a = indicateursFiabilite(recs, {}).find(i => i.cle === 'accompagnements');
+    assert.equal(a.ecart, 1);
+    assert.equal(a.sur, 2);
+    assert.equal(a.marge, 50);
+    assert.equal(a.niveau, 'faible');
+    assert.ok(a.fait.includes('1 doublon suspect sur 2 accompagnements'), a.fait);
+  });
   it('les ateliers sont une reformulation, pas une marge', () => {
     const recs = [atelier('1', '2025-01-01'), atelier('1', '2025-01-01')];
     const a = indicateursFiabilite(recs, {}).find(i => i.cle === 'ateliers');
@@ -938,7 +961,7 @@ describe('syntheseFiabilite', () => {
     const s = syntheseFiabilite(ind);
     assert.equal(s.solides, 2);
     assert.equal(s.vigilance, 1);
-    assert.ok(s.texte.includes('2 indicateurs solides'), s.texte);
+    assert.ok(s.texte.includes('2 contrôles sans défaut détecté'), s.texte);
     assert.ok(s.texte.includes('Par conseiller'), s.texte);
   });
   it('nomme le plus sensible, pas le premier venu', () => {
@@ -947,6 +970,16 @@ describe('syntheseFiabilite', () => {
       { cle: 'b', libelle: 'B', niveau: 'faible', marge: 40 },
     ];
     assert.equal(syntheseFiabilite(ind).plusFaible.libelle, 'B');
+  });
+  // AG-004 (Codex) : un indicateur « solide » avec un défaut détecté n'est pas
+  // présenté comme sans défaut.
+  it('un solide qui a des défauts n\'est pas « sans défaut détecté »', () => {
+    const s = syntheseFiabilite([
+      { cle: 'a', libelle: 'A', niveau: 'solide', marge: 0, ecart: 0 },
+      { cle: 'b', libelle: 'B', niveau: 'solide', marge: 0.5, ecart: 1 },
+    ]);
+    assert.equal(s.sansDefaut, 1);
+    assert.ok(s.texte.startsWith('1 contrôle sans défaut détecté · 1 avec moins de 1 % de défauts'), s.texte);
   });
   it('tout solide', () => {
     const s = syntheseFiabilite([{ cle: 'a', libelle: 'A', niveau: 'solide', marge: 0 }]);
@@ -1241,6 +1274,15 @@ describe('reactivite48', () => {
     assert.deepEqual(r, { calculables: 2, dans48: 1, sansContact: 2, taux: 50 });
   });
   it('pas de taux sous le seuil', () => assert.equal(reactivite48([act(1)]).taux, null));
+  // AG-004 : une demande à 20 accompagnements pesait 20 fois (95 % au lieu de 50 %).
+  it('compte chaque demande une seule fois', () => {
+    const a = [];
+    for (let i = 0; i < 20; i++) a.push({ id_demande: 'D1', delai_reactivite: 1 });
+    a.push({ id_demande: 'D2', delai_reactivite: 5 }, { id_demande: 'D3', delai_reactivite: null });
+    assert.deepEqual(reactivite48(a, 1), { calculables: 2, dans48: 1, sansContact: 1, taux: 50 });
+    assert.equal(reactivite48(a).taux, null, 'le seuil de 20 porte sur les demandes');
+    assert.deepEqual(delaisParDemande(a), [1, 5, null]);
+  });
 });
 
 describe('dansPeriode : filtre au jour', () => {

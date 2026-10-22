@@ -677,14 +677,14 @@ function countEntries(arr,key){
   return Object.entries(m).sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:a[0]>b[0]?1:0));
 }
 function count(arr,key){return Object.fromEntries(countEntries(arr,key));}
-// L'unité de countThemas est LA MENTION D'UNE THÉMATIQUE, ni une demande ni une
-// ligne : une ligne portant trois thématiques compte trois fois, et il n'y a
-// aucune déduplication par N° de demande. La somme des valeurs dépasse donc le
-// nombre de lignes, et un pourcentage rapporté à data.length peut passer 100 %.
-// Tout libellé affiché à partir de ce compteur dit « mentions » — jamais
-// « demandes », « accompagnements » ni « participations » (AG-003 d'AGORA.md,
-// confirmé par Codex le 22/10/2026). Dire « actions portant cette thématique »
-// exigerait de dédupliquer par ligne, ce que cette fonction ne fait pas.
+// countThemas compte, pour chaque thématique, LES LIGNES QUI LA PORTENT : une
+// thématique saisie deux fois sur une ligne compte une fois, mais une ligne à
+// trois thématiques compte dans trois entrées. Une valeur se rapporte donc aux
+// lignes (« % des accompagnements », dénominateur = toutes les lignes, sans
+// thématique comprises — choix de l'utilisateur, AG-004, 22/10/2026) ; la
+// SOMME des valeurs dépasse le nombre de lignes et ne se divise jamais par lui
+// (lignesAvecThemas pour un Top 3). Jamais « demandes » : aucune déduplication
+// par N° de demande (AG-003).
 // ── Mention de révisabilité (AG-002, 22/10/2026) ──
 // À période identique, le total d'accompagnements est passé de 7 881 à 8 313
 // entre deux imports : un chiffre déjà communiqué change sans que rien ne le
@@ -709,7 +709,11 @@ function mentionRevisabilite(opts){
   return `${periode} · ${imp} · chiffres susceptibles d'être révisés`;
 }
 
-function countThemas(arr){const m={};arr.forEach(r=>(r.themas||[]).forEach(t=>{m[t]=(m[t]||0)+1;}));return Object.fromEntries(Object.entries(m).sort((a,b)=>b[1]-a[1]));}
+function countThemas(arr){const m={};arr.forEach(r=>new Set(r.themas||[]).forEach(t=>{m[t]=(m[t]||0)+1;}));return Object.fromEntries(Object.entries(m).sort((a,b)=>b[1]-a[1]));}
+// Lignes portant au moins une des thématiques citées : l'union, pour un
+// « Top 3 ». Additionner les valeurs de countThemas compterait deux fois une
+// ligne qui en porte deux (jusqu'à 200 %, AG-004).
+function lignesAvecThemas(arr,noms){const s=new Set(noms);return(arr||[]).filter(r=>(r.themas||[]).some(t=>s.has(t))).length;}
 function countTypes(arr){const m={};arr.forEach(r=>(r.type_action||[]).filter(t=>t!=='Reservation').forEach(t=>{m[t]=(m[t]||0)+1;}));return Object.fromEntries(Object.entries(m).sort((a,b)=>b[1]-a[1]));}
 function pct(n,total){return total?Math.round(n/total*100):0;}
 function monthLabel(k){const[y,mo]=k.split('-');return MONTH_FR[parseInt(mo)-1]+' '+y.slice(2);}
@@ -993,48 +997,54 @@ function indicateursFiabilite(records,stats){
   const n=base.length;
   if(!n)return[];
   const st=stats||{};
-  const pourcent=x=>Math.round(x/n*1000)/10;
   const ind=[];
-  const ajoute=(cle,libelle,valeur,ecart,fait,niveauForce)=>{
-    const marge=pourcent(ecart);
-    ind.push({cle,libelle,valeur,ecart,marge,niveau:niveauForce||niveauFiabilite(marge),fait});
+  // `sur` = la population contrôlée. Les doublons d'un type se rapportent aux
+  // lignes de ce type, pas à toute la base : 1 doublon sur 2 accompagnements
+  // affichait 0,5 % parmi 200 lignes, classé « solide » (AG-004).
+  const ajoute=(cle,libelle,valeur,ecart,fait,sur)=>{
+    const pop=sur==null?n:sur;
+    const marge=pop?Math.round(ecart/pop*1000)/10:0;
+    ind.push({cle,libelle,valeur,ecart,sur:pop,marge,niveau:niveauFiabilite(marge),fait});
   };
 
   // Demandes : le N° est renseigné sur toutes les lignes retenues, donc exact.
   const sansNum=base.filter(r=>!r.id_demande).length;
   ajoute('demandes','Demandes distinctes',countDemandes(base),sansNum,
-    sansNum?`${sansNum} lignes sans N° de demande`:'N° de demande renseigné sur 100 % des lignes');
+    sansNum?`${sansNum} lignes sans N° de demande sur ${n} lignes`:'N° de demande renseigné sur 100 % des lignes');
 
   // Types principaux : la marge est le nombre de doublons suspects du type.
   [['accompagnements','Accompagnements','Accompagnement'],
    ['contacts','Prises de contact','Prise de contact']].forEach(([cle,libelle,type])=>{
     const lignes=base.filter(r=>(r.type_action||[]).includes(type));
     const dbl=compterDoublons(lignes);
-    ajoute(cle,libelle,lignes.length,dbl,dbl?`${dbl} doublons suspects`:'aucun doublon suspect');
+    const unite=libelle.toLowerCase();
+    ajoute(cle,libelle,lignes.length,dbl,
+      `${dbl?`${dbl} doublon${dbl>1?'s':''} suspect${dbl>1?'s':''}`:'aucun doublon suspect'} sur ${lignes.length} ${unite}`,
+      lignes.length);
   });
 
   // Ateliers : pas de marge, une reformulation. Une ligne est une participation.
   const atl=statsAteliers(base);
   if(atl.participations>0)ind.push({cle:'ateliers',libelle:'Ateliers',valeur:atl.sessions,
-    ecart:0,marge:0,niveau:'solide',
+    ecart:0,sur:atl.participations,marge:0,niveau:'solide',
     fait:`${atl.sessions} séances pour ${atl.participations} participations`,
     participations:atl.participations});
 
   // Dimensions d'analyse : la marge est la part de lignes non rattachables.
   const autreStructure=base.filter(r=>r.cms==='Autre structure').length;
   ajoute('lieu','Par lieu / CMS',new Set(base.map(r=>r.cms).filter(Boolean)).size,autreStructure,
-    `${autreStructure} lignes en « Autre structure »`);
+    `${autreStructure} lignes en « Autre structure » sur ${n} lignes`);
 
   const horsRef=base.filter(r=>r.commune&&!rattacherCommune(r.commune)).length;
   ajoute('commune','Par commune',new Set(base.map(r=>r.commune).filter(Boolean)).size,horsRef,
-    `${horsRef} lignes hors référentiel officiel`);
+    `${horsRef} lignes hors référentiel officiel sur ${n} lignes`);
 
   const sansThema=base.filter(r=>!r.themas||!r.themas.length).length;
   ajoute('themas','Thématiques',new Set(base.flatMap(r=>r.themas||[])).size,sansThema,
-    `${sansThema} lignes sans thématique`);
+    `${sansThema} lignes sans thématique sur ${n} lignes`);
 
   const chrono=base.filter(r=>r.date_realisation&&r.date_realisation<r.date_demande).length;
-  ajoute('delais','Délais',null,chrono,`${chrono} réalisations antérieures à leur demande`);
+  ajoute('delais','Délais',null,chrono,`${chrono} réalisations antérieures à leur demande sur ${n} lignes`);
 
   // Conseiller : l'indicateur le plus sensible. conum_deduit est posé par
   // applyConumAttrib ; sans lui on retombe sur les lignes sans conseiller.
@@ -1045,7 +1055,7 @@ function indicateursFiabilite(records,stats){
   // peut pas dire qu'elle est exacte, donc elle compte dans la marge.
   const inconnus=base.filter(r=>r.conum_origine==='inconnu').length;
   ajoute('conseiller','Par conseiller',new Set(base.map(r=>r.conum).filter(Boolean)).size,deduits+inconnus,
-    `${deduits} lignes attribuées par déduction depuis le CMS`+(inconnus?` · ${inconnus} d'origine inconnue (base d'une version antérieure : réimporter l'export pour la retrouver)`:''));
+    `${deduits} lignes attribuées par déduction depuis le CMS sur ${n} lignes`+(inconnus?` · ${inconnus} d'origine inconnue (base d'une version antérieure : réimporter l'export pour la retrouver)`:''));
 
   return ind;
 }
@@ -1075,21 +1085,27 @@ function defautsSaisie(records,stats){
 
 // Synthèse d'une ligne, affichée après import.
 // Ne PAS réduire l'ensemble au pire indicateur : un seul point faible ferait
-// afficher « fiabilité faible » alors que la plupart des chiffres sont exacts,
-// et décrédibiliterait ce qui est solide — l'inverse du but. La synthèse
-// compte ce qui est solide, annonce les points de vigilance et nomme le plus
-// sensible, à charge pour l'onglet de détailler.
+// afficher « fiabilité faible » alors que la plupart des contrôles sont nets.
+// Ne pas non plus faire passer un contrôle « solide » pour une exactitude :
+// « solide » = moins de 1 % de défauts DÉTECTÉS, pas zéro (AG-004, Codex). La
+// synthèse sépare donc les contrôles sans défaut détecté de ceux qui en ont
+// peu, annonce les points de vigilance et nomme le plus sensible.
 function syntheseFiabilite(indicateurs){
   const ind=indicateurs||[];
-  if(!ind.length)return{niveau:'—',solides:0,vigilance:0,plusFaible:null,texte:'aucune donnée'};
-  const solides=ind.filter(i=>i.niveau==='solide').length;
+  if(!ind.length)return{niveau:'—',solides:0,sansDefaut:0,vigilance:0,plusFaible:null,texte:'aucune donnée'};
+  const solides=ind.filter(i=>i.niveau==='solide');
+  const sansDefaut=solides.filter(i=>!i.ecart).length;
+  const peu=solides.length-sansDefaut;
   const enVigilance=ind.filter(i=>i.niveau!=='solide');
   const plusFaible=enVigilance.slice().sort((a,b)=>b.marge-a.marge)[0]||null;
   const pire=plusFaible?plusFaible.niveau:'solide';
-  const texte=enVigilance.length
-    ?`${solides} indicateur${solides>1?'s':''} solide${solides>1?'s':''} · ${enVigilance.length} point${enVigilance.length>1?'s':''} de vigilance · le plus sensible : ${plusFaible.libelle} (${plusFaible.marge} %)`
-    :`${solides} indicateur${solides>1?'s':''} solide${solides>1?'s':''} · aucun point de vigilance`;
-  return{niveau:pire,solides,vigilance:enVigilance.length,plusFaible,texte};
+  const pl=(k,mot)=>`${k} ${mot}${k>1?'s':''}`;
+  const parts=[`${pl(sansDefaut,'contrôle')} sans défaut détecté`];
+  if(peu)parts.push(`${peu} avec moins de 1 % de défauts`);
+  parts.push(enVigilance.length
+    ?`${pl(enVigilance.length,'point')} de vigilance · le plus sensible : ${plusFaible.libelle} (${plusFaible.marge} %)`
+    :'aucun point de vigilance');
+  return{niveau:pire,solides:solides.length,sansDefaut,vigilance:enVigilance.length,plusFaible,texte:parts.join(' · ')};
 }
 
 // ─── Libellé des lignes affichées ────────────────────────────────────────────
@@ -1300,15 +1316,30 @@ function deriverActions(records,aujourdhui){
   });
   return out;
 }
-// Réactivité 48 h sur une liste d'actions dérivées. `calculables` = lignes
-// dont la demande a un contact valide ; `sansContact` = les autres, à afficher
-// à côté du taux. Le taux n'est publié qu'à partir de `seuil` cas.
+// Délai de premier contact, UNE valeur par demande : deriverActions répète le
+// délai d'une demande sur chacun de ses accompagnements, si bien qu'une demande
+// à 20 accompagnements pesait 20 fois (95 % au lieu de 50 %, AG-004). Une
+// action sans N° de demande est un cas à part entière. null = sans contact.
+function delaisParDemande(actions){
+  const m=new Map();
+  (actions||[]).forEach((r,i)=>{
+    const k=r.id_demande?'d:'+r.id_demande:'l:'+i;
+    const d=r.delai_reactivite!=null&&r.delai_reactivite>=0?r.delai_reactivite:null;
+    if(!m.has(k)||(d!=null&&(m.get(k)==null||d<m.get(k))))m.set(k,d);
+  });
+  return[...m.values()];
+}
+// Réactivité « 48 h » = premier contact en 2 jours ouvrés au plus, fériés non
+// retirés — une mesure, pas un délai réglementaire. Comptée PAR DEMANDE
+// (choix de l'utilisateur, AG-004, 22/10/2026). `calculables` = demandes avec
+// un contact valide ; `sansContact` = demandes sans contact, à afficher à côté
+// du taux. Le taux n'est publié qu'à partir de `seuil` demandes calculables.
 function reactivite48(actions,seuil){
-  const liste=actions||[];
-  const calc=liste.filter(r=>r.delai_reactivite!=null&&r.delai_reactivite>=0);
-  const dans48=calc.filter(r=>r.delai_reactivite<=2).length;
+  const delais=delaisParDemande(actions);
+  const calc=delais.filter(d=>d!=null);
+  const dans48=calc.filter(d=>d<=2).length;
   const min=seuil==null?20:seuil;
-  return{calculables:calc.length,dans48,sansContact:liste.length-calc.length,
+  return{calculables:calc.length,dans48,sansContact:delais.length-calc.length,
     taux:calc.length>=min?Math.round(dans48/calc.length*100):null};
 }
 // Filtre par période au JOUR : les écrans comparaient des mois (YYYY-MM), si
@@ -1365,8 +1396,8 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,deriverActions,reactivite48,dansPeriode,tauxRealisation,validerSauvegardeJSON,baseAncienne,completerRangs,dateIsoValide,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
-    typeColor,pct,monthLabel,count,countEntries,countThemas,countTypes,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,validerSauvegardeJSON,baseAncienne,completerRangs,dateIsoValide,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
+    typeColor,pct,monthLabel,count,countEntries,countThemas,lignesAvecThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,dateFr,mentionRevisabilite,cleDoublon,compterDoublons,moisDeLaPeriode,libelleLignes,LIBELLE_LIGNES,
   };
