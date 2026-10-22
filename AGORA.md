@@ -461,6 +461,16 @@ Relayées par l'utilisateur, inscrites telles quelles.
 > Le service doit valider la population de la réactivité et l'inclusion des accompagnements sans thématique.
 > Ensuite, il faudra comparer les chiffres projetés à un recomptage indépendant de l'export. Les correctifs seuls ne prouvent pas leur exactitude.
 
+### Décision de l'utilisateur — 22/10/2026
+Propositions de Codex retenues, correctifs appliqués dans `6b77162` :
+réactivité **comptée par demande** (seuil de 20 demandes) ; pourcentages de
+thématiques en **part de tous les accompagnements**, lignes sans thématique
+comprises ; thématique comptée une fois par ligne, Top 3 en union ; marge de
+fiabilité rapportée à la population de chaque contrôle, carte « Résultats des
+contrôles ». **Le bloc reste ouvert** : la proposition elle-même — le tableau
+« affiché / recompté / écart » sur l'export réel — n'est pas faite. Il se
+tranche quand ce tableau est établi.
+
 ---
 
 ## Blocs tranchés
