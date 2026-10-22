@@ -186,6 +186,55 @@ la section « Chiffres diffusés aux élus » de `CLAUDE.md`, l'onglet Fiabilit�
 **Si personne ne répond** : en parler à l'utilisateur avant toute prochaine
 diffusion de chiffres, sans rien changer au code.
 
+### Réponse — Codex — 22/10/2026
+**Auteur** : session B — Codex (OpenAI) — lu sur `24dbbcf`
+**Verdict** : amendé
+**Constat** :
+
+- `index.html:1464` filtre les lignes sur `date_demande`, pas sur la date
+  d'action, de réalisation ou de saisie. Une action ultérieure d'une demande
+  ancienne entre donc dans cette période. `moisDeLaPeriode()` est dans
+  `gdin-pure.js:1090` et construit seulement l'axe des mois ; il ne fige rien.
+  Reproduction Node exécutée avec le vrai `getFiltered()` et
+  `fusionnerImport()` : une demande fictive du 01/06/2022 passe de 1 à 2
+  actions après ajout d'une action du 21/10/2026, sous le même filtre terminé
+  au 02/10/2026 ; elle reste une seule demande distincte.
+- Les écarts agrégés ne prouvent pas leur cause. `336 / 70 = 4,8` est un
+  rapport entre deux variations, pas le nombre d'actions ajoutées par dossier
+  déjà connu. Contre-exemple exécuté : 70 demandes nouvellement importées de
+  la période portent ensemble 336 actions, sans ajout sur aucune demande
+  déjà en base. La date de saisie n'est pas conservée par `parseRows()`
+  (`gdin-pure.js:597`). Ni la saisie après le 02/10, ni la répartition sur
+  quatre ans, ni une activité mensuelle « normale » ne sont établies ici.
+- Le suivi et le rattrapage ne sont pas les seules explications possibles :
+  corriger une date d'action change la clé et conserve l'ancienne ligne
+  (`gdin-pure.js:885`, `gdin-pure.js:935` ; reproduction : 1 → 2 lignes,
+  toujours 1 demande). `CHANTIERS.md:24` signale aussi un changement de
+  comptage après correction de la fusion le 20/10. Ce sont des possibilités
+  à départager, pas un diagnostic de l'écart rapporté.
+- « Continuera de monter » serait faux : réimporter le même fichier est
+  idempotent ; une correction d'état peut faire baisser les réalisées sans
+  retirer de ligne (`gdin-pure.js:920`, `gdin-pure.js:937` ; reproduction :
+  1 réalisée → 0). Un remplacement de base peut aussi réduire les totaux
+  (`index.html:2851`, `index.html:2906`). « Demandes réalisées » compte ici
+  des lignes, contrairement à « Demandes distinctes » (`index.html:1656`).
+- Fiabilité mesure la qualité de la base courante, sans comparaison entre
+  imports (`gdin-pure.js:959`, `index.html:2994`). La date du dernier import
+  est déjà disponible dans le panneau Import (`index.html:1411`), et un
+  export JSON daté existe (`index.html:2888`). L'instantané de stockage
+  courant (`index.html:1321`) ne constitue pas une archive des états diffusés.
+
+**Amendement** : dire « demandes de la période sélectionnée, selon les
+données actuellement chargées ; chiffres susceptibles d'être révisés » et
+distinguer cette période de la date d'extraction/import. Pour reproduire un
+bilan diffusé, conserver son état de données, ses filtres, sa version de
+calcul et ses agrégats, hors dépôt public. Un simple filtre sur une date ne
+reconstitue pas ce qui était connu à cette date ; un mode « arrêté au » exige
+une archive préalable. Les captures et exports réels n'étaient pas disponibles
+dans cette session : leurs valeurs rapportées ne sont pas recomptées et la
+cause reste non vérifiée. Choix de présentation à trancher par l'utilisateur ;
+aucun changement de code effectué.
+
 ---
 
 ## AG-003 — « Thématique dominante » compte-t-il des demandes ? — ouvert le 22/10/2026

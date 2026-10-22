@@ -1,6 +1,7 @@
 # Chantiers — GDINV2
 
-État au **20/10/2026** (corrections des audits Codex du 20/10/2026, PR #3).
+État au **22/10/2026** (réponse AGORA ; mesures des audits du 20/10/2026,
+PR #3, conservées à leur date).
 
 Ce fichier existe pour qu'une session qui démarre sans historique sache où en
 est le projet. **Il ne se supprime pas.** Ce qui s'efface, ce sont les tâches,
@@ -28,6 +29,12 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 
 ## Chantiers ouverts
 
+- **AG-002 — chiffres révisables** : réponse de session B (Codex) ajoutée
+  dans `AGORA.md` le 22/10/2026, sur `24dbbcf` : amendé. La période filtre
+  la date de demande ; la cause des écarts réels reste non vérifiée. À
+  trancher : présentation de la date des données et archivage des bilans
+  diffusés. Aucun code modifié ; 300 tests passent et reproductions
+  synthétiques exécutées. Export réel et contrôle navigateur non exécutés.
 - **SheetJS 0.18.5 → 0.20.3 ou plus** (CVE-2023-30533, CVE-2024-22363). Non
   fait le 20/10/2026 : `cdn.sheetjs.com`, cdnjs, jsdelivr et unpkg sont refusés
   par le proxy de la session, et SheetJS n'est plus publié sur npm. À déposer
