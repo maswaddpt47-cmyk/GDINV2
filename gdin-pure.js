@@ -685,6 +685,30 @@ function count(arr,key){return Object.fromEntries(countEntries(arr,key));}
 // « demandes », « accompagnements » ni « participations » (AG-003 d'AGORA.md,
 // confirmé par Codex le 22/10/2026). Dire « actions portant cette thématique »
 // exigerait de dédupliquer par ligne, ce que cette fonction ne fait pas.
+// ── Mention de révisabilité (AG-002, 22/10/2026) ──
+// À période identique, le total d'accompagnements est passé de 7 881 à 8 313
+// entre deux imports : un chiffre déjà communiqué change sans que rien ne le
+// signale. Tout écran qui donne un chiffre, et toute diapositive projetée,
+// portent donc la période couverte, la date du dernier import et la mention
+// que les chiffres sont révisables.
+// Ceci N'ARCHIVE RIEN : reproduire un bilan déjà diffusé exigerait de
+// conserver ses données, ses filtres et sa version de calcul hors du poste
+// (volet B d'AG-002, en attente de la durée de conservation applicable).
+function dateFr(iso){
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso==null?'':iso));
+  return m?`${m[3]}/${m[2]}/${m[1]}`:'';
+}
+function mentionRevisabilite(opts){
+  const o=opts||{};
+  const d=dateFr(o.debut), f=dateFr(o.fin);
+  const periode = d&&f ? `Période du ${d} au ${f}`
+    : d ? `Période depuis le ${d}`
+    : f ? `Période jusqu'au ${f}`
+    : 'Toutes périodes';
+  const imp=o.dateImport?`données importées le ${String(o.dateImport)}`:'source non datée';
+  return `${periode} · ${imp} · chiffres susceptibles d'être révisés`;
+}
+
 function countThemas(arr){const m={};arr.forEach(r=>(r.themas||[]).forEach(t=>{m[t]=(m[t]||0)+1;}));return Object.fromEntries(Object.entries(m).sort((a,b)=>b[1]-a[1]));}
 function countTypes(arr){const m={};arr.forEach(r=>(r.type_action||[]).filter(t=>t!=='Reservation').forEach(t=>{m[t]=(m[t]||0)+1;}));return Object.fromEntries(Object.entries(m).sort((a,b)=>b[1]-a[1]));}
 function pct(n,total){return total?Math.round(n/total*100):0;}
@@ -1344,6 +1368,6 @@ if(typeof module!=='undefined'){
     esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,deriverActions,reactivite48,dansPeriode,tauxRealisation,validerSauvegardeJSON,baseAncienne,completerRangs,dateIsoValide,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,countTypes,
     parseDt,dayDiff,bizDays,
-    normEtat,isRealisee,countDemandes,cleDoublon,compterDoublons,moisDeLaPeriode,libelleLignes,LIBELLE_LIGNES,
+    normEtat,isRealisee,countDemandes,dateFr,mentionRevisabilite,cleDoublon,compterDoublons,moisDeLaPeriode,libelleLignes,LIBELLE_LIGNES,
   };
 }

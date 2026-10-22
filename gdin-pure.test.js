@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const {
   pct, esc, excelDate, parseDt, dayDiff, bizDays, monthLabel, typeColor,
   count, countEntries, countThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
-  normEtat, isRealisee, countDemandes, parseRows, mapColonnes, demojibakeUtf16, moisDeLaPeriode, libelleLignes,
+  normEtat, isRealisee, countDemandes, dateFr, mentionRevisabilite, parseRows, mapColonnes, demojibakeUtf16, moisDeLaPeriode, libelleLignes,
   cleDoublon, compterDoublons,
   estAtelier, cleSessionAtelier, compterSessionsAtelier, statsAteliers,
   numeroterParticipants, cleFusion, numeroterLignes, fusionnerImport, attribuerConum, deriverAttributionCms,
@@ -1338,5 +1338,55 @@ describe('base enregistrée avant l\'identité par rang', () => {
     assert.deepEqual(base.map(r => r.rang_ligne), [1, 2]);
     assert.equal(baseAncienne(base), false);
     assert.equal(base.length, 2);
+  });
+});
+
+// ── Mention de révisabilité (AG-002) ──
+// Le total d'un bilan déjà communiqué change au réimport suivant : la mention
+// est le seul garde-fou posé côté affichage, et elle est lue par des élus.
+describe('dateFr', () => {
+  it('ISO vers jour/mois/année', () => assert.equal(dateFr('2026-10-22'), '22/10/2026'));
+  it('conserve les zéros de tête',  () => assert.equal(dateFr('2024-01-05'), '05/01/2024'));
+  it('refuse un format partiel',   () => assert.equal(dateFr('2026-10'), ''));
+  it('refuse du texte',            () => assert.equal(dateFr('nawak'), ''));
+  it('refuse vide, null, undefined', () => {
+    assert.equal(dateFr(''), '');
+    assert.equal(dateFr(null), '');
+    assert.equal(dateFr(undefined), '');
+  });
+});
+
+describe('mentionRevisabilite', () => {
+  it('les deux bornes et la date d\'import', () => {
+    assert.equal(
+      mentionRevisabilite({ debut: '2024-01-01', fin: '2026-10-21', dateImport: '22/10/2026' }),
+      "Période du 01/01/2024 au 21/10/2026 · données importées le 22/10/2026 · chiffres susceptibles d'être révisés");
+  });
+  it('sans aucune borne, dit « Toutes périodes » plutôt que de taire le filtre', () => {
+    assert.match(mentionRevisabilite({ dateImport: '22/10/2026' }), /^Toutes périodes · données importées le 22\/10\/2026 · /);
+  });
+  it('borne de début seule', () => {
+    assert.match(mentionRevisabilite({ debut: '2024-01-01' }), /^Période depuis le 01\/01\/2024 · /);
+  });
+  it('borne de fin seule', () => {
+    assert.match(mentionRevisabilite({ fin: '2026-10-21' }), /^Période jusqu'au 21\/10\/2026 · /);
+  });
+  it('sans date d\'import, le dit au lieu de laisser un blanc', () => {
+    assert.match(mentionRevisabilite({ debut: '2024-01-01', fin: '2026-10-21' }), / · source non datée · /);
+  });
+  it('une borne illisible est traitée comme absente, jamais recopiée telle quelle', () => {
+    const m = mentionRevisabilite({ debut: 'nawak', fin: '2026-10-21', dateImport: '22/10/2026' });
+    assert.ok(!m.includes('nawak'), m);
+    assert.match(m, /^Période jusqu'au 21\/10\/2026 · /);
+  });
+  it('l\'avertissement est présent dans tous les cas', () => {
+    for (const o of [{}, { debut: '2024-01-01' }, { fin: '2026-10-21' }, { dateImport: '22/10/2026' },
+                     { debut: '2024-01-01', fin: '2026-10-21', dateImport: '22/10/2026' }]) {
+      assert.match(mentionRevisabilite(o), /chiffres susceptibles d'être révisés$/);
+    }
+  });
+  it('sans argument, ne lève pas', () => {
+    assert.equal(typeof mentionRevisabilite(), 'string');
+    assert.equal(typeof mentionRevisabilite(null), 'string');
   });
 });

@@ -687,6 +687,7 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
       <button class="tab" onclick="switchTab('import',this)" style="background:var(--green);color:#000;border:none;border-radius:8px;padding:9px 18px;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;box-shadow:0 0 16px rgba(0,229,160,.3)">⬆ Importer mes données</button>
     </div>
   </div>
+  <div id="mention-revision" style="font-size:11px;color:var(--muted);margin-bottom:12px;padding:8px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;line-height:1.5"></div>
   <div id="kpi-global" class="g5"></div>
   <div id="kpi-global2" class="g3" style="margin-top:0"></div>
   <div class="card g1">
@@ -1456,6 +1457,19 @@ function toggleYear(yr,idx){
 }
 
 // UTILS
+// Mention de révisabilité (AG-002) : lit les filtres et le dernier import.
+// Le calcul du libellé est dans gdin-pure.js (mentionRevisabilite), testé.
+function mentionCourante(){
+  return mentionRevisabilite({
+    debut:(document.getElementById('dFrom')||{}).value,
+    fin:(document.getElementById('dTo')||{}).value,
+    dateImport:(dataSource==='imported'&&importMeta)?importMeta.date:null
+  });
+}
+function majMentionRevision(){
+  const el=document.getElementById('mention-revision');
+  if(el)el.textContent=mentionCourante();
+}
 function getFiltered(){
   const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value,ty=document.getElementById('typeFilter').value;
   const dates=DATA.map(r=>r.date_demande).sort();const dmin=dates[0]||'',dmax=dates[dates.length-1]||'';
@@ -1594,6 +1608,7 @@ function setNNMode(on,btn){nnModeVal=on;document.querySelectorAll('#nnMode .togg
 
 // VUE GLOBALE
 function renderGlobal(){
+  majMentionRevision();
   const data=getFiltered(),noDsian=data.filter(r=>r.cms!=='DSIAN');
   const nbDemandes=countDemandes(data);
   // Filtre « Atelier » : data.length compte des participations, pas des
@@ -2433,7 +2448,7 @@ function renderRapport(){
   if(btnDiapoRpt)btnDiapoRpt.style.display='inline-block';
   const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;
   document.getElementById('rpt-title').textContent=`${conum} — ${cms}`;
-  document.getElementById('rpt-sub').textContent=`Période : ${f} → ${t} · ${data.length} accompagnements`;
+  document.getElementById('rpt-sub').textContent=`${data.length} accompagnements · ${mentionCourante()}`;
   const oriCount=new Set(data.map(r=>r.orienteur).filter(Boolean)).size;
   const topThema=Object.keys(countThemas(data))[0]||'—';
   // Délais depuis ACTIONS_DATA
@@ -4355,7 +4370,7 @@ function drSlideCover(c,data){
         <div style="width:1px;background:var(--border)"></div>
         <div style="text-align:center"><div style="font-size:32px;font-weight:700;color:var(--orange);font-family:'JetBrains Mono',monospace">${fin}</div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px">Fin période</div></div>
       </div>
-      <div style="font-size:10px;color:var(--dim);margin-top:20px">Généré le ${new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}</div>
+      <div style="font-size:10px;color:var(--dim);margin-top:20px;line-height:1.6">Généré le ${new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}<br>${esc(mentionCourante())}</div>
     </div>`;
 }
 
