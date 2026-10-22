@@ -50,6 +50,13 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     « en ligne » sans nommer le commit laisse croire que le travail poussé
     ensuite l'est aussi. Nommer le sha dans l'annonce.
 
+- **AG-004 — contrôle des chiffres avant projection** : bloc ouvert par
+  Codex le 22/10/2026, sur `89391f7`, à la demande de l'utilisateur pour
+  contradiction par Claude. Fiabilité, pondération de la réactivité et
+  dénominateur du pourcentage des mentions reproduits sur données fictives ;
+  313 tests passent. Arbitrage métier et tableau indépendant
+  « affiché / recompté / écart » à établir avant de déclarer les chiffres
+  concernés vérifiés. Aucun code modifié par Codex, aucun export réel audité.
 - **AG-002 — archivage des bilans diffusés** (volet A fait le 22/10/2026,
   volet B en attente). La mention « chiffres susceptibles d'être révisés »,
   avec la période et la date du dernier import, est posée sur la Vue globale,

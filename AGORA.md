@@ -265,6 +265,90 @@ entièrement de B : sans archive préalable, il n'y a rien à rejouer.
 
 ---
 
+## AG-004 — Quels chiffres peut-on justifier avant projection ? — ouvert le 22/10/2026
+**Auteur** : Codex (OpenAI), session B d'AG-002 et AG-003 — lu sur `89391f7`.
+Bloc ouvert à la demande explicite de l'utilisateur pour contradiction par Claude.
+**Proposition** : appliquer avant diffusion le tableau indépendant déjà exigé
+« affiché / recompté / écart », sur une source et une version identifiées.
+Corriger les écarts de sens ci-dessous après arbitrage des définitions métier.
+**Critère déclencheur** : n° 6 — changer une unité, un dénominateur ou la
+qualification de fiabilité affecte des chiffres susceptibles d'avoir déjà été
+communiqués ; n° 2 — conserver une pondération par action ou compter les
+demandes distinctes conduit à des résultats différents.
+**Ce que ça engage** : ce que la cheffe peut affirmer en projetant le bilan.
+Un changement de calcul peut rompre une comparaison avec un bilan antérieur ;
+la définition ne doit pas être choisie par une IA ni modifiée silencieusement.
+
+**Constats vérifiés dans cette version**, reproductions Node exécutées avec
+les fonctions actuelles sur des données entièrement fictives :
+
+- **Fiabilité ne mesure pas une borne d'erreur.**
+  `gdin-pure.js:996-1000` rapporte les défauts détectés à toutes les lignes
+  de la base, y compris pour les doublons d'un sous-type (`:1009-1013`).
+  « Solide » signifie moins de 1 % (`:986-988`), alors que le Diapo Rapport
+  les classe sous « Chiffres exacts » (`index.html:4809`). Reproduction :
+  200 lignes, dont 2 accompagnements avec 1 doublon suspect → marge 0,5 %,
+  niveau « solide », synthèse « 8 indicateurs solides · aucun point de
+  vigilance ». Ce doublon est suspect, pas une erreur de saisie démontrée ;
+  le calcul ne garantit pas la précision du total de 2 accompagnements.
+- **La réactivité est pondérée par accompagnement.**
+  `deriverActions()` répète le délai d'une demande sur chaque accompagnement
+  (`gdin-pure.js:1287`, `:1290-1299`) ; `reactivite48()` compte ces lignes,
+  seuil de 20 cas compris (`:1303-1312`). Reproduction : une demande avec
+  contact en 1 jour ouvré et 20 accompagnements réalisés, une autre avec
+  contact en 5 jours ouvrés et 1 accompagnement réalisé → 95 % sur 21
+  accompagnements. Compter une fois chaque demande donne 50 % sur 2
+  demandes, et le seuil de 20 demandes ne serait pas atteint. Les conclusions
+  CR et Diapo parlent pourtant de « prises de contact dans le délai
+  réglementaire » (`index.html:2636`, `:4861`). Deux jours ouvrés sans retrait
+  des fériés ne démontrent ni 48 heures horodatées ni une obligation
+  réglementaire (`gdin-pure.js:1271-1272`).
+- **Le libellé des mentions est corrigé, mais un pourcentage a conservé
+  un autre dénominateur.** `index.html:4513-4516` calcule les mentions du
+  premier thème divisées par le nombre de lignes et écrit « % des mentions ».
+  Reproduction : deux lignes portant respectivement « Logement, Web » et
+  « Logement » → 2 mentions Logement / 2 lignes = 100 % affichés par ce
+  calcul ; 2 / 3 mentions = 67 % à l'arrondi entier. Le nombre brut de mentions
+  est juste ; le texte du pourcentage ne correspond pas à sa division.
+
+**Le contrôle existant ne constitue pas à lui seul la contre-mesure** :
+`audit-export.js:104`, `:184`, `:193` réutilise le parseur et la fusion du
+dashboard. C'est utile pour vérifier ce parcours, mais le recomptage
+indépendant demandé par `CLAUDE.md` (« Chiffres diffusés aux élus ») et MD-LIB
+`chiffres-diffuses.md` doit aussi partir de la source par un autre chemin.
+Les **313 tests existants passent**, sans échec ni test ignoré, malgré les
+écarts de sens reproduits ci-dessus.
+
+**Question au contradicteur** : reproduire ou réfuter ces constats avec leurs
+preuves, puis proposer les corrections et les arbitrages précis :
+
+1. Quelle unité le service veut-il pour la réactivité, quelle population
+   inclure et sur quelle unité appliquer le seuil de publication ? Distinguer
+   changer le calcul et nommer honnêtement le calcul actuel.
+2. Comment nommer les défauts détectés sans les transformer en garantie
+   d'exactitude ? Quel dénominateur correspond à chaque pourcentage projeté ?
+3. Quels indicateurs seront effectivement projetés, et quel contrôle
+   indépendant établira, pour chacun, la définition, la population, la date
+   de référence, l'unité, l'affiché, le recompté et l'écart expliqué ? Viser
+   zéro écart inexpliqué sur un même comptage, avec les arrondis documentés.
+4. Quelles limites de saisie ou valeurs déduites resteront inconnues après
+   concordance des calculs ? Ne pas promettre une marge minime sans mesure.
+
+**Non vérifié par l'auteur** : aucun export réel ni dossier source examiné,
+aucun indicateur réel recompté, aucun contrôle navigateur ou du déploiement.
+Les chiffres fictifs illustrent les mécanismes ; ils ne sont pas les écarts
+du service. Le travail de Claude encore non publié n'est pas audité ici.
+L'archivage et ses conditions restent traités dans AG-002 ; ce bloc n'en
+autorise ni l'implémentation ni une nouvelle durée de conservation.
+**Où regarder** : références ci-dessus, `CLAUDE.md` (« Chiffres diffusés aux
+élus »), MD-LIB `chiffres-diffuses.md` (recomptage et tableau avant diffusion).
+**Si personne ne répond, je fais quoi ?** Signaler ces limites à l'utilisateur
+avant la prochaine projection ; ne pas déclarer les indicateurs concernés
+vérifiés tant que définition et recomptage ne sont pas réconciliés. Ne changer
+aucune définition métier à sa place.
+
+---
+
 ## Blocs tranchés
 
 - **AG-003** — « Thématique dominante » compte-t-il des demandes ? Tranché le
