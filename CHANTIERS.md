@@ -1,7 +1,24 @@
 # Chantiers — GDINV2
 
-État au **22/10/2026** (réponses AGORA ; mesures des audits du 20/10/2026,
-PR #3, conservées à leur date).
+État au **22/10/2026**, fin de session (changement de compte). Mesures des
+audits du 20/10/2026, PR #3, conservées à leur date.
+
+**À faire en premier, dans cet ordre** :
+1. Trancher le **dénominateur des pourcentages de thématiques** (AG-004,
+   premier chantier ci-dessous). Rien d'autre ne doit toucher ces libellés
+   avant.
+2. Contrôler à l'œil la **mention de révisabilité**, déjà en ligne (deuxième
+   chantier).
+3. Lire les deux autres constats d'**AG-004** dans `AGORA.md` (fiabilité
+   présentée comme « chiffres exacts », réactivité pondérée par accompagnement)
+   et les mettre à l'arbitrage de l'utilisateur sans rien corriger.
+
+**Hors dépôt, pour l'utilisateur seul** : les deux questions au référent
+archives et au DPO — où les dossiers de bilan sont déposés, combien de temps
+ils sont conservés. Elles bloquent le volet B d'AG-002 et rien d'autre.
+
+**Ce qu'aucune session suivante ne doit refaire** : relancer un audit Codex sur
+AG-003 (clos), ni rouvrir la mise à jour SheetJS (faite, 0.20.3 vendorisée).
 
 Ce fichier existe pour qu'une session qui démarre sans historique sache où en
 est le projet. **Il ne se supprime pas.** Ce qui s'efface, ce sont les tâches,
