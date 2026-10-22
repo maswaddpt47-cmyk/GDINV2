@@ -29,6 +29,32 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 
 ## Chantiers ouverts
 
+- **AG-004 / dénominateur des pourcentages de thématiques — À TRANCHER PAR
+  L'UTILISATEUR, ne pas décider seul.** Ouvert par Codex le 22/10/2026 sur
+  `89391f7`, constat confirmé et élargi le même jour : **10 pourcentages**
+  divisent un compte de *mentions* par un nombre de *lignes*
+  (`index.html` 1658, 2318, 2405, 2600, 2633, 4098, 4422, 4514, 4515, 4857 —
+  mesuré par grep, pas à l'œil). Une ligne portant « Logement, Web » et une
+  portant « Logement » donnent 2/2 = 100 % au lieu de 2/3 = 67 %.
+  Le défaut **préexistait** à la correction d'AG-003 : le numérateur comptait
+  déjà des mentions et le dénominateur déjà des lignes. Nommer correctement le
+  numérateur (« mentions ») a rendu l'incohérence lisible, il ne l'a pas créée
+  — mais la session qui a corrigé les libellés ne l'a pas vue alors qu'elle
+  travaillait sur ces lignes mêmes.
+  Deux options, et c'est un arbitrage métier parce que les chiffres projetés
+  changent :
+  - **(a) dénominateur = total des mentions.** Cohérent avec le calcul actuel,
+    aucun changement de comptage. Les pourcentages baissent partout où une
+    ligne porte plusieurs thématiques.
+  - **(b) « part des accompagnements portant cette thématique ».** Exige de
+    dédupliquer par ligne — donc un changement de comptage, celui que Codex
+    avait déjà écarté dans AG-003.
+  Critère AGORA n° 6 : des pourcentages peuvent avoir déjà été communiqués.
+  Ne pas corriger avant l'arbitrage. Les autres constats d'AG-004 (fiabilité
+  présentée comme « chiffres exacts », réactivité pondérée par accompagnement
+  et non par demande) attendent le même arbitrage et sont détaillés dans
+  `AGORA.md`.
+
 - **Contrôle visuel de la mention de révisabilité** (posée le 22/10/2026,
   `3280ec2`). **En ligne** : déploiement de `89391f7` vérifié vert le
   22/10/2026 (`c93dee9`, poussé après, ne touche que ce fichier). Reste le
