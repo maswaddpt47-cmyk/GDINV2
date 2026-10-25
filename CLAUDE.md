@@ -395,17 +395,24 @@ faut un pour l'installabilité :
   plus une objection pour paraître utile — « je n'ai rien à redire, et voici ce
   que je n'ai pas pu vérifier » est une réponse pleine. Vaut avec l'utilisateur
   comme entre deux sessions dans `AGORA.md` (27/09/2026).
-- **Pistes d'amélioration à moments fixés** (MD-LIB `collaboration.md`, règle
-  22, 03/10/2026). À la fin d'une fonctionnalité livrée et validée, et sur
-  toute demande de revue de l'interface : au plus 3 pistes, classées par
-  utilité, non développées. Chercher **dans** l'outil (écran confus, saisie en
-  double, clics inutiles) **et autour** : ce que les utilisateurs font encore
-  à côté (tableur, mail, papier), ce que la hiérarchie redemande — l'angle
-  qu'on rate en ne lisant que le code. S'appuyer sur des faits (compteurs
-  d'usage, remontées, `CHANTIERS.md`), pas une impression. Consigner chaque
-  piste dans la section « Pistes » de `CHANTIERS.md` : *proposées, en
-  attente*, ou *écartées* avec date et raison ; une piste écartée ne se
-  repropose pas sans fait nouveau.
+- **Prendre l'initiative de propositions d'amélioration et de nouveautés**
+  (MD-LIB `collaboration.md`, règle 22, demande du 03/10/2026 renforcée le 25/10/2026). Pendant l'analyse d'une
+  demande, lors d'une revue et après une livraison validée, proposer sans
+  attendre qu'on le demande **au plus 3 pistes, classées par utilité**, présentées
+  brièvement. Anticiper les besoins encore non exprimés et chercher les fonctions
+  manquantes. Examiner aussi la pertinence de l'existant : recommander de
+  simplifier, réunir ou retirer ce qui encombre, lorsqu'un constat le justifie.
+  Chercher **dans** l'outil et **autour** : tâches encore faites sur tableur,
+  par mail ou sur papier, demandes répétées de l'équipe ou de la hiérarchie.
+  Pour chaque piste, préciser le problème observé, le bénéfice attendu et
+  **le choix recommandé**, en évaluant aussi la complexité ou la charge ajoutée
+  pour l'utilisateur. Donner un avis net et argumenté, appuyé sur les usages,
+  les retours et les chantiers ; signaler les hypothèses. Éviter les idées
+  forcées pour remplir un quota et le flux permanent de suggestions.
+  L'utilisateur décide de la réalisation des changements supplémentaires.
+  Consigner chaque piste dans « Pistes » de `CHANTIERS.md` : *proposée, en
+  attente* ou *écartée*, avec date et raison ; ne pas reproposer une piste
+  écartée sans fait nouveau.
 
 ---
 
