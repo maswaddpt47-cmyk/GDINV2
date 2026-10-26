@@ -164,10 +164,16 @@ moment de l'écrire, dire pourquoi on ouvre un bloc ou non.
    (voir « Décisions à ne pas défaire » dans `CHANTIERS.md`) ;
 5. la proposition contredit une note datée du dépôt ;
 6. coût irréversible côté usager — perte du `localStorage` d'un poste, rupture
-   d'un rapport déjà diffusé, changement de comptage déjà communiqué.
+   d'un rapport déjà diffusé, changement de comptage déjà communiqué ;
+7. le changement touche un calcul ou un chiffre affiché (indicateur, total,
+   taux, filtre, définition ; CR, diapo, export) — **systématique, quelle que
+   soit sa taille** (MD-LIB `agora.md` critère 7, 26/10/2026). Contradicteur :
+   Codex. Bloc ouvert avant la correction, définitions métier séparées des
+   défauts démontrés et tranchées par l'utilisateur.
 
 **N'y vont pas** : un changement de rendu pur (cf. « Ce que coûte un test »), un
-correctif localisé appuyé sur une preuve, tout ce qui se défait en un commit.
+correctif localisé appuyé sur une preuve, tout ce qui se défait en un commit —
+**sauf calcul ou chiffre affiché : critère 7, toujours.**
 
 **Soumettre d'office, sans demander l'autorisation**, au moment où le choix est
 fait — pas après l'implémentation, sinon le contradicteur hérite d'un biais de
