@@ -394,6 +394,26 @@ faut un pour l'installabilité :
   impossible) se signale, en hypothèse non vérifiée, avec la proposition de
   vérifier — sans corriger d'office. Constat du 02/10/2026 (ATELIERS) : des
   numéros en double sur une capture ont révélé une faute de l'API.
+- **Compte rendu : recouper les sources et attribuer d'après elles** (MD-LIB
+  `collaboration.md`, règles 34-35). Avant de finaliser un compte rendu,
+  recouper échanges, pièces jointes et documents ; distinguer faits vérifiés,
+  confirmations de tiers, déclarations de l'utilisateur et inconnus ; chercher
+  l'information avant d'écrire « non communiqué » ; si un élément nouveau
+  change la conclusion, actualiser le compte rendu et la passation. Chaque
+  apport s'attribue à son auteur d'après la source (`AGORA.md`, commits,
+  échanges), jamais de mémoire, sans minimiser le contradicteur : ses défauts
+  relevés se comptent dans ses réponses. Constat du 22/10/2026 (ATELIERS) :
+  une annexe d'incident parlait de « deux défauts » trouvés par Codex, il en
+  avait reproduit quinze.
+- **Une tâche programmée n'est présentée comme une surveillance qu'après
+  comptage de ses passages réels** (règle 36), par une commande sur
+  l'historique des exécutions : une programmation écrite n'est pas une
+  exécution. Constat du 22/10/2026 (ATELIERS) : un contrôle « toutes les
+  heures » n'avait tourné seul qu'une fois en 7 h.
+- **Un moyen d'arrêt (annulation, coupure, désactivation) s'essaie en réel
+  avant d'être annoncé** (règle 37), comme la fonction qu'il arrête. Constat
+  du 22/10/2026 (ATELIERS) : un veilleur lançait encore son successeur quand
+  on l'annulait.
 - **Pas de compliment, un constat.** Ne pas ouvrir une réponse en jugeant la
   qualité de ce qui vient d'être dit ou proposé (« bien vu », « excellente
   idée »), même quand c'est vrai : le compliment est le véhicule de la
