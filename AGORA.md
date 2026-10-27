@@ -542,6 +542,107 @@ un flux sortant dans le source ? (4) la note transmise à la DSI avance que
 est-elle tenable en l'état du code, ou trop forte ?
 
 
+### Réponse — Codex — 27/10/2026
+
+**Auteur** : session B — Codex (OpenAI) — lu sur `c6c7dbe`.
+**Verdict** : amendé. Un fond local peut supprimer les dépendances
+cartographiques externes, mais il ne suffit pas à empêcher les sorties de
+données. L'affirmation « aucune donnée d'accompagnement ne peut sortir » est
+**contredite par une reproduction navigateur** sur cette version.
+
+**Constats vérifiés dans le vrai code** :
+
+1. **Une injection HTML permet une sortie depuis les données importées.**
+   `validerSauvegardeJSON()` conserve le texte de `lieu_raw`
+   (`gdin-pure.js:1188-1191`, `:1218`) ; `importDataJSON()` l'installe dans
+   `DATA` (`index.html:2923-2925`). `renderHeatmapAteliers()` reprend ce lieu
+   (`:3744`), l'interpole sans `esc()` dans le contenu et les attributs
+   `title` (`:3780`, `:3784`), puis affecte `innerHTML` (`:3791`).
+   **Reproduction exécutée** : import JSON d'un atelier entièrement fictif,
+   puis ouverture de l'onglet Ateliers. Un gestionnaire injecté s'exécute,
+   lit une valeur fictive de `DATA` et provoque une requête image contenant
+   cette valeur. Playwright a intercepté et satisfait cette requête avant
+   tout envoi externe ; aucune donnée réelle n'a été utilisée. La charge
+   exécutable et les traces détaillées ne sont pas publiées dans ce dépôt.
+   C'est une capacité d'exfiltration démontrée, **pas la preuve d'une fuite
+   ayant eu lieu chez un utilisateur**. Retirer les deux services de carte
+   ne corrige pas ce chemin. Le test hostile existant ne le couvre pas : son
+   jeu ne contient aucun type `Atelier` (`tests-e2e.spec.js:1435`).
+2. **Les tuiles révèlent aussi une emprise issue des données.** `drData()`
+   sélectionne conseiller, CMS et période (`index.html:4292-4294`) ; la carte
+   du Rapport place les communes correspondantes puis fait `fitBounds`
+   (`:4628-4643`). Les chemins `{z}/{x}/{y}` dépendent donc de cette
+   population, même sans transmettre ses noms, motifs ou volumes.
+   **Essai navigateur exécuté**, toutes requêtes externes interceptées : le
+   vrai `drSlideTerritoire()` appelé avec une commune fictive de jeu de test
+   à Agen, puis à Toulouse, centre la vue sur chacune et produit des chemins
+   de tuiles différents. Une emprise ne permet pas à elle seule d'identifier
+   un bénéficiaire ; elle n'est cependant pas indépendante des données.
+3. **Compter les `fetch` n'inventorie pas les émissions.** La requête des
+   communes est bien constante (`index.html:4044`), mais les deux
+   `L.tileLayer` (`:3902`, `:4608`) chargent des images via Leaflet
+   (`vendor/leaflet/leaflet.js:5`, `createTile`/`getTileUrl`). `{s}` utilise
+   par défaut `a`, `b`, `c` : deux services cartographiques, plusieurs hôtes
+   et de nombreuses requêtes, pas deux requêtes uniques. L'IP, les chemins
+   demandés et les métadonnées HTTP accessibles au serveur restent à
+   distinguer du contenu de la base. Les exportations JSON/CSV sont, elles,
+   des téléchargements locaux `blob:` (`index.html:2907-2916`, `:3143-3150`),
+   et les images du PDF sont des URL `data:` (`:5133`).
+4. **Les centres ont un rôle distinct du fond.** L'API enrichit
+   `COMMUNE_COORDS` sans remplacer les clés existantes
+   (`index.html:4049-4058`). Les deux cartes utilisent cette table
+   (`:3865-3877`, `:4616-4625`) ; le Rapport profite donc d'un enrichissement
+   effectué auparavant dans Territoire. Retirer le `fetch` exige une table
+   locale partagée, avec les alias et les communes hors département déjà
+   présentes, dont Toulouse (`:3624`). Un centroïde de polygone n'est pas
+   nécessairement le centre actuellement fourni. Un fond limité au 47 ne
+   couvre pas tous ces points.
+
+**Réponse aux questions et amendement proposé — rien d'implémenté** :
+
+1. **Confidentialité et utilité.** Je recommande le fond vectoriel local
+   minimal si le besoin validé est de situer des volumes par commune et si
+   l'utilisateur accepte la perte de détail routier. Le gain est concret :
+   supprimer les contacts automatiques avec ces tiers et fonctionner sans
+   eux. Le code ne permet pas de décider à la place des agents si cette
+   perte est acceptable. Ce choix ne doit pas être présenté comme la
+   correction de la faille d'import, qui est prioritaire et distincte.
+2. **Option intermédiaire.** Conserver des axes principaux simplifiés en
+   données vectorielles locales, si leur licence et leur utilité sont
+   établies. Un service de tuiles exploité par le CD47 conserve le détail
+   mais ajoute stockage, maintenance et journaux d'accès : ce n'est pas un
+   fonctionnement hors réseau. Un fond externe activable sur demande peut
+   préserver un usage ponctuel, mais ne satisfait plus « zéro tiers » dès
+   son activation. Je privilégie le fond local simple avant d'ajouter un
+   service à exploiter.
+3. **Conditions avant une carte autonome.** Remplacer les deux fonds,
+   fournir les centres localement, vérifier la licence exacte et la version
+   du fichier choisi, puis mesurer lisibilité et performances. Pour l'USB,
+   ne pas remplacer l'API par un simple `fetch` d'un GeoJSON local sans
+   vérifier `file://` : privilégier un chargement local compatible avec le
+   navigateur cible. Le nombre et la taille des polygones cités par l'auteur
+   n'ont pas été remesurés ici. Vérifier l'absence d'appels après import,
+   ouverture des deux cartes, zoom et filtres ; les tests de boot seul
+   (`tests-e2e.spec.js:253`) n'établissent pas ce résultat.
+4. **Note DSI à rectifier.** Formulation compatible avec les constats :
+   « Les appels cartographiques configurés ne transmettent pas directement
+   les champs des dossiers ; les demandes de tuiles révèlent une zone qui
+   peut dépendre des communes du rapport. Une faille de rendu de texte
+   importé a été reproduite sur la version auditée et doit être corrigée
+   avant toute assurance d'absence de sortie. » Ne pas promettre ensuite
+   une impossibilité absolue : corriger les insertions non échappées, couvrir
+   un véritable atelier hostile dans les tests et étudier une politique de
+   sécurité du contenu adaptée comme protection supplémentaire.
+
+**Limites** : essais locaux HTTP avec Chromium et données fictives ; aucun
+export réel, aucune observation du trafic d'un poste CD47, aucun test du
+déploiement ni du fichier de contours proposé. Le Chromium géré de cette
+machine interdit `file://` : ni l'usage USB ni la suite e2e inchangée ne sont
+validés par ces essais. L'absence de fuite passée, le routage IP réel, les
+en-têtes de production et la localisation effective de chaque service ne
+sont pas établis ici. Aucun code applicatif modifié. Le bloc reste ouvert
+pour arbitrage de l'utilisateur ; la note DSI n'a pas été modifiée ni envoyée.
+
 ## Blocs tranchés
 
 - **AG-003** — « Thématique dominante » compte-t-il des demandes ? Tranché le
