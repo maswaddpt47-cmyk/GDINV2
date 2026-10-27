@@ -1432,7 +1432,11 @@ test.describe('Contenu importé hostile', () => {
         date_demande: `2025-0${(i % 6) + 1}-1${i % 9}`, date_action: `2025-0${(i % 6) + 1}-2${i % 9}`,
         id_demande: String(300 + i), conum: i % 2 ? `Ana ${H}` : `Bob ${H}`,
         cms: `CMS Agen ${H}`, lieu_raw: H, structure: H, commune: `Agen ${H}`,
-        themas: [`Thème ${H}`], type_action: [i % 3 ? 'Accompagnement' : 'Prise de contact'],
+        themas: [`Thème ${H}`],
+        // Un quart d'ateliers : sans type 'Atelier', renderHeatmapAteliers() sort
+        // sur « Aucun atelier sur la période » et n'atteint jamais son innerHTML.
+        // C'est ce qui a laissé passer l'injection par lieu_raw (AG-005, 27/10/2026).
+        type_action: [i % 4 === 0 ? 'Atelier' : (i % 3 ? 'Accompagnement' : 'Prise de contact')],
         orienteur: `Orient ${H}`, motif: H, benef_connu: false, urgence: false,
         etat: i % 4 ? 'Réalisée' : `Autre ${H}`, date_planifiee: null, date_realisation: `2025-0${(i % 6) + 1}-2${i % 9}`,
       });
