@@ -44,6 +44,24 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 
 ## Chantiers ouverts
 
+- **AG-005 — carte vectorielle, zéro appel externe** (ouvert le 27/10/2026,
+  `80b4071`, contradicteur **Codex**). La DSI s'inquiète d'une fuite de données
+  par les deux appels restants. Vérifié ce jour : il n'y en a pas (un seul
+  `fetch`, URL littérale sans interpolation, aucun autre mécanisme d'émission,
+  `EMBEDDED=[]`). Reste l'IP de sortie et la zone de carte regardée, vers deux
+  hôtes en UE. La proposition — contours des 319 communes en GeoJSON, 443 Ko
+  mesurés, `L.geoJSON` au lieu de `L.tileLayer` — supprime ce reste au prix du
+  fond cartographique. **Ne rien implémenter avant la réponse de Codex et
+  l'arbitrage de l'utilisateur.** Une note technique a été remise à la DSI le
+  27/10/2026 (hors dépôt).
+- **Usage sur clé USB** : mesuré le 27/10/2026, l'application tourne en
+  `file://` sous Chromium (`localStorage` OK, IndexedDB ouvrable, aucune erreur
+  JS). 1,9 Mo à copier (`index.html`, `gdin-pure.js`, `vendor/`). Piège à
+  retenir : le stockage appartient au **navigateur du poste**, pas à la clé —
+  les données ne suivent pas d'un poste à l'autre, le transport passe par
+  l'export JSON. Non vérifié : l'appel `geo.api.gouv.fr` depuis une origine
+  `file://` (CORS probablement refusé).
+
 - **AG-004 — correctifs appliqués le 22/10/2026 (`6b77162`), recomptage à
   faire.** Décisions de l'utilisateur sur les propositions de Codex (détail
   dans `AGORA.md`) : réactivité **par demande**, pourcentages de thématiques
