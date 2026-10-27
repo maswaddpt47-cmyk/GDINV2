@@ -473,6 +473,75 @@ tranche quand ce tableau est établi.
 
 ---
 
+---
+
+## AG-005 — Supprimer les deux derniers appels réseau en passant la carte en vectoriel — ouvert le 27/10/2026
+**Auteur** : session Claude — lu sur `2f186bd`
+**Proposition** : intégrer au dépôt les contours des 319 communes du 47 en
+GeoJSON (443 Ko) et dessiner la carte avec `L.geoJSON` au lieu de
+`L.tileLayer`. Les deux seuls appels externes — `tile.openstreetmap.fr` et
+`geo.api.gouv.fr` — disparaissent.
+**Critère déclencheur** : n° 1 — nouvelle dépendance dans `vendor/` et contrat
+de rendu de la carte ; volet RGPD, donc contradicteur **Codex** (`agora.md`
+§12).
+**Ce que ça engage** : la carte perd le relief, les routes et les noms de
+hameaux. Revenir en arrière est facile (un commit), mais le fichier de contours
+reste une dépendance de données à tenir à jour, et les agents se seront
+habitués au nouveau rendu.
+
+**Le fait qui déclenche**, mesuré le 27/10/2026 : la DSI du CD47 s'inquiète
+d'une fuite de données personnelles par ces appels. Vérification du source :
+un seul `fetch` dans toute l'application, vers une URL **littérale sans
+interpolation** ; zéro `XMLHttpRequest`, `sendBeacon`, `WebSocket`,
+`EventSource`, formulaire, traceur ou service worker ; `EMBEDDED=[]`. Aucune
+donnée d'accompagnement ne peut sortir. Ce qui sort réellement : l'adresse IP
+de sortie et la zone de carte regardée, vers deux hôtes en UE.
+La proposition ne corrige donc **aucune fuite** : elle supprime un reste.
+
+**Mesures à l'appui** :
+- contours des 319 communes du 47, source `france-geojson` (IGN/OSM) :
+  **442 995 octets** téléchargés et comptés ce jour ;
+- cache de tuiles-images écarté : **1 072 tuiles** pour z8→z13 (~21 Mo),
+  **15 652** à z15 (~306 Mo), alors que le code autorise z19 — et la politique
+  d'usage d'OSM France interdit le téléchargement massif ;
+- l'application tourne en `file://` (Chromium, ce jour) : `localStorage` OK,
+  IndexedDB ouvrable, aucune erreur JS. L'usage sur clé USB est donc possible,
+  et le vectoriel le rendrait autonome carte comprise.
+
+**Non vérifié par l'auteur** :
+- je n'ai **pas** ouvert le GeoJSON dans Leaflet : performance de rendu de 319
+  polygones, comportement au zoom, lisibilité réelle du fond — rien de mesuré ;
+- je n'ai **pas** vérifié ce que devient l'usage actuel des centres de communes
+  (`index.html:4044`) : les centroïdes doivent être recalculés depuis les
+  polygones ou le petit JSON conservé à côté, et je n'ai pas lu tous les
+  appelants ;
+- je n'ai **pas** confirmé que l'IP vue par les tiers est bien celle de sortie
+  de la collectivité et non celle du poste — la DSI seule le sait ;
+- l'appel `geo.api.gouv.fr` depuis `file://` part d'une origine `null` : CORS
+  probablement refusé, **non testé** (hôte bloqué depuis ma session) ;
+- la licence du jeu de contours retenu n'a pas été lue ligne à ligne, seulement
+  supposée libre (IGN/OSM) ;
+- aucun agent n'a été consulté sur la perte du fond cartographique.
+
+**Si personne ne répond, je fais quoi ?** Rien. Je n'implémente pas : la DSI
+n'a pas établi de fuite, les mesures ci-dessus montrent qu'il n'y en a pas, et
+retirer le fond de carte dégrade un outil en service pour un gain réel mais
+limité. Le bloc existe parce que l'inverse se défend aussi — une collectivité
+peut vouloir zéro tiers, et c'est un argument politique autant que technique.
+
+**Où regarder** : `index.html:1167` (`TUILES_URL`), `:3902` et `:4608`
+(`L.tileLayer`), `:4044` (le `fetch` des centres de communes) ; `CLAUDE.md`
+section « Librairies servies depuis le dépôt ».
+
+**Question au contradicteur** : (1) le gain de confidentialité justifie-t-il la
+perte du fond cartographique pour un usage de suivi par commune ? (2) y a-t-il
+une option intermédiaire que je n'ai pas vue — fond vectoriel minimal gardant
+les axes principaux, ou tuiles servies par le CD47 lui-même ? (3) ai-je manqué
+un flux sortant dans le source ? (4) la note transmise à la DSI avance que
+« aucune donnée d'accompagnement ne peut sortir » : cette affirmation
+est-elle tenable en l'état du code, ou trop forte ?
+
+
 ## Blocs tranchés
 
 - **AG-003** — « Thématique dominante » compte-t-il des demandes ? Tranché le
