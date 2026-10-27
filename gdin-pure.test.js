@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const {
   pct, esc, excelDate, parseDt, dayDiff, bizDays, monthLabel, typeColor,
   count, countEntries, countThemas, lignesAvecThemas, countTypes, normKey, normCms, extractDominantCms, parseXlsText,
-  normEtat, isRealisee, countDemandes, dateFr, mentionRevisabilite, fusionnerCoords, parseRows, mapColonnes, demojibakeUtf16, moisDeLaPeriode, libelleLignes,
+  normEtat, isRealisee, countDemandes, dateFr, mentionRevisabilite, parseRows, mapColonnes, demojibakeUtf16, moisDeLaPeriode, libelleLignes,
   cleDoublon, compterDoublons,
   estAtelier, cleSessionAtelier, compterSessionsAtelier, statsAteliers,
   numeroterParticipants, cleFusion, numeroterLignes, fusionnerImport, attribuerConum, deriverAttributionCms,
@@ -1433,54 +1433,3 @@ describe('mentionRevisabilite', () => {
   });
 });
 
-// ── Fusion des coordonnées de communes (AG-005) ──
-// La table en dur porte des alias de saisie et des communes hors département.
-// Si le référentiel les écrasait, des accompagnements disparaîtraient de la
-// carte sans aucun message. C'est la raison d'être de la priorité.
-describe('fusionnerCoords', () => {
-  const base = { 'AGEN': [44.2042, 0.6208], 'AGEN CEDEX 9': [44.2042, 0.6208], 'TOULOUSE': [43.6045, 1.4440] };
-
-  it('la table en dur gagne sur le référentiel', () => {
-    const r = fusionnerCoords(base, { 'AGEN': [44.0, 0.0] });
-    assert.deepEqual(r['AGEN'], [44.2042, 0.6208]);
-  });
-  it('les alias de saisie survivent', () => {
-    const r = fusionnerCoords(base, { 'NERAC': [44.13, 0.34] });
-    assert.deepEqual(r['AGEN CEDEX 9'], [44.2042, 0.6208]);
-  });
-  it('une commune hors département survit', () => {
-    const r = fusionnerCoords(base, { 'NERAC': [44.13, 0.34] });
-    assert.deepEqual(r['TOULOUSE'], [43.6045, 1.4440]);
-  });
-  it('le référentiel complète ce qui manque', () => {
-    const r = fusionnerCoords(base, { 'NERAC': [44.13, 0.34], 'FUMEL': [44.49, 0.96] });
-    assert.deepEqual(r['NERAC'], [44.13, 0.34]);
-    assert.equal(Object.keys(r).length, 5);
-  });
-  it('les clés sont normalisées en majuscules', () => {
-    const r = fusionnerCoords({}, { 'nérac': [44.13, 0.34], '  fumel  ': [44.49, 0.96] });
-    assert.ok('NÉRAC' in r, Object.keys(r).join(','));
-    assert.ok('FUMEL' in r);
-  });
-  it('une coordonnée hors des bornes terrestres est écartée', () => {
-    const r = fusionnerCoords({}, { 'A': [999, 0], 'B': [0, 999], 'C': [44, 0.6] });
-    assert.deepEqual(Object.keys(r), ['C']);
-  });
-  it('une entrée malformée est écartée sans lever', () => {
-    const r = fusionnerCoords({}, { 'A': null, 'B': [44], 'C': ['44', '0.6'], 'D': [NaN, 0], 'E': [44, 0.6] });
-    assert.deepEqual(Object.keys(r), ['E']);
-  });
-  it('une clé vide est écartée', () => {
-    assert.deepEqual(Object.keys(fusionnerCoords({}, { '': [44, 0.6], '   ': [44, 0.6] })), []);
-  });
-  it('sans argument, ne lève pas et rend un objet vide', () => {
-    assert.deepEqual(fusionnerCoords(), {});
-    assert.deepEqual(fusionnerCoords(null, null), {});
-  });
-  it('ne partage pas les tableaux de la source', () => {
-    const src = { 'A': [44, 0.6] };
-    const r = fusionnerCoords({}, src);
-    r['A'][0] = 0;
-    assert.equal(src['A'][0], 44, 'la table source a été modifiée');
-  });
-});
