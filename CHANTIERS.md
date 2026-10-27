@@ -44,6 +44,14 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 
 ## Chantiers ouverts
 
+- **Faille d'injection par `lieu_raw` — CORRIGÉE le 27/10/2026** (`949d2dd`,
+  déployé vert). Trouvée par Codex dans AG-005. Ne pas défaire : les trois
+  interpolations de `renderHeatmapAteliers()` passent par `esc()`, et le jeu du
+  test « contenu importé hostile » contient des ateliers — sans eux la fonction
+  sort avant son `innerHTML` et le test valide du code vulnérable.
+  **Reste à étudier** : une politique de sécurité du contenu (CSP), proposée
+  par Codex comme protection supplémentaire indépendante du code. Non évaluée.
+
 - **AG-005 — carte vectorielle, zéro appel externe** (ouvert le 27/10/2026,
   `80b4071`). **Réponse de Codex, session B, le 27/10/2026 : amendé**
   (`a82f95b`, code examiné `c6c7dbe`, preuves dans `AGORA.md`). Un lieu importé
