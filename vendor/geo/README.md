@@ -44,9 +44,27 @@ pour cette raison le 27/10/2026.
 Après toute évolution du découpage communal (fusions de communes). Le fichier
 porte un millésime implicite : noter la date de génération dans le commit.
 
-## Poids
+## Poids, et pourquoi on ne simplifie pas
 
-Mesuré sur un jeu équivalent : environ **440 Ko** pour 319 communes, contours
-non simplifiés. Si ce poids devient gênant, simplifier les polygones plutôt
-que réduire le nombre de communes — une commune absente disparaît de la carte
-sans message.
+Mesuré le 27/10/2026 sur un jeu équivalent de 319 communes, avec 4 décimales :
+
+| Tolérance | Poids | Rendu |
+|---|---|---|
+| aucune (défaut) | 442 Ko | intact |
+| 50 m | 312 Ko | fentes discrètes entre communes |
+| 100 m | 216 Ko | fentes visibles |
+| 200 m | 150 Ko | fentes marquées |
+
+`preparer-geo.js` accepte une tolérance en quatrième argument, mais **n'en
+applique aucune par défaut**. La raison est visuelle : chaque commune est
+simplifiée indépendamment, donc les deux versants d'une frontière partagée
+cessent de coïncider et une fente blanche s'ouvre entre communes voisines.
+Invisible à l'échelle du département, criant dès le zoom cantonal — et la
+carte Territoire autorise aujourd'hui le zoom maximal.
+
+Deux façons de gagner ce poids sans ce défaut : brider le zoom de la carte, ou
+passer à une simplification topologique (TopoJSON), qui traite une frontière
+partagée une seule fois. Les deux restent à arbitrer.
+
+Ne jamais réduire le **nombre** de communes pour gagner du poids : une commune
+absente disparaît de la carte sans aucun message.
