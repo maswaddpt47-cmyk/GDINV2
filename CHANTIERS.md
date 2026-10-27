@@ -44,6 +44,22 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 
 ## Chantiers ouverts
 
+- **CHANGEMENT D'USAGE (27/10/2026) : le tableau de bord sera consulté en
+  local**, depuis une copie sur poste ou clé USB, et plus seulement par
+  GitHub Pages. Trois conséquences, à garder en tête avant toute évolution :
+  - **`geo.api.gouv.fr` peut ne pas répondre en `file://`.** L'origine de la
+    page est alors `null` et l'appel n'aboutit que si l'API renvoie
+    `Access-Control-Allow-Origin: *`. **Non vérifié** — l'hôte est refusé par
+    le proxy des sessions Claude. À contrôler sur un poste : ouvrir la copie
+    locale, onglet Territoire, console (F12). Si l'appel échoue, seules les
+    **112 communes en dur** de `COMMUNE_COORDS` se placent, les 319 autres
+    non. Le fond vectoriel (AG-005) cesse alors d'être un confort.
+  - **Pas de `?v=<sha>` en local** : le cache-busting vient du workflow de
+    déploiement. Après remplacement du fichier sur une clé, un navigateur peut
+    resservir l'ancienne version — Ctrl+F5 obligatoire.
+  - **La CSP est la seule protection embarquée** hors serveur. Vérifiée en
+    `file://` et en production sur Chrome et Edge.
+
 - **Faille d'injection par `lieu_raw` — CORRIGÉE le 27/10/2026** (`949d2dd`,
   déployé vert). Trouvée par Codex dans AG-005. Ne pas défaire : les trois
   interpolations de `renderHeatmapAteliers()` passent par `esc()`, et le jeu du
