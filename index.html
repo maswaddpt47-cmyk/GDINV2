@@ -3777,11 +3777,11 @@ function renderHeatmapAteliers(){
   tbl+=`</tr></thead><tbody>`;
   activeLieux.forEach(lieu=>{
     const shortL=lieu.replace(/^Médiathèque(?:\s+municipale)?\s*/i,'Méd. ').replace(/^Permanence\s+/i,'Perm. ').replace(/^Centre\s+Socio-Culturel\s*/i,'CSC ');
-    tbl+=`<tr><td class="hm-label" title="${lieu}" style="min-width:130px">${shortL}</td>`;
+    tbl+=`<tr><td class="hm-label" title="${esc(lieu)}" style="min-width:130px">${esc(shortL)}</td>`;
     displayYearsRev.forEach((yr,yi)=>{
       const vals=vol[lieu][yr]||Array(12).fill(0);
       vals.forEach((v,mi)=>{
-        tbl+=`<td class="hm-cell" style="background:${cellColor(v)}" title="${lieu}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
+        tbl+=`<td class="hm-cell" style="background:${cellColor(v)}" title="${esc(lieu)}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
       });
       if(yi<displayYearsRev.length-1)tbl+=`<td style="width:10px"></td>`;
     });
