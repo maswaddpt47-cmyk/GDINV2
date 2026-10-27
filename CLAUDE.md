@@ -313,7 +313,10 @@ est vide, le reste fonctionne :
   deux cartes en production sans qu'une ligne du dépôt ait changé. Trois tests
   e2e refusent désormais une URL contenant `cartocdn`, `apikey` ou
   `access_token` ;
-- **`geo.api.gouv.fr`** pour les contours des communes du 47.
+- **`geo.api.gouv.fr`** pour le **nom et le centre** des communes du 47 —
+  des points, pas des contours : l'appel demande
+  `fields=nom,centre&geometry=centre` (`index.html:4044`, corrigé le
+  27/10/2026 ; la note disait « contours », ce que le code ne fait pas).
 
 Les deux reçoivent l'**adresse IP des visiteurs** et la zone regardée — aucune
 donnée d'accompagnement ne leur est transmise.
