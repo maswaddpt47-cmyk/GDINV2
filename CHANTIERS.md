@@ -88,24 +88,6 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   Manipulation reproductible, utile si la DSI veut le constater elle-même :
   F12 → Console → `allow pasting` → `new Image().src='https://exemple.com/x.png'`.
 
-- **AG-005 — carte vectorielle, zéro appel externe** (ouvert le 27/10/2026,
-  `80b4071`). **Réponse de Codex, session B, le 27/10/2026 : amendé**
-  (`a82f95b`, code examiné `c6c7dbe`, preuves dans `AGORA.md`). Un lieu importé
-  est inséré sans échappement dans la heatmap Ateliers : exécution de script,
-  lecture d'une valeur fictive de la base et requête image contenant cette
-  valeur reproduites en HTTP, requête interceptée sans envoi externe. **Cela
-  contredit l'assurance d'impossibilité de sortie ; aucune fuite passée n'est
-  établie.** Les tuiles du Rapport révèlent aussi une emprise dépendant des
-  communes filtrées. Priorité proposée : corriger ce rendu et couvrir un vrai
-  atelier hostile dans le test existant, qui n'en contient pas. Le vectoriel
-  ne corrige pas cette faille ; fond local minimal recommandé sous réserve de
-  l'usage, avec centres locaux partagés, licence et fonctionnement USB à
-  vérifier. **Arbitrage utilisateur toujours attendu, aucun correctif ni
-  changement de carte implémenté.** 318 tests unitaires passent ; essais
-  navigateur ciblés exécutés, suite e2e inchangée bloquée ici par la politique
-  Chromium sur `file://`. La note DSI remise par l'autre session le
-  27/10/2026 (hors dépôt) doit être rectifiée ; ni accès à cette note ni envoi
-  effectué par la session B.
 - **Usage sur clé USB** : mesuré le 27/10/2026, l'application tourne en
   `file://` sous Chromium (`localStorage` OK, IndexedDB ouvrable, aucune erreur
   JS). 1,9 Mo à copier (`index.html`, `gdin-pure.js`, `vendor/`). Piège à
@@ -271,6 +253,21 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
   population (les doublons d'un type aux lignes de ce type), et chaque constat
   la nomme. « Solide » = moins de 1 % de défauts *détectés* : jamais
   « chiffres exacts », jamais « aucun défaut » s'il y en a un.
+
+- **Les deux appels externes restent** (AG-005, tranché le 27/10/2026) :
+  tuiles `tile.openstreetmap.fr` et `geo.api.gouv.fr`. Ils ne présentent
+  **aucun risque de fuite** — les deux URL sont des chaînes littérales sans
+  interpolation, aucune ligne ne les construit depuis les données. Ne pas
+  rouvrir la question sans fait nouveau (fermeture d'accès d'OSM France,
+  filtrage par la DSI, demande formelle de « zéro tiers »).
+- **Si la carte locale revient un jour**, trois constats du 27/10/2026 à ne
+  pas redécouvrir : le référentiel **complète** `COMMUNE_COORDS` et ne
+  l'écrase jamais (112 entrées en dur, alias de saisie et Toulouse) ;
+  le fichier doit être un `.js` chargé par `<script src>` et non un `.json`
+  chargé par `fetch`, qui serait refusé en `file://` ; et **simplifier les
+  tracés ouvre des fentes blanches** entre communes voisines, chaque polygone
+  étant simplifié indépendamment de ses voisins. Code préparé puis retiré,
+  voir `git log` (82a9396, 664e275, fe82b95).
 
 **Noms d'agents**
 
