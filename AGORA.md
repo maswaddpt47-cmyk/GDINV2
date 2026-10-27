@@ -673,6 +673,15 @@ précision de Codex sur l'emprise des tuiles dérivée des données du rapport.
 Codex le dit : ce choix est distinct de la faille et ne doit pas être présenté
 comme son correctif. En attente de l'arbitrage de l'utilisateur.
 
+**Suite — 27/10/2026, seconde mesure retenue.** La CSP proposée par Codex est
+posée et déployée (`b9d1fbd`). Elle ne corrige pas l'injection — l'échappement
+s'en charge — elle coupe la *sortie* : `img-src` et `connect-src` énumèrent les
+seules destinations permises, donc le chemin exact de la reproduction (balise
+`<img>` vers un tiers) ne peut plus être emprunté. Mesuré en `file://`
+(Chromium) : ne gêne pas l'usage sur clé USB. `'unsafe-inline'` conservé,
+limite assumée et écrite dans `CHANTIERS.md`.
+**Le bloc reste ouvert sur sa question d'origine** : fond vectoriel ou tuiles.
+
 ## Blocs tranchés
 
 - **AG-003** — « Thématique dominante » compte-t-il des demandes ? Tranché le

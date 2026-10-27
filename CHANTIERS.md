@@ -49,8 +49,18 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   interpolations de `renderHeatmapAteliers()` passent par `esc()`, et le jeu du
   test « contenu importé hostile » contient des ateliers — sans eux la fonction
   sort avant son `innerHTML` et le test valide du code vulnérable.
-  **Reste à étudier** : une politique de sécurité du contenu (CSP), proposée
-  par Codex comme protection supplémentaire indépendante du code. Non évaluée.
+- **Politique de sécurité du contenu — POSÉE le 27/10/2026** (`b9d1fbd`,
+  déployée verte), sur proposition de Codex dans AG-005. `img-src` et
+  `connect-src` énumèrent les seules destinations autorisées : une requête
+  vers un tiers n'est plus émise, ce qui coupe le chemin d'exfiltration
+  démontré. Ne pas défaire, et **ne jamais y remettre `*` ni `https:` en bloc**
+  — un test e2e le refuse, ainsi que l'absence de la balise.
+  **Limite assumée** : `'unsafe-inline'` reste nécessaire (2 blocs `<script>`,
+  83 `onclick=`), donc la CSP n'empêche pas l'exécution d'un code injecté,
+  seulement son émission. Supprimer `'unsafe-inline'` demanderait de sortir
+  tout le JS du fichier : hors proportion tant que l'échappement tient.
+  Mesuré : n'empêche pas le chargement en `file://` (Chromium), la clé USB
+  fonctionne avec. Non testé sous Firefox ni Edge.
 
 - **AG-005 — carte vectorielle, zéro appel externe** (ouvert le 27/10/2026,
   `80b4071`). **Réponse de Codex, session B, le 27/10/2026 : amendé**
