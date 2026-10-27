@@ -44,9 +44,28 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 
 ## Chantiers ouverts
 
-- **CHANGEMENT D'USAGE (27/10/2026) : le tableau de bord sera consulté en
-  local**, depuis une copie sur poste ou clé USB, et plus seulement par
-  GitHub Pages. Trois conséquences, à garder en tête avant toute évolution :
+- **CHANGEMENT DE DIFFUSION (27/10/2026, demande du DSI) : deux modes.**
+  Le tableau de bord sera **lancé depuis l'hébergement interne (cloud) du
+  CD47**, et/ou **téléchargé puis exécuté depuis le disque du poste**.
+  GitHub Pages n'est plus la seule voie, et a vocation à ne plus en être une.
+  - **À remonter à la DSI au moment du déploiement sur leur cloud** : le
+    `?v=<sha court>` qui force le rafraîchissement du cache est injecté par
+    `.github/workflows/deploy.yml`, **au push sur `main` et pour GitHub Pages
+    seulement**. Il ne s'appliquera pas à un déploiement sur leur
+    infrastructure. Sans en-têtes `Cache-Control` côté serveur, un agent peut
+    garder une version périmée sans le savoir. C'est leur domaine et c'est
+    plus propre que le mécanisme actuel — mais personne n'y pensera si ce
+    n'est pas dit.
+  - **Ne pas confondre cache et données** : le cache ne porte que sur les
+    fichiers de l'application. Un import de données ne passe par aucun cache
+    HTTP, il n'appelle donc **jamais** de rechargement forcé. Le Ctrl+F5 ne
+    concerne qu'un changement de version de l'application, et seulement en
+    mode téléchargé, faute de serveur pour signaler le changement.
+  - **Le workflow de déploiement reste à adapter** si le cloud du CD47
+    remplace GitHub Pages : `deploy.yml` publie sur Pages et `deploy.test.js`
+    verrouille le motif de réécriture du `<head>`. Les deux sont à revoir
+    ensemble, pas séparément.
+  Les conséquences déjà constatées du mode local :
   - **`geo.api.gouv.fr` et les tuiles fonctionnent en `file://`** — vérifié
     par l'utilisateur le 27/10/2026 sur Chrome, copie locale extraite : aucune
     erreur CORS en console, fond de carte affiché, **268 communes placées**
