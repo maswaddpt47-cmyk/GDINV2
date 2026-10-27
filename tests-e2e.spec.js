@@ -1468,6 +1468,42 @@ test.describe('Contenu importé hostile', () => {
   });
 });
 
+// Politique de sécurité du contenu (AG-005, 27/10/2026). L'échappement empêche
+// l'injection ; la CSP empêche la SORTIE si une injection revient un jour. C'est
+// cette seconde ligne de défense que ce test verrouille : sans elle, une balise
+// <img> suffit à exfiltrer, comme l'a démontré la reproduction de Codex.
+test.describe('Politique de sécurité du contenu', () => {
+  test('les destinations sont énumérées, et une destination tierce est refusée', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+
+    const csp = await page.evaluate(() =>
+      (document.querySelector('meta[http-equiv="Content-Security-Policy"]') || {}).content || '');
+    expect(csp, 'aucune CSP dans le <head>').toBeTruthy();
+
+    // Les deux directives qui bloquent l'exfiltration, et leur étanchéité.
+    const dir = Object.fromEntries(csp.split(';').map(d => d.trim()).filter(Boolean)
+      .map(d => { const [k, ...v] = d.split(/\s+/); return [k, v.join(' ')]; }));
+    for (const k of ['default-src', 'img-src', 'connect-src']) {
+      expect(dir[k], `directive ${k} absente`).toBeTruthy();
+    }
+    for (const k of ['img-src', 'connect-src']) {
+      expect(dir[k], `${k} ne doit pas tout autoriser`).not.toMatch(/(^|\s)(\*|https:)(\s|$)/);
+    }
+    // Les deux services dont l'application a réellement besoin restent permis.
+    expect(dir['img-src']).toContain('tile.openstreetmap.fr');
+    expect(dir['connect-src']).toContain('geo.api.gouv.fr');
+
+    // Contre-preuve : la requête vers un tiers n'est pas émise, elle est refusée.
+    const refus = await page.evaluate(() => new Promise(res => {
+      document.addEventListener('securitypolicyviolation', e => res(e.violatedDirective), { once: true });
+      const i = new Image();
+      i.src = 'https://tiers-non-autorise.invalid/p.png?fuite=1';
+      setTimeout(() => res(null), 2000);
+    }));
+    expect(refus, 'la requête vers un tiers n\'a pas été refusée par la CSP').toBeTruthy();
+  });
+});
+
 // Le Diapo Global plantait à son lancement : l'élément #diapo-overlay n'existait
 // pas dans la page (constaté le 20/10/2026 en rejouant le parcours, aucun test
 // ne le lançait). Et l'export PDF sortait la page « Fiabilité » vide.
