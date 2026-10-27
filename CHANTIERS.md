@@ -1,7 +1,8 @@
 # Chantiers — GDINV2
 
-État au **22/10/2026**, fin de session (changement de compte). Mesures des
-audits du 20/10/2026, PR #3, conservées à leur date.
+État au **27/10/2026**. Mesures des audits du 20/10/2026, PR #3, conservées à
+leur date. Ménage du 27/10/2026 : ce qui est fait ou déjà écrit dans
+`CLAUDE.md` est retiré — texte complet dans `git log -p CHANTIERS.md`.
 
 **À faire en premier, dans cet ordre** :
 1. Faire contrôler à l'œil par l'utilisateur les **correctifs d'AG-004**
@@ -18,14 +19,7 @@ ils sont conservés. Elles bloquent le volet B d'AG-002 et rien d'autre.
 **Ce qu'aucune session suivante ne doit refaire** : relancer un audit Codex sur
 AG-003 (clos), ni rouvrir la mise à jour SheetJS (faite, 0.20.3 vendorisée).
 
-Ce fichier existe pour qu'une session qui démarre sans historique sache où en
-est le projet. **Il ne se supprime pas.** Ce qui s'efface, ce sont les tâches,
-au fur et à mesure qu'elles sont terminées — après avoir remonté dans
-« Décisions à ne pas défaire » l'invariant ou le piège qui doit survivre. Le
-récit de ce qui a été fait appartient à `git log`, dont les messages portent
-les mesures.
-
-Règles permanentes : `CLAUDE.md`.
+Règles permanentes, et pourquoi ce fichier ne se supprime pas : `CLAUDE.md`.
 
 ## Comment reprendre
 
@@ -89,42 +83,12 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     `gdin-pure.js` manquent, six `ERR_FILE_NOT_FOUND` et « parseXlsText is not
     defined » s'affichent. Constaté le 27/10/2026. Un
     `A-LIRE-AVANT-D-OUVRIR.txt` est désormais à la racine de l'archive.
-  - **Pas de `?v=<sha>` en local** : le cache-busting vient du workflow de
-    déploiement. Après remplacement du fichier sur une clé, un navigateur peut
-    resservir l'ancienne version — Ctrl+F5 obligatoire.
   - **La CSP est la seule protection embarquée** hors serveur. Vérifiée en
     `file://` et en production sur Chrome et Edge.
-
-- **Faille d'injection par `lieu_raw` — CORRIGÉE le 27/10/2026** (`949d2dd`,
-  déployé vert). Trouvée par Codex dans AG-005. Ne pas défaire : les trois
-  interpolations de `renderHeatmapAteliers()` passent par `esc()`, et le jeu du
-  test « contenu importé hostile » contient des ateliers — sans eux la fonction
-  sort avant son `innerHTML` et le test valide du code vulnérable.
-- **Politique de sécurité du contenu — POSÉE le 27/10/2026** (`b9d1fbd`,
-  déployée verte), sur proposition de Codex dans AG-005. `img-src` et
-  `connect-src` énumèrent les seules destinations autorisées : une requête
-  vers un tiers n'est plus émise, ce qui coupe le chemin d'exfiltration
-  démontré. Ne pas défaire, et **ne jamais y remettre `*` ni `https:` en bloc**
-  — un test e2e le refuse, ainsi que l'absence de la balise.
-  **Limite assumée** : `'unsafe-inline'` reste nécessaire (2 blocs `<script>`,
-  83 `onclick=`), donc la CSP n'empêche pas l'exécution d'un code injecté,
-  seulement son émission. Supprimer `'unsafe-inline'` demanderait de sortir
-  tout le JS du fichier : hors proportion tant que l'échappement tient.
-  Mesuré : n'empêche pas le chargement en `file://` (Chromium), la clé USB
-  fonctionne avec. **Vérifiée en production le 27/10/2026 par l'utilisateur**,
-  sur Chrome, dans la console du dashboard déployé : une requête image vers un
-  tiers renvoie « violates the following Content Security Policy directive…
-  The action has been blocked ». Non testé sous Firefox ni Edge.
-  Manipulation reproductible, utile si la DSI veut le constater elle-même :
-  F12 → Console → `allow pasting` → `new Image().src='https://exemple.com/x.png'`.
-
-- **Usage sur clé USB** : mesuré le 27/10/2026, l'application tourne en
-  `file://` sous Chromium (`localStorage` OK, IndexedDB ouvrable, aucune erreur
-  JS). 1,9 Mo à copier (`index.html`, `gdin-pure.js`, `vendor/`). Piège à
-  retenir : le stockage appartient au **navigateur du poste**, pas à la clé —
-  les données ne suivent pas d'un poste à l'autre, le transport passe par
-  l'export JSON. Non vérifié : l'appel `geo.api.gouv.fr` depuis une origine
-  `file://` (CORS probablement refusé).
+  - **Clé USB** (mesuré le 27/10/2026, Chromium) : tourne en `file://`,
+    `localStorage` et IndexedDB OK, 1,9 Mo (`index.html`, `gdin-pure.js`,
+    `vendor/`). Le stockage appartient au **navigateur du poste**, pas à la
+    clé : les données passent d'un poste à l'autre par l'export JSON.
 
 - **AG-004 — correctifs appliqués le 22/10/2026 (`6b77162`), recomptage à
   faire.** Décisions de l'utilisateur sur les propositions de Codex (détail
@@ -268,7 +232,16 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
   Chart.js, « Maximum call stack »).
 - **Tout texte importé est échappé** à l'insertion (`esc()`), `conumClass()`
   assainit le nom de classe. Un e2e injecte du HTML dans tous les champs et
-  parcourt les onglets et les deux diaporamas.
+  parcourt les onglets et les deux diaporamas ; son jeu contient des ateliers,
+  sans quoi `renderHeatmapAteliers()` sort avant son `innerHTML` et le test
+  valide du code vulnérable (faille `lieu_raw`, Codex AG-005, `949d2dd`).
+- **Politique de sécurité du contenu** (`b9d1fbd`, 27/10/2026, Codex AG-005) :
+  `img-src` et `connect-src` énumèrent les seules destinations ; **jamais `*`
+  ni `https:` en bloc** (un e2e le refuse, et l'absence de la balise).
+  `'unsafe-inline'` reste (2 `<script>`, 83 `onclick=`) : la CSP bloque
+  l'émission d'un code injecté, pas son exécution. Vérifiée en production sur
+  Chrome par l'utilisateur ; pas sous Firefox. Démonstration pour la DSI :
+  F12 → Console → `allow pasting` → `new Image().src='https://exemple.com/x.png'`.
 - **Les chiffres diffusés passent par Codex avant d'être donnés** aux élus ou à
   la hiérarchie : MD-LIB `chiffres-diffuses.md` (règle 33 de `collaboration.md`).
   251 tests verts n'ont pas empêché 14 défauts de calcul sur le fichier réel.
@@ -403,29 +376,14 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
 
 **AGORA**
 
-- **AGORA a servi une fois, et ça a marché** (AG-001, 21/09/2026). Une seconde
-  session, sans accès à MD-LIB, a confirmé le fond, infirmé un argument et
-  trouvé un défaut que l'auteur n'avait pas vu. L'auto-suffisance d'`AGORA.md`
-  + `CLAUDE.md` est donc **éprouvée, pas supposée** : trois règles hors gabarit
-  ont réellement servi à répondre. Ne pas réduire `AGORA.md` au seul gabarit.
-- **Le trailer `Claude-Session:` distingue deux sessions**, même sous une
-  identité GitHub unique — c'est lui qui vérifie qu'on ne répond pas à son
-  propre bloc, pas le champ `Auteur`, qui n'est qu'un libellé oral. Quand le
-  trailer manque, demander.
-- **Un bloc ouvert est invisible si rien n'y mène.** `CLAUDE.md` envoyait une
-  session qui démarre vers `CHANTIERS.md` et lui seul ; `AGORA.md` est
-  désormais cité dans « Où en est le projet ». Le point faible du dispositif
-  joue des deux côtés : Claude oublie de soumettre, et oublie de répondre.
+- **L'auto-suffisance d'`AGORA.md` + `CLAUDE.md` est éprouvée** (AG-001,
+  21/09/2026) : ne pas réduire `AGORA.md` au seul gabarit.
 
 **Dépendances externes et affichage**
 
-- **Le fond de carte ne doit dépendre d'aucune clé.** CARTO a fermé l'accès
-  libre à ses tuiles le 20/09/2026 : un filigrane « API KEY REQUIRED » barrait
-  les deux cartes en production, sans qu'une ligne du dépôt ait changé. Source
-  actuelle : OpenStreetMap France, libre et hébergé en UE. `TUILES_URL` et
-  `TUILES_ATTRIB` sont partagées par les deux cartes — elles déclaraient
-  chacune la leur, l'une pouvait casser sans l'autre. Trois tests e2e refusent
-  une URL contenant `cartocdn`, `apikey` ou `access_token`.
+- **Fond de carte sans clé** (CARTO fermé le 20/09/2026, détail dans
+  `CLAUDE.md`) : `TUILES_URL` et `TUILES_ATTRIB` partagées par les deux cartes,
+  sinon l'une peut casser sans l'autre.
 - **Les options des `<select>` ont besoin d'un fond opaque écrit en dur.** Le
   menu natif s'ouvre hors de la page, sur un fond système blanc : sans fond
   explicite, les options héritent du `color` clair du select et deviennent
@@ -437,18 +395,9 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
   fond de carte ne peut donc pas être constaté ici : il se vérifie sur le site
   déployé, jamais par lecture de code.
 
-**Structure**
+**Structure** (dashboard unique, pas de CDN, pas de version en dur, tests de
+minimisation : `CLAUDE.md`)
 
-- **Un seul dashboard.** `index.html`. Une variante à essayer se fait sur une
-  branche, jamais dans un fichier parallèle.
-- **Pas de `<script src="https://…">`** dans le `<head>` : sans accès au CDN la
-  page restait blanche. Trois tests e2e coupent le réseau et échouent si ça
-  revient. Versions : `vendor/README.md`.
-- **Pas de version écrite en dur dans le source** : `?v=<sha>` est injecté au
-  déploiement, `deploy.test.js` verrouille le motif.
-- **Les tests de minimisation RGPD** (`parseRows — minimisation RGPD`)
-  empêchent un champ nominatif d'entrer dans l'application. Ne jamais les
-  désactiver pour faire passer un commit.
 - **Ne pas retirer les contre-preuves** des tests e2e (`Garde-fous IndexedDB`,
   `Classement des communes`) : elles rejouent l'implémentation fautive et sans
   elles les autres tests passeraient même si le correctif disparaissait.
@@ -506,10 +455,8 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
 
 ## Pistes d'amélioration
 
-Consigne renforcée et propagation approuvée par l'utilisateur le 25/10/2026 :
-initiative dès l'analyse, recommandations argumentées et examen de la pertinence
-de l'existant. Règle 22 de MD-LIB copiée dans `CLAUDE.md` ; ce registre garde
-les pistes et les décisions, sans reproposer une piste écartée sans fait nouveau.
+Règle dans `CLAUDE.md` (« Posture de travail ») ; ne pas reproposer une piste
+écartée sans fait nouveau.
 
 **Proposées, en attente**
 _(aucune)_
