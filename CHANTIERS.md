@@ -44,27 +44,38 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 
 ## Chantiers ouverts
 
-- **CHANGEMENT DE DIFFUSION (27/10/2026, demande du DSI) : deux modes.**
-  Le tableau de bord sera **lancé depuis l'hébergement interne (cloud) du
-  CD47**, et/ou **téléchargé puis exécuté depuis le disque du poste**.
-  GitHub Pages n'est plus la seule voie, et a vocation à ne plus en être une.
-  - **À remonter à la DSI au moment du déploiement sur leur cloud** : le
-    `?v=<sha court>` qui force le rafraîchissement du cache est injecté par
-    `.github/workflows/deploy.yml`, **au push sur `main` et pour GitHub Pages
-    seulement**. Il ne s'appliquera pas à un déploiement sur leur
-    infrastructure. Sans en-têtes `Cache-Control` côté serveur, un agent peut
-    garder une version périmée sans le savoir. C'est leur domaine et c'est
-    plus propre que le mécanisme actuel — mais personne n'y pensera si ce
-    n'est pas dit.
-  - **Ne pas confondre cache et données** : le cache ne porte que sur les
-    fichiers de l'application. Un import de données ne passe par aucun cache
-    HTTP, il n'appelle donc **jamais** de rechargement forcé. Le Ctrl+F5 ne
-    concerne qu'un changement de version de l'application, et seulement en
-    mode téléchargé, faute de serveur pour signaler le changement.
-  - **Le workflow de déploiement reste à adapter** si le cloud du CD47
-    remplace GitHub Pages : `deploy.yml` publie sur Pages et `deploy.test.js`
-    verrouille le motif de réécriture du `<head>`. Les deux sont à revoir
-    ensemble, pas séparément.
+- **CHANGEMENT DE DIFFUSION (27/10/2026, demande du DSI) : deux modes, et
+  aucun des deux n'est un serveur web.**
+  Le tableau de bord sera déposé sur le **cloud du CD47 — un espace de
+  stockage de fichiers, type Drive, pas un hébergement web** — et/ou
+  téléchargé puis exécuté depuis le disque du poste. GitHub Pages a vocation
+  à ne plus être la voie de diffusion.
+  - **Conséquence : le `?v=<sha court>` n'a plus d'objet.** Il est injecté par
+    `.github/workflows/deploy.yml` pour GitHub Pages, et ne sert qu'à
+    contourner l'impossibilité d'y configurer des en-têtes. Sans serveur, il
+    n'y a ni en-tête à poser ni adresse à versionner : **c'est le Ctrl+F5
+    après mise à jour qui règle le cache**, dans les deux modes.
+  - **À TESTER PAR L'UTILISATEUR (prévu le 28/10/2026)** : ouvrir
+    `index.html` **depuis l'interface web du drive ne fonctionnera
+    probablement pas** — hypothèse non vérifiée. La plupart de ces outils
+    forcent le téléchargement ou affichent un aperçu sans exécuter le
+    JavaScript, et les chemins relatifs vers `vendor/` et `gdin-pure.js` ne
+    se résoudraient pas : on retomberait sur les `ERR_FILE_NOT_FOUND` du zip
+    non extrait. **Ce qui devrait marcher** : un dossier synchronisé sur le
+    poste, ouvert depuis le disque (adresse en `C:/...`, pas en `https://`).
+    Résultat du test à consigner ici.
+  - **Risque propre au drive, à cadrer** : un espace partagé diffuse ce qu'on
+    y dépose. Si un agent y place un export JSON pour « sauvegarder » ou
+    « partager », les données d'accompagnement — motif en clair compris —
+    deviennent lisibles par tous ceux qui ont accès au dossier. Sur une clé le
+    risque était la perte ; ici c'est la diffusion silencieuse. **Le dossier
+    partagé porte l'application, jamais les données.**
+  - **Les documents remis au DSI** (synthèse et note consolidée du
+    27/10/2026, hors dépôt) décrivent encore ce mode comme un « hébergement
+    interne ». À reformuler une fois le test fait.
+  - **`deploy.yml` et `deploy.test.js` sont à revoir ensemble** le jour où
+    GitHub Pages est abandonné : le premier publie sur Pages, le second
+    verrouille le motif de réécriture du `<head>` qui n'aurait plus d'objet.
   Les conséquences déjà constatées du mode local :
   - **`geo.api.gouv.fr` et les tuiles fonctionnent en `file://`** — vérifié
     par l'utilisateur le 27/10/2026 sur Chrome, copie locale extraite : aucune
