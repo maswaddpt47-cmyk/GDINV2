@@ -685,6 +685,27 @@ function count(arr,key){return Object.fromEntries(countEntries(arr,key));}
 // SOMME des valeurs dépasse le nombre de lignes et ne se divise jamais par lui
 // (lignesAvecThemas pour un Top 3). Jamais « demandes » : aucune déduplication
 // par N° de demande (AG-003).
+// ── Coordonnées des communes (AG-005) ──
+// La table en dur d'`index.html` porte des alias de saisie
+// (« AGEN CEDEX 9 », « VILLENEUVE/LOT ») et des communes hors département,
+// dont Toulouse. Le référentiel ne les contient pas : il COMPLÈTE, il ne
+// remplace jamais. Inverser la priorité ferait disparaître ces entrées et des
+// accompagnements cesseraient d'apparaître sur la carte sans message d'erreur.
+function fusionnerCoords(base, ajout){
+  const out = {};
+  const valide = v => Array.isArray(v) && v.length === 2
+    && typeof v[0] === 'number' && typeof v[1] === 'number'
+    && isFinite(v[0]) && isFinite(v[1])
+    && v[0] >= -90 && v[0] <= 90 && v[1] >= -180 && v[1] <= 180;
+  for (const [k, v] of Object.entries(ajout || {})) {
+    if (typeof k === 'string' && k.trim() && valide(v)) out[k.trim().toUpperCase()] = [v[0], v[1]];
+  }
+  for (const [k, v] of Object.entries(base || {})) {
+    if (typeof k === 'string' && k.trim() && valide(v)) out[k.trim().toUpperCase()] = [v[0], v[1]];
+  }
+  return out;
+}
+
 // ── Mention de révisabilité (AG-002, 22/10/2026) ──
 // À période identique, le total d'accompagnements est passé de 7 881 à 8 313
 // entre deux imports : un chiffre déjà communiqué change sans que rien ne le
@@ -1399,6 +1420,6 @@ if(typeof module!=='undefined'){
     esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,validerSauvegardeJSON,baseAncienne,completerRangs,dateIsoValide,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,lignesAvecThemas,countTypes,
     parseDt,dayDiff,bizDays,
-    normEtat,isRealisee,countDemandes,dateFr,mentionRevisabilite,cleDoublon,compterDoublons,moisDeLaPeriode,libelleLignes,LIBELLE_LIGNES,
+    normEtat,isRealisee,countDemandes,dateFr,mentionRevisabilite,fusionnerCoords,cleDoublon,compterDoublons,moisDeLaPeriode,libelleLignes,LIBELLE_LIGNES,
   };
 }
