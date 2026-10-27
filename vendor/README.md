@@ -10,8 +10,10 @@ Les polices Google transmettaient en plus l'IP des visiteurs à Google.
 |---|---|---|
 | `leaflet/leaflet.js`, `leaflet.css`, `images/` | 1.9.4 | `leaflet@1.9.4` (`dist/`) |
 | `chartjs/chart.umd.min.js` | 4.4.1 | `chart.js@4.4.1` (`dist/chart.umd.js`, déjà minifié) |
-| `xlsx/xlsx.full.min.js` | 0.18.5 — **à remplacer par ≥ 0.20.3** (CVE-2023-30533, CVE-2024-22363), distribué sur `cdn.sheetjs.com` et plus sur npm | `xlsx@0.18.5` (`dist/`) |
+| `xlsx/xlsx.full.min.js` | **0.20.3** (vérifié le 27/10/2026 : `XLSX.version` dans le fichier). Corrige CVE-2023-30533 et CVE-2024-22363. Distribué sur `cdn.sheetjs.com`, plus sur npm : la mise à jour se fait à la main | `cdn.sheetjs.com` |
 | `fonts/*.woff2` + `fonts.css` | — | `@fontsource/space-grotesk`, `@fontsource/jetbrains-mono`, sous-ensemble latin |
+
+| `geo/geo47.js` | référentiel des communes du 47 — **non déposé à ce jour**, voir `geo/README.md` | `geo.api.gouv.fr` |
 
 ## Mettre à jour une librairie
 
