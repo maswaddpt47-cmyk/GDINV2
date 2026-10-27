@@ -8,6 +8,15 @@
 <meta property="og:title" content="GDIN — Dashboard Activité Conum">
 <meta property="og:description" content="Suivi d'activité des conseillers numériques — Conseil Départemental du Lot-et-Garonne">
 <meta property="og:type" content="website">
+<!-- Politique de sécurité du contenu. La ligne qui compte est img-src/connect-src :
+     elle énumère les SEULES destinations autorisées. Si une interpolation non
+     échappée réapparaît un jour (cf. AG-005, 27/10/2026), le code injecté ne
+     pourra pas émettre les données vers un tiers — le navigateur refuse la requête.
+     'unsafe-inline' reste nécessaire : 2 blocs <script> et 83 onclick= dans ce
+     fichier. Mesuré en file:// (Chromium, 27/10/2026) : n'empêche pas le
+     chargement local, la version clé USB fonctionne avec.
+     GitHub Pages ne permettant pas d'en-tête HTTP, elle passe par <meta>. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.tile.openstreetmap.fr; connect-src 'self' https://geo.api.gouv.fr; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css"/>
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/chartjs/chart.umd.min.js"></script>
