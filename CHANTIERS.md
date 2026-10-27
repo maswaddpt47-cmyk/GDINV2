@@ -47,13 +47,18 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 - **CHANGEMENT D'USAGE (27/10/2026) : le tableau de bord sera consulté en
   local**, depuis une copie sur poste ou clé USB, et plus seulement par
   GitHub Pages. Trois conséquences, à garder en tête avant toute évolution :
-  - **`geo.api.gouv.fr` peut ne pas répondre en `file://`.** L'origine de la
-    page est alors `null` et l'appel n'aboutit que si l'API renvoie
-    `Access-Control-Allow-Origin: *`. **Non vérifié** — l'hôte est refusé par
-    le proxy des sessions Claude. À contrôler sur un poste : ouvrir la copie
-    locale, onglet Territoire, console (F12). Si l'appel échoue, seules les
-    **112 communes en dur** de `COMMUNE_COORDS` se placent, les 319 autres
-    non. Le fond vectoriel (AG-005) cesse alors d'être un confort.
+  - **`geo.api.gouv.fr` et les tuiles fonctionnent en `file://`** — vérifié
+    par l'utilisateur le 27/10/2026 sur Chrome, copie locale extraite : aucune
+    erreur CORS en console, fond de carte affiché, **268 communes placées**
+    (bien au-delà des 112 en dur de `COMMUNE_COORDS`). L'API renvoie donc
+    `Access-Control-Allow-Origin: *`. La crainte inverse, notée à l'ouverture
+    de ce chantier, est levée : le fond vectoriel (AG-005) reste un choix de
+    confidentialité et d'autonomie hors réseau, **pas une nécessité technique**.
+  - **Le ZIP doit être EXTRAIT avant d'ouvrir `index.html`.** Ouvert depuis
+    l'intérieur du zip, Windows n'extrait que ce fichier : `vendor/` et
+    `gdin-pure.js` manquent, six `ERR_FILE_NOT_FOUND` et « parseXlsText is not
+    defined » s'affichent. Constaté le 27/10/2026. Un
+    `A-LIRE-AVANT-D-OUVRIR.txt` est désormais à la racine de l'archive.
   - **Pas de `?v=<sha>` en local** : le cache-busting vient du workflow de
     déploiement. Après remplacement du fichier sur une clé, un navigateur peut
     resservir l'ancienne version — Ctrl+F5 obligatoire.
