@@ -60,7 +60,12 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   seulement son émission. Supprimer `'unsafe-inline'` demanderait de sortir
   tout le JS du fichier : hors proportion tant que l'échappement tient.
   Mesuré : n'empêche pas le chargement en `file://` (Chromium), la clé USB
-  fonctionne avec. Non testé sous Firefox ni Edge.
+  fonctionne avec. **Vérifiée en production le 27/10/2026 par l'utilisateur**,
+  sur Chrome, dans la console du dashboard déployé : une requête image vers un
+  tiers renvoie « violates the following Content Security Policy directive…
+  The action has been blocked ». Non testé sous Firefox ni Edge.
+  Manipulation reproductible, utile si la DSI veut le constater elle-même :
+  F12 → Console → `allow pasting` → `new Image().src='https://exemple.com/x.png'`.
 
 - **AG-005 — carte vectorielle, zéro appel externe** (ouvert le 27/10/2026,
   `80b4071`). **Réponse de Codex, session B, le 27/10/2026 : amendé**
