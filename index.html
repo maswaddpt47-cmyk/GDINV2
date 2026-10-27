@@ -3588,13 +3588,19 @@ function openFilterDrawer(){
 // Le drawer bloque le défilement du body tant qu'il est ouvert : le masquer
 // en CSS ne suffit pas, il faut le refermer vraiment quand on repasse en
 // grand écran, sinon la page reste non défilable sans rien qui l'explique.
+// Le handler est installé ici, le <div id="filter-drawer"> est déclaré ~1600
+// lignes plus bas : un redimensionnement pendant le chargement (ouvrir les
+// outils de développement suffit) trouvait l'élément absent et levait
+// « Cannot read properties of null ». Constaté en production le 27/10/2026.
 window.addEventListener('resize',()=>{
-  if(window.innerWidth>780&&document.getElementById('filter-drawer').classList.contains('open'))closeFilterDrawer();
+  const dr=document.getElementById('filter-drawer');
+  if(window.innerWidth>780&&dr&&dr.classList.contains('open'))closeFilterDrawer();
 });
 
 function closeFilterDrawer(){
-  document.getElementById('filter-drawer').classList.remove('open');
-  document.getElementById('drawer-backdrop').classList.remove('open');
+  const dr=document.getElementById('filter-drawer'),bd=document.getElementById('drawer-backdrop');
+  if(dr)dr.classList.remove('open');
+  if(bd)bd.classList.remove('open');
   document.body.style.overflow='';
 }
 function syncMobileFilter(type,val){
