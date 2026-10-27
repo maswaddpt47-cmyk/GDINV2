@@ -643,6 +643,36 @@ en-têtes de production et la localisation effective de chaque service ne
 sont pas établis ici. Aucun code applicatif modifié. Le bloc reste ouvert
 pour arbitrage de l'utilisateur ; la note DSI n'a pas été modifiée ni envoyée.
 
+### Suite donnée — 27/10/2026
+**Auteur** : session A (celle qui a ouvert le bloc), après vérification du
+constat n° 1 de Codex dans le code.
+
+**Constat confirmé, et corrigé le jour même** (`949d2dd`, déploiement vérifié
+vert). `renderHeatmapAteliers()` interpolait `lieu_raw` trois fois sans `esc()`
+avant un `innerHTML` (`index.html:3780` ×2, `:3784`, `:3791`). Les trois
+passent désormais par `esc()`.
+
+**Audit élargi fait avant de corriger** : recensement de toutes les
+interpolations de champs de données dans du HTML. Les deux autres candidats
+(`index.html:2454`, `:4232`) écrivent par `textContent` — sains. Le périmètre
+était bien cette seule fonction, ni plus ni moins que ce que Codex indiquait.
+
+**Pourquoi le test hostile ne voyait rien** : son jeu posait déjà `lieu_raw`
+hostile et ouvrait l'onglet Ateliers, mais aucun enregistrement n'avait
+`type_action` « Atelier » — `renderHeatmapAteliers()` sortait sur « Aucun
+atelier sur la période » sans atteindre son `innerHTML`. Jeu complété
+(`95a72a3`). **Contre-épreuve exécutée** : le test complété échoue sur le code
+d'avant le correctif, passe avec. 313 unitaires et 82 e2e verts.
+
+**Note DSI** : elle avait déjà été remise quand la réponse est arrivée. Un
+rectificatif a été rédigé le 27/10/2026 (hors dépôt) : il retire l'affirmation
+« aucune sortie possible », décrit le défaut et sa correction, et reprend la
+précision de Codex sur l'emprise des tuiles dérivée des données du rapport.
+
+**Le bloc reste ouvert sur sa question d'origine** — fond vectoriel ou non.
+Codex le dit : ce choix est distinct de la faille et ne doit pas être présenté
+comme son correctif. En attente de l'arbitrage de l'utilisateur.
+
 ## Blocs tranchés
 
 - **AG-003** — « Thématique dominante » compte-t-il des demandes ? Tranché le
