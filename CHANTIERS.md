@@ -45,15 +45,23 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 ## Chantiers ouverts
 
 - **AG-005 — carte vectorielle, zéro appel externe** (ouvert le 27/10/2026,
-  `80b4071`, contradicteur **Codex**). La DSI s'inquiète d'une fuite de données
-  par les deux appels restants. Vérifié ce jour : il n'y en a pas (un seul
-  `fetch`, URL littérale sans interpolation, aucun autre mécanisme d'émission,
-  `EMBEDDED=[]`). Reste l'IP de sortie et la zone de carte regardée, vers deux
-  hôtes en UE. La proposition — contours des 319 communes en GeoJSON, 443 Ko
-  mesurés, `L.geoJSON` au lieu de `L.tileLayer` — supprime ce reste au prix du
-  fond cartographique. **Ne rien implémenter avant la réponse de Codex et
-  l'arbitrage de l'utilisateur.** Une note technique a été remise à la DSI le
-  27/10/2026 (hors dépôt).
+  `80b4071`). **Réponse de Codex, session B, le 27/10/2026 : amendé**
+  (`a82f95b`, code examiné `c6c7dbe`, preuves dans `AGORA.md`). Un lieu importé
+  est inséré sans échappement dans la heatmap Ateliers : exécution de script,
+  lecture d'une valeur fictive de la base et requête image contenant cette
+  valeur reproduites en HTTP, requête interceptée sans envoi externe. **Cela
+  contredit l'assurance d'impossibilité de sortie ; aucune fuite passée n'est
+  établie.** Les tuiles du Rapport révèlent aussi une emprise dépendant des
+  communes filtrées. Priorité proposée : corriger ce rendu et couvrir un vrai
+  atelier hostile dans le test existant, qui n'en contient pas. Le vectoriel
+  ne corrige pas cette faille ; fond local minimal recommandé sous réserve de
+  l'usage, avec centres locaux partagés, licence et fonctionnement USB à
+  vérifier. **Arbitrage utilisateur toujours attendu, aucun correctif ni
+  changement de carte implémenté.** 318 tests unitaires passent ; essais
+  navigateur ciblés exécutés, suite e2e inchangée bloquée ici par la politique
+  Chromium sur `file://`. La note DSI remise par l'autre session le
+  27/10/2026 (hors dépôt) doit être rectifiée ; ni accès à cette note ni envoi
+  effectué par la session B.
 - **Usage sur clé USB** : mesuré le 27/10/2026, l'application tourne en
   `file://` sous Chromium (`localStorage` OK, IndexedDB ouvrable, aucune erreur
   JS). 1,9 Mo à copier (`index.html`, `gdin-pure.js`, `vendor/`). Piège à
