@@ -2417,7 +2417,7 @@ function renderConum(){
     <div class="kpi orange"><div class="kpi-label">CMS couverts</div><div class="kpi-value">${cmsCount}</div><div class="kpi-sub">structures actives</div></div>
     <div class="kpi purple"><div class="kpi-label">Orienteurs distincts</div><div class="kpi-value">${new Set(data.map(r=>r.orienteur).filter(Boolean)).size}</div><div class="kpi-sub">TS</div></div>
     <div class="kpi cyan"><div class="kpi-label">Thématique principale</div><div class="kpi-value" style="font-size:13px;line-height:1.5;padding-top:4px">${esc(topThema)}</div><div class="kpi-sub">${countThemas(data)[topThema]||0} ${motLignes()}</div></div>
-    ${evolByYear.length>1?`<div class="kpi" style="grid-column:1/-1;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px"><div class="kpi-label">Évolution par année</div><div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px">${evolByYear.map(e=>`<div style="text-align:center;min-width:50px"><div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:var(--blue)">${e.n}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px">${e.y}</div></div>`).join('')}</div></div>`:''}`;
+    ${evolByYear.length>1?`<div class="kpi" style="grid-column:1/-1;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px"><div class="kpi-label">Évolution par année</div><div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px">${evolByYear.map(e=>`<div style="text-align:center;min-width:50px"><div class="nb-anime" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:var(--blue)">${e.n}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px">${e.y}</div></div>`).join('')}</div></div>`:''}`;
   makeBarList(document.getElementById('bar-conum-thema'),countThemas(data),'orange');
   makeBarList(document.getElementById('bar-conum-cms'),countEntries(data,'cms'),'blue');
   const mKeys=[...new Set(allData.map(r=>r.date_demande.slice(0,7)))].sort(),col=conumColor(conum);
@@ -2745,7 +2745,7 @@ function buildRptBilan(conum,cms,data,dataConum){
     [communes,'Communes couvertes','var(--cyan)'],
     [orienteurs,'Orienteurs actifs','var(--purple)'],
     [p48!==null?p48+'%':'—',`Réactivité 48h · ${r48}/${t48} demandes calculables${R48.sansContact?` · ${R48.sansContact} sans contact renseigné`:''}`,p48Color],
-  ].map(([v,l,col])=>`<div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}"><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:${col}">${v}</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div></div>`).join('');
+  ].map(([v,l,col])=>`<div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}"><div class="nb-anime" style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:${col}">${v}</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div></div>`).join('');
 
   // Évolution annuelle conum × cms — toujours sur DATA brut (indépendant du filtre années)
   const rawCC=DATA.filter(r=>r.conum===conum&&r.cms===cms);
@@ -2756,7 +2756,7 @@ function buildRptBilan(conum,cms,data,dataConum){
     const diff=prev!==null&&prev>0?Math.round((n-prev)/prev*100):null;
     const arrow=diff===null?'':(diff>=0?`<span style="color:var(--green);font-size:10px;margin-left:3px">▲${diff}%</span>`:`<span style="color:var(--red);font-size:10px;margin-left:3px">▼${Math.abs(diff)}%</span>`);
     const col=yearColor(yr);
-    return`<div style="text-align:center;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;border-top:2px solid ${col}"><div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:${col}">${n}${arrow}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${yr}</div></div>`;
+    return`<div style="text-align:center;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;border-top:2px solid ${col}"><div class="nb-anime" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:${col}">${n}${arrow}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${yr}</div></div>`;
   }).join('');
   document.getElementById('rpt-bilan-evol').innerHTML=evolYears.length>1
     ?`<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Évolution annuelle — ${esc(cms)}</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px">${evolItems}</div>`
@@ -4503,7 +4503,7 @@ function drSlideCover(c,data){
       <div style="font-size:15px;color:var(--muted);font-weight:500;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:8px 20px">${esc(drCms)}</div>
       <div style="width:60px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--blue));border-radius:2px"></div>
       <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin-top:10px">
-        <div style="text-align:center"><div style="font-size:32px;font-weight:700;color:var(--blue);font-family:'JetBrains Mono',monospace">${data.length}</div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px">Accompagnements</div></div>
+        <div style="text-align:center"><div class="nb-anime" style="font-size:32px;font-weight:700;color:var(--blue);font-family:'JetBrains Mono',monospace">${data.length}</div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px">Accompagnements</div></div>
         <div style="width:1px;background:var(--border)"></div>
         <div style="text-align:center"><div style="font-size:32px;font-weight:700;color:var(--cyan);font-family:'JetBrains Mono',monospace">${years||'—'}</div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px">Année(s)</div></div>
         <div style="width:1px;background:var(--border)"></div>
@@ -4837,7 +4837,7 @@ function drSlideNonReal(c,data){
           [txNR+'%','Taux non réalisation',txNRColor],
         ].map(([v,l,col])=>`
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;border-top:2px solid ${col}">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:500;color:${col}">${v}</div>
+            <div class="nb-anime" style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:500;color:${col}">${v}</div>
             <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-top:6px">${l}</div>
           </div>`).join('')}
       </div>
@@ -4988,7 +4988,7 @@ function drSlideBilan(c,data,allDataConum){
     const diff=prev!==null&&prev>0?Math.round((n-prev)/prev*100):null;
     const arrow=diff===null?'':(diff>=0?`<span style="color:var(--green);font-size:10px;margin-left:3px">▲${diff}%</span>`:`<span style="color:var(--red);font-size:10px;margin-left:3px">▼${Math.abs(diff)}%</span>`);
     const col=yearColor(yr);
-    return`<div style="text-align:center;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;border-top:2px solid ${col}"><div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:${col}">${n}${arrow}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${yr}</div></div>`;
+    return`<div style="text-align:center;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;border-top:2px solid ${col}"><div class="nb-anime" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:${col}">${n}${arrow}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${yr}</div></div>`;
   }).join('');
   const years=drYears.size?[...drYears].sort():[...new Set(data.map(r=>r.date_demande.slice(0,4)))].sort();
   const cnColor=conumColor(drConum);
@@ -5013,7 +5013,7 @@ function drSlideBilan(c,data,allDataConum){
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
         ${[[total,'Accompagnements','var(--blue)'],[txC+'%','Accompagnements réalisés','var(--green)'],[trend,`Évol. ${nYear} / ${nPrevYear}${EVO.partielle?` (au ${EVO.coupure})`:''}`,trendColor],[communes,'Communes couvertes','var(--cyan)'],[orienteurs,'Orienteurs actifs','var(--purple)'],[p48!==null?p48+'%':'—',`Réactivité 48h · ${r48}/${t48} demandes calculables${R48.sansContact?` · ${R48.sansContact} sans contact renseigné`:''}`,p48Color]].map(([v,l,col])=>`
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:${col}">${v}</div>
+            <div class="nb-anime" style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:${col}">${v}</div>
             <div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div>
           </div>`).join('')}
       </div>
@@ -5051,7 +5051,7 @@ function drSlideComparaison(c,data,allDataConum){
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
         ${[[selCount,shortLbl(drCms),'var(--blue)'],[pct(selCount,total)+'%','Part dans le secteur','var(--purple)'],[rank+' / '+cmsEntries.length,'Rang du CMS','var(--green)']].map(([v,l,col])=>`
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;border-top:2px solid ${col}">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:500;color:${col}">${v}</div>
+            <div class="nb-anime" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:500;color:${col}">${v}</div>
             <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-top:6px">${l}</div>
           </div>`).join('')}
       </div>
