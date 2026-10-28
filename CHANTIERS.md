@@ -1,8 +1,8 @@
 # Chantiers — GDINV2
 
-État au **27/10/2026**. Mesures des audits du 20/10/2026, PR #3, conservées à
-leur date. Ménage du 27/10/2026 : ce qui est fait ou déjà écrit dans
-`CLAUDE.md` est retiré — texte complet dans `git log -p CHANTIERS.md`.
+État au **28/10/2026** (mesures des audits du 20/10/2026 à leur date). Ménages
+des 27 et 28/10/2026 : le fait, et ce que dit déjà `CLAUDE.md`, sont retirés ;
+les décisions resserrées. Texte complet : `git log -p CHANTIERS.md`.
 
 **À faire en premier, dans cet ordre** :
 1. Faire contrôler à l'œil par l'utilisateur les **correctifs d'AG-004**
@@ -71,13 +71,9 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     GitHub Pages est abandonné : le premier publie sur Pages, le second
     verrouille le motif de réécriture du `<head>` qui n'aurait plus d'objet.
   Les conséquences déjà constatées du mode local :
-  - **`geo.api.gouv.fr` et les tuiles fonctionnent en `file://`** — vérifié
-    par l'utilisateur le 27/10/2026 sur Chrome, copie locale extraite : aucune
-    erreur CORS en console, fond de carte affiché, **268 communes placées**
-    (bien au-delà des 112 en dur de `COMMUNE_COORDS`). L'API renvoie donc
-    `Access-Control-Allow-Origin: *`. La crainte inverse, notée à l'ouverture
-    de ce chantier, est levée : le fond vectoriel (AG-005) reste un choix de
-    confidentialité et d'autonomie hors réseau, **pas une nécessité technique**.
+  - **`geo.api.gouv.fr` et les tuiles fonctionnent en `file://`** (vérifié par
+    l'utilisateur le 27/10/2026, Chrome : pas d'erreur CORS, 268 communes
+    placées). Un fond vectoriel local serait un choix, pas une nécessité.
   - **Le ZIP doit être EXTRAIT avant d'ouvrir `index.html`.** Ouvert depuis
     l'intérieur du zip, Windows n'extrait que ce fichier : `vendor/` et
     `gdin-pure.js` manquent, six `ERR_FILE_NOT_FOUND` et « parseXlsText is not
@@ -85,10 +81,8 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     `A-LIRE-AVANT-D-OUVRIR.txt` est désormais à la racine de l'archive.
   - **La CSP est la seule protection embarquée** hors serveur. Vérifiée en
     `file://` et en production sur Chrome et Edge.
-  - **Clé USB** (mesuré le 27/10/2026, Chromium) : tourne en `file://`,
-    `localStorage` et IndexedDB OK, 1,9 Mo (`index.html`, `gdin-pure.js`,
-    `vendor/`). Le stockage appartient au **navigateur du poste**, pas à la
-    clé : les données passent d'un poste à l'autre par l'export JSON.
+  - **Clé USB** (mesuré le 27/10/2026) : fonctionne, 1,9 Mo ; les données
+    restent dans le navigateur du poste et voyagent par l'export JSON.
 
 - **AG-004 — correctifs appliqués le 22/10/2026 (`6b77162`), recomptage à
   faire.** Décisions de l'utilisateur sur les propositions de Codex (détail
@@ -109,8 +103,8 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     Territoire (`index.html`, `ch-terr-thema`) découpe un cercle en parts
     qui se chevauchent (une ligne à deux thématiques est dans deux parts) ;
     un anneau promet un tout. Barres horizontales à proposer à l'utilisateur.
-  - Les chiffres de réactivité et de fiabilité déjà projetés avant
-    `6b77162` ne sont plus comparables : signalé à l'utilisateur.
+  - Chiffres de réactivité et de fiabilité projetés avant `6b77162` : non
+    comparables (signalé).
 
 - **Contrôle visuel de la mention de révisabilité** (posée le 22/10/2026,
   `3280ec2`). **En ligne** : déploiement de `89391f7` vérifié vert le
@@ -120,17 +114,6 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   première diapositive du Diapo Rapport (c'est elle qui part en PDF). Sur les
   données de démonstration la mention dit « source non datée » — voulu, pas un
   défaut : la date vient de `importMeta.date`, absent sans import.
-
-- **À porter à MD-LIB** (deux constats de la session du 22/10/2026, propagation
-  à demander à l'utilisateur) :
-  - `outils/attendre-deploiement.sh` attend `[dossier] [branche]`, pas un sha.
-    Lancé avec un sha il fait `cd <sha>`, échoue — et **sort tout de même 0**,
-    avec pour seule trace un message sur stderr. Une session pressée lit le
-    code 0 comme un déploiement vert. Le `cd` doit faire sortir le script en
-    erreur. Constaté en réel ce jour (`deploiement.md`).
-  - Le ✅ d'un déploiement **porte sur un sha, pas sur une session**. Annoncer
-    « en ligne » sans nommer le commit laisse croire que le travail poussé
-    ensuite l'est aussi. Nommer le sha dans l'annonce.
 
 - **AG-002 — archivage des bilans diffusés** (volet A fait le 22/10/2026,
   volet B en attente). La mention « chiffres susceptibles d'être révisés »,
@@ -160,9 +143,8 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   - **Taux de demandes closes** : le taux affiché est un taux d'*accompagnements*
     réalisés (lignes). Un taux par demande demande une règle pour les demandes
     à plusieurs actions.
-- **Validation sur poste** : le rendu (badges, tableau États à 9 colonnes,
-  regroupement « Autres structures », libellé de réactivité) se contrôle sur le
-  site déployé.
+- **Validation sur poste** du rendu (badges, États à 9 colonnes, « Autres
+  structures », libellé de réactivité), sur le site déployé.
 - **Bases déjà présentes sur les postes** : conservées, complétées (rangs
   reconstitués dans l'ordre de la base), marquées `base_heritee` ; la
   provenance du conseiller y est « inconnue » sauf déduction connue. Elles sont
@@ -173,7 +155,7 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 
 ## À porter aux développeurs de l'outil de saisie
 
-Par gain décroissant. L'encodage a été signalé le 20/09/2026.
+Par gain décroissant. L'encodage de « Date action » a été signalé le 20/09/2026.
 
 | Action à la source | Gain mesuré |
 |---|---|
@@ -183,275 +165,127 @@ Par gain décroissant. L'encodage a été signalé le 20/09/2026.
 | Liste déroulante communes (référentiel INSEE) | supprime les 2 % hors référentiel |
 | Thématique obligatoire | comble 22,9 % de trous |
 | Contrôle de cohérence des dates à la saisie | supprime les 7,2 % d'incohérences chronologiques |
-| ~~Corriger l'encodage de « Date action »~~ | signalé le 20/09/2026 |
 | Rendre « Urgence » fiable (consigne de saisie, ou champ retiré) | 101 urgences en 2024, 5 en 2025, 0 en 2026 : la case n'est plus cochée depuis août 2024 |
 
 ## Décisions à ne pas défaire
 
-**Identité, provenance, stockage, populations (20/10/2026, audits Codex)**
+Une ligne par décision ; le récit et les mesures d'origine sont dans
+`git log -p CHANTIERS.md` (version complète : avant le ménage du 28/10/2026).
+« Testé » = un test unitaire ou e2e échoue si on la défait.
 
-- **Identité d'une ligne** (`cleFusion`, `cleBaseAction`, gdin-pure.js) : N°
-  demande + types + date d'action + CMS + rang de répétition. Elle exclut le
-  conseiller (déduit après la fusion : l'ancienne clé le contenait, d'où 2 → 3 →
-  4 lignes à chaque réimport), l'état et les dates de planification et de
-  réalisation, mis à jour par `fusionnerImport()`. Limites : une date d'action
-  corrigée à la source crée une nouvelle ligne ; le rang suppose le même ordre
-  de lignes d'un export à l'autre. L'export n'a pas d'identifiant d'action.
+**Identité, provenance, stockage (20/10/2026, audits Codex)**
+
+- **Identité d'une ligne** (`cleFusion`, `cleBaseAction`) : N° demande + types
+  + date d'action + CMS + rang. Jamais le conseiller (déduit après fusion :
+  l'ancienne clé dupliquait à chaque réimport), ni l'état, ni les dates de
+  planification/réalisation (mises à jour par `fusionnerImport()`). Limites :
+  date d'action corrigée à la source = nouvelle ligne ; le rang suppose le même
+  ordre d'export.
 - **Provenance du conseiller** : `conum_origine` = source | referent | deduit |
-  inconnu. `attribuerConum()` est idempotent et ne remet jamais `conum_deduit`
-  à faux au seul motif que le nom est rempli. Les majoritaires par secteur ne
-  s'appuient que sur source et referent. « Inconnu » compte dans la marge de
-  l'onglet Fiabilité.
-- **Sauvegarde** : un instantané `{schema, rev, records, meta}` (`gdin_snap_v4`)
-  dans localStorage ET IndexedDB ; au démarrage la révision la plus récente
-  gagne. Écritures en file, invalidées par la réinitialisation (`_storageEpoch`) ;
-  `_idbDel` attend `oncomplete`. Ne pas supprimer l'ancienne copie avant le
-  succès de la nouvelle.
-- **JSON importé** : validé en entier (`validerSauvegardeJSON`), reconstruit
-  champ par champ ; une ligne invalide rejette le fichier, la base active reste
-  intacte. « Réinitialiser et importer » est un paramètre de l'opération
-  (`pendingData.reset`), jamais une variable globale.
-- **États** : `categorieEtat()` → realisee | non_realisee | en_attente |
-  autre. « En cours » de la source est normalisé en « En attente ». Aucun écran
-  ne compte `=== 'En cours'`.
-- **Réactivité** rattachée à la même demande (`deriverActions`), jamais à
-  conseiller + CMS + date ; sans contact valide, le cas est compté « sans
-  contact ». **Le taux 48 h compte des demandes** (`delaisParDemande`, seuil
-  de 20 demandes, AG-004, décision de l'utilisateur du 22/10/2026) : par
-  accompagnement, une demande à 20 accompagnements pesait 20 fois. « 48 h » =
-  au plus 2 jours ouvrés, fériés non retirés : ne jamais écrire « délai
-  réglementaire ». Les actions dérivées gardent `jour` (filtre) et `date` (mois,
-  graphiques) ; ne jamais comparer des mois pour filtrer une période.
-- **Taux de réalisation** = lignes à l'état Réalisée sur les lignes, jamais la
-  présence de `date_action`. **Comparaison N/N−1** à même date, avec le type
-  du filtre (`evolutionAnnuelle`, `filtrerParType`).
-- **Un seul aiguillage des diapositives du Rapport** : `drRenderSlide()`,
-  appelé par la navigation et par l'export PDF. Le conteneur `#diapo-overlay`
-  du Diapo Global doit exister (il manquait : le bouton plantait) ; l'export PDF
-  ne doit jamais faire `options.animation = options.animation || {}` (proxy
-  Chart.js, « Maximum call stack »).
-- **Tout texte importé est échappé** à l'insertion (`esc()`), `conumClass()`
-  assainit le nom de classe. Un e2e injecte du HTML dans tous les champs et
-  parcourt les onglets et les deux diaporamas ; son jeu contient des ateliers,
-  sans quoi `renderHeatmapAteliers()` sort avant son `innerHTML` et le test
-  valide du code vulnérable (faille `lieu_raw`, Codex AG-005, `949d2dd`).
-- **Politique de sécurité du contenu** (`b9d1fbd`, 27/10/2026, Codex AG-005) :
-  `img-src` et `connect-src` énumèrent les seules destinations ; **jamais `*`
-  ni `https:` en bloc** (un e2e le refuse, et l'absence de la balise).
-  `'unsafe-inline'` reste (2 `<script>`, 83 `onclick=`) : la CSP bloque
-  l'émission d'un code injecté, pas son exécution. Vérifiée en production sur
-  Chrome par l'utilisateur ; pas sous Firefox. Démonstration pour la DSI :
-  F12 → Console → `allow pasting` → `new Image().src='https://exemple.com/x.png'`.
-- **Les chiffres diffusés passent par Codex avant d'être donnés** aux élus ou à
-  la hiérarchie : MD-LIB `chiffres-diffuses.md` (règle 33 de `collaboration.md`).
-  251 tests verts n'ont pas empêché 14 défauts de calcul sur le fichier réel.
-- **Une valeur de thématique compte des lignes** (AG-004, décision de
-  l'utilisateur du 22/10/2026, remplace la règle « mentions » d'AG-003) :
-  `countThemas()` compte une thématique une fois par ligne ; son pourcentage
-  se rapporte à **toutes** les lignes, sans thématique comprises (« % des
-  accompagnements »). La **somme** des valeurs dépasse le nombre de lignes :
-  un Top 3 se compte en union (`lignesAvecThemas`), jamais en additionnant.
-  Jamais « demandes » : aucune déduplication par N° de demande.
-- **Fiabilité** (AG-004) : la marge d'un indicateur se rapporte à sa propre
-  population (les doublons d'un type aux lignes de ce type), et chaque constat
-  la nomme. « Solide » = moins de 1 % de défauts *détectés* : jamais
-  « chiffres exacts », jamais « aucun défaut » s'il y en a un.
-
-- **Les deux appels externes restent** (AG-005, tranché le 27/10/2026) :
-  tuiles `tile.openstreetmap.fr` et `geo.api.gouv.fr`. Ils ne présentent
-  **aucun risque de fuite** — les deux URL sont des chaînes littérales sans
-  interpolation, aucune ligne ne les construit depuis les données. Ne pas
-  rouvrir la question sans fait nouveau (fermeture d'accès d'OSM France,
-  filtrage par la DSI, demande formelle de « zéro tiers »).
-- **Si la carte locale revient un jour**, trois constats du 27/10/2026 à ne
-  pas redécouvrir : le référentiel **complète** `COMMUNE_COORDS` et ne
-  l'écrase jamais (112 entrées en dur, alias de saisie et Toulouse) ;
-  le fichier doit être un `.js` chargé par `<script src>` et non un `.json`
-  chargé par `fetch`, qui serait refusé en `file://` ; et **simplifier les
-  tracés ouvre des fentes blanches** entre communes voisines, chaque polygone
-  étant simplifié indépendamment de ses voisins. Code préparé puis retiré,
-  voir `git log` (82a9396, 664e275, fe82b95).
+  inconnu ; `attribuerConum()` idempotent ; majoritaires par secteur calculés
+  sur source et referent seulement ; « inconnu » compte dans la marge Fiabilité.
+- **Sauvegarde** `gdin_snap_v4` dans localStorage ET IndexedDB, la révision la
+  plus récente gagne ; écritures en file invalidées par `_storageEpoch` ; ne
+  jamais supprimer l'ancienne copie avant le succès de la nouvelle.
+- **JSON importé** validé en entier (`validerSauvegardeJSON`) : une ligne
+  invalide rejette le fichier ; « Réinitialiser et importer » =
+  `pendingData.reset`, jamais une globale.
+- **États** : `categorieEtat()` ; « En cours » normalisé en « En attente ».
+- **Réactivité par demande** (`deriverActions`, `delaisParDemande`, seuil 20
+  demandes, AG-004, 22/10/2026) ; sans contact valide = « sans contact ».
+  « 48 h » = 2 jours ouvrés, fériés non retirés : jamais « délai
+  réglementaire ». Filtrer sur `jour`, jamais sur des mois.
+- **Taux de réalisation** = lignes « Réalisée » / lignes, jamais
+  `date_action` (renseignée à 100 %). **N/N−1** à même date, avec le type du
+  filtre (`evolutionAnnuelle`).
+- **Diapositives du Rapport** : un seul aiguillage `drRenderSlide()` (navigation
+  et PDF) ; `#diapo-overlay` doit exister ; jamais
+  `options.animation = options.animation || {}` (proxy Chart.js).
+- **Tout texte importé passe par `esc()`** ; l'e2e d'injection doit contenir des
+  ateliers, sinon il valide du code vulnérable (faille `lieu_raw`, `949d2dd`).
+- **CSP** (`b9d1fbd`, AG-005) : `img-src`/`connect-src` énumérés, jamais `*` ni
+  `https:` (testé) ; `'unsafe-inline'` reste (2 `<script>`, 83 `onclick=`).
+  Démo DSI : F12 → Console → `allow pasting` →
+  `new Image().src='https://exemple.com/x.png'`.
+- **Thématiques** (AG-004) : une fois par ligne, % de **toutes** les lignes ;
+  un Top 3 se compte en union (`lignesAvecThemas`), jamais en additionnant ;
+  jamais « demandes ».
+- **Fiabilité** : la marge d'un indicateur porte sur sa propre population ;
+  « Solide » = moins de 1 % de défauts *détectés*, jamais « chiffres exacts ».
+  La synthèse nomme l'indicateur le plus sensible, ne résume pas au pire.
+  `defautsSaisie()` garde deux dénominateurs (sinon 104,9 %). Aucune marge
+  estimée : toutes viennent d'`indicateursFiabilite()`. Onglet validé en l'état
+  le 20/09/2026 ; « Ateliers » sans marge, voulu.
+- **Les deux appels externes restent** (tuiles OSM France, `geo.api.gouv.fr`,
+  AG-005, 27/10/2026) : URL littérales, aucune interpolation. Rouvrir seulement
+  sur fait nouveau. **Si une carte locale revient** : le référentiel complète
+  `COMMUNE_COORDS` sans l'écraser, `.js` par `<script src>` (pas `fetch`, refusé
+  en `file://`), pas de simplification des tracés (fentes blanches) — code
+  retiré : `82a9396`, `664e275`, `fe82b95`.
 
 **Noms d'agents**
 
-- **Aucun nom d'agent dans le code source**, et aucune exclusion par nom : elle
-  publierait ce nom et se périmerait d'elle-même. Le dépôt est public et
-  indexable : une publication sans finalité ne se justifie pas au regard de la
-  minimisation. Le rattachement CMS → conseiller, la liste des conseillers et
-  leurs couleurs sont dérivés des données.
-- **L'attribution se dérive par année**, jamais globalement : les affectations
-  changent, et un mapping figé réécrit rétroactivement cinq ans d'historique.
+- **Aucun nom d'agent dans le source**, ni exclusion par nom (dépôt public) :
+  tout se dérive des données. **Attribution par année**, jamais globale.
 
 **Import et fusion**
 
-- **Un seul parseur.** `parseRows()` porte le mapping pour tous les chemins.
-  Il en existait deux, qui divergeaient de 26 % sur le même fichier. Ne jamais
-  recopier le mapping ailleurs.
-- **Clé de fusion des ateliers** : `atl:<N° demande>|<date action>|p:<rang>`.
-  La clé générique ne porte pas le N° de demande et fait entrer deux séances
-  en collision. Sans le rang, 78 % des participations étaient supprimées à
-  l'import.
-- **`demojibakeUtf16()`** répare l'encodage UTF-16 de « Date action », cassée
-  sur 100 % des lignes. Ne pas l'assouplir : elle ne décode que si toute la
-  chaîne est dans le plan supérieur Unicode et que le résultat est de l'ASCII
-  imprimable. Elle pourra être retirée le jour où un export complet n'affiche
-  plus aucune cellule réparée — pas avant.
-- **Cycle Pass écarté par type d'action**, jamais par nom de structure : UNA 47
-  porte 969 lignes du cycle et 30 d'activité réelle.
-- **Communes : référentiel officiel**, pas de rapprochement par ressemblance.
-  Brax et Bias, Layrac et Clairac sont à deux caractères l'un de l'autre ; un
-  prototype sans référentiel rattachait Donzac à Dondas, sans alerte.
-- **`normCms()` : le mapping explicite d'abord**, la clé souple en dernier
-  recours seulement. Un test vérifie qu'aucune clé souple ne désigne deux
-  lieux.
-- **`Villeneuve sur Lot` saisi comme lieu reste en « Autre structure »** : ce
-  ne sont pas les ateliers de l'utilisateur. Un test le verrouille.
+- **Un seul parseur** `parseRows()` (il y en a eu deux, 26 % d'écart).
+- **Ateliers** : clé `atl:<N° demande>|<date action>|p:<rang>` (sans le rang,
+  78 % des participations supprimées).
+- **`demojibakeUtf16()`** : ne pas l'assouplir ; la retirer quand un export
+  complet n'affiche plus aucune cellule réparée.
+- **Cycle Pass écarté par type d'action**, jamais par structure (UNA 47 a aussi
+  de l'activité réelle).
+- **Communes : référentiel officiel**, jamais de ressemblance (Donzac → Dondas).
+- **`normCms()`** : mapping explicite d'abord (testé) ; `Villeneuve sur Lot`
+  saisi comme lieu reste « Autre structure » (testé).
 
 **Comptages et affichage**
 
-- **Une ligne d'atelier est une participation, pas un atelier.** Toujours
-  afficher les deux : 596 séances pour 5 478 participations.
-- **Les participants d'une séance ne sont pas des doublons.** Le nom du
-  bénéficiaire n'entre pas dans l'application (minimisation RGPD), rien ne les
-  distingue : le dashboard s'abstient plutôt que d'accuser à tort. Les compter
-  faisait annoncer 25 % de doublons là où il y en a 0,1 %.
-- **Ne pas fonder d'indicateur sur `!r.date_action`** : la colonne est
-  renseignée à 100 %, la valeur serait constante. Le taux de réalisation, lui,
-  varie de 38 % à 83 %.
-- **Un filtre par défaut peut vider un graphe sans que rien ne le signale.**
-  `typeFilter` vaut « Accompagnement » à l'ouverture : les deux graphes de
-  types d'action, alimentés par `getFiltered()`, n'affichaient qu'une barre —
-  déjà le KPI principal. Ils lisent `getFilteredSansType()`. Audit systématique
-  du 21/09/2026 : les 36 autres graphes, listes et tables de neuf onglets ont
-  été relevés sous filtre par défaut puis filtre levé, aucun autre n'est
-  concerné. Ateliers, États et Territoire sont indépendants du type par
-  construction.
-- **L'axe d'une courbe d'évolution vient de la période, pas des données.**
-  `moisDeLaPeriode()` : un mois sans activité s'affiche à zéro au lieu de
-  disparaître. Sans cela deux points voisins à l'écran pouvaient être séparés
-  de plusieurs mois réels — 10 points pour 36 mois sur un Rapport mesuré le
-  21/09/2026. Appliqué au Rapport et au slide « Non réalisés » ; le slide
-  « Évolution » trace déjà 12 mois calendaires. Les autres écrans ne sont pas
-  concernés, leur volume remplit tous les mois.
-- **`countEntries()` pour tout classement affiché**, jamais `count()` : les
-  clés entières d'un objet JavaScript repassent en tête et « 47 » s'affichait
-  devant Agen.
-- **Ne pas revenir à `indexOf()`** pour compter les doublons : 1 547 ms contre
-  3 ms, le coût croît au carré.
-- **L'onglet États ne suit pas le filtre de type**, comme l'onglet Fiabilité :
-  `ACTIONS_DATA` ne porte que des accompagnements, appliquer le type viderait
-  l'écran dès que « Atelier » est choisi. Un test e2e le verrouille.
-- **Un seul jeu de filtres par écran.** Le bloc d'états a vécu dans l'onglet
-  Import avec ses propres listes année / CMS / conseiller : il pouvait afficher
-  2024 pendant que le reste du tableau de bord affichait 2026, sans alerte. Ne
-  pas réintroduire de filtres locaux sur un écran qui porte les mêmes données
-  que les autres ; un test vérifie qu'aucun ne revient.
-- **Un test de contenu ne prouve pas l'affichage.** Les premiers tests de
-  l'onglet États vérifiaient les tables mais pas la visibilité du panneau : ils
-  seraient passés sur un écran resté masqué. Le test « le panneau devient
-  réellement visible » comble ce trou — ne pas le retirer.
-- **Les courbes ne s'empilent pas, les barres peuvent.** « Volume par CMS »
-  était en aires empilées : la courbe du haut valait le total des six CMS et
-  non le volume du sien, et toutes reprenaient la forme du total. Dans une
-  barre segmentée le découpage reste visible ; dans une courbe, la hauteur se
-  lit comme une valeur. `revue-sens.test.js` refuse le retour de l'empilement
-  sur un graphe en lignes.
-- **Un titre ne fige pas un type d'action** que le filtre peut démentir :
-  `libelleLignes()` rend « Accompagnements par CMS » et « Accompagnements
-  N/N-1/N-2 », qui mentaient sous le filtre « Atelier ». Même test.
-- **`ACTIONS_DATA` est dérivé de `DATA`**, pas importé séparément
-  (index.html, `DATA.forEach` sur `type_action` commençant par
-  « accompagnement » et `cms` non vide), et il y ajoute `delai_reactivite`
-  et `delai_total`. Il alimente la Vue globale, le Rapport, le Bilan, le
-  Diapo Global et le Diapo Rapport : **ne pas le supprimer** en croyant
-  nettoyer l'onglet Import.
-- **La synthèse de fiabilité ne se réduit pas au pire indicateur** : afficher
-  « faible » quand quatre indicateurs sur neuf sont exacts décrédibilise ce qui
-  est solide. Elle nomme le plus sensible.
-- **`defautsSaisie()` utilise deux dénominateurs** — base pour les défauts
-  constatés, lignes lues ou retenues pour ceux issus de l'import. Les mélanger
-  affichait 104,9 % sur une colonne réparée à 100 %.
-- **Aucune marge affichée ne doit être estimée.** Toutes viennent de
-  `indicateursFiabilite()`, recalculées depuis le fichier importé.
+- **Une ligne d'atelier = une participation** : afficher séances et
+  participations. Les participants d'une séance ne sont pas des doublons.
+- **Filtre par défaut « Accompagnement »** : les graphes de types d'action
+  lisent `getFilteredSansType()` (audit des 36 autres graphes le 21/09/2026).
+  États et Fiabilité ne suivent pas le filtre de type (testé). **Un seul jeu de
+  filtres par écran** (testé).
+- **Axe d'évolution = la période** (`moisDeLaPeriode()`), pas les données.
+- **`countEntries()`** pour tout classement, jamais `count()` ; pas
+  d'`indexOf()` pour les doublons (1 547 ms contre 3 ms).
+- **Courbes jamais empilées, titres jamais figés sur un type**
+  (`libelleLignes()`) : `revue-sens.test.js`.
+- **`ACTIONS_DATA` dérivé de `DATA`** : alimente Vue globale, Rapport, Bilan et
+  les deux diaporamas — ne pas le supprimer en « nettoyant » l'Import.
+- **Visibilité réelle du panneau États** : test « le panneau devient réellement
+  visible », à garder.
 
-**AGORA**
+**Divers**
 
-- **L'auto-suffisance d'`AGORA.md` + `CLAUDE.md` est éprouvée** (AG-001,
-  21/09/2026) : ne pas réduire `AGORA.md` au seul gabarit.
+- **AGORA** : ne pas réduire `AGORA.md` au gabarit (auto-suffisance éprouvée,
+  AG-001).
+- **Fond de carte** : `TUILES_URL` et `TUILES_ATTRIB` partagés par les deux
+  cartes. **Options des `<select>`** : fond opaque écrit en dur (contraste
+  testé dans les deux thèmes).
+- **Ne pas retirer les contre-preuves** e2e (`Garde-fous IndexedDB`,
+  `Classement des communes`).
+- **Harnais** : générateur mulberry32 (pas un LCG en `seed % n`), combinaison
+  du Rapport la plus fournie, *landing* fermé par `.lo-btn` et un seul
+  `.panel.active` avant toute capture.
+- **Ce que l'environnement de développement ne voit pas** : le proxy filtre
+  cdnjs, `geo.api.gouv.fr` et les tuiles ; le rendu de la carte se vérifie sur
+  le site.
 
-**Dépendances externes et affichage**
+**Limites connues, à assumer**
 
-- **Fond de carte sans clé** (CARTO fermé le 20/09/2026, détail dans
-  `CLAUDE.md`) : `TUILES_URL` et `TUILES_ATTRIB` partagées par les deux cartes,
-  sinon l'une peut casser sans l'autre.
-- **Les options des `<select>` ont besoin d'un fond opaque écrit en dur.** Le
-  menu natif s'ouvre hors de la page, sur un fond système blanc : sans fond
-  explicite, les options héritent du `color` clair du select et deviennent
-  invisibles — la liste paraît vide alors qu'elle est peuplée. Les variables de
-  thème sont translucides et ne conviennent pas. Des tests e2e mesurent le
-  contraste réel dans les deux thèmes.
-- **Ce que le réseau de développement ne permet pas de vérifier.** Le proxy
-  filtre cdnjs, geo.api.gouv.fr et les serveurs de tuiles. Le rendu réel d'un
-  fond de carte ne peut donc pas être constaté ici : il se vérifie sur le site
-  déployé, jamais par lecture de code.
-
-**Structure** (dashboard unique, pas de CDN, pas de version en dur, tests de
-minimisation : `CLAUDE.md`)
-
-- **Ne pas retirer les contre-preuves** des tests e2e (`Garde-fous IndexedDB`,
-  `Classement des communes`) : elles rejouent l'implémentation fautive et sans
-  elles les autres tests passeraient même si le correctif disparaissait.
-
-**Mesurer l'application, pas son instrument**
-
-- **Ne jamais conclure à une anomalie sans avoir éliminé le jeu de test.** Un
-  audit du 21/09/2026 a signalé « un seul conseiller sur 262 lignes » puis
-  « graphes du Rapport à une seule valeur » : les deux venaient du harnais, pas
-  du code. Le générateur pseudo-aléatoire était un LCG lu en `seed % n`, dont
-  les bits de poids faible se corrèlent — il ne produisait que quatre CMS sur
-  six et presque toujours le même conseiller ; et la combinaison du Rapport
-  avait été choisie par `selectedIndex=1`, qui tombait sur un couple à un seul
-  dossier. Pour un jeu synthétique, utiliser un générateur à bits de poids fort
-  (mulberry32) et vérifier sa distribution avant de l'exploiter ; pour le
-  Rapport, sélectionner la combinaison la plus fournie, jamais la première.
-- **Une capture ne vaut que si l'écran capturé est celui qu'on croit.** Deux
-  captures de l'onglet États ont montré le diaporama et l'écran d'accueil.
-  Fermer le *landing* par `.lo-btn` comme le font les tests e2e, et vérifier
-  dans la même passe que le panneau visé est bien le seul `.panel.active`.
-
-**Limites connues, à assumer plutôt qu'à masquer**
-
-- **Pas de KPI « Urgences »** (retiré le 23/09/2026). Le champ est toujours
-  importé, mais la saisie s'est effondrée en août 2024 (mesuré sur l'export du
-  21/09/2026). Ne le réafficher que si un nouvel export montre une saisie
-  régulière.
-
-- **Rupture d'historique au 20/09/2026.** Jusqu'à cette date, 2 853 lignes
-  étaient attribuées au conseiller en poste aujourd'hui sur un secteur, et non
-  à celui qui l'occupait à l'époque — principalement Tonneins, Nérac, Antenne
-  Aiguillon et Agen Tapie. Corrigé depuis. Un bilan individuel antérieur au
-  20/09/2026 ne se compare donc pas à un bilan tiré après : l'écart vient de
-  la correction, pas de l'activité.
-- **L'onglet Fiabilité est validé en l'état** (20/09/2026). Trois choix y sont
-  délibérés et ne se défont pas sans raison mesurée : la synthèse nomme
-  l'indicateur le plus sensible au lieu de résumer au pire, « Ateliers »
-  s'affiche sans marge parce que séances et participations sont une
-  reformulation et non une incertitude, et la marge de 40,4 % porte sur
-  l'attribution individuelle, jamais sur le volume d'activité.
-- **L'attribution par conseiller est déduite à 40,4 %** : `comblerConum()`
-  applique d'abord le référent constaté, `applyConumAttrib()` comble le reste
-  depuis le secteur — le conseiller majoritaire de ce secteur pour l'année
-  concernée, donc un changement d'affectation ne réécrit plus l'historique,
-  mais cela reste une inférence. Le bandeau de
-  l'onglet Fiabilité est la réponse retenue — ne pas présenter ces chiffres
-  comme une mesure individuelle.
-- **La saisie reste du texte libre.** Les trois mécanismes de rattrapage
-  (lieux, communes, conseiller) sont des filets, pas une solution : elle se
-  joue à la source.
-- **Préfixes de service devant un CMS non reconnus** (`CIP - CMS
-  Villeneuve/Lot`, `DSIAN / CMS Villeneuve-Fumel`…) : 39 lignes en « Autre
-  structure ». Le libellé nu `CMS Marmande` n'est pas non plus une clé du
-  mapping. Volume faible, non corrigé.
+- **Pas de KPI « Urgences »** (saisie effondrée depuis août 2024) : le remettre
+  seulement si un export montre une saisie régulière.
+- **Rupture d'historique au 20/09/2026** : 2 853 lignes réattribuées ; un bilan
+  individuel antérieur ne se compare pas à un postérieur.
+- **Attribution déduite à 40,4 %** (`comblerConum()`, `applyConumAttrib()`) :
+  jamais présentée comme une mesure individuelle (bandeau Fiabilité).
+- **Saisie en texte libre** : les rattrapages sont des filets ; 39 lignes à
+  préfixe de service (`CIP - CMS …`) et `CMS Marmande` nu restent en « Autre
+  structure », non corrigé.
 
 ## Pistes d'amélioration
 
