@@ -1656,6 +1656,54 @@ test.describe('Animations', () => {
     expect(r.vus[r.vus.length - 1]).toBe(r.final);
   });
 
+  // L'écran d'accueil recouvre la Vue globale sans la masquer pour
+  // IntersectionObserver : le comptage se jouait derrière et était fini au clic
+  // (signalé par l'utilisateur le 28/10/2026).
+  test("fermer l'écran d'accueil fait compter les KPI de la Vue globale", async ({ page }) => {
+    await preparer(page);
+    await page.reload();
+    await page.locator('.lo-btn').waitFor({ state: 'visible' });
+    await page.waitForFunction(() => dataSource === 'imported' || DATA.length > 0);
+    await page.waitForTimeout(1500);   // le comptage caché a le temps de finir
+    const r = await page.evaluate(() => new Promise(res => {
+      document.querySelector('.lo-btn').click();
+      const vus = [], t0 = performance.now();
+      const pas = () => {
+        const el = document.querySelector('#kpi-global .kpi-value');
+        vus.push(decouperNombre(el.textContent.trim()).valeur);
+        if (performance.now() - t0 < 1100) requestAnimationFrame(pas); else res({ vus, final: el._nbAnime && el._nbAnime.d.valeur });
+      };
+      pas();
+    }));
+    expect(r.final).toBeGreaterThan(2);
+    expect(r.vus[0], 'la valeur finale s\'affiche avant le comptage').toBeLessThan(r.final);
+    expect(r.vus[r.vus.length - 1]).toBe(r.final);
+  });
+
+  // « Top 15 orienteurs » restait figé (signalé le 28/10/2026) : créé à
+  // l'ouverture de l'onglet, il s'animait à taille nulle puis était
+  // redimensionné sans animation. Mesure : la plus grande barre doit partir de 0.
+  test('ouvrir un onglet fait pousser les barres de ses graphes', async ({ page }) => {
+    await preparer(page);
+    const ouvrir = id => page.evaluate(id => document.querySelector(`[onclick*="'${id}'"]`).click(), id);
+    for (const passage of [1, 2]) {
+      await ouvrir('global'); await page.waitForTimeout(800);
+      const xs = await page.evaluate(() => new Promise(res => {
+        document.querySelector(`[onclick*="'orienteurs'"]`).click();
+        const xs = [], t0 = performance.now();
+        const pas = () => {
+          const c = charts['ch-ori-bar'];
+          if (c && c.chartArea) { const m = c.getDatasetMeta(0).data; xs.push(m[m.length - 1].x - c.chartArea.left); }
+          if (performance.now() - t0 < 1200) requestAnimationFrame(pas); else res(xs);
+        };
+        requestAnimationFrame(pas);
+      }));
+      const fin = xs[xs.length - 1];
+      expect(fin, 'graphe vide').toBeGreaterThan(20);
+      expect(Math.min(...xs), `passage ${passage} : la barre ne pousse pas`).toBeLessThan(fin / 4);
+    }
+  });
+
   test('en mouvement réduit, aucun graphe ne s\'anime, même à sa création', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await preparer(page);
