@@ -471,6 +471,32 @@ contrôles ». **Le bloc reste ouvert** : la proposition elle-même — le table
 « affiché / recompté / écart » sur l'export réel — n'est pas faite. Il se
 tranche quand ce tableau est établi.
 
+## AG-006 — Un chiffre animé peut-il partir faux ? — ouvert le 28/10/2026
+**Auteur** : session Claude C — lu sur `219de1d` (branche de session, mergée
+dans `main` avec ce bloc).
+**Proposition** : les KPI comptent de 0 (ou de l'ancienne valeur) jusqu'à leur
+valeur, les graphes rejouent leur animation d'entrée à l'écran (demande de
+l'utilisateur, modèle NEWGEN). Le texte final n'est jamais recalculé : il est
+remis tel quel. Animation coupée en mouvement réduit, à l'impression
+(`beforeprint`) et pendant l'export PDF (`ANIM.suspendu`).
+**Critère déclencheur** : n° 7 — la valeur affichée passe par des chiffres
+intermédiaires.
+**Ce que ça engage** : une capture, une copie ou un PDF pris en plein comptage
+figerait un chiffre faux. Sans la suspension, le PDF portait « 0
+Accompagnements » au lieu de 14 (contre-preuve e2e rejouée).
+**Non vérifié par l'auteur** : la capture d'écran Windows (Win+Maj+S) pendant
+le comptage ; l'impression par Ctrl+P hors du bouton PDF (seul `beforeprint`
+la couvre) ; les lecteurs d'écran, qui peuvent lire une valeur intermédiaire ;
+un KPI dont le nombre n'est pas le premier texte de l'élément (non animé, à
+dessein) ; la mémoire des valeurs indexée par emplacement
+(`id` ancêtre + rang), qui glisserait depuis la valeur d'un autre KPI si un
+écran réordonne ses tuiles.
+**Si personne ne répond, je fais quoi ?** Rien de plus : l'animation reste,
+l'utilisateur est prévenu des cas non vérifiés.
+**Où regarder** : `index.html` (bloc « Animations : NombreAnime… », début du
+second `<script>` ; `exportDiapoPDF`), `gdin-pure.js` (`decouperNombre`,
+`formaterCommeNombre`), `tests-e2e.spec.js` (describe « Animations »).
+
 ---
 
 ## Blocs tranchés

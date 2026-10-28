@@ -9,7 +9,7 @@ const {
   numeroterParticipants, cleFusion, numeroterLignes, fusionnerImport, attribuerConum, deriverAttributionCms,
   neutraliserFormule, celluleCSV, validerSauvegardeJSON, baseAncienne, completerRangs,
   categorieEtat, repartitionEtats, deriverActions, delaisParDemande, reactivite48, dansPeriode, tauxRealisation, filtrerParType, evolutionAnnuelle,
-  indicateursFiabilite, defautsSaisie, syntheseFiabilite, niveauFiabilite,
+  indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
   rattacherCommune, COMMUNES_47,
 } = require('./gdin-pure.js');
@@ -1433,3 +1433,32 @@ describe('mentionRevisabilite', () => {
   });
 });
 
+
+// ─── Animation des KPI : lecture et réécriture du nombre ─────────────────────
+describe('decouperNombre', () => {
+  it('lit un pourcentage', () => assert.equal(decouperNombre('95%').valeur, 95));
+  it('lit les milliers à espace', () => {
+    const d = decouperNombre('20 226');
+    assert.equal(d.valeur, 20226);
+    assert.equal(d.sepMil, ' ');
+  });
+  it('lit un signe et une décimale à virgule', () => {
+    const d = decouperNombre('+12,5 j');
+    assert.equal(d.valeur, 12.5);
+    assert.equal(d.decimales, 1);
+    assert.equal(d.prefixe, '+');
+  });
+  it('n\'anime ni texte, ni tiret, ni seuil, ni date, ni année', () => {
+    ['Logement', '—', '<20 cas', '22/10/2026', '2025', ''].forEach(x =>
+      assert.equal(decouperNombre(x), null, x));
+  });
+});
+describe('formaterCommeNombre', () => {
+  // La dernière image de l'animation doit redonner exactement le texte d'origine.
+  it('rend le texte d\'origine pour la valeur finale', () => {
+    ['95%', '20 226', '+12,5 j', '1 234 567', '0', '-3%'].forEach(x =>
+      assert.equal(formaterCommeNombre(decouperNombre(x).valeur, decouperNombre(x)), x, x));
+  });
+  it('arrondit une valeur intermédiaire au format du modèle', () =>
+    assert.equal(formaterCommeNombre(1234.6, decouperNombre('20 226')), '1 235'));
+});

@@ -15,6 +15,10 @@ module.exports = defineConfig({
   use: {
     headless: true,
     viewport: { width: 1440, height: 900 },
+    // Animations de comptage et d'entrée coupées, comme sur un poste qui demande
+    // moins de mouvement : sans quoi un test lirait un KPI en cours de comptage.
+    // Le describe « Animations » les rallume pour les vérifier.
+    contextOptions: { reducedMotion: 'reduce' },
     launchOptions: { executablePath, args: ['--no-sandbox', '--disable-setuid-sandbox'] },
   },
   reporter: process.env.CI ? [['github'], ['list']] : [['list']],

@@ -1549,3 +1549,67 @@ test.describe('Diaporamas et PDF', () => {
     expect(fia).not.toMatch(/Chiffres exacts/);
   });
 });
+
+// NombreAnime et quandVisible (28/10/2026). Le reste de la suite tourne en
+// mouvement réduit ; ici on les rallume.
+test.describe('Animations', () => {
+  test.use({ contextOptions: { reducedMotion: 'no-preference' } });
+  // Combinaison conseiller × CMS la plus fournie : DATA[0] n'a pas de
+  // conseiller, son rapport est vide et ne prouverait rien.
+  async function preparer(page) {
+    await loadFresh(page); await dismissLanding(page); await importerJeu(page);
+    await page.evaluate(() => {
+      window.choisirCombinaison = () => {
+        const n = {};
+        getFiltered().filter(r => r.conum && r.cms && r.cms !== "?").forEach(r => { const k = r.conum + '|' + r.cms; n[k] = (n[k] || 0) + 1; });
+        const [conum, cms] = Object.entries(n).sort((a, b) => b[1] - a[1])[0][0].split('|');
+        // La liste des CMS se remplit au choix du conseiller : sans cet appel,
+        // la valeur posée sur le second <select> est ignorée et rien ne s'ouvre.
+        document.getElementById('sel-rpt-conum').value = conum; onRptConumChange();
+        document.getElementById('sel-rpt-cms').value = cms;
+        if (document.getElementById('sel-rpt-cms').value !== cms) throw new Error('combinaison non sélectionnable');
+      };
+    });
+  }
+  async function exporterPages(page) {
+    return page.evaluate(async () => {
+      let pages = [];
+      window.print = () => { pages = [...document.querySelectorAll('#dr-print-container .dr-print-page')].map(p => p.textContent.replace(/\s+/g, ' ').trim()); };
+      await exportDiapoPDF();
+      return pages;
+    });
+  }
+
+  test('un KPI compte depuis 0 et finit exactement sur sa valeur', async ({ page }) => {
+    await preparer(page);
+    const r = await page.evaluate(() => new Promise(res => {
+      choisirCombinaison();
+      startDiapoRapport(); drGoTo(DR_SLIDES.findIndex(s => s.id === 'kpis'));
+      // La préparation passe par un MutationObserver : elle arrive après ce script.
+      queueMicrotask(() => {
+        const el = [...document.querySelectorAll('#dr-content .nb-anime')].find(e => e._nbAnime && e._nbAnime.d.valeur > 2);
+        if (!el) { res(null); return; }
+        const vus = [], t0 = performance.now();
+        const pas = () => { vus.push(el.textContent.trim()); if (performance.now() - t0 < 1500) requestAnimationFrame(pas); else res({ vus, final: el._nbAnime.final.trim() }); };
+        pas();
+      });
+    }));
+    expect(r, 'aucun KPI animé sur la diapositive Chiffres clés').not.toBeNull();
+    expect(Number.parseFloat(r.final), 'KPI à 0 : le rapport choisi est vide').toBeGreaterThan(2);
+    expect(new Set(r.vus).size, 'le KPI ne bouge pas').toBeGreaterThan(2);
+    expect(r.vus[r.vus.length - 1]).toBe(r.final);
+  });
+
+  // Contre-preuve : sans la suspension pendant l'export, la page « Chiffres
+  // clés » était copiée en plein comptage et le PDF portait des « 0 ».
+  test("le PDF est identique avec et sans animation", async ({ page }) => {
+    await preparer(page);
+    await page.evaluate(() => { choisirCombinaison(); startDiapoRapport(); });
+    const anime = await exporterPages(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const fixe = await exporterPages(page);
+    expect(anime.length).toBeGreaterThan(0);
+    expect(fixe.join(' '), 'aucun chiffre non nul exporté : la contre-preuve ne prouverait rien').toMatch(/[1-9]/);
+    expect(anime).toEqual(fixe);
+  });
+});

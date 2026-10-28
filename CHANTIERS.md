@@ -121,6 +121,12 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   - Chiffres de réactivité et de fiabilité projetés avant `6b77162` : non
     comparables (signalé).
 
+- **Animations des KPI et des graphes** (28/10/2026, `219de1d`, AG-006 ouvert
+  pour Codex) : contrôle à l'œil après Ctrl+F5 — Vue globale (les KPI montent
+  de 0), changer d'année (ils glissent), descendre puis remonter (les graphes
+  rejouent), Diapo Rapport puis ⬇ PDF (aucun chiffre à 0 dans le PDF). En
+  mouvement réduit (réglage Windows), rien ne bouge : voulu.
+
 - **Contrôle visuel de la mention de révisabilité** (posée le 22/10/2026,
   `3280ec2`). **En ligne** : déploiement de `89391f7` vérifié vert le
   22/10/2026 (`c93dee9`, poussé après, ne touche que ce fichier). Reste le
@@ -225,6 +231,10 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
 - **Thématiques** (AG-004) : une fois par ligne, % de **toutes** les lignes ;
   un Top 3 se compte en union (`lignesAvecThemas`), jamais en additionnant ;
   jamais « demandes ».
+- **Animations** (`NombreAnime`, `quandVisible`) : jamais pendant l'export
+  PDF ni à l'impression (`ANIM.suspendu`, `beforeprint`) — contre-preuve e2e ;
+  la suite e2e tourne en mouvement réduit via `contextOptions` (un
+  `reducedMotion` posé directement dans `use` n'est pas appliqué).
 - **Fiabilité** : la marge d'un indicateur porte sur sa propre population ;
   « Solide » = moins de 1 % de défauts *détectés*, jamais « chiffres exacts ».
   La synthèse nomme l'indicateur le plus sensible, ne résume pas au pire.

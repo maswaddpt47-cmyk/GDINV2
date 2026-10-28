@@ -532,6 +532,8 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
 #landing-overlay .lo-arrow{font-size:18px;transition:transform .2s;display:inline-block}
 #landing-overlay .lo-btn:hover .lo-arrow{transform:translateX(4px)}
 #landing-overlay .lo-footer{position:absolute;bottom:20px;font-size:10px;color:#6b7fa0;letter-spacing:.5px;opacity:.4}
+/* Chiffres à chasse fixe : un KPI qui compte ne fait pas danser sa ligne. */
+.kpi-value,.bs-val,.nb-anime{font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -1163,6 +1165,102 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
 </div>
 
 <script>
+// ── Animations : NombreAnime (KPI) et quandVisible (graphes), 28/10/2026 ──
+// Même comportement que NEWGEN (shared.js) : un KPI monte de 0 à sa valeur
+// quand il arrive à l'écran, un graphe y joue son animation d'entrée, et les
+// deux la rejouent chaque fois qu'ils y reviennent après en être sortis. Un
+// KPI dont la valeur change (filtre) glisse depuis l'ancienne valeur. Le texte
+// final est celui que le code a écrit, remis tel quel : l'animation ne calcule
+// rien. Coupées si le poste demande moins de mouvement (prefers-reduced-motion
+// — la suite e2e tourne ainsi), pendant l'export PDF et à l'impression : une
+// copie prise en plein comptage figerait un chiffre faux.
+const ANIM={suspendu:false,
+  actif(){return!this.suspendu&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);}};
+const NombreAnime=(()=>{
+  const SELECTEUR='.kpi-value,.bs-val,.nb-anime';
+  const DUREE=800;
+  const ecrit=new WeakMap();   // nœud texte → dernier texte écrit ici
+  const enCours=new Map();     // nœud texte → texte final, tant qu'il n'est pas affiché
+  const memoire=new Map();     // emplacement du KPI → dernière valeur, pour glisser
+  const io=window.IntersectionObserver?new IntersectionObserver(es=>es.forEach(e=>{
+    const el=e.target,a=el._nbAnime;
+    if(!a||!el.isConnected){io.unobserve(el);return;}
+    if(e.isIntersecting&&e.intersectionRatio>=.3){
+      if(a.dehors){a.dehors=false;lancer(a,a.vu?0:a.de);a.vu=true;}
+    }else if(!e.isIntersecting&&!a.dehors&&ANIM.actif()){
+      a.dehors=true;enCours.set(a.n,a.final);poser(a.n,formaterCommeNombre(0,a.d));
+    }
+  }),{threshold:[0,.3]}):null;
+  const noeudNombre=el=>{
+    const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+    for(let n=w.nextNode();n;n=w.nextNode()){if(n.data.trim())return decouperNombre(n.data)?n:null;}
+    return null;
+  };
+  const emplacement=el=>{
+    const anc=el.parentElement&&el.parentElement.closest('[id]');
+    return anc?anc.id+'#'+[...anc.querySelectorAll(SELECTEUR)].indexOf(el):null;
+  };
+  const poser=(n,t)=>{ecrit.set(n,t);n.data=t;};
+  function preparer(el){
+    if(!ANIM.actif()||!io||el.closest('#dr-print-container'))return;
+    const n=noeudNombre(el);
+    if(!n||ecrit.get(n)===n.data)return;
+    const d=decouperNombre(n.data),cle=emplacement(el);
+    const de=cle&&memoire.has(cle)?memoire.get(cle):0;
+    if(cle)memoire.set(cle,d.valeur);
+    el._nbAnime={n,d,final:n.data,de,dehors:true,vu:false};
+    enCours.set(n,n.data);
+    poser(n,formaterCommeNombre(de,d));
+    io.observe(el);
+  }
+  function lancer(a,de){
+    if(!ANIM.actif()){finir(a.n);return;}
+    const t0=performance.now();
+    const pas=t=>{
+      if(!enCours.has(a.n)||a.dehors)return;
+      const k=Math.min(1,(t-t0)/DUREE),e=1-Math.pow(1-k,3);
+      if(k<1){poser(a.n,formaterCommeNombre(de+(a.d.valeur-de)*e,a.d));requestAnimationFrame(pas);}
+      else finir(a.n);
+    };
+    requestAnimationFrame(pas);
+  }
+  function finir(n){if(enCours.has(n)){poser(n,enCours.get(n));enCours.delete(n);}}
+  function terminer(){[...enCours.keys()].forEach(finir);}
+  function parcourir(racine){
+    if(racine.nodeType!==1)return;
+    if(racine.matches(SELECTEUR))preparer(racine);
+    racine.querySelectorAll(SELECTEUR).forEach(preparer);
+  }
+  new MutationObserver(ms=>{
+    if(!ANIM.actif())return;
+    ms.forEach(m=>{
+      if(m.type==='characterData'){const el=m.target.parentElement&&m.target.parentElement.closest(SELECTEUR);if(el)preparer(el);}
+      else m.addedNodes.forEach(parcourir);
+    });
+  }).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+  window.addEventListener('beforeprint',terminer);
+  return{terminer};
+})();
+// quandVisible : greffon Chart.js. Un graphe visible à sa création garde son
+// animation normale ; sinon il la joue à sa première apparition, puis la
+// rejoue à chaque retour à l'écran après en être complètement sorti.
+Chart.register({id:'quandVisible',
+  afterInit(chart){
+    const cv=chart.canvas;
+    if(!window.IntersectionObserver||!cv||cv.closest('#dr-print-container'))return;
+    const t0=performance.now();let dehors=true;
+    const io=new IntersectionObserver(es=>{
+      const e=es[es.length-1];
+      if(e.isIntersecting&&e.intersectionRatio>=.2){
+        if(!dehors)return;dehors=false;
+        if(!ANIM.actif()||!chart.canvas||chart.options.animation===false||performance.now()-t0<200)return;
+        chart.reset();chart.update();
+      }else if(!e.isIntersecting)dehors=true;
+    },{threshold:[0,.2]});
+    io.observe(cv);chart.$quandVisible=io;
+  },
+  beforeDestroy(chart){if(chart.$quandVisible)chart.$quandVisible.disconnect();}
+});
 const EMBEDDED=[];
 // Couleurs dérivées du nom (couleurConum, gdin-pure.js) : le mapping
 // explicite inscrivait cinq noms d'agents dans un dépôt public.
@@ -3659,7 +3757,7 @@ function renderAteliers(){
 
   function kpiAtl(val,label,sub,color){
     return `<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:24px 20px;text-align:center;border-top:3px solid ${color}">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:38px;font-weight:500;color:${color};line-height:1">${val}</div>
+      <div class="nb-anime" style="font-family:'JetBrains Mono',monospace;font-size:38px;font-weight:500;color:${color};line-height:1">${val}</div>
       <div style="font-size:12px;font-weight:600;color:var(--text);margin-top:10px;text-transform:uppercase;letter-spacing:.8px">${label}</div>
       <div style="font-size:10px;color:var(--muted);margin-top:4px">${sub}</div>
     </div>`;
@@ -4417,7 +4515,7 @@ function drSlideKpis(c,data,allDataConum){
 
   function kpi(val,label,sub,color){
     return `<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:24px 20px;text-align:center;border-top:3px solid ${color}">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:38px;font-weight:500;color:${color};line-height:1">${val}</div>
+      <div class="nb-anime" style="font-family:'JetBrains Mono',monospace;font-size:38px;font-weight:500;color:${color};line-height:1">${val}</div>
       <div style="font-size:12px;font-weight:600;color:var(--text);margin-top:10px;text-transform:uppercase;letter-spacing:.8px">${label}</div>
       <div style="font-size:10px;color:var(--muted);margin-top:4px">${sub}</div>
     </div>`;
@@ -5081,6 +5179,9 @@ function toggleTheme(){
 async function exportDiapoPDF(){
   const btn=document.getElementById('btn-dr-pdf');
   btn.textContent='⏳ Génération…';btn.disabled=true;
+  // Pas d'animation pendant la copie des diapositives : un KPI copié en cours
+  // de comptage partirait faux dans le PDF.
+  ANIM.suspendu=true;NombreAnime.terminer();
   const container=document.getElementById('dr-print-container');
   container.innerHTML='';
 
@@ -5170,6 +5271,7 @@ async function exportDiapoPDF(){
     await new Promise(resolve=>setTimeout(resolve,500));
   }finally{
     if(!wasLight)document.body.classList.remove('light-mode');
+    ANIM.suspendu=false;
     btn.textContent='⬇ PDF';btn.disabled=false;
     container.innerHTML='';
   }
