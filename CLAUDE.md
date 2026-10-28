@@ -286,8 +286,13 @@ casser est le risque principal du projet :
 1. **Minimisation à l'import.** `parseXlsText()` (gdin-pure.js) et
    `parseXlsxBinary()` (dans `index.html`) ne retiennent aucune identité de
    bénéficiaire : ni nom, ni prénom, ni adresse, ni téléphone, ni date de
-   naissance. Champs conservés : date, commune, CMS, thématiques, type
-   d'action, conum, orienteur, état, motif tronqué à 120 caractères.
+   naissance. Champs conservés (relevés dans `parseRows()` le 28/10/2026) :
+   n° de demande, dates (demande, action, planifiée, réalisation), commune,
+   lieu/CMS et structure orienteur bruts, thématiques, type d'action, conum,
+   orienteur, état, urgence, bénéficiaire connu, motif tronqué à 120
+   caractères. **Le n° de demande renvoie au dossier source : les données
+   sont pseudonymisées, pas anonymes.** Registre RGPD (hors dépôt) : V0.1 du
+   28/10/2026, à valider par le DPO.
    **Ne jamais ajouter de colonne nominative au mapping**, même présente
    dans le fichier source.
 2. **`const EMBEDDED=[]` reste vide.** Le repo est public et déployé sur
