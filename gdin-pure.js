@@ -1127,6 +1127,29 @@ function libelleLignes(typeFiltre){
   return LIBELLE_LIGNES[k]||'Demandes';
 }
 
+// ─── Nombre d'un KPI, pour l'animation de comptage (28/10/2026) ──────────────
+// decouperNombre lit « 95% », « 1 234 », « +12% », « 4,5 j » ; tout le reste
+// (texte, « — », « <20 cas », date, année seule) rend null et ne s'anime pas.
+// formaterCommeNombre réécrit une valeur intermédiaire dans le même format. La
+// valeur finale affichée n'est jamais recalculée : l'animation remet le texte
+// d'origine tel quel à la fin.
+function decouperNombre(texte){
+  const m=/^(\s*[+\-\u2212]?)(\d{1,3}(?:[ \u00a0\u202f]\d{3})+|\d+)(?:([.,])(\d+))?(\s?(?:%|[a-zA-Zéèû.]{1,6})?\s*)$/.exec(String(texte==null?'':texte));
+  if(!m)return null;
+  const sepMil=(/[ \u00a0\u202f]/.exec(m[2])||[''])[0];
+  const entier=m[2].replace(/[ \u00a0\u202f]/g,'');
+  const decimales=m[4]?m[4].length:0;
+  const valeur=parseFloat(entier+(m[4]?'.'+m[4]:''));
+  if(!sepMil&&!decimales&&!m[1].trim()&&!m[5].trim()&&valeur>=1900&&valeur<=2100)return null;
+  return{prefixe:m[1],valeur,decimales,sepDec:m[3]||',',sepMil,suffixe:m[5]};
+}
+function formaterCommeNombre(v,modele){
+  const fixe=Math.abs(v).toFixed(modele.decimales);
+  let[ent,dec]=fixe.split('.');
+  if(modele.sepMil)ent=ent.replace(/\B(?=(\d{3})+(?!\d))/g,modele.sepMil);
+  return modele.prefixe+ent+(dec?modele.sepDec+dec:'')+modele.suffixe;
+}
+
 // ─── Mois d'une période ───────────────────────────────────────────────────────
 // Les courbes d'évolution construisaient leur axe depuis les mois présents dans
 // les données : un mois sans activité disparaissait au lieu de s'afficher à
@@ -1399,6 +1422,6 @@ if(typeof module!=='undefined'){
     esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,validerSauvegardeJSON,baseAncienne,completerRangs,dateIsoValide,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,lignesAvecThemas,countTypes,
     parseDt,dayDiff,bizDays,
-    normEtat,isRealisee,countDemandes,dateFr,mentionRevisabilite,cleDoublon,compterDoublons,moisDeLaPeriode,libelleLignes,LIBELLE_LIGNES,
+    normEtat,isRealisee,countDemandes,dateFr,mentionRevisabilite,decouperNombre,formaterCommeNombre,cleDoublon,compterDoublons,moisDeLaPeriode,libelleLignes,LIBELLE_LIGNES,
   };
 }
