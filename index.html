@@ -1238,7 +1238,10 @@ const NombreAnime=(()=>{
     const t0=performance.now();
     const pas=t=>{
       if(!enCours.has(a.n)||a.dehors)return;
-      const k=Math.min(1,(t-t0)/DUREE),e=1-Math.pow(1-k,3);
+      // L'horodatage d'une image peut précéder t0 : sans le plancher à 0, la
+      // première image dépassait la valeur de départ (922 entre 900 et 300),
+      // ou passait sous 0 en partant de 0 (mesuré le 28/10/2026).
+      const k=Math.max(0,Math.min(1,(t-t0)/DUREE)),e=1-Math.pow(1-k,3);
       if(k<1){poser(a.n,formaterCommeNombre(de+(a.d.valeur-de)*e,a.d));requestAnimationFrame(pas);}
       else finir(a.n);
     };
