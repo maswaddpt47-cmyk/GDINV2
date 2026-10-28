@@ -1166,7 +1166,8 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
 
 <script>
 // ── Animations : NombreAnime (KPI) et quandVisible (graphes), 28/10/2026 ──
-// Même comportement que NEWGEN (shared.js) : un KPI monte de 0 à sa valeur
+// Même comportement que NEWGEN (shared.js) : un KPI (et la valeur d'une barre
+// de liste, dont la barre se remplit depuis 0) monte de 0 à sa valeur
 // quand il arrive à l'écran, un graphe y joue son animation d'entrée, et les
 // deux la rejouent chaque fois qu'ils y reviennent après en être sortis. Un
 // KPI dont la valeur change (filtre) glisse depuis l'ancienne valeur. Le texte
@@ -1177,13 +1178,25 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
 const ANIM={suspendu:false,
   actif(){return!this.suspendu&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);}};
 const NombreAnime=(()=>{
-  const SELECTEUR='.kpi-value,.bs-val,.nb-anime';
+  const SELECTEUR='.kpi-value,.bs-val,.nb-anime,.bi-val';
+  const BARRE='.bar-fill';     // barres des listes (makeBarList) : remplissage depuis 0
+  const barres=new Set();      // barres vidées, en attente de leur largeur
   const DUREE=800;
   const ecrit=new WeakMap();   // nœud texte → dernier texte écrit ici
   const enCours=new Map();     // nœud texte → texte final, tant qu'il n'est pas affiché
   const memoire=new Map();     // emplacement du KPI → dernière valeur, pour glisser
   const io=window.IntersectionObserver?new IntersectionObserver(es=>es.forEach(e=>{
-    const el=e.target,a=el._nbAnime;
+    const el=e.target;
+    if(el._barre){
+      const b=el._barre;
+      if(!el.isConnected){io.unobserve(el);barres.delete(el);return;}
+      if(e.isIntersecting&&e.intersectionRatio>=.3){
+        if(b.dehors){b.dehors=false;requestAnimationFrame(()=>requestAnimationFrame(()=>{
+          if(!b.dehors){el.style.width=b.w;barres.delete(el);}}));}
+      }else if(!e.isIntersecting&&!b.dehors&&ANIM.actif()){b.dehors=true;barres.add(el);el.style.width='0';}
+      return;
+    }
+    const a=el._nbAnime;
     if(!a||!el.isConnected){io.unobserve(el);return;}
     if(e.isIntersecting&&e.intersectionRatio>=.3){
       if(a.dehors){a.dehors=false;lancer(a,a.vu?0:a.de);a.vu=true;}
@@ -1225,11 +1238,22 @@ const NombreAnime=(()=>{
     requestAnimationFrame(pas);
   }
   function finir(n){if(enCours.has(n)){poser(n,enCours.get(n));enCours.delete(n);}}
-  function terminer(){[...enCours.keys()].forEach(finir);}
+  function preparerBarre(el){
+    if(!ANIM.actif()||!io||el._barre||el.closest('#dr-print-container'))return;
+    const w=el.style.width;if(!w)return;
+    el._barre={w,dehors:true};barres.add(el);el.style.width='0';
+    io.observe(el);
+  }
+  function terminer(){
+    [...enCours.keys()].forEach(finir);
+    barres.forEach(el=>{el.style.width=el._barre.w;});barres.clear();
+  }
   function parcourir(racine){
     if(racine.nodeType!==1)return;
     if(racine.matches(SELECTEUR))preparer(racine);
     racine.querySelectorAll(SELECTEUR).forEach(preparer);
+    if(racine.matches(BARRE))preparerBarre(racine);
+    racine.querySelectorAll(BARRE).forEach(preparerBarre);
   }
   new MutationObserver(ms=>{
     if(!ANIM.actif())return;
