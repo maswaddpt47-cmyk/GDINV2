@@ -179,7 +179,7 @@ body.light-mode #dr-insight-tip{background:#ffffff;color:#0d1220}
 .bar-item .bi-name{font-size:12px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:73%}
 .bar-item .bi-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--text)}
 .bar-track{background:rgba(255,255,255,.06);border-radius:4px;height:5px;overflow:hidden}
-.bar-fill{height:100%;border-radius:4px;transition:width .45s cubic-bezier(.4,0,.2,1)}
+.bar-fill{height:100%;border-radius:4px;transition:width .8s cubic-bezier(.33,1,.68,1)}
 .bar-fill.blue{background:linear-gradient(90deg,var(--blue),var(--cyan))}
 .bar-fill.orange{background:linear-gradient(90deg,var(--orange),var(--yellow))}
 .bar-fill.green{background:linear-gradient(90deg,var(--green),var(--cyan))}
@@ -1193,7 +1193,7 @@ const NombreAnime=(()=>{
       if(e.isIntersecting&&e.intersectionRatio>=.3){
         if(b.dehors){b.dehors=false;requestAnimationFrame(()=>requestAnimationFrame(()=>{
           if(!b.dehors){el.style.width=b.w;barres.delete(el);}}));}
-      }else if(!e.isIntersecting&&!b.dehors&&ANIM.actif()){b.dehors=true;barres.add(el);el.style.width='0';}
+      }else if(!e.isIntersecting&&!b.dehors&&ANIM.actif()){b.dehors=true;barres.add(el);vider(el);}
       return;
     }
     const a=el._nbAnime;
@@ -1253,10 +1253,13 @@ const NombreAnime=(()=>{
     requestAnimationFrame(pas);
   }
   function finir(n){if(enCours.has(n)){poser(n,enCours.get(n));enCours.delete(n);}}
+  // Vider sans transition : avec elle, la barre rétrécissait lentement (320 →
+  // 300 px) avant de repousser, et ne partait jamais de 0 (mesuré le 28/10/2026).
+  function vider(el){el.style.transition='none';el.style.width='0';void el.offsetWidth;el.style.transition='';}
   function preparerBarre(el){
     if(!ANIM.actif()||!io||el._barre||el.closest('#dr-print-container'))return;
     const w=el.style.width;if(!w)return;
-    el._barre={w,dehors:true};barres.add(el);el.style.width='0';
+    el._barre={w,dehors:true};barres.add(el);vider(el);
     io.observe(el);
   }
   // Rejouer ce qui est à l'écran. L'écran d'accueil recouvre la Vue globale
@@ -1271,7 +1274,7 @@ const NombreAnime=(()=>{
     });
     document.querySelectorAll(BARRE).forEach(el=>{
       const b=el._barre;if(!b||!aLEcran(el))return;
-      el.style.width='0';requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.width=b.w;}));
+      vider(el);requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.width=b.w;}));
     });
     Object.values(Chart.instances||{}).forEach(c=>{if(c.canvas&&aLEcran(c.canvas)){c.reset();c.update();}});
   }
