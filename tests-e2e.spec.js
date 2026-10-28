@@ -1632,6 +1632,30 @@ test.describe('Animations', () => {
     expect(hors).toEqual([]);
   });
 
+  // Retour sur un onglet : il est redessiné, et la mémoire faisait glisser
+  // chaque KPI de sa valeur vers la même valeur — rien ne bougeait (constaté
+  // par l'utilisateur le 28/10/2026). Revenu d'un onglet caché, il recompte.
+  test('revenir sur un onglet refait compter ses KPI', async ({ page }) => {
+    await preparer(page);
+    const ouvrir = id => page.evaluate(id => document.querySelector(`[onclick*="'${id}'"]`).click(), id);
+    await ouvrir('etats'); await page.waitForTimeout(1200);
+    await ouvrir('global'); await page.waitForTimeout(1200);
+    const r = await page.evaluate(() => new Promise(res => {
+      document.querySelector(`[onclick*="'etats'"]`).click();
+      const vus = [], t0 = performance.now();
+      const pas = () => {
+        const el = [...document.querySelectorAll('#act-kpi .kpi-value')].find(e => e._nbAnime && e._nbAnime.d.valeur > 2);
+        if (el) vus.push(decouperNombre(el.textContent.trim()).valeur);
+        if (performance.now() - t0 < 1200) requestAnimationFrame(pas);
+        else res({ vus, final: el && el._nbAnime.d.valeur });
+      };
+      queueMicrotask(pas);
+    }));
+    expect(r.final, 'aucun KPI animé dans États').toBeGreaterThan(2);
+    expect(Math.min(...r.vus), 'le KPI ne recompte pas au retour').toBeLessThan(r.final);
+    expect(r.vus[r.vus.length - 1]).toBe(r.final);
+  });
+
   test('en mouvement réduit, aucun graphe ne s\'anime, même à sa création', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await preparer(page);

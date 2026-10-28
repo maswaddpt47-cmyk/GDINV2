@@ -1184,7 +1184,7 @@ const NombreAnime=(()=>{
   const DUREE=800;
   const ecrit=new WeakMap();   // nœud texte → dernier texte écrit ici
   const enCours=new Map();     // nœud texte → texte final, tant qu'il n'est pas affiché
-  const memoire=new Map();     // identité du KPI → dernière valeur, pour glisser
+  const memoire=new Map();     // identité du KPI → {valeur, a : son animation}, pour glisser
   const io=window.IntersectionObserver?new IntersectionObserver(es=>es.forEach(e=>{
     const el=e.target;
     if(el._barre){
@@ -1226,9 +1226,14 @@ const NombreAnime=(()=>{
     const n=noeudNombre(el);
     if(!n||ecrit.get(n)===n.data)return;
     const d=decouperNombre(n.data),cle=identite(el,n,d);
-    const de=cle&&memoire.has(cle)?memoire.get(cle):0;
-    if(cle)memoire.set(cle,d.valeur);
+    // Glisser seulement si l'ancienne instance était à l'écran (un filtre change
+    // la valeur sous les yeux). Un onglet est redessiné à chaque affichage :
+    // revenu d'un onglet caché, glisser de 675 à 675 ne montrait rien — le
+    // chiffre repart de 0 (constaté le 28/10/2026).
+    const prec=cle&&memoire.get(cle);
+    const de=prec&&prec.a&&!prec.a.dehors&&prec.a.vu?prec.valeur:0;
     el._nbAnime={n,d,final:n.data,de,dehors:true,vu:false};
+    if(cle)memoire.set(cle,{valeur:d.valeur,a:el._nbAnime});
     enCours.set(n,n.data);
     poser(n,formaterCommeNombre(de,d));
     io.observe(el);
