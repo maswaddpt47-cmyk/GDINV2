@@ -1184,7 +1184,7 @@ const NombreAnime=(()=>{
   const DUREE=800;
   const ecrit=new WeakMap();   // nœud texte → dernier texte écrit ici
   const enCours=new Map();     // nœud texte → texte final, tant qu'il n'est pas affiché
-  const memoire=new Map();     // emplacement du KPI → dernière valeur, pour glisser
+  const memoire=new Map();     // identité du KPI → dernière valeur, pour glisser
   const io=window.IntersectionObserver?new IntersectionObserver(es=>es.forEach(e=>{
     const el=e.target;
     if(el._barre){
@@ -1209,16 +1209,23 @@ const NombreAnime=(()=>{
     for(let n=w.nextNode();n;n=w.nextNode()){if(n.data.trim())return decouperNombre(n.data)?n:null;}
     return null;
   };
-  const emplacement=el=>{
+  // Identité d'un KPI = emplacement + libellé voisin (chiffres retirés) + unité.
+  // L'emplacement seul confondait deux diapositives : « Réalisés » (1500) puis
+  // « Accompagnements réalisés » (75 %) au même rang affichait 1125 % en
+  // glissant (AG-006, Codex, reproduit le 28/10/2026). Identité différente :
+  // on repart de 0.
+  const identite=(el,n,d)=>{
     const anc=el.parentElement&&el.parentElement.closest('[id]');
-    return anc?anc.id+'#'+[...anc.querySelectorAll(SELECTEUR)].indexOf(el):null;
+    if(!anc)return null;
+    const lib=(el.parentElement.textContent||'').replace(n.data,'').replace(/[\d\s.,%+\-\u2212]+/g,' ').trim().slice(0,80);
+    return anc.id+'#'+[...anc.querySelectorAll(SELECTEUR)].indexOf(el)+'|'+d.suffixe.trim()+'|'+lib;
   };
   const poser=(n,t)=>{ecrit.set(n,t);n.data=t;};
   function preparer(el){
     if(!ANIM.actif()||!io||el.closest('#dr-print-container'))return;
     const n=noeudNombre(el);
     if(!n||ecrit.get(n)===n.data)return;
-    const d=decouperNombre(n.data),cle=emplacement(el);
+    const d=decouperNombre(n.data),cle=identite(el,n,d);
     const de=cle&&memoire.has(cle)?memoire.get(cle):0;
     if(cle)memoire.set(cle,d.valeur);
     el._nbAnime={n,d,final:n.data,de,dehors:true,vu:false};
@@ -1231,7 +1238,10 @@ const NombreAnime=(()=>{
     const t0=performance.now();
     const pas=t=>{
       if(!enCours.has(a.n)||a.dehors)return;
-      const k=Math.min(1,(t-t0)/DUREE),e=1-Math.pow(1-k,3);
+      // L'horodatage d'une image peut précéder t0 : sans le plancher à 0, la
+      // première image dépassait la valeur de départ (922 entre 900 et 300),
+      // ou passait sous 0 en partant de 0 (mesuré le 28/10/2026).
+      const k=Math.max(0,Math.min(1,(t-t0)/DUREE)),e=1-Math.pow(1-k,3);
       if(k<1){poser(a.n,formaterCommeNombre(de+(a.d.valeur-de)*e,a.d));requestAnimationFrame(pas);}
       else finir(a.n);
     };
@@ -1264,6 +1274,16 @@ const NombreAnime=(()=>{
   }).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
   window.addEventListener('beforeprint',terminer);
   return{terminer};
+})();
+// Mouvement réduit : plus aucune animation de graphe, y compris celle de
+// création (le greffon ne coupait que le rejeu — AG-006, Codex). Suit le
+// réglage s'il change pendant la session.
+(()=>{
+  if(!window.matchMedia)return;
+  const mq=matchMedia('(prefers-reduced-motion: reduce)'),parDefaut=Chart.defaults.animation;
+  const suivre=()=>{Chart.defaults.animation=mq.matches?false:parDefaut;};
+  suivre();
+  if(mq.addEventListener)mq.addEventListener('change',suivre);
 })();
 // quandVisible : greffon Chart.js. Un graphe visible à sa création garde son
 // animation normale ; sinon il la joue à sa première apparition, puis la
