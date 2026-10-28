@@ -1275,6 +1275,16 @@ const NombreAnime=(()=>{
   window.addEventListener('beforeprint',terminer);
   return{terminer};
 })();
+// Mouvement réduit : plus aucune animation de graphe, y compris celle de
+// création (le greffon ne coupait que le rejeu — AG-006, Codex). Suit le
+// réglage s'il change pendant la session.
+(()=>{
+  if(!window.matchMedia)return;
+  const mq=matchMedia('(prefers-reduced-motion: reduce)'),parDefaut=Chart.defaults.animation;
+  const suivre=()=>{Chart.defaults.animation=mq.matches?false:parDefaut;};
+  suivre();
+  if(mq.addEventListener)mq.addEventListener('change',suivre);
+})();
 // quandVisible : greffon Chart.js. Un graphe visible à sa création garde son
 // animation normale ; sinon il la joue à sa première apparition, puis la
 // rejoue à chaque retour à l'écran après en être complètement sorti.

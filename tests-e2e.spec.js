@@ -1632,6 +1632,18 @@ test.describe('Animations', () => {
     expect(hors).toEqual([]);
   });
 
+  test('en mouvement réduit, aucun graphe ne s\'anime, même à sa création', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await preparer(page);
+    // Chart.animator est interne à Chart.js 4.4 : seul moyen de savoir si une
+    // animation tourne. Si la mise à jour de vendor/ le change, adapter ici.
+    const enCours = await page.evaluate(() => {
+      refreshAll();
+      return [...Chart.animator._charts.values()].filter(a => a.running).length;
+    });
+    expect(enCours).toBe(0);
+  });
+
   // Balayage du 28/10/2026 : sept blocs de chiffres écrits en style direct
   // (Par Conseiller, Rapport, Diapo Rapport) et un seuil « années » laissaient
   // des KPI immobiles, trouvés à l'œil un par un. Tout chiffre affiché en grand
