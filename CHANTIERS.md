@@ -71,12 +71,13 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     deviennent lisibles par tous ceux qui ont accès au dossier. Sur une clé le
     risque était la perte ; ici c'est la diffusion silencieuse. **Le dossier
     partagé porte l'application, jamais les données.**
-  - **Les documents remis au DSI** (synthèse et note consolidée du
-    27/10/2026, hors dépôt) décrivent encore ce mode comme un « hébergement
-    interne ». **Test fait : à reformuler** en « dépôt sur le cloud,
-    téléchargement et ouverture locale ». Le parcours est désormais dans
-    `CLAUDE.md` (« Déploiement et cache ») ; le `A-LIRE-AVANT-D-OUVRIR.txt`
-    de l'archive (hors dépôt) est à aligner dessus.
+  - **Documents du dossier DSI reformulés le 28/10/2026** (hors dépôt,
+    dossier `GDIN-DSI_2026-10-28` sur Nextcloud) : synthèse et note V2
+    datées du 28/10/2026 décrivent le dépôt sur Nextcloud, le téléchargement
+    et l'ouverture locale, avec le risque d'un export déposé dans l'espace
+    partagé ; versions du 27/10/2026 rangées dans `02_Historique`. Consigne
+    aux utilisateurs (V0.1, une page) ajoutée ; elle complète le
+    `A-LIRE-AVANT-D-OUVRIR.txt` de l'archive, qui reste à relire.
   - **`deploy.yml` et `deploy.test.js` sont à revoir ensemble** le jour où
     GitHub Pages est abandonné : le premier publie sur Pages, le second
     verrouille le motif de réécriture du `<head>` qui n'aurait plus d'objet.
