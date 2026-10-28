@@ -506,6 +506,10 @@ tranche quand ce tableau est établi.
   `gdin-pure.js` : c'est là que le prochain lecteur la cherchera, et aucun test
   ne peut la verrouiller sans suivre les variables d'appel. Détail dans
   `git log`.
+  **Remplacé par AG-004 (décision de l'utilisateur du 22/10/2026, `6b77162`)** :
+  `countThemas()` compte désormais une thématique **une fois par ligne**, et
+  ses pourcentages se disent « % des accompagnements » (toutes les lignes au
+  dénominateur). Ne pas revenir aux « mentions » sur la foi de ce résumé.
 - **AG-001** — Que doit contenir un `AGORA.md` de projet. Tranché le
   21/09/2026 : la section « Pour répondre à un bloc » reste, le gabarit seul ne
   porte pas les règles qui ont réellement servi. Conclusion remontée dans
