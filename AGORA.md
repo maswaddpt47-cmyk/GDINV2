@@ -497,6 +497,21 @@ l'utilisateur est prévenu des cas non vérifiés.
 second `<script>` ; `exportDiapoPDF`), `gdin-pure.js` (`decouperNombre`,
 `formaterCommeNombre`), `tests-e2e.spec.js` (describe « Animations »).
 
+### Complément de l'auteur — 28/10/2026, lu sur `66423d7`
+Le périmètre a grandi depuis `219de1d` ; relire sur `66423d7` :
+- **listes de barres** (`.bi-val`, `.bar-fill`, `b2fd796`) : la valeur compte,
+  la barre part de 0 ;
+- **exclusion des nombres de 1900 à 2100 retirée** (`a4955d6`) : elle figeait
+  « 1947 non réalisées ». Aucun élément animé n'affiche d'année seule ;
+  vérifié par balayage, pas par lecture de tout le code ;
+- **huit blocs de chiffres en style direct** passés en `nb-anime`
+  (`12fc5c3`), dont les grilles du Diapo Rapport — donc **dans le PDF**. Le
+  test « le PDF est identique avec et sans animation » compare toutes les
+  pages ; il couvre ces grilles, mais seulement sur le jeu de test.
+- Nouveau test : tout chiffre de 18 px et plus lisible comme un nombre doit
+  être animé (onglets et Diapo Rapport). **Le Diapo Global n'est pas dans ce
+  test** (balayé une fois à la main : 17 chiffres, tous animés).
+
 ---
 
 ## Blocs tranchés
