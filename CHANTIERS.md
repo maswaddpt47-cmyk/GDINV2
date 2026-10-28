@@ -59,7 +59,10 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     dossier synchronisé par le client de bureau Nextcloud, ouvert en
     `file:///C:/…`, qui éviterait le téléchargement à chaque mise à jour —
     avec les fichiers virtuels activés, le dossier doit être marqué
-    « Toujours disponible localement » (*supposé*). *Supposé* : un dossier téléchargé
+    « Toujours disponible localement » (*supposé*). **Client de bureau
+    Nextcloud non installé sur le poste de l'utilisateur** (constaté le
+    28/10/2026) : ce mode dépend d'une installation par le DSI, sur chaque
+    poste d'agent. D'ici là, le téléchargement est le seul parcours. *Supposé* : un dossier téléchargé
     depuis un drive arrive souvent en `.zip` — dans ce cas l'extraction est
     obligatoire, sinon les `ERR_FILE_NOT_FOUND` du 27/10/2026 reviennent.
   - **Risque propre au drive, à cadrer** : un espace partagé diffuse ce qu'on
