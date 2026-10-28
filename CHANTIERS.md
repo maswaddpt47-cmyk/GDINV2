@@ -75,7 +75,11 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     dossier `GDIN-DSI_2026-10-28` sur Nextcloud) : synthèse et note V2
     datées du 28/10/2026 décrivent le dépôt sur Nextcloud, le téléchargement
     et l'ouverture locale, avec le risque d'un export déposé dans l'espace
-    partagé ; versions du 27/10/2026 rangées dans `02_Historique`. Consigne
+    partagé (pas encore remises, donc ni « V3 » ni mention de mise à jour ;
+    brouillons du 27/10/2026 supprimés). `02_Historique` ne garde que la
+    note V1 et le rectificatif, sous des noms neutres — pas de « REMPLACE »
+    ni « PERIMEE » dans les noms, demande de l'utilisateur : le dossier et le
+    sommaire disent le statut. Consigne
     aux utilisateurs (V0.1, une page) ajoutée ; elle complète le
     `A-LIRE-AVANT-D-OUVRIR.txt` de l'archive, qui reste à relire.
   - **`deploy.yml` et `deploy.test.js` sont à revoir ensemble** le jour où
