@@ -1753,6 +1753,24 @@ test.describe('Animations', () => {
     for (let i = 1; i < r.vu.length; i++) expect(r.vu[i], `tuile ${i} pas après la ${i - 1}`).toBeGreaterThan(r.vu[i - 1]);
     expect(r.vu[r.vu.length - 1] - r.vu[0], 'aucun décalage').toBeGreaterThan(150);
     expect(r.fin.every(o => o === 1)).toBe(true);
+    // Les tuiles à texte (« CN principal », « Thématique principale ») entraient
+    // d'un coup (signalé le 28/10/2026) : sur Par CMS, toutes entrent à leur rang.
+    await ouvrir('global'); await page.waitForTimeout(1200);
+    const c = await page.evaluate(() => new Promise(res => {
+      document.querySelector(`[onclick*="'par-cms'"]`).click();
+      const vu = [], t0 = performance.now();
+      const pas = () => {
+        const t = performance.now() - t0;
+        document.querySelectorAll('#kpi-cms .kpi').forEach((k, i) => {
+          if (vu[i] == null && +getComputedStyle(k).opacity > 0.5) vu[i] = t;
+        });
+        if (t < 1800) requestAnimationFrame(pas);
+        else res({ vu, texte: [...document.querySelectorAll('#kpi-cms .kpi .kpi-value')].map(v => !decouperNombre(v.textContent.trim())) });
+      };
+      requestAnimationFrame(pas);
+    }));
+    expect(c.texte.some(Boolean), 'aucune tuile à texte sur Par CMS').toBe(true);
+    for (let i = 1; i < c.vu.length; i++) expect(c.vu[i], `Par CMS : tuile ${i} pas après la ${i - 1}`).toBeGreaterThan(c.vu[i - 1]);
   });
 
   test('en mouvement réduit, aucun graphe ne s\'anime, même à sa création', async ({ page }) => {
