@@ -230,7 +230,9 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
   moins d'une seconde, peut montrer un chiffre intermédiaire). Un graphe
   rejoue **toujours** à son arrivée à l'écran (un délai ou
   `Chart.animator.running` laissaient figé « Top 15 orienteurs ») ; la
-  fermeture de l'écran d'accueil rejoue la Vue globale (`NombreAnime`,
+  fermeture de l'écran d'accueil rejoue la Vue globale ; une barre de liste se
+  vide **sans transition** avant de pousser (avec, elle ne partait jamais de 0 ;
+  barres validées par l'utilisateur le 28/10/2026) (`NombreAnime`,
   `quandVisible`) : jamais pendant l'export
   PDF ni à l'impression (`ANIM.suspendu`, `beforeprint`) — contre-preuve e2e ;
   la suite e2e tourne en mouvement réduit via `contextOptions` (un
