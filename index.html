@@ -1202,6 +1202,10 @@ const NombreAnime=(()=>{
     t.style.opacity='1';t.style.transform='';
     setTimeout(()=>{if(t.style.opacity==='1'){t.style.transition='';t.style.opacity='';tuilesCachees.delete(t);}},retard+600);
   }
+  function montrerTuileAuRang(t){
+    if(!ANIM.actif()){remettreTuiles();return;}
+    montrerTuile(t,Math.min(rangTuile(t)*DECALAGE,DECALAGE_MAX));
+  }
   function remettreTuiles(){
     tuilesCachees.forEach(t=>{t.style.transition='';t.style.opacity='';t.style.transform='';});tuilesCachees.clear();
   }
@@ -1218,6 +1222,11 @@ const NombreAnime=(()=>{
     }
     const a=el._nbAnime;
     if(!a||!el.isConnected){io.unobserve(el);return;}
+    if(a.tuileSeule){
+      if(e.isIntersecting&&e.intersectionRatio>=.3){if(a.dehors){a.dehors=false;a.vu=true;montrerTuileAuRang(a.tuile);}}
+      else if(!e.isIntersecting&&!a.dehors&&ANIM.actif()){a.dehors=true;cacherTuile(a.tuile);}
+      return;
+    }
     if(e.isIntersecting&&e.intersectionRatio>=.3){
       if(a.dehors){a.dehors=false;lancer(a,a.vu?0:a.de);a.vu=true;}
     }else if(!e.isIntersecting&&!a.dehors&&ANIM.actif()){
@@ -1245,7 +1254,15 @@ const NombreAnime=(()=>{
   function preparer(el){
     if(!ANIM.actif()||!io||el.closest('#dr-print-container'))return;
     const n=noeudNombre(el);
-    if(!n||ecrit.get(n)===n.data)return;
+    if(!n){
+      // Valeur en texte (« Logement », un nom, « — ») : pas de comptage, mais la
+      // tuile entre à son rang comme les autres (signalé le 28/10/2026).
+      const t=tuileDe(el);
+      if(!t||el._nbAnime)return;
+      el._nbAnime={tuileSeule:true,tuile:t,dehors:true,vu:false};
+      cacherTuile(t);io.observe(el);return;
+    }
+    if(ecrit.get(n)===n.data)return;
     const d=decouperNombre(n.data),cle=identite(el,n,d);
     // Glisser seulement si l'ancienne instance était à l'écran (un filtre change
     // la valeur sous les yeux). Un onglet est redessiné à chaque affichage :
@@ -1295,6 +1312,7 @@ const NombreAnime=(()=>{
     if(!ANIM.actif())return;
     document.querySelectorAll(SELECTEUR).forEach(el=>{
       const a=el._nbAnime;if(!a||!el.isConnected||!aLEcran(el))return;
+      if(a.tuileSeule){a.dehors=false;a.vu=true;cacherTuile(a.tuile);montrerTuileAuRang(a.tuile);return;}
       a.dehors=false;a.vu=true;enCours.set(a.n,a.final);poser(a.n,formaterCommeNombre(0,a.d));
       if(a.tuile)cacherTuile(a.tuile);lancer(a,0);
     });
