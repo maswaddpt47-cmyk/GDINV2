@@ -254,6 +254,17 @@ l'expression du workflow ne reconnaît plus, le remplacement cesse sans erreur
 poussé (❌ : dire l'échec et corriger ; ⏳ : dire que ce n'est pas fini). Règle
 et déclenchement automatique : MD-LIB `deploiement.md` (13/10/2026).
 
+**Diffusion aux agents (demande du DSI, 27/10/2026) : le cloud du CD47 est un
+point de dépôt, pas un mode d'exécution.** Testé par l'utilisateur le
+28/10/2026 : `index.html` ne s'ouvre pas depuis le cloud, il faut le
+télécharger. Parcours unique, comme pour la clé USB : **télécharger, extraire,
+ouvrir `index.html` depuis le disque** (`file:///C:/…`), Ctrl+F5 après chaque
+mise à jour — en `file://` le `?v=<sha>` ne sert plus. Le dossier déposé porte
+**l'application, jamais les données** : un export JSON déposé là devient
+lisible par tous ceux qui ont accès au dossier, `motif` en clair compris.
+GitHub Pages reste en service tant que son abandon n'est pas décidé (suivi :
+`CHANTIERS.md`).
+
 ### Un seul dashboard
 
 `index.html` est le seul fichier servi. Il porte le design system dit « v2» :

@@ -68,7 +68,9 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   - **Les documents remis au DSI** (synthèse et note consolidée du
     27/10/2026, hors dépôt) décrivent encore ce mode comme un « hébergement
     interne ». **Test fait : à reformuler** en « dépôt sur le cloud,
-    téléchargement et ouverture locale ».
+    téléchargement et ouverture locale ». Le parcours est désormais dans
+    `CLAUDE.md` (« Déploiement et cache ») ; le `A-LIRE-AVANT-D-OUVRIR.txt`
+    de l'archive (hors dépôt) est à aligner dessus.
   - **`deploy.yml` et `deploy.test.js` sont à revoir ensemble** le jour où
     GitHub Pages est abandonné : le premier publie sur Pages, le second
     verrouille le motif de réécriture du `<head>` qui n'aurait plus d'objet.
