@@ -1315,12 +1315,16 @@ Chart.register({id:'quandVisible',
   afterInit(chart){
     const cv=chart.canvas;
     if(!window.IntersectionObserver||!cv||cv.closest('#dr-print-container'))return;
-    const t0=performance.now();let dehors=true;
+    let dehors=true;
     const io=new IntersectionObserver(es=>{
       const e=es[es.length-1];
       if(e.isIntersecting&&e.intersectionRatio>=.2){
         if(!dehors)return;dehors=false;
-        if(!ANIM.actif()||!chart.canvas||chart.options.animation===false||performance.now()-t0<200)return;
+        // Toujours rejouer à l'arrivée. Un graphe créé à l'ouverture de son
+        // onglet s'anime à taille nulle puis est redimensionné sans animation :
+        // ni un délai (200 ms) ni « une animation tourne » ne le distinguaient
+        // d'une animation visible (« Top 15 orienteurs », signalé le 28/10/2026).
+        if(!ANIM.actif()||!chart.canvas||chart.options.animation===false)return;
         chart.reset();chart.update();
       }else if(!e.isIntersecting)dehors=true;
     },{threshold:[0,.2]});
