@@ -1600,6 +1600,36 @@ test.describe('Animations', () => {
     expect(r.vus[r.vus.length - 1]).toBe(r.final);
   });
 
+  // Balayage du 28/10/2026 : sept blocs de chiffres écrits en style direct
+  // (Par Conseiller, Rapport, Diapo Rapport) et un seuil « années » laissaient
+  // des KPI immobiles, trouvés à l'œil un par un. Tout chiffre affiché en grand
+  // (18 px et plus) qui se lit comme un nombre doit être pris en charge.
+  test('tout grand chiffre des onglets et du Diapo Rapport est animé', async ({ page }) => {
+    await preparer(page);
+    const sonde = () => page.evaluate(() => {
+      const SEL = '.kpi-value,.bs-val,.nb-anime,.bi-val', oublies = [];
+      document.querySelectorAll('body *').forEach(el => {
+        const rc = el.getBoundingClientRect(); if (!rc.width || !rc.height) return;
+        const own = [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.data).join('').trim();
+        if (!decouperNombre(own) || el.closest(SEL)) return;
+        if (parseFloat(getComputedStyle(el).fontSize) >= 18) oublies.push(own + ' (' + ((el.closest('[id]') || {}).id || '') + ')');
+      });
+      return oublies;
+    });
+    const oublies = [];
+    for (const o of ONGLETS) {
+      await page.evaluate(id => { document.querySelector(`[onclick*="'${id}'"]`).click(); }, o);
+      if (o === 'rapport') await page.evaluate(() => { choisirCombinaison(); renderRapport(); });
+      oublies.push(...(await sonde()).map(x => o + ' : ' + x));
+    }
+    const n = await page.evaluate(() => { choisirCombinaison(); startDiapoRapport(); return DR_SLIDES.length; });
+    for (let i = 0; i < n; i++) {
+      await page.evaluate(i => drGoTo(i), i);
+      oublies.push(...(await sonde()).map(x => 'diapo rapport ' + i + ' : ' + x));
+    }
+    expect(oublies).toEqual([]);
+  });
+
   // Contre-preuve : sans la suspension pendant l'export, la page « Chiffres
   // clés » était copiée en plein comptage et le PDF portait des « 0 ».
   test("le PDF est identique avec et sans animation", async ({ page }) => {
