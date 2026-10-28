@@ -1728,6 +1728,33 @@ test.describe('Animations', () => {
     }
   });
 
+  // Décalage des tuiles (28/10/2026) : chaque tuile entre après la précédente,
+  // et toutes finissent visibles sur leur valeur.
+  test('les tuiles KPI entrent l\'une après l\'autre', async ({ page }) => {
+    await preparer(page);
+    // Première visite : États calcule ses actions, ses tuiles valent encore 0.
+    const ouvrir = id => page.evaluate(id => document.querySelector(`[onclick*="'${id}'"]`).click(), id);
+    await ouvrir('etats'); await page.waitForTimeout(1200);
+    await ouvrir('global'); await page.waitForTimeout(1200);
+    const r = await page.evaluate(() => new Promise(res => {
+      document.querySelector(`[onclick*="'etats'"]`).click();
+      const vu = [], t0 = performance.now();
+      const pas = () => {
+        const t = performance.now() - t0;
+        document.querySelectorAll('#act-kpi .kpi').forEach((k, i) => {
+          if (vu[i] == null && +getComputedStyle(k).opacity > 0.5) vu[i] = t;
+        });
+        if (t < 1800) requestAnimationFrame(pas);
+        else res({ vu, fin: [...document.querySelectorAll('#act-kpi .kpi')].map(k => +getComputedStyle(k).opacity) });
+      };
+      requestAnimationFrame(pas);
+    }));
+    expect(r.vu.length).toBeGreaterThan(2);
+    for (let i = 1; i < r.vu.length; i++) expect(r.vu[i], `tuile ${i} pas après la ${i - 1}`).toBeGreaterThan(r.vu[i - 1]);
+    expect(r.vu[r.vu.length - 1] - r.vu[0], 'aucun décalage').toBeGreaterThan(150);
+    expect(r.fin.every(o => o === 1)).toBe(true);
+  });
+
   test('en mouvement réduit, aucun graphe ne s\'anime, même à sa création', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await preparer(page);

@@ -1185,6 +1185,26 @@ const NombreAnime=(()=>{
   const ecrit=new WeakMap();   // nœud texte → dernier texte écrit ici
   const enCours=new Map();     // nœud texte → texte final, tant qu'il n'est pas affiché
   const memoire=new Map();     // identité du KPI → {valeur, a : son animation}, pour glisser
+  // Décalage des tuiles (demande du 28/10/2026, modèle NEWGEN) : chaque tuile
+  // entre en fondu 80 ms après la précédente de son groupe (0,5 s au plus), et
+  // son chiffre compte à partir de ce moment. Les valeurs des listes de barres
+  // (.bi-val) n'ont pas de tuile.
+  const DECALAGE=80,DECALAGE_MAX=480;
+  const tuilesCachees=new Set();
+  const tuileDe=el=>el.closest('.kpi,.bilan-stat')||(el.classList.contains('nb-anime')?el.parentElement:null);
+  const rangTuile=t=>t.parentElement?[...t.parentElement.children].indexOf(t):0;
+  function cacherTuile(t){
+    t.style.transition='none';t.style.opacity='0';t.style.transform='translateY(8px)';tuilesCachees.add(t);
+  }
+  function montrerTuile(t,retard){
+    void t.offsetWidth;
+    t.style.transition=`opacity .5s ease ${retard}ms,transform .5s ease ${retard}ms`;
+    t.style.opacity='1';t.style.transform='';
+    setTimeout(()=>{if(t.style.opacity==='1'){t.style.transition='';t.style.opacity='';tuilesCachees.delete(t);}},retard+600);
+  }
+  function remettreTuiles(){
+    tuilesCachees.forEach(t=>{t.style.transition='';t.style.opacity='';t.style.transform='';});tuilesCachees.clear();
+  }
   const io=window.IntersectionObserver?new IntersectionObserver(es=>es.forEach(e=>{
     const el=e.target;
     if(el._barre){
@@ -1202,6 +1222,7 @@ const NombreAnime=(()=>{
       if(a.dehors){a.dehors=false;lancer(a,a.vu?0:a.de);a.vu=true;}
     }else if(!e.isIntersecting&&!a.dehors&&ANIM.actif()){
       a.dehors=true;enCours.set(a.n,a.final);poser(a.n,formaterCommeNombre(0,a.d));
+      if(a.tuile)cacherTuile(a.tuile);
     }
   }),{threshold:[0,.3]}):null;
   const noeudNombre=el=>{
@@ -1232,15 +1253,19 @@ const NombreAnime=(()=>{
     // chiffre repart de 0 (constaté le 28/10/2026).
     const prec=cle&&memoire.get(cle);
     const de=prec&&prec.a&&!prec.a.dehors&&prec.a.vu?prec.valeur:0;
-    el._nbAnime={n,d,final:n.data,de,dehors:true,vu:false};
+    el._nbAnime={n,d,final:n.data,de,dehors:true,vu:false,tuile:tuileDe(el)};
+    if(el._nbAnime.tuile)cacherTuile(el._nbAnime.tuile);
     if(cle)memoire.set(cle,{valeur:d.valeur,a:el._nbAnime});
     enCours.set(n,n.data);
     poser(n,formaterCommeNombre(de,d));
     io.observe(el);
   }
   function lancer(a,de){
-    if(!ANIM.actif()){finir(a.n);return;}
-    const t0=performance.now(),gen=a.gen=(a.gen||0)+1;   // un seul comptage à la fois
+    if(!ANIM.actif()){finir(a.n);remettreTuiles();return;}
+    const retard=a.tuile?Math.min(rangTuile(a.tuile)*DECALAGE,DECALAGE_MAX):0;
+    if(a.tuile)montrerTuile(a.tuile,retard);
+    // t0 décalé : la progression reste à 0 (plancher) jusqu'à l'entrée de la tuile.
+    const t0=performance.now()+retard,gen=a.gen=(a.gen||0)+1;   // un seul comptage à la fois
     const pas=t=>{
       if(!enCours.has(a.n)||a.dehors||a.gen!==gen)return;
       // L'horodatage d'une image peut précéder t0 : sans le plancher à 0, la
@@ -1270,7 +1295,8 @@ const NombreAnime=(()=>{
     if(!ANIM.actif())return;
     document.querySelectorAll(SELECTEUR).forEach(el=>{
       const a=el._nbAnime;if(!a||!el.isConnected||!aLEcran(el))return;
-      a.dehors=false;a.vu=true;enCours.set(a.n,a.final);poser(a.n,formaterCommeNombre(0,a.d));lancer(a,0);
+      a.dehors=false;a.vu=true;enCours.set(a.n,a.final);poser(a.n,formaterCommeNombre(0,a.d));
+      if(a.tuile)cacherTuile(a.tuile);lancer(a,0);
     });
     document.querySelectorAll(BARRE).forEach(el=>{
       const b=el._barre;if(!b||!aLEcran(el))return;
@@ -1281,7 +1307,7 @@ const NombreAnime=(()=>{
   const accueil=document.querySelector('#landing-overlay .lo-btn');
   if(accueil)accueil.addEventListener('click',rejouer);   // avant le prochain affichage : pas d'image à la valeur finale
   function terminer(){
-    [...enCours.keys()].forEach(finir);
+    [...enCours.keys()].forEach(finir);remettreTuiles();
     barres.forEach(el=>{el.style.width=el._barre.w;});barres.clear();
   }
   function parcourir(racine){
