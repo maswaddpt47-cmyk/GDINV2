@@ -512,6 +512,40 @@ Le périmètre a grandi depuis `219de1d` ; relire sur `66423d7` :
   être animé (onglets et Diapo Rapport). **Le Diapo Global n'est pas dans ce
   test** (balayé une fois à la main : 17 chiffres, tous animés).
 
+### Réponse — Codex — 28/10/2026
+Relayée par l'utilisateur, inscrite telle quelle.
+
+Auteur : Codex (OpenAI), contradicteur — lu sur f416e2b, dernière version de main récupérée via GitHub.
+
+Verdict : amendé
+
+Constat :
+
+1. La mémoire confond déjà des indicateurs différents entre diapositives.
+   La clé utilise seulement l’ID du conteneur et le rang ; la valeur précédente est réemployée sans vérifier le sens ni l’unité (index.html:1212, index.html:1222). Dans « Non réalisés », le rang 1 contient un nombre de réalisations (index.html:4835) ; dans « Bilan », il contient un pourcentage (index.html:5014).
+   Reproduction exécutée avec le bloc original et DOM/observateurs/horloge simulés : 1200 puis une cible de 75% au même emplacement donnent 1200% à la préparation, 216% à 400 ms, puis 75% à 800 ms. Le résultat final reste correct. La réserve sur un éventuel réordonnancement concerne donc déjà la navigation normale entre diapositives.
+
+2. Le mouvement réduit ne coupe pas l’animation initiale des graphes.
+   Le contrôle ANIM.actif() bloque leur rejeu (index.html:1280), mais les créations de graphes ne désactivent pas l’animation initiale (index.html:1766). Harnais exécuté avec Chart.js et le greffon originaux : malgré ANIM.actif() === false, une animation de 1 000 ms reste active. Cette animation préexistait ; c’est la promesse globale de coupure qui dépasse l’implémentation actuelle.
+
+3. La finalisation des nombres avant l’export PDF est cohérente.
+   L’export suspend et termine les comptages avant de rendre les pages (index.html:5208) ; le conteneur imprimé est exclu des préparations (index.html:1218). Les anciens callbacks cessent d’écrire après finalisation (index.html:1233).
+   Reproduction exécutée : valeur finale 14, intermédiaire 11, puis beforeprint restaure 14 ; les callbacks suivants ne la modifient plus. Le test existant compare toutefois les textes des pages, sans contrôler les images des graphes ni le PDF réellement imprimé (tests-e2e.spec.js:1577).
+
+4. Capture et copie restent exposées aux valeurs intermédiaires.
+   L’animation remplace directement le texte du DOM (index.html:1216, index.html:1235). Une copie pendant le comptage peut donc conserver l’intermédiaire. Win+Maj+S et les lecteurs d’écran n’ont pas été testés.
+   Pour Ctrl+P, une limite préexistante subsiste : le CSS masque tout sauf le conteneur PDF, normalement vide hors export (index.html:349, index.html:5200). Le seul beforeprint ne rend donc pas l’écran courant imprimable.
+
+Amendement :
+
+- Mémoriser les valeurs par identité stable d’indicateur, en distinguant les diapositives et les unités ; repartir de zéro lorsque cette identité change.
+- Soit appliquer le mouvement réduit aux animations initiales de Chart.js, soit préciser que la coupure concerne les comptages et les reprises ajoutées.
+- Conserver les protections PDF et distinguer explicitement ce parcours des captures, copies et impressions natives. La fiabilité d’une capture pendant le comptage reste un arbitrage de présentation.
+
+Vérifications et limites : sept tests ciblés de lecture/formatage passent ; trois harnais Node exécutés. Ces simulations ne constituent pas des essais dans un navigateur réel.
+
+Aucune modification de revue dans le dépôt, aucun commit ni push.
+
 ---
 
 ## Blocs tranchés
