@@ -112,7 +112,11 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     (« Top 3 : X % des accompagnements »).
   - **Tableau « affiché / recompté / écart »** : tableau croisé dynamique
     Excel sur l'export source, comparé aux 11 diapositives du Diapo Rapport
-    pour la période et le couple conseiller × CMS projetés. C'est la seule
+    pour la période et le couple conseiller × CMS projetés. **Modèle prêt**
+    (28/10/2026, 28 chiffres, définition et méthode de recomptage de chacun) :
+    dépôt **privé** `maswaddpt47-cmyk/GDINV2-BACKUP`, dossier `releves/`
+    (Excel et Word). Jamais dans ce dépôt-ci, public. Si une définition change
+    ici, mettre le modèle à jour. C'est la seule
     preuve d'exactitude ; les correctifs n'en sont pas une (Codex).
   - **Non traité, à proposer** : le graphe en anneau des thématiques du
     Territoire (`index.html`, `ch-terr-thema`) découpe un cercle en parts
