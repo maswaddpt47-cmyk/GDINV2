@@ -1704,6 +1704,30 @@ test.describe('Animations', () => {
     }
   });
 
+  // Les barres des listes (makeBarList) étaient vidées avec la transition
+  // active : elles rétrécissaient de quelques pixels puis revenaient, sans
+  // jamais partir de 0 (signalé le 28/10/2026, Par CMS). Largeur réelle mesurée.
+  test('les barres des listes poussent depuis 0 à l\'ouverture de l\'onglet', async ({ page }) => {
+    await preparer(page);
+    for (const passage of [1, 2]) {
+      await page.evaluate(() => document.querySelector(`[onclick*="'global'"]`).click());
+      await page.waitForTimeout(1000);
+      const ws = await page.evaluate(() => new Promise(res => {
+        document.querySelector(`[onclick*="'par-cms'"]`).click();
+        const ws = [], t0 = performance.now();
+        const pas = () => {
+          const f = document.querySelector('#bar-cms-thema .bar-fill');
+          if (f) ws.push(f.getBoundingClientRect().width);
+          if (performance.now() - t0 < 1200) requestAnimationFrame(pas); else res(ws);
+        };
+        requestAnimationFrame(pas);
+      }));
+      const fin = ws[ws.length - 1];
+      expect(fin, 'liste vide').toBeGreaterThan(40);
+      expect(Math.min(...ws), `passage ${passage} : la barre ne part pas de 0`).toBeLessThan(fin / 4);
+    }
+  });
+
   test('en mouvement réduit, aucun graphe ne s\'anime, même à sa création', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await preparer(page);
