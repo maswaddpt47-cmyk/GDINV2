@@ -1129,7 +1129,10 @@ function libelleLignes(typeFiltre){
 
 // ─── Nombre d'un KPI, pour l'animation de comptage (28/10/2026) ──────────────
 // decouperNombre lit « 95% », « 1 234 », « +12% », « 4,5 j » ; tout le reste
-// (texte, « — », « <20 cas », date, année seule) rend null et ne s'anime pas.
+// (texte, « — », « <20 cas », date) rend null et ne s'anime pas. Une valeur
+// entre 1900 et 2100 est un compte comme un autre : l'exclure pour épargner
+// les années figeait « 1947 non réalisées » (constaté le 28/10/2026), et aucun
+// élément animé n'affiche d'année seule.
 // formaterCommeNombre réécrit une valeur intermédiaire dans le même format. La
 // valeur finale affichée n'est jamais recalculée : l'animation remet le texte
 // d'origine tel quel à la fin.
@@ -1140,7 +1143,6 @@ function decouperNombre(texte){
   const entier=m[2].replace(/[ \u00a0\u202f]/g,'');
   const decimales=m[4]?m[4].length:0;
   const valeur=parseFloat(entier+(m[4]?'.'+m[4]:''));
-  if(!sepMil&&!decimales&&!m[1].trim()&&!m[5].trim()&&valeur>=1900&&valeur<=2100)return null;
   return{prefixe:m[1],valeur,decimales,sepDec:m[3]||',',sepMil,suffixe:m[5]};
 }
 function formaterCommeNombre(v,modele){
