@@ -1240,9 +1240,9 @@ const NombreAnime=(()=>{
   }
   function lancer(a,de){
     if(!ANIM.actif()){finir(a.n);return;}
-    const t0=performance.now();
+    const t0=performance.now(),gen=a.gen=(a.gen||0)+1;   // un seul comptage à la fois
     const pas=t=>{
-      if(!enCours.has(a.n)||a.dehors)return;
+      if(!enCours.has(a.n)||a.dehors||a.gen!==gen)return;
       // L'horodatage d'une image peut précéder t0 : sans le plancher à 0, la
       // première image dépassait la valeur de départ (922 entre 900 et 300),
       // ou passait sous 0 en partant de 0 (mesuré le 28/10/2026).
@@ -1259,6 +1259,24 @@ const NombreAnime=(()=>{
     el._barre={w,dehors:true};barres.add(el);el.style.width='0';
     io.observe(el);
   }
+  // Rejouer ce qui est à l'écran. L'écran d'accueil recouvre la Vue globale
+  // sans la masquer pour IntersectionObserver : le comptage s'y jouait derrière
+  // et était fini au clic sur « Accéder » (signalé le 28/10/2026).
+  const aLEcran=el=>{const r=el.getBoundingClientRect();return r.width&&r.height&&r.bottom>0&&r.top<innerHeight;};
+  function rejouer(){
+    if(!ANIM.actif())return;
+    document.querySelectorAll(SELECTEUR).forEach(el=>{
+      const a=el._nbAnime;if(!a||!el.isConnected||!aLEcran(el))return;
+      a.dehors=false;a.vu=true;enCours.set(a.n,a.final);poser(a.n,formaterCommeNombre(0,a.d));lancer(a,0);
+    });
+    document.querySelectorAll(BARRE).forEach(el=>{
+      const b=el._barre;if(!b||!aLEcran(el))return;
+      el.style.width='0';requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.width=b.w;}));
+    });
+    Object.values(Chart.instances||{}).forEach(c=>{if(c.canvas&&aLEcran(c.canvas)){c.reset();c.update();}});
+  }
+  const accueil=document.querySelector('#landing-overlay .lo-btn');
+  if(accueil)accueil.addEventListener('click',rejouer);   // avant le prochain affichage : pas d'image à la valeur finale
   function terminer(){
     [...enCours.keys()].forEach(finir);
     barres.forEach(el=>{el.style.width=el._barre.w;});barres.clear();

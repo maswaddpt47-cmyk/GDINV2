@@ -1656,6 +1656,30 @@ test.describe('Animations', () => {
     expect(r.vus[r.vus.length - 1]).toBe(r.final);
   });
 
+  // L'écran d'accueil recouvre la Vue globale sans la masquer pour
+  // IntersectionObserver : le comptage se jouait derrière et était fini au clic
+  // (signalé par l'utilisateur le 28/10/2026).
+  test("fermer l'écran d'accueil fait compter les KPI de la Vue globale", async ({ page }) => {
+    await preparer(page);
+    await page.reload();
+    await page.locator('.lo-btn').waitFor({ state: 'visible' });
+    await page.waitForFunction(() => dataSource === 'imported' || DATA.length > 0);
+    await page.waitForTimeout(1500);   // le comptage caché a le temps de finir
+    const r = await page.evaluate(() => new Promise(res => {
+      document.querySelector('.lo-btn').click();
+      const vus = [], t0 = performance.now();
+      const pas = () => {
+        const el = document.querySelector('#kpi-global .kpi-value');
+        vus.push(decouperNombre(el.textContent.trim()).valeur);
+        if (performance.now() - t0 < 1100) requestAnimationFrame(pas); else res({ vus, final: el._nbAnime && el._nbAnime.d.valeur });
+      };
+      pas();
+    }));
+    expect(r.final).toBeGreaterThan(2);
+    expect(r.vus[0], 'la valeur finale s\'affiche avant le comptage').toBeLessThan(r.final);
+    expect(r.vus[r.vus.length - 1]).toBe(r.final);
+  });
+
   test('en mouvement réduit, aucun graphe ne s\'anime, même à sa création', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await preparer(page);
