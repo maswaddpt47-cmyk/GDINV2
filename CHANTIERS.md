@@ -49,15 +49,16 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     contourner l'impossibilité d'y configurer des en-têtes. Sans serveur, il
     n'y a ni en-tête à poser ni adresse à versionner : **c'est le Ctrl+F5
     après mise à jour qui règle le cache**, dans les deux modes.
-  - **À TESTER PAR L'UTILISATEUR (prévu le 28/10/2026)** : ouvrir
-    `index.html` **depuis l'interface web du drive ne fonctionnera
-    probablement pas** — hypothèse non vérifiée. La plupart de ces outils
-    forcent le téléchargement ou affichent un aperçu sans exécuter le
-    JavaScript, et les chemins relatifs vers `vendor/` et `gdin-pure.js` ne
-    se résoudraient pas : on retomberait sur les `ERR_FILE_NOT_FOUND` du zip
-    non extrait. **Ce qui devrait marcher** : un dossier synchronisé sur le
-    poste, ouvert depuis le disque (adresse en `C:/...`, pas en `https://`).
-    Résultat du test à consigner ici.
+  - **Testé par l'utilisateur le 28/10/2026 : `index.html` ne s'ouvre pas
+    depuis le cloud, il faut le télécharger.** Le cloud du CD47 est donc un
+    **point de dépôt**, pas un mode d'exécution : on télécharge, on extrait,
+    on ouvre depuis le disque — le même parcours que la clé USB ou le zip,
+    avec les mêmes règles (extraire avant d'ouvrir, Ctrl+F5 après mise à
+    jour, stockage propre au navigateur du poste). **Pas testé** : un dossier
+    synchronisé sur le poste (s'il existe pour ce cloud), qui éviterait le
+    téléchargement à chaque mise à jour. *Supposé* : un dossier téléchargé
+    depuis un drive arrive souvent en `.zip` — dans ce cas l'extraction est
+    obligatoire, sinon les `ERR_FILE_NOT_FOUND` du 27/10/2026 reviennent.
   - **Risque propre au drive, à cadrer** : un espace partagé diffuse ce qu'on
     y dépose. Si un agent y place un export JSON pour « sauvegarder » ou
     « partager », les données d'accompagnement — motif en clair compris —
@@ -66,7 +67,8 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     partagé porte l'application, jamais les données.**
   - **Les documents remis au DSI** (synthèse et note consolidée du
     27/10/2026, hors dépôt) décrivent encore ce mode comme un « hébergement
-    interne ». À reformuler une fois le test fait.
+    interne ». **Test fait : à reformuler** en « dépôt sur le cloud,
+    téléchargement et ouverture locale ».
   - **`deploy.yml` et `deploy.test.js` sont à revoir ensemble** le jour où
     GitHub Pages est abandonné : le premier publie sur Pages, le second
     verrouille le motif de réécriture du `<head>` qui n'aurait plus d'objet.
