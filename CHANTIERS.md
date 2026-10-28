@@ -232,7 +232,8 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
   `Chart.animator.running` laissaient figé « Top 15 orienteurs ») ; la
   fermeture de l'écran d'accueil rejoue la Vue globale ; une barre de liste se
   vide **sans transition** avant de pousser (avec, elle ne partait jamais de 0 ;
-  barres validées par l'utilisateur le 28/10/2026) (`NombreAnime`,
+  barres validées par l'utilisateur le 28/10/2026) ; tuiles en cascade (80 ms,
+  texte compris, validées le même jour) (`NombreAnime`,
   `quandVisible`) : jamais pendant l'export
   PDF ni à l'impression (`ANIM.suspendu`, `beforeprint`) — contre-preuve e2e ;
   la suite e2e tourne en mouvement réduit via `contextOptions` (un
