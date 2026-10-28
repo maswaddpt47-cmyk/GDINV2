@@ -1448,8 +1448,10 @@ describe('decouperNombre', () => {
     assert.equal(d.decimales, 1);
     assert.equal(d.prefixe, '+');
   });
-  it('n\'anime ni texte, ni tiret, ni seuil, ni date, ni année', () => {
-    ['Logement', '—', '<20 cas', '22/10/2026', '2025', ''].forEach(x =>
+  // Un compte entre 1900 et 2100 s'anime : « 1947 » non réalisées restait figé.
+  it('lit un compte qui ressemble à une année', () => assert.equal(decouperNombre('1947').valeur, 1947));
+  it('n\'anime ni texte, ni tiret, ni seuil, ni date', () => {
+    ['Logement', '—', '<20 cas', '22/10/2026', ''].forEach(x =>
       assert.equal(decouperNombre(x), null, x));
   });
 });
