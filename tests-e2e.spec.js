@@ -1600,6 +1600,38 @@ test.describe('Animations', () => {
     expect(r.vus[r.vus.length - 1]).toBe(r.final);
   });
 
+  // AG-006 (Codex) : la mémoire, indexée par le seul emplacement, faisait
+  // glisser « Accompagnements réalisés » depuis le nombre de « Réalisés » de la
+  // diapositive précédente : 1125 % affichés avant 75 %. Et une image horodatée
+  // avant le départ dépassait la valeur de départ. Toute valeur intermédiaire
+  // doit rester entre le départ et l'arrivée.
+  test('en changeant de diapositive, aucun chiffre intermédiaire hors de son trajet', async ({ page }) => {
+    await preparer(page);
+    const hors = await page.evaluate(() => new Promise(res => {
+      choisirCombinaison(); startDiapoRapport();
+      drGoTo(DR_SLIDES.findIndex(s => s.id === 'nonreal'));
+      setTimeout(() => {
+        drGoTo(DR_SLIDES.findIndex(s => s.id === 'bilan'));
+        const vus = new Map(), t0 = performance.now();
+        const pas = () => {
+          document.querySelectorAll('#dr-content .nb-anime').forEach(el => {
+            const a = el._nbAnime; if (!a) return;
+            const v = decouperNombre(el.textContent.trim());
+            if (!v) return;
+            // Aucun indicateur de « Bilan » n'existe sur « Non réalisés » : tous
+            // repartent de 0. Mesurer par rapport à a.de ne prouvait rien, le
+            // mauvais départ servant lui-même de borne (contre-preuve du 28/10).
+            if (a.de !== 0) vus.set(a.final + ' départ', a.final + ' part de ' + a.de);
+            if (v.valeur < -0.5 || v.valeur > a.d.valeur + 0.5) vus.set(a.final, el.textContent.trim() + ' (attendu entre 0 et ' + a.d.valeur + ')');
+          });
+          if (performance.now() - t0 < 1000) requestAnimationFrame(pas); else res([...vus.values()]);
+        };
+        queueMicrotask(pas);
+      }, 1200);
+    }));
+    expect(hors).toEqual([]);
+  });
+
   // Balayage du 28/10/2026 : sept blocs de chiffres écrits en style direct
   // (Par Conseiller, Rapport, Diapo Rapport) et un seuil « années » laissaient
   // des KPI immobiles, trouvés à l'œil un par un. Tout chiffre affiché en grand
