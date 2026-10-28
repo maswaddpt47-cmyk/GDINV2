@@ -71,8 +71,9 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     deviennent lisibles par tous ceux qui ont accès au dossier. Sur une clé le
     risque était la perte ; ici c'est la diffusion silencieuse. **Le dossier
     partagé porte l'application, jamais les données.**
-  - **Documents du dossier DSI reformulés le 28/10/2026** (hors dépôt,
-    dossier `GDIN-DSI_2026-10-28` sur Nextcloud) : synthèse et note V2
+  - **Documents du dossier DSI reformulés le 28/10/2026** (hors de ce dépôt
+    public : dépôt **privé** `GDINV2-BACKUP`, dossier `dsi/`, avec le registre
+    RGPD V0.1 dans `rgpd/` ; copie de travail sur Nextcloud) : synthèse et note V2
     datées du 28/10/2026 décrivent le dépôt sur Nextcloud, le téléchargement
     et l'ouverture locale, avec le risque d'un export déposé dans l'espace
     partagé (pas encore remises, donc ni « V3 » ni mention de mise à jour ;
