@@ -54,9 +54,12 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     **point de dépôt**, pas un mode d'exécution : on télécharge, on extrait,
     on ouvre depuis le disque — le même parcours que la clé USB ou le zip,
     avec les mêmes règles (extraire avant d'ouvrir, Ctrl+F5 après mise à
-    jour, stockage propre au navigateur du poste). **Pas testé** : un dossier
-    synchronisé sur le poste (s'il existe pour ce cloud), qui éviterait le
-    téléchargement à chaque mise à jour. *Supposé* : un dossier téléchargé
+    jour, stockage propre au navigateur du poste). **Le cloud du CD47 est un
+    Nextcloud** (dit par l'utilisateur le 28/10/2026). **Pas testé** : un
+    dossier synchronisé par le client de bureau Nextcloud, ouvert en
+    `file:///C:/…`, qui éviterait le téléchargement à chaque mise à jour —
+    avec les fichiers virtuels activés, le dossier doit être marqué
+    « Toujours disponible localement » (*supposé*). *Supposé* : un dossier téléchargé
     depuis un drive arrive souvent en `.zip` — dans ce cas l'extraction est
     obligatoire, sinon les `ERR_FILE_NOT_FOUND` du 27/10/2026 reviennent.
   - **Risque propre au drive, à cadrer** : un espace partagé diffuse ce qu'on
