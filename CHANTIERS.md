@@ -323,9 +323,7 @@ Règle dans `CLAUDE.md` (« Posture de travail ») ; ne pas reproposer une piste
 écartée sans fait nouveau.
 
 **Proposées, en attente**
-- 28/10/2026 — Décalage d'apparition des tuiles KPI (l'une après l'autre,
-  comme NEWGEN) : plus lisible en projection, quelques lignes ; pas fait sans
-  accord de l'utilisateur.
+_(aucune — le décalage des tuiles KPI, proposé le 28/10/2026, est fait le même jour sur demande de l'utilisateur)_
 
 **Écartées** (date — piste — raison)
 _(aucune)_
