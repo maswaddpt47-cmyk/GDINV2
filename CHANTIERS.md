@@ -121,15 +121,6 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   - Chiffres de réactivité et de fiabilité projetés avant `6b77162` : non
     comparables (signalé).
 
-- **Animations des KPI et des graphes** (28/10/2026, AG-006 tranché) :
-  contrôle à l'œil après Ctrl+F5 — Vue globale (les KPI montent de 0),
-  changer d'année (ils glissent), descendre puis remonter (graphes et barres
-  rejouent), Diapo Rapport : passer de « Non réalisés » à « Bilan » (aucun
-  chiffre aberrant), puis ⬇ PDF (aucun chiffre à 0). En mouvement réduit
-  (réglage Windows), rien ne bouge, graphes compris : voulu.
-  **Limite acceptée** : attendre la fin du comptage (moins d'une seconde)
-  avant une capture ou une copie.
-
 - **Contrôle visuel de la mention de révisabilité** (posée le 22/10/2026,
   `3280ec2`). **En ligne** : déploiement de `89391f7` vérifié vert le
   22/10/2026 (`c93dee9`, poussé après, ne touche que ce fichier). Reste le
@@ -234,7 +225,13 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
 - **Thématiques** (AG-004) : une fois par ligne, % de **toutes** les lignes ;
   un Top 3 se compte en union (`lignesAvecThemas`), jamais en additionnant ;
   jamais « demandes ».
-- **Animations** (`NombreAnime`, `quandVisible`) : jamais pendant l'export
+- **Animations** (validées à l'œil par l'utilisateur sur téléphone le
+  28/10/2026 ; limite acceptée : une capture ou une copie pendant le comptage,
+  moins d'une seconde, peut montrer un chiffre intermédiaire). Un graphe
+  rejoue **toujours** à son arrivée à l'écran (un délai ou
+  `Chart.animator.running` laissaient figé « Top 15 orienteurs ») ; la
+  fermeture de l'écran d'accueil rejoue la Vue globale (`NombreAnime`,
+  `quandVisible`) : jamais pendant l'export
   PDF ni à l'impression (`ANIM.suspendu`, `beforeprint`) — contre-preuve e2e ;
   la suite e2e tourne en mouvement réduit via `contextOptions` (un
   `reducedMotion` posé directement dans `use` n'est pas appliqué). Un KPI ne
@@ -324,7 +321,9 @@ Règle dans `CLAUDE.md` (« Posture de travail ») ; ne pas reproposer une piste
 écartée sans fait nouveau.
 
 **Proposées, en attente**
-_(aucune)_
+- 28/10/2026 — Décalage d'apparition des tuiles KPI (l'une après l'autre,
+  comme NEWGEN) : plus lisible en projection, quelques lignes ; pas fait sans
+  accord de l'utilisateur.
 
 **Écartées** (date — piste — raison)
 _(aucune)_
