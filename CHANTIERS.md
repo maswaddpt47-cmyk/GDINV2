@@ -117,7 +117,10 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     (28/10/2026, 28 chiffres, définition et méthode de recomptage de chacun) :
     dépôt **privé** `maswaddpt47-cmyk/GDINV2-BACKUP`, dossier `releves/`
     (Excel et Word). Jamais dans ce dépôt-ci, public. Si une définition change
-    ici, mettre le modèle à jour. C'est la seule
+    ici, mettre le modèle à jour.
+    **L'utilisateur veut être guidé pas à pas** (28/10/2026) : sélection
+    d'abord, puis étape 0 clic par clic, puis le relevé ligne par ligne ; il
+    ne transmet que des nombres et des noms de colonnes. C'est la seule
     preuve d'exactitude ; les correctifs n'en sont pas une (Codex).
   - **Non traité, à proposer** : le graphe en anneau des thématiques du
     Territoire (`index.html`, `ch-terr-thema`) découpe un cercle en parts
