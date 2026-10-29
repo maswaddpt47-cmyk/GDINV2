@@ -1528,6 +1528,18 @@ describe('mentionRevisabilite', () => {
       mentionRevisabilite({ debut: '2022-02-11', fin: '2026-10-29', dateImport: '29/10/2026', annees: ['2025'], anneesBase: ['2023', '2024', '2025', '2026'] }),
       "Année 2025 (base du 11/02/2022 au 29/10/2026) · données importées le 29/10/2026 · chiffres susceptibles d'être révisés");
   });
+  it('dates du filtre resserrées : elles ne se font pas passer pour la base', () => {
+    assert.equal(
+      mentionRevisabilite({ debut: '2025-06-01', fin: '2025-09-30', baseDebut: '2024-02-01', baseFin: '2026-10-29',
+        dateImport: '29/10/2026', annees: ['2025'], anneesBase: ['2024', '2025', '2026'] }),
+      "Année 2025 · dates du 01/06/2025 au 30/09/2025 (base du 01/02/2024 au 29/10/2026) · données importées le 29/10/2026 · chiffres susceptibles d'être révisés");
+  });
+  it('dates du filtre égales à la base : pas de répétition', () => {
+    assert.equal(
+      mentionRevisabilite({ debut: '2024-02-01', fin: '2026-10-29', baseDebut: '2024-02-01', baseFin: '2026-10-29',
+        annees: ['2025'], anneesBase: ['2024', '2025', '2026'], dateImport: '29/10/2026' }),
+      "Année 2025 (base du 01/02/2024 au 29/10/2026) · données importées le 29/10/2026 · chiffres susceptibles d'être révisés");
+  });
   it('années non contiguës : toutes sont nommées, jamais un minimum et un maximum', () => {
     assert.match(
       mentionRevisabilite({ debut: '2022-02-11', fin: '2026-10-29', annees: ['2025', '2023'], anneesBase: ['2023', '2024', '2025', '2026'] }),

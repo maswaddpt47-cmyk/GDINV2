@@ -1792,9 +1792,15 @@ function toggleYear(yr,idx){
 // UTILS
 // Mention de révisabilité (AG-002) : lit les filtres et le dernier import.
 // Le calcul du libellé est dans gdin-pure.js (mentionRevisabilite), testé.
+function bornesBase(){
+  let mn='',mx='';
+  DATA.forEach(r=>{const d=r.date_demande;if(!d)return;if(!mn||d<mn)mn=d;if(d>mx)mx=d;});
+  return{debut:mn,fin:mx};
+}
 function mentionCourante(annees){
+  const bb=bornesBase();
   return mentionRevisabilite({
-    annees:annees||[...activeYears],anneesBase:ALL_YEARS,
+    annees:annees||[...activeYears],anneesBase:ALL_YEARS,baseDebut:bb.debut,baseFin:bb.fin,
     debut:(document.getElementById('dFrom')||{}).value,
     fin:(document.getElementById('dTo')||{}).value,
     dateImport:(dataSource==='imported'&&importMeta)?importMeta.date:null

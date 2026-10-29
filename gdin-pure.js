@@ -709,11 +709,19 @@ function mentionRevisabilite(opts){
   // la mention la nomme et relègue les bornes de la base entre parenthèses. Annoncer
   // « du 11/02/2022 au 29/10/2026 » sous un bilan 2025 décrivait la base, pas le
   // bilan (AG-004, décision 4).
+  // Trois choses à ne pas confondre (relecture de Codex, 29/10/2026) : les années cochées,
+  // les dates du filtre (`debut`/`fin`) et les bornes réelles des données (`baseDebut`/
+  // `baseFin`). Sans ces dernières, les dates du filtre se faisaient passer pour la base.
+  // Les années non contiguës sont toutes nommées, jamais un minimum et un maximum.
   const sel=(o.annees||[]).map(String).filter(Boolean).sort();
   const baseA=(o.anneesBase||[]).map(String);
   if(sel.length&&baseA.length&&sel.length<baseA.length){
     const lib=sel.length===1?`Année ${sel[0]}`:`Années ${sel.join(', ')}`;
-    periode=d&&f?`${lib} (base du ${d} au ${f})`:lib;
+    const bd=dateFr(o.baseDebut)||d, bf=dateFr(o.baseFin)||f;
+    const filtreResserre=(d&&bd&&d!==bd)||(f&&bf&&f!==bf);
+    const filtre=filtreResserre?` · dates du ${d||'…'} au ${f||'…'}`:'';
+    const base=bd&&bf?` (base du ${bd} au ${bf})`:'';
+    periode=`${lib}${filtre}${base}`;
   }
   const imp=o.dateImport?`données importées le ${String(o.dateImport)}`:'source non datée';
   return `${periode} · ${imp} · chiffres susceptibles d'être révisés`;
