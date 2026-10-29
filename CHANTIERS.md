@@ -20,7 +20,8 @@ session et de compte) :
 3. **À valider par l'utilisateur** : registre RGPD GDINV2 V0.2 (avec le DPO) ;
    registre de sécurité V0.9 d'`ateliers-backups` (relire la ligne sur NextStep et
    NEWGEN, « état réel non vérifié »).
-4. **Règles 53 et 54** de MD-LIB `collaboration.md` : propagation à lui proposer.
+4. **Règles 53 et 54** de MD-LIB : propagées ici, à NEWGEN et NextStep le 29/10
+   (reste PAPPERBOARD, pas dans cette session).
 5. Faire contrôler à l'œil les **correctifs d'AG-004** (`6b77162`), puis établir
    le **tableau « affiché / recompté / écart »** sur son export : aucun chiffre
    concerné n'est « vérifié » avant.
