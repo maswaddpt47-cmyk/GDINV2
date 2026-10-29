@@ -4565,7 +4565,7 @@ function buildAnomalyReport(records, rawLines){
   // Les ateliers en sont exclus : leurs participants portent la même clé,
   // faute de nom de bénéficiaire dans l'application (minimisation RGPD).
   const nbDoublons=compterDoublons(records);
-  if(nbDoublons>0)items.push({label:'Doublons hors ateliers (même N°/date action/type)',val:nbDoublons,color:'var(--orange)'});
+  if(nbDoublons>0)items.push({label:'Doublons hors ateliers (même N° et mêmes dates, type ou conseiller/orienteur)',val:nbDoublons,color:'var(--orange)'});
   // 4. Ateliers : rappeler que les lignes sont des participations
   const atlQ=statsAteliers(records);
   if(atlQ.participations>0)items.push({label:`Participations d'atelier (${atlQ.sessions} séances, non comptées en doublons)`,val:atlQ.participations,color:'var(--cyan)'});

@@ -754,7 +754,10 @@ function isRealisee(etat){return normEtat(etat)==='realisee';}
 function cleDoublon(r){
   if(r.id_demande&&r.date_action)
     return`id:${r.id_demande}|da:${r.date_action}|${(r.type_action||[]).slice().sort().join('+')}`;
-  return`${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.orienteur||''}`;
+  // Sans date d'action, le N° de demande reste dans la clé : deux demandes
+  // distinctes du même jour, du même conseiller et du même orienteur ne sont
+  // pas des doublons (AG-007, 29/10/2026).
+  return`${r.id_demande||''}|${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.orienteur||''}`;
 }
 // Les ateliers sont exclus : cleDoublon() donne la même clé à tous les
 // participants d'une séance, puisque le nom du bénéficiaire n'entre pas dans

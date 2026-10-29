@@ -732,6 +732,11 @@ describe('compterDoublons', () => {
     // Le texte libre des anciennes bases ne distingue plus les suspicions.
     assert.equal(compterDoublons([l({motif:'a'}), l({motif:'b'}), l()]), 2);
   });
+  it('sans date d\'action, deux N° distincts le même jour ne sont pas des doublons (AG-007)', () => {
+    const sans = o => l({ date_action: '', ...o });
+    assert.equal(compterDoublons([sans({ id_demande: '101' }), sans({ id_demande: '102' })]), 0);
+    assert.equal(compterDoublons([sans({ id_demande: '101' }), sans({ id_demande: '101' })]), 1);
+  });
   it('distingue par numéro de demande quand il est présent', () => {
     const a = l({ id_demande: '1' }), b = l({ id_demande: '2' });
     assert.equal(compterDoublons([a, b]), 0);
