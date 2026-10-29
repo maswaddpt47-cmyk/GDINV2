@@ -69,10 +69,12 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     (27/10/2026) ; la CSP est la seule protection embarquée ; clé USB : 1,9 Mo,
     données dans le navigateur du poste, un autre poste réimporte un fichier
     source.
-  - **Dossier DSI** (hors dépôt public : dépôt privé `GDINV2-BACKUP`, `dsi/`
-    et `rgpd/`) : synthèse et note V2 du 28/10/2026 pas encore remises ;
-    consigne aux utilisateurs V0.1 à relire avec le `A-LIRE-AVANT-D-OUVRIR.txt`.
-    Pas de statut dans les noms de fichiers (demande de l'utilisateur).
+  - **Dossier DSI** (hors dépôt public : dépôt privé `GDINV2-BACKUP`,
+    `dsi/GDIN-DSI_2026-10-29/`, lire son `SOMMAIRE.txt`) : la note V2 du
+    28/10/2026 est **déjà remise** ; la V3 (trois défauts, JSON et motif
+    retirés), la synthèse du 29/10 et la consigne V0.2 l'annulent et la
+    remplacent, **pas encore remises** (29/10/2026). Pas de statut dans les
+    noms de fichiers (demande de l'utilisateur).
 
 - **AG-004 — correctifs appliqués le 22/10/2026 (`6b77162`), recomptage à
   faire.** Décisions de l'utilisateur sur les propositions de Codex (détail
