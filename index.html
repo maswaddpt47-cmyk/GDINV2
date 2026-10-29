@@ -2519,7 +2519,7 @@ function renderCms(){
   });
   charts['ch-cms-cal']=new Chart(document.getElementById('ch-cms-cal'),{type:'bar',data:{labels:labM,datasets},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:true,labels:{color:legendColor(),font:{size:10},boxWidth:10,padding:6}}},scales:{x:{grid:{display:false},ticks:{color:legendColor(),font:{size:11}}},y:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:legendColor(),font:{size:11}}}}}});}
   let rows='';
-  countEntries(data,'orienteur').filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())).slice(0,15).forEach(([name,n],i)=>{
+  orienteursExternes(data,ORI_EXCL).slice(0,15).forEach(([name,n],i)=>{
     const od=data.filter(r=>r.orienteur===name),topCN2=(countEntries(od,'conum').map(e=>e[0])[0]||'—');
     rows+=`<tr><td class="mono">${i+1}</td><td>${esc(name)}</td><td class="mono">${n}</td><td class="mono">${pct(n,data.length)}%</td><td class="${conumClass(topCN2)}">${esc(topCN2)}</td></tr>`;
   });
@@ -2529,7 +2529,7 @@ function renderCms(){
   const peakCms=mKeysCms.map(k=>[k,mCntCms[k]||0]).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1])[0];
   const cmsShort=cms.replace(/^Centre Médico-Social(?: de)? /,'CMS ');
   setInsightQ('ch-cms-evol',peakCms?`Pic mensuel <strong>${esc(cmsShort)}</strong> : <strong>${monthLabel(peakCms[0])}</strong> (${peakCms[1]} dem.)<br>Complétion globale : <strong>${pct(data.length-data.filter(r=>!r.date_action).length,data.length)}%</strong>.`:'Aucune donnée');
-  const topOriCms=countEntries(data,'orienteur').filter(([n])=>n&&n!=='?'&&!ORI_EXCL.has(n.trim())).sort((a,b)=>b[1]-a[1])[0];
+  const topOriCms=orienteursExternes(data,ORI_EXCL).sort((a,b)=>b[1]-a[1])[0];
   setInsightQ('ch-cms-cal',topOriCms?`TS le plus orienteur vers ce CMS : <strong>${esc(topOriCms[0])}</strong> (${topOriCms[1]} dem.)<br>Thématique principale : <strong>${esc(Object.keys(countThemas(data))[0]||'—')}</strong>.`:'Aucune donnée');}
   renderSaisonCms(cms);
 }
@@ -2674,7 +2674,7 @@ function renderOrienteurs(){
   let data=getFiltered();if(cms)data=data.filter(r=>r.cms===cms);
 
   // Trier par volume desc, exclure vides
-  const oriEntries=countEntries(data,'orienteur').filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())).sort((a,b)=>b[1]-a[1]);
+  const oriEntries=orienteursExternes(data,ORI_EXCL).sort((a,b)=>b[1]-a[1]);
 
   // ── Graphe bar horizontal top 15 ──
   const top15=oriEntries.slice(0,15);
@@ -2834,7 +2834,7 @@ function renderRapport(){
   const themas=Object.entries(countThemas(data)).slice(0,8);
   destroyChart('ch-rpt-thema');
   charts['ch-rpt-thema']=new Chart(document.getElementById('ch-rpt-thema'),{type:'doughnut',data:{labels:themas.map(t=>t[0]),datasets:[{data:themas.map(t=>t[1]),backgroundColor:PALETTE,borderWidth:2,borderColor:'#111827',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:8,color:legendColor()}}}}});
-  const _oriRpt=(countEntries(data,'orienteur').filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim())));makeBarList(document.getElementById('bar-rpt-ori'),_oriRpt,'green');
+  const _oriRpt=(orienteursExternes(data,ORI_EXCL));makeBarList(document.getElementById('bar-rpt-ori'),_oriRpt,'green');
   {const cmsEntries=countEntries(dataConum,'cms').sort((a,b)=>b[1]-a[1]);
   const hasSel=cmsEntries.some(([c])=>c===cms);
   if(!hasSel){const v=(count(dataConum,'cms')[cms]||0);cmsEntries.push([cms,v]);}
@@ -4897,7 +4897,7 @@ function drSlideOrienteurs(c,data,palette){
   // Effectif et parts calculés sur TOUS les orienteurs externes ; seul
   // l'affichage est limité à dix barres. Tronquer avant de compter annonçait
   // 10 actifs au lieu de 36 et 22 % au lieu de 14 % (mesuré le 20/10/2026).
-  const oriTous=countEntries(data,'orienteur').filter(([n])=>n&&n!=='?'&&n.trim()!==''&&!ORI_EXCL.has(n.trim()));
+  const oriTous=orienteursExternes(data,ORI_EXCL);
   const oriData=oriTous.slice(0,10);
   const oriTotal=oriTous.reduce((s,[,v])=>s+v,0);
   const top1Ori=oriData[0];

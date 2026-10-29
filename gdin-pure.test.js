@@ -9,7 +9,7 @@ const {
   numeroterParticipants, cleFusion, numeroterLignes, fusionnerImport, attribuerConum, deriverAttributionCms,
   neutraliserFormule, celluleCSV, retirerMotifs, baseAncienne, completerRangs,
   categorieEtat, repartitionEtats, deriverActions, delaisParDemande, reactivite48, dansPeriode, tauxRealisation, filtrerParType, evolutionAnnuelle,
-  evolutionParAnnee, basculerAnnee, compterOrienteursExternes, mentionAttribution, indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
+  evolutionParAnnee, basculerAnnee, orienteursExternes, compterOrienteursExternes, mentionAttribution, indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
   rattacherCommune, COMMUNES_47,
 } = require('./gdin-pure.js');
@@ -1023,6 +1023,25 @@ describe('basculerAnnee — sélecteur d\'année du Diapo (AG-004)', () => {
     const sel = new Set(['2025']);
     basculerAnnee(sel, toutes, '2024');
     assert.deepEqual([...sel], ['2025']);
+  });
+});
+
+describe('orienteursExternes — une seule liste pour l\'effectif et les barres (AG-004)', () => {
+  const r = o => ({ orienteur: o });
+  it('« Nom » et « Nom » suivi d\'un espace forment un seul orienteur, avec leurs lignes additionnées', () => {
+    const recs = [r('Externe fictif'), r('Externe fictif '), r('Externe autre'), r('Externe autre')];
+    assert.deepEqual(orienteursExternes(recs, new Set()), [['Externe autre', 2], ['Externe fictif', 2]]);
+    assert.equal(compterOrienteursExternes(recs, new Set()), 2);
+  });
+  it('l\'effectif est toujours la longueur de la liste affichée', () => {
+    const recs = [r('A'), r('A '), r(' B'), r('C'), r('Conseiller'), r('?'), r('')];
+    const liste = orienteursExternes(recs, new Set(['Conseiller']));
+    assert.equal(compterOrienteursExternes(recs, new Set(['Conseiller'])), liste.length);
+    assert.equal(liste.length, 3);
+  });
+  it('tri : nombre décroissant, puis ordre alphabétique', () => {
+    const recs = [r('B'), r('A'), r('A'), r('C'), r('C')];
+    assert.deepEqual(orienteursExternes(recs).map(e => e[0]), ['A', 'C', 'B']);
   });
 });
 
