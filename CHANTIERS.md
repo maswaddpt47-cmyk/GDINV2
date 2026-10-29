@@ -1,16 +1,17 @@
 # Chantiers — GDINV2
 
 État au **29/10/2026** (mesures des audits du 20/10/2026 à leur date). Ménages
-des 27 et 28/10/2026 : le fait, et ce que dit déjà `CLAUDE.md`, sont retirés ;
-les décisions resserrées. Texte complet : `git log -p CHANTIERS.md`.
+des 27, 28 et 29/10/2026 : ce qui est fait, et ce que dit déjà `CLAUDE.md`,
+sont retirés. Texte complet : `git log -p CHANTIERS.md`.
 
 **À faire en premier, dans cet ordre** :
-1. Faire contrôler à l'œil par l'utilisateur les **correctifs d'AG-004**
-   (`6b77162`, premier chantier ci-dessous), puis établir avec lui le
-   **tableau « affiché / recompté / écart »** sur son export. Aucun chiffre
-   concerné n'est « vérifié » avant ce tableau.
-2. Contrôler à l'œil la **mention de révisabilité**, déjà en ligne (deuxième
-   chantier).
+1. **Audit XSS par Codex** (consigne dans `ateliers-backups/documents/sources/`,
+   `consigne-audit-codex-gdinv2-xss.md`), maintenant que le retrait du motif et
+   du JSON est en ligne. Voir « XSS » ci-dessous.
+2. Faire contrôler à l'œil par l'utilisateur les **correctifs d'AG-004**
+   (`6b77162`), puis établir avec lui le **tableau « affiché / recompté /
+   écart »** sur son export. Aucun chiffre concerné n'est « vérifié » avant.
+3. Contrôler à l'œil la **mention de révisabilité** (en ligne, voir AG-002).
 
 **Hors dépôt, pour l'utilisateur seul** : les deux questions au référent
 archives et au DPO — où les dossiers de bilan sont déposés, combien de temps
@@ -24,7 +25,7 @@ Règles permanentes, et pourquoi ce fichier ne se supprime pas : `CLAUDE.md`.
 ## Comment reprendre
 
 ```bash
-npm test                      # 318 tests unitaires · 82 e2e (npx playwright test)
+npm test                      # 330 tests unitaires · 95 e2e (npx playwright test)
 npm run audit -- export.xls [--suivi ../suivi.json]   # parcours réel : lues, exclues, retenues, fusionnées, réimport
 ```
 
@@ -38,99 +39,49 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 
 ## Chantiers ouverts
 
-- **Minimisation et fichiers JSON — publiés le 29/10/2026 (AG-007).**
-  Décisions de l'utilisateur : motif exclu du parsing et du CSV ;
-  imports/exports de fichiers JSON retirés (rejet avant toute
-  réinitialisation) ; stockage navigateur conservé. Les anciennes copies
-  localStorage / IndexedDB sont nettoyées de la seule propriété `motif`, sans
-  changer lignes, rangs ni révisions ; un échec est signalé. Fichiers source et
-  exports déjà téléchargés inchangés. Le diagnostic de doublons suspects peut
-  augmenter sans motif (repli sans n° de demande ni date d'action) ; fusion et
-  volumes inchangés. Pas de purge automatique ; cycle DUC/DUA/sort final à fixer
-  au tableau de gestion. Écrit par Codex, relu par Claude (exception `agora.md`
-  §12) : 330 tests Node et suite e2e passées en local ; les tests e2e importent
-  désormais un vrai XLSX (fixture alignée sur le vrai parseur : noms de CMS
-  bruts, thématiques vides au lieu de conseillers vides, car le parseur déduit
-  les conseillers manquants). Ce parcours réaliste a révélé une XSS préexistante
-  dans `renderCms()` (conseiller principal et thématique non échappés),
-  corrigée à part (`e846717`). **Reste** : remplacer les copies applicatives
-  distribuées ; à l'audit XSS, regarder aussi les `setInsightQ` qui écrivent des
-  noms issus du fichier (ex. `index.html:2510`) — non vérifié.
+- **XSS — audit Codex à lancer.** Le retrait du motif et de l'import/export
+  JSON est en ligne (29/10/2026, AG-007, `539f74b`) : l'e2e importe désormais
+  un vrai XLSX. Ce parcours réaliste a révélé deux XSS préexistantes, corrigées
+  le 29/10/2026 : `renderCms()` (`e846717`) et sept textes d'aide « ? »
+  (`setInsightQ`, `8e483a7`), dont le clic exécutait du code. **Ne pas donner
+  ces correctifs à Codex** : il doit retrouver seul ce qui reste.
+  **Reste** : l'audit, puis remplacer les copies applicatives distribuées.
+  Le diagnostic de doublons suspects peut augmenter sans motif (repli sans
+  n° de demande ni date d'action) ; fusion et volumes inchangés.
 
 - **CHANGEMENT DE DIFFUSION (27/10/2026, demande du DSI) : deux modes, et
-  aucun des deux n'est un serveur web.**
-  Le tableau de bord sera déposé sur le **cloud du CD47 — un espace de
-  stockage de fichiers, type Drive, pas un hébergement web** — et/ou
-  téléchargé puis exécuté depuis le disque du poste. GitHub Pages a vocation
-  à ne plus être la voie de diffusion.
-  - **Conséquence : le `?v=<sha court>` n'a plus d'objet.** Il est injecté par
-    `.github/workflows/deploy.yml` pour GitHub Pages, et ne sert qu'à
-    contourner l'impossibilité d'y configurer des en-têtes. Sans serveur, il
-    n'y a ni en-tête à poser ni adresse à versionner : **c'est le Ctrl+F5
-    après mise à jour qui règle le cache**, dans les deux modes.
-  - **Testé par l'utilisateur le 28/10/2026 : `index.html` ne s'ouvre pas
-    depuis le cloud, il faut le télécharger.** Le cloud du CD47 est donc un
-    **point de dépôt**, pas un mode d'exécution : on télécharge, on extrait,
-    on ouvre depuis le disque — le même parcours que la clé USB ou le zip,
-    avec les mêmes règles (extraire avant d'ouvrir, Ctrl+F5 après mise à
-    jour, stockage propre au navigateur du poste). **Le cloud du CD47 est un
-    Nextcloud** (dit par l'utilisateur le 28/10/2026). **Pas testé** : un
-    dossier synchronisé par le client de bureau Nextcloud, ouvert en
-    `file:///C:/…`, qui éviterait le téléchargement à chaque mise à jour —
-    avec les fichiers virtuels activés, le dossier doit être marqué
-    « Toujours disponible localement » (*supposé*). **Client de bureau
-    Nextcloud non installé sur le poste de l'utilisateur** (constaté le
-    28/10/2026) : ce mode dépend d'une installation par le DSI, sur chaque
-    poste d'agent. D'ici là, le téléchargement est le seul parcours. *Supposé* : un dossier téléchargé
-    depuis un drive arrive souvent en `.zip` — dans ce cas l'extraction est
-    obligatoire, sinon les `ERR_FILE_NOT_FOUND` du 27/10/2026 reviennent.
-  - **Risque propre au drive, à cadrer** : un espace partagé diffuse ce qu'on
-    y dépose. Si un agent y place un fichier source, un CSV détaillé ou un
-    ancien export JSON pour « sauvegarder » ou « partager », les données
-    deviennent lisibles par tous ceux qui ont accès au dossier. Sur une clé le
-    risque était la perte ; ici c'est la diffusion silencieuse. **Le dossier
-    partagé porte l'application, jamais les données.**
-  - **Documents du dossier DSI reformulés le 28/10/2026** (hors de ce dépôt
-    public : dépôt **privé** `GDINV2-BACKUP`, dossier `dsi/`, avec le registre
-    RGPD V0.1 dans `rgpd/` ; copie de travail sur Nextcloud) : synthèse et note V2
-    datées du 28/10/2026 décrivent le dépôt sur Nextcloud, le téléchargement
-    et l'ouverture locale, avec le risque d'un export déposé dans l'espace
-    partagé (pas encore remises, donc ni « V3 » ni mention de mise à jour ;
-    brouillons du 27/10/2026 supprimés). `02_Historique` ne garde que la
-    note V1 et le rectificatif, sous des noms neutres — pas de « REMPLACE »
-    ni « PERIMEE » dans les noms, demande de l'utilisateur : le dossier et le
-    sommaire disent le statut. Consigne
-    aux utilisateurs (V0.1, une page) ajoutée ; elle complète le
-    `A-LIRE-AVANT-D-OUVRIR.txt` de l'archive, qui reste à relire.
-  - **`deploy.yml` et `deploy.test.js` sont à revoir ensemble** le jour où
-    GitHub Pages est abandonné : le premier publie sur Pages, le second
-    verrouille le motif de réécriture du `<head>` qui n'aurait plus d'objet.
-  Les conséquences déjà constatées du mode local :
-  - **`geo.api.gouv.fr` et les tuiles fonctionnent en `file://`** (vérifié par
-    l'utilisateur le 27/10/2026, Chrome : pas d'erreur CORS, 268 communes
-    placées). Un fond vectoriel local serait un choix, pas une nécessité.
-  - **Le ZIP doit être EXTRAIT avant d'ouvrir `index.html`.** Ouvert depuis
-    l'intérieur du zip, Windows n'extrait que ce fichier : `vendor/` et
-    `gdin-pure.js` manquent, six `ERR_FILE_NOT_FOUND` et « parseXlsText is not
-    defined » s'affichent. Constaté le 27/10/2026. Un
-    `A-LIRE-AVANT-D-OUVRIR.txt` est désormais à la racine de l'archive.
-  - **La CSP est la seule protection embarquée** hors serveur. Vérifiée en
-    `file://` et en production sur Chrome et Edge.
-  - **Clé USB** (mesuré le 27/10/2026) : fonctionne, 1,9 Mo ; les données
-    restent dans le navigateur du poste. Depuis le 29/10/2026, un autre
-    poste doit réimporter un fichier source couvrant l'historique souhaité.
+  aucun des deux n'est un serveur web.** Le tableau de bord sera déposé sur le
+  **cloud du CD47 (un Nextcloud : stockage de fichiers, pas un hébergement
+  web)** et/ou téléchargé puis exécuté depuis le disque. GitHub Pages a
+  vocation à ne plus être la voie de diffusion.
+  - **`index.html` ne s'ouvre pas depuis le cloud** (testé le 28/10/2026) :
+    on télécharge, on **extrait le ZIP** (sinon six `ERR_FILE_NOT_FOUND`,
+    constaté le 27/10/2026), on ouvre depuis le disque, **Ctrl+F5** après chaque
+    mise à jour. Le `?v=<sha>` n'a donc plus d'objet ; `deploy.yml` et
+    `deploy.test.js` se revoient ensemble le jour où Pages est abandonné.
+  - **Pas testé** : un dossier synchronisé par le client de bureau Nextcloud
+    (*supposé* : « Toujours disponible localement » requis). Le client n'est pas
+    installé sur le poste de l'utilisateur ; ce mode dépend du DSI.
+  - **Risque propre au drive** : un espace partagé diffuse ce qu'on y dépose
+    (fichier source, CSV détaillé, ancien export JSON). **Le dossier partagé
+    porte l'application, jamais les données.**
+  - **Constaté** : `geo.api.gouv.fr` et les tuiles fonctionnent en `file://`
+    (27/10/2026) ; la CSP est la seule protection embarquée ; clé USB : 1,9 Mo,
+    données dans le navigateur du poste, un autre poste réimporte un fichier
+    source.
+  - **Dossier DSI** (hors dépôt public : dépôt privé `GDINV2-BACKUP`, `dsi/`
+    et `rgpd/`) : synthèse et note V2 du 28/10/2026 pas encore remises ;
+    consigne aux utilisateurs V0.1 à relire avec le `A-LIRE-AVANT-D-OUVRIR.txt`.
+    Pas de statut dans les noms de fichiers (demande de l'utilisateur).
 
 - **AG-004 — correctifs appliqués le 22/10/2026 (`6b77162`), recomptage à
   faire.** Décisions de l'utilisateur sur les propositions de Codex (détail
   dans `AGORA.md`) : réactivité **par demande**, pourcentages de thématiques
   en **part de tous les accompagnements** (sans thématique compris),
-  correctifs de libellé appliqués. 318 tests unitaires et 82 e2e passent.
-  Reste :
+  correctifs de libellé appliqués. Reste :
   - **Contrôle visuel** après Ctrl+F5 : Rapport et Diapo Rapport d'un
-    conseiller × CMS (KPI réactivité « X/N demandes calculables · M sans
-    contact renseigné », phrase de conclusion, diapositive Thématiques,
-    diapositive Fiabilité « Résultats des contrôles ») ; onglet Territoire
-    (« Top 3 : X % des accompagnements »).
+    conseiller × CMS (KPI réactivité, phrase de conclusion, diapositives
+    Thématiques et Fiabilité) ; onglet Territoire (« Top 3 : X % »).
   - **Tableau « affiché / recompté / écart »** : tableau croisé dynamique
     Excel sur l'export source, comparé aux 11 diapositives du Diapo Rapport
     pour la période et le couple conseiller × CMS projetés. **Modèle prêt**
@@ -149,21 +100,15 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   - Chiffres de réactivité et de fiabilité projetés avant `6b77162` : non
     comparables (signalé).
 
-- **Contrôle visuel de la mention de révisabilité** (posée le 22/10/2026,
-  `3280ec2`). **En ligne** : déploiement de `89391f7` vérifié vert le
-  22/10/2026 (`c93dee9`, poussé après, ne touche que ce fichier). Reste le
-  contrôle à l'œil, après un Ctrl+F5, dans cet ordre : bandeau gris au-dessus des KPI de la Vue globale,
-  sous-titre du Rapport après avoir choisi un conseiller et un CMS, pied de la
-  première diapositive du Diapo Rapport (c'est elle qui part en PDF). Sur les
-  données de démonstration la mention dit « source non datée » — voulu, pas un
-  défaut : la date vient de `importMeta.date`, absent sans import.
-
 - **AG-002 — archivage des bilans diffusés** (volet A fait le 22/10/2026,
   volet B en attente). La mention « chiffres susceptibles d'être révisés »,
   avec la période et la date du dernier import, est posée sur la Vue globale,
   le sous-titre du Rapport et la couverture du Diapo Rapport
-  (`mentionRevisabilite()`, `gdin-pure.js`, 13 tests). Elle prévient, elle
-  n'archive rien.
+  (`mentionRevisabilite()`, `gdin-pure.js`, 13 tests ; en ligne le 22/10/2026).
+  Elle prévient, elle n'archive rien. **Contrôle à l'œil restant**, après
+  Ctrl+F5 : bandeau gris de la Vue globale, sous-titre du Rapport (conseiller et
+  CMS choisis), pied de la première diapositive du Diapo Rapport. Sur les
+  données de démonstration elle dit « source non datée » : voulu.
   **Volet B — bloqué sur une question qui n'est pas technique** : reproduire un
   bilan déjà diffusé demande de conserver ses données, ses filtres et sa
   version de calcul. L'ancien export JSON ne portait ni les filtres de lecture,
@@ -187,13 +132,11 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     à plusieurs actions.
 - **Validation sur poste** du rendu (badges, États à 9 colonnes, « Autres
   structures », libellé de réactivité), sur le site déployé.
-- **Bases déjà présentes sur les postes** : conservées, complétées (rangs
-  reconstitués dans l'ordre de la base), marquées `base_heritee` ; la
-  provenance du conseiller y est « inconnue » sauf déduction connue. Elles sont
-  incomplètes (demandes fusionnées à tort). Un import dans une telle base
-  propose de la remplacer ; la reconstruction fiable = « Réinitialiser et
-  importer » l'export source, puis comparer les comptes (20 226 pour
-  septembre 2026).
+- **Bases déjà présentes sur les postes** : conservées, complétées, marquées
+  `base_heritee` (conseiller « inconnu » sauf déduction connue), mais
+  incomplètes (demandes fusionnées à tort). Reconstruction fiable :
+  « Réinitialiser et importer » l'export source, puis comparer les comptes
+  (20 226 pour septembre 2026).
 
 ## À porter aux développeurs de l'outil de saisie
 
@@ -244,8 +187,14 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
 - **Diapositives du Rapport** : un seul aiguillage `drRenderSlide()` (navigation
   et PDF) ; `#diapo-overlay` doit exister ; jamais
   `options.animation = options.animation || {}` (proxy Chart.js).
-- **Tout texte importé passe par `esc()`** ; l'e2e d'injection doit contenir des
-  ateliers, sinon il valide du code vulnérable (faille `lieu_raw`, `949d2dd`).
+- **Tout texte importé passe par `esc()`**, y compris dans les textes d'aide
+  « ? » (`setInsightQ`, écrits en HTML au clic). L'e2e d'injection doit passer
+  par un **vrai import XLSX**, contenir des ateliers, et un CMS que le parseur
+  reconnaît : avec un CMS hostile le sélecteur reste vide et `renderCms()` sort
+  tôt (failles `lieu_raw` `949d2dd`, Par CMS et aides le 29/10/2026).
+- **Un canvas Chart.js ne lit pas `var(--text)`** : couleur d'axe par
+  `legendColor()`. **Une tuile à valeur texte** (`.kpi-texte`) prend la taille des
+  chiffres voisins et ne rétrécit que si le libellé déborde.
 - **CSP** (`b9d1fbd`, AG-005) : `img-src`/`connect-src` énumérés, jamais `*` ni
   `https:` (testé) ; `'unsafe-inline'` reste (2 `<script>`, 83 `onclick=`).
   Démo DSI : F12 → Console → `allow pasting` →
@@ -253,22 +202,17 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
 - **Thématiques** (AG-004) : une fois par ligne, % de **toutes** les lignes ;
   un Top 3 se compte en union (`lignesAvecThemas`), jamais en additionnant ;
   jamais « demandes ».
-- **Animations** (validées à l'œil par l'utilisateur sur téléphone le
-  28/10/2026 ; limite acceptée : une capture ou une copie pendant le comptage,
-  moins d'une seconde, peut montrer un chiffre intermédiaire). Un graphe
-  rejoue **toujours** à son arrivée à l'écran (un délai ou
-  `Chart.animator.running` laissaient figé « Top 15 orienteurs ») ; la
-  fermeture de l'écran d'accueil rejoue la Vue globale ; une barre de liste se
-  vide **sans transition** avant de pousser (avec, elle ne partait jamais de 0 ;
-  barres validées par l'utilisateur le 28/10/2026) ; tuiles en cascade (80 ms,
-  texte compris, validées le même jour) (`NombreAnime`,
-  `quandVisible`) : jamais pendant l'export
-  PDF ni à l'impression (`ANIM.suspendu`, `beforeprint`) — contre-preuve e2e ;
-  la suite e2e tourne en mouvement réduit via `contextOptions` (un
-  `reducedMotion` posé directement dans `use` n'est pas appliqué). Un KPI ne
-  glisse que depuis **le même indicateur** (emplacement + libellé + unité :
-  l'emplacement seul a donné 1125 %) ; progression bornée à 0 ; tout chiffre de
-  18 px et plus est animé (test de balayage).
+- **Animations** (validées à l'œil sur téléphone le 28/10/2026 ; limite
+  acceptée : une capture pendant le comptage, moins d'une seconde, peut montrer
+  un chiffre intermédiaire). Un graphe rejoue **toujours** à son arrivée à
+  l'écran ; la fermeture de l'écran d'accueil rejoue la Vue globale ; une barre
+  de liste se vide **sans transition** avant de pousser ; tuiles en cascade
+  (80 ms) (`NombreAnime`, `quandVisible`) ; jamais pendant l'export PDF ni à
+  l'impression (`ANIM.suspendu`, `beforeprint`, contre-preuve e2e) ; la suite
+  e2e tourne en mouvement réduit via `contextOptions`. Un KPI ne glisse que
+  depuis **le même indicateur** (emplacement + libellé + unité : l'emplacement
+  seul a donné 1125 %) ; progression bornée à 0 ; tout chiffre de 18 px et plus
+  est animé (test de balayage).
 - **Fiabilité** : la marge d'un indicateur porte sur sa propre population ;
   « Solide » = moins de 1 % de défauts *détectés*, jamais « chiffres exacts ».
   La synthèse nomme l'indicateur le plus sensible, ne résume pas au pire.
@@ -349,10 +293,5 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
 ## Pistes d'amélioration
 
 Règle dans `CLAUDE.md` (« Posture de travail ») ; ne pas reproposer une piste
-écartée sans fait nouveau.
-
-**Proposées, en attente**
-_(aucune — le décalage des tuiles KPI, proposé le 28/10/2026, est fait le même jour sur demande de l'utilisateur)_
-
-**Écartées** (date — piste — raison)
-_(aucune)_
+écartée sans fait nouveau. **Proposées, en attente** : aucune. **Écartées** :
+aucune.
