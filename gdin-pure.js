@@ -1408,13 +1408,20 @@ function evolutionParAnnee(records,dateMax){
 // Rend [[nom, nombre]] trié par nombre décroissant puis par nom, comme countEntries().
 function orienteursExternes(records,conseillers){
   const exclus=conseillers||new Set();
-  const m={};
+  // Map : un référent nommé « __proto__ » ou « constructor » (la cellule est libre) ne doit
+  // ni disparaître du comptage ni donner un texte au lieu d'un nombre (AG-009).
+  const m=new Map();
   (records||[]).forEach(r=>{
-    const o=String((r&&r.orienteur)||'').trim();
-    if(o&&o!=='?'&&!exclus.has(o))m[o]=(m[o]||0)+1;
+    const o=nomOrienteur(r);
+    if(o&&o!=='?'&&!exclus.has(o))m.set(o,(m.get(o)||0)+1);
   });
-  return Object.entries(m).sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:a[0]>b[0]?1:0));
+  return [...m.entries()].sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:a[0]>b[0]?1:0));
 }
+// Nom d'orienteur normalisé (espaces de tête et de queue retirés) et lignes d'un orienteur par ce
+// même nom : les barres regroupent « Nom » et « Nom » + espace, leurs détails (CMS, conseiller,
+// thématique) doivent donc retrouver les lignes des DEUX graphies, pas d'une seule.
+function nomOrienteur(r){return String((r&&r.orienteur)||'').trim();}
+function lignesOrienteur(records,nom){return(records||[]).filter(r=>nomOrienteur(r)===nom);}
 function compterOrienteursExternes(records,conseillers){
   return orienteursExternes(records,conseillers).length;
 }
@@ -1471,7 +1478,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,evolutionParAnnee,basculerAnnee,orienteursExternes,compterOrienteursExternes,mentionAttribution,SEUIL_ATTRIBUTION_DEDUITE,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,retirerMotifs,baseAncienne,completerRangs,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,evolutionParAnnee,basculerAnnee,orienteursExternes,lignesOrienteur,compterOrienteursExternes,mentionAttribution,SEUIL_ATTRIBUTION_DEDUITE,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,retirerMotifs,baseAncienne,completerRangs,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,lignesAvecThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,dateFr,mentionRevisabilite,decouperNombre,formaterCommeNombre,cleDoublon,compterDoublons,moisDeLaPeriode,libelleLignes,LIBELLE_LIGNES,

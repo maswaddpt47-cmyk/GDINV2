@@ -9,7 +9,7 @@ const {
   numeroterParticipants, cleFusion, numeroterLignes, fusionnerImport, attribuerConum, deriverAttributionCms,
   neutraliserFormule, celluleCSV, retirerMotifs, baseAncienne, completerRangs,
   categorieEtat, repartitionEtats, deriverActions, delaisParDemande, reactivite48, dansPeriode, tauxRealisation, filtrerParType, evolutionAnnuelle,
-  evolutionParAnnee, basculerAnnee, orienteursExternes, compterOrienteursExternes, mentionAttribution, indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
+  evolutionParAnnee, basculerAnnee, orienteursExternes, lignesOrienteur, compterOrienteursExternes, mentionAttribution, indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
   rattacherCommune, COMMUNES_47,
 } = require('./gdin-pure.js');
@@ -1046,6 +1046,19 @@ describe('orienteursExternes — une seule liste pour l\'effectif et les barres 
     const liste = orienteursExternes(recs, new Set(['Conseiller']));
     assert.equal(compterOrienteursExternes(recs, new Set(['Conseiller'])), liste.length);
     assert.equal(liste.length, 3);
+  });
+  it('les détails d\'un orienteur retrouvent les lignes des deux graphies', () => {
+    const recs = [{ orienteur: 'Externe fictif', cms: 'CMS A' }, { orienteur: 'Externe fictif ', cms: 'CMS B' }, { orienteur: 'Autre', cms: 'CMS A' }];
+    assert.equal(lignesOrienteur(recs, 'Externe fictif').length, 2);
+    assert.equal(lignesOrienteur(recs, 'Autre').length, 1);
+  });
+  it('les noms hérités d\'Object ne faussent pas le comptage', () => {
+    const recs = [{ orienteur: '__proto__' }, { orienteur: 'constructor' }, { orienteur: 'constructor' }, { orienteur: 'toString' }];
+    const liste = orienteursExternes(recs, new Set());
+    assert.equal(liste.length, 3);
+    assert.deepEqual(liste.find(e => e[0] === 'constructor'), ['constructor', 2]);
+    assert.deepEqual(liste.find(e => e[0] === '__proto__'), ['__proto__', 1]);
+    assert.equal(compterOrienteursExternes(recs, new Set()), 3);
   });
   it('tri : nombre décroissant, puis ordre alphabétique', () => {
     const recs = [r('B'), r('A'), r('A'), r('C'), r('C')];
