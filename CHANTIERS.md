@@ -4,7 +4,19 @@
 des 27, 28 et 29/10/2026 : ce qui est fait, et ce que dit déjà `CLAUDE.md`,
 sont retirés. Texte complet : `git log -p CHANTIERS.md`.
 
-**À faire en premier, dans cet ordre** :
+**À faire en premier, dans cet ordre** (état du 29/10/2026, fin de session) :
+0. **Registre RGPD V0.2** (`GDINV2-BACKUP/rgpd/`) : demandé par l'utilisateur,
+   **en cours**. Le `.docx` V0.2 se génère depuis la V0.1 (motif retiré, JSON
+   retiré, six défauts, origine partagée, décisions 3 et 4) ; il reste à
+   convertir en PDF et en `.md`, ranger la V0.1 dans `rgpd/historique/`, mettre
+   à jour le `README.md` de `GDINV2-BACKUP`, puis pousser. Vérifier avec
+   `git -C GDINV2-BACKUP status` ce qui a déjà été fait.
+0bis. **Répondre à l'utilisateur** (questions posées le 29/10, sans réponse
+   encore) : quelles copies remplacer (copie déposée sur Nextcloud + dossier
+   extrait de chaque agent) ; ce que change un autre domaine (adresse, données
+   du navigateur propres à chaque domaine donc à réimporter ; GitHub reste le
+   dépôt du code). Options : fermer la version en ligne (recommandé, déjà voulu
+   par le DSI) ou un autre domaine ; **c'est son choix**.
 1. **Trancher l'origine partagée** (voir « À trancher ») : l'audit XSS de
    Codex du 29/10/2026 est fait et ses trois défauts sont corrigés ; reste
    l'impact d'une XSS sur les autres applications du même domaine GitHub Pages.
