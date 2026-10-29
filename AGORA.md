@@ -530,6 +530,13 @@ assez qui est coché (rendu seul). **Reste ouvert** : les 12 lignes de l'écart 
 (périmètre rendu sans objet pour le bloc, qui ne compte plus que les accompagnements),
 les autres couples, et une relecture par Codex avant toute diffusion de chiffres.
 
+### Corrections appliquées — 29/10/2026
+Poussées sur `main`, un commit par décision, tests unitaires ajoutés (336 puis 340 au
+total) et suite navigateur à 95 tests verts : contrôle sans population `46b6528` ;
+évolution annuelle `1a40a80` ; orienteurs hors conseillers `e1b4f8c` ; mention de période
+`240e409` ; mention d'attribution déduite `a49ca84` ; sélecteur d'année `f09f964`.
+**Pas encore relu par Codex** ; l'effet sur l'export réel n'est pas mesuré. AG-004 reste ouvert.
+
 ---
 
 ## Blocs tranchés
