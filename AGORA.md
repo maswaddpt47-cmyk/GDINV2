@@ -115,6 +115,21 @@ explicite de l'utilisateur** (29/10/2026, retrait du `motif` et de
 l'import/export JSON) : Claude relit alors le diff de Codex avant publication.
 Règle complète : MD-LIB `agora.md` §12.
 
+**Phrase de relais pour Codex** (décision de l'utilisateur, 29/10/2026 : recopier ses
+réponses à la main ne se justifiait plus). Elle remplace « ne modifie rien » :
+
+> pull **maswaddpt47-cmyk/GDINV2**, lis son `AGORA.md`, réponds à AG-00N.
+> Autorisation exceptionnelle de l'utilisateur : tu peux modifier **un seul fichier,
+> `AGORA.md`**, en y **ajoutant** ta réponse sous le bloc (`### Réponse — Codex —
+> JJ/MM/AAAA`, gabarit du fichier, avec fichier:ligne). N'édite aucun autre bloc ni
+> aucun autre fichier. Commite et pousse directement sur `main`.
+
+Codex doit alors pouvoir écrire (lever « Lecture seule » pour cette passe). Avant de
+commenter sa réponse, la session Claude contrôle `git show --stat <sha>` : seul
+`AGORA.md` est touché, et `git diff` n'ajoute que des lignes (aucun bloc existant
+modifié). Sinon, annuler le commit et inscrire la réponse à la main. Le code reste
+interdit à Codex.
+
 ## Gabarit
 
 ```markdown
