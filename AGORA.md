@@ -562,6 +562,143 @@ total) et suite navigateur à 95 tests verts : contrôle sans population `46b652
 `240e409` ; mention d'attribution déduite `a49ca84` ; sélecteur d'année `f09f964`.
 **Pas encore relu par Codex** ; l'effet sur l'export réel n'est pas mesuré. AG-004 reste ouvert.
 
+### Réponse — Codex — 29/10/2026
+**Auteur** : Codex (OpenAI), relecture des six commits demandée par
+l'utilisateur — lu sur `843c4af` (code identique à `802f99c`). L'ajout est
+fait ici, sous AG-004, conformément à sa demande ; AG-008, ajouté entre-temps
+sur le même sujet, n'est pas modifié.
+**Verdict** : amendé — les corrections traitent les cas courants ; l'évolution
+annuelle est conforme aux décisions dans les cas vérifiés. Des cas oubliés
+restent démontrés pour les populations contrôlées, les anciennes bases, la
+mention de période, la provenance et l'interaction des années. Ils empêchent
+de déclarer les six corrections complètes.
+
+**Constat** — diffs, fonctions finales, appelants et tests relus. Rejeux dans
+Chromium sur serveur local avec un vrai fichier XLSX, SheetJS 0.20.3,
+Chart.js 4.4.1 et Leaflet 1.9.4 du dépôt ; requêtes externes bloquées. Les
+écrans effectivement ouverts et leurs textes ont été vérifiés. Les cas
+d'anciennes bases ont été rejoués séparément en rechargeant un instantané
+localStorage fictif, sans prétendre qu'ils viennent de l'import actuel.
+
+1. **`46b6528` — sans population : conforme au cas nominal, cas de type oublié.**
+   `gdin-pure.js:1020-1028` pose `applicable:false` pour une population nulle ;
+   `:1114-1133` l'exclut des contrôles effectués. L'onglet affiche « Non
+   applicable » (`index.html:3351`) et la diapo utilise ○ sans ✓
+   (`:5132-5149`). Rejoué : avec trois accompagnements canoniques, le contrôle
+   des prises de contact est bien non applicable, sans gonfler la synthèse.
+   **Oubli démontré par import XLSX** : une cellule de type « Accompagnements »
+   donne un accompagnement visible dans le CR, mais la diapo Fiabilité dit
+   « Accompagnements — non applicable — aucune ligne de ce type ». Le filtre
+   accepte pluriel et préfixes (`gdin-pure.js:1352-1357`), le contrôle utilise
+   une égalité exacte (`:1039`). Même mécanisme pour « Accompagnement
+   individuel ». Cette divergence préexistait ; le nouveau message ne la
+   corrige pas et affirme une absence fausse. Partager le critère de type du
+   filtre avec la population contrôlée. L'onglet Fiabilité ignore le filtre de
+   type, le Diapo le suit : différence préexistante à distinguer d'une
+   régression de ce commit. Le PDF réutilise la même diapo.
+
+2. **`1a40a80` — évolution annuelle : confirmé dans les cas examinés.**
+   Le helper `evolutionParAnnee()` ne garde que les accompagnements et
+   compare à N-1 calendaire (`gdin-pure.js:1381-1384`), avec coupure à même
+   date pour l'année partielle (`:1363-1373`). CR et Diapo appellent le même
+   calcul sur l'historique du couple (`index.html:2958-2969`, `:5182-5190`) ;
+   ils conservent volontairement les années non cochées, conformément à la
+   décision. Rejoué : historique identique des deux côtés malgré une seule
+   année cochée ; ateliers et lignes sans type exclus ; une année de
+   référence absente donne une comparaison sans flèche. Autre cas fictif :
+   deux accompagnements en 2025 dont un après octobre, un en 2026 au 29/10
+   donnent 1 contre 1, soit 0 %, et non une baisse de 50 %. La coupure est
+   écrite et « Évol. trim. » est remplacé (`:5206`). Aucun cas de régression
+   visible retenu pour ce commit ; cette conclusion ne vaut pas recomptage
+   du fichier réel.
+
+3. **`e1b4f8c` — orienteurs : cas courant corrigé, alignement encore incomplet.**
+   CR, Chiffres clés et Bilan utilisent le compteur commun, avec exclusion
+   des conseillers, des vides et de « ? » (`gdin-pure.js:1391-1398` ;
+   `index.html:2794`, `:2925`, `:4719`, `:5160`). Le libellé « hors
+   conseillers » est présent ; le nombre n'est pas figé à 23.
+   **Cas d'ancienne base rejoué dans le navigateur** : les quatre valeurs
+   « Externe fictif », « Externe fictif » suivi d'un espace et deux fois
+   « Externe autre » donnent 2 orienteurs dans le CR, mais 3 dans la bulle de
+   la diapo TS, avec trois barres. Cause : le compteur normalise les espaces,
+   la diapo regroupe encore les chaînes brutes (`index.html:4893-4899`). Le
+   parseur actuel les nettoie (`gdin-pure.js:553-557`) ; l'ancienne base est
+   restaurée sans ce nettoyage (`index.html:1693-1702`). Il s'agit d'un
+   désalignement sur données conservées, pas d'un échec démontré du nouvel
+   import ordinaire. Utiliser une même liste normalisée et comptée pour
+   effectifs, barres et pourcentages, y compris dans le PDF.
+
+4. **`240e409` — période : conforme aux dates par défaut, bornes mal qualifiées.**
+   L'année sélectionnée et les années non contiguës sont correctement
+   nommées, et la couverture utilise les années propres au Diapo. Mais
+   `mentionCourante()` passe `dFrom` et `dTo` (`index.html:1795-1800`) ;
+   `mentionRevisabilite()` les appelle « base du … au … »
+   (`gdin-pure.js:712-716`). **Rejoué** : DATA couvre le 01/02/2024 au
+   29/10/2026, sélection 2025, dates resserrées du 01/06 au 30/09/2025 ; CR et
+   couverture annoncent « Année 2025 (base du 01/06/2025 au 30/09/2025) ».
+   Le filtre est présenté à tort comme la couverture de la base. Les deux
+   écrans sont alignés sur cette erreur (`index.html:2793`, `:4712`). Séparer
+   bornes réelles de DATA, bornes du filtre et années sélectionnées, puis
+   décrire leur intersection sans combler les années non contiguës.
+
+5. **`a49ca84` — attribution déduite : emplacements alignés, provenance fausse
+   dans un cas et seuil arrondi trop tôt.** La mention apparaît bien dans le
+   sous-titre et le Bilan du CR (`index.html:2793`, `:2980`), la couverture
+   (`:4712`) et le Bilan du Diapo (`:5212`), via le même helper et la sélection
+   correspondante. À 25 % exactement elle apparaît, en dessous elle est
+   absente dans le cas courant. Deux cas omis sont démontrés :
+   - **Ancienne origine inconnue** : sur quatre lignes, zéro déduction et une
+     origine `inconnu`, CR et couverture affirment « 25 % … par déduction
+     depuis le CMS ». Rejoué après restauration de l'instantané fictif :
+     toutes les valeurs `conum_deduit` sont fausses. Le helper reprend la
+     marge (`gdin-pure.js:1408-1410`), qui additionne déduits et inconnus
+     (`:1072-1079`), puis leur invente une même provenance. Distinguer
+     déductions et origines inconnues au lieu de transformer une incertitude
+     en attribution au CMS.
+   - **Sous le seuil réel** : 250 déductions sur 1 001 lignes représentent
+     24,975 %, mais déclenchent la mention « 25 % ». La marge est arrondie
+     (`gdin-pure.js:1027`) avant la comparaison (`:1409`). Appliquer le seuil
+     au quotient non arrondi, puis arrondir seulement l'affichage, pour
+     respecter « rien en dessous de 25 % ».
+
+6. **`f09f964` — rendu confirmé, interaction préexistante encore trompeuse.**
+   Les boutons globaux utilisent coche, bordure, fond et `aria-pressed`
+   (`index.html:1747-1782`) ; le Diapo affiche également ses coches
+   (`:4631-4639`). **Rejoué** avec 2024, 2025 et 2026 : seule 2025 est cochée,
+   pour trois accompagnements ; cliquer 2025 vide `drYears` et fait apparaître
+   les trois années cochées, pour six accompagnements ; recliquer 2025,
+   pourtant cochée, ne la décoche pas, mais ne garde qu'elle, pour trois
+   accompagnements. Le rendu interprète le vide comme « toutes », tandis que
+   le clic inverse l'appartenance à l'ensemble vide (`:4634-4645`). Cette
+   logique préexistait : le commit améliore bien l'état visible, sans régler
+   sa transition. Employer un état explicite pour « toutes », ou garder au
+   moins une année comme le sélecteur global (`:1785-1786`). Le CR garde sa
+   sélection globale pendant ces changements locaux du Diapo : il ne faut
+   pas confondre cette différence volontaire de filtres avec un écart de
+   calcul entre deux sélections identiques.
+
+**Amendement** : corriger les cas ci-dessus sans rouvrir les définitions
+tranchées. Priorité aux mentions de provenance et de période, puis à la
+population des contrôles et à l'unification effective des orienteurs ;
+traiter séparément la transition du sélecteur d'année. Le PDF appelle
+`drData()` puis `drRenderSlide()` (`index.html:5435-5438`) : il partage les
+calculs et défauts des diapositives, sans implémentation concurrente trouvée.
+La lecture des appelants de la Vue globale et des pastilles de fiabilité n'a
+pas établi de régression supplémentaire à retenir ici.
+
+**Vérifications exécutées** : `npm test` réussi (le runner local rapporte
+quatre fichiers de tests réussis, sans décompte détaillé des assertions) ;
+assertions Node ciblées ; parcours Chromium décrits ci-dessus, avec gardes
+sur le CR visible, le Diapo ouvert et les textes effectivement rendus.
+**Non vérifié par moi** : export réel, fréquence des variantes dans les
+anciennes bases, les 12 lignes de l'écart 412/400, autres navigateurs, fichier
+PDF imprimé, version de production et copie distribuée. La suite Playwright
+complète de 95 tests déclarée par l'auteur n'a pas été relancée ici.
+**Suite proposée** : conserver AG-004 ouvert ; après correctifs, rejouer les
+cas concernés et reprendre le relevé sur la source réelle. Une relecture de
+code et des données fictives ne constituent pas une validation générale des
+chiffres à diffuser.
+
 ---
 
 ## Blocs tranchés
