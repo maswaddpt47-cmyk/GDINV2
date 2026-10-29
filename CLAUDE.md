@@ -265,6 +265,18 @@ lisible par tous ceux qui ont accès au dossier, `motif` en clair compris.
 GitHub Pages reste en service tant que son abandon n'est pas décidé (suivi :
 `CHANTIERS.md`).
 
+### Livrer les dernières versions pour le cloud du CD47 (demande du 29/10/2026)
+
+L'utilisateur téléverse lui-même sur Nextcloud (Claude n'y a pas accès). **Toute
+modification de l'application ou d'un document rattaché** (consigne utilisateurs,
+`LISEZ-MOI`, `A-LIRE`, note et synthèse DSI, registres) **se termine par la remise
+des dernières versions** : `SendUserFile` des fichiers à téléverser, en disant
+lesquels remplacent lesquels, ce qui est à supprimer et pour qui (agents ou DSI
+seulement). Le zip de l'application : `scripts/zip-cloud.sh` (après commit).
+L'inventaire de ce qui existe, des destinataires et de l'état du dépôt est dans
+`GDINV2-BACKUP/INVENTAIRE.md` : **le mettre à jour dans la même livraison**. Ne
+jamais écrire « déposé » avant que l'utilisateur l'ait déclaré (*déclaré, non vérifié*).
+
 ### Un seul dashboard
 
 `index.html` est le seul fichier servi. Il porte le design system dit « v2» :

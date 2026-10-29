@@ -7,8 +7,8 @@ sont retirés. Texte complet : `git log -p CHANTIERS.md`.
 **À faire en premier, dans cet ordre** (état du 29/10/2026, fin de session) :
 0. **Registre RGPD V0.2 : fait** (29/10, `GDINV2-BACKUP` `b17afdb`). Reste à
    valider par le DPO.
-1. **Copies à remplacer** : pas d'archive fabriquée (l'utilisateur téléverse les
-   derniers fichiers ; le ZIP vient du téléchargement Nextcloud). Zip
+1. **Copies à remplacer** : le zip se fabrique par `scripts/zip-cloud.sh` (29/10) ;
+   règle de livraison dans `CLAUDE.md`, inventaire dans `GDINV2-BACKUP/INVENTAIRE.md`. Zip
    `GDIN_2026-10-29.zip` (appli `b07a280`, `LISEZ-MOI.txt` et
    `A-LIRE-AVANT-D-OUVRIR.txt` corrigés) **déposé sur Nextcloud le 29/10**
    (*déclaré par l'utilisateur, non vérifié*). Reste : chaque agent
