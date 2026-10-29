@@ -486,6 +486,13 @@ body.light-mode .leaflet-popup-tip{background:#ffffff!important}
 .heatmap-table td.hm-label{color:var(--text);font-weight:500;padding-right:8px;text-align:left;min-width:130px}
 .hm-cell{width:28px;height:22px;border-radius:4px;text-align:center;line-height:22px;font-family:'JetBrains Mono',monospace;font-size:9px;cursor:default;transition:transform .1s}
 .hm-cell:hover{transform:scale(1.15);z-index:1;position:relative}
+/* Briques des heatmaps (28/10/2026) : en attente, puis entrée en vague. */
+table.hm-attente td.hm-b{opacity:0}
+table.hm-joue td.hm-b{animation:hm-brique .35s cubic-bezier(.33,1,.68,1) both;animation-delay:var(--d,0ms)}
+@keyframes hm-brique{from{opacity:0;transform:scale(.55)}to{opacity:1;transform:none}}
+.hm-legende{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:8px;font-size:10px;color:var(--muted)}
+.hm-legende .hm-pastille{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px;border:1px solid var(--border)}
+.hm-legende .hm-degrade{display:inline-block;width:70px;height:10px;border-radius:3px;vertical-align:-1px;margin:0 5px}
 /* ── Tooltip KPI ── */
 .kpi[data-tip]{cursor:help}
 .pt-vig{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:6px;vertical-align:middle;cursor:help;position:relative}
@@ -1321,11 +1328,39 @@ const NombreAnime=(()=>{
       vider(el);requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.width=b.w;}));
     });
     Object.values(Chart.instances||{}).forEach(c=>{if(c.canvas&&aLEcran(c.canvas)){c.reset();c.update();}});
+    document.querySelectorAll(HEATMAP).forEach(t=>{if(t._hm&&aLEcran(t)){t._hm.dehors=false;attendreHeatmap(t);jouerHeatmap(t);}});
   }
   const accueil=document.querySelector('#landing-overlay .lo-btn');
   if(accueil)accueil.addEventListener('click',rejouer);   // avant le prochain affichage : pas d'image à la valeur finale
+  // Heatmaps : les briques entrent en vague diagonale depuis le coin haut-gauche
+  // (demande du 28/10/2026), et rejouent au retour à l'écran. Observateur à
+  // part : une heatmap large, qui défile à l'horizontale sur téléphone, n'est
+  // jamais visible à 30 % ; on la lance quand son haut passe au-dessus du bas
+  // de l'écran moins 10 %.
+  const HEATMAP='table.hm-anime',VAGUE_PAS=14,VAGUE_MAX=900;
+  const heatmapsCachees=new Set();
+  function attendreHeatmap(t){t.classList.remove('hm-joue');t.classList.add('hm-attente');heatmapsCachees.add(t);}
+  function jouerHeatmap(t){
+    t.classList.remove('hm-attente');void t.offsetWidth;t.classList.add('hm-joue');heatmapsCachees.delete(t);
+    // Classe retirée à la fin : l'animation « both » bloquerait le zoom au survol.
+    clearTimeout(t._hmFin);t._hmFin=setTimeout(()=>t.classList.remove('hm-joue'),VAGUE_MAX+400);
+  }
+  const ioHm=window.IntersectionObserver?new IntersectionObserver(es=>es.forEach(e=>{
+    const t=e.target,h=t._hm;
+    if(!h||!t.isConnected){ioHm.unobserve(t);heatmapsCachees.delete(t);return;}
+    if(e.isIntersecting){if(h.dehors){h.dehors=false;if(ANIM.actif())jouerHeatmap(t);else remettreHeatmaps();}}
+    else if(!h.dehors&&ANIM.actif()){h.dehors=true;attendreHeatmap(t);}
+  }),{rootMargin:'0px 0px -10% 0px',threshold:0}):null;
+  function preparerHeatmap(t){
+    if(!ANIM.actif()||!ioHm||t._hm||t.closest('#dr-print-container'))return;
+    [...t.rows].forEach((tr,r)=>{
+      [...tr.querySelectorAll('td.hm-b')].forEach((td,c)=>td.style.setProperty('--d',Math.min((r+c)*VAGUE_PAS,VAGUE_MAX)+'ms'));
+    });
+    t._hm={dehors:true};attendreHeatmap(t);ioHm.observe(t);
+  }
+  function remettreHeatmaps(){heatmapsCachees.forEach(t=>t.classList.remove('hm-attente','hm-joue'));heatmapsCachees.clear();}
   function terminer(){
-    [...enCours.keys()].forEach(finir);remettreTuiles();
+    [...enCours.keys()].forEach(finir);remettreTuiles();remettreHeatmaps();
     barres.forEach(el=>{el.style.width=el._barre.w;});barres.clear();
   }
   function parcourir(racine){
@@ -1334,6 +1369,8 @@ const NombreAnime=(()=>{
     racine.querySelectorAll(SELECTEUR).forEach(preparer);
     if(racine.matches(BARRE))preparerBarre(racine);
     racine.querySelectorAll(BARRE).forEach(preparerBarre);
+    if(racine.matches(HEATMAP))preparerHeatmap(racine);
+    racine.querySelectorAll(HEATMAP).forEach(preparerHeatmap);
   }
   new MutationObserver(ms=>{
     if(!ANIM.actif())return;
@@ -2007,7 +2044,7 @@ function renderSaisonGlobal(){
   // Heatmap mois × année
   const allVals=years.flatMap(y=>MO.map(m=>matrix[y]?.[m]||0));
   const maxVal=Math.max(...allVals,1);
-  let html=`<table style="border-collapse:separate;border-spacing:3px;font-size:10px;min-width:520px"><tr><th style="min-width:70px"></th>`;
+  let html=`<table class="hm-anime" style="border-collapse:separate;border-spacing:3px;font-size:10px;min-width:520px"><tr><th style="min-width:70px"></th>`;
   MONTH_FR.forEach(m=>html+=`<th style="font-size:9px;color:var(--muted);font-weight:600;padding:0 2px 6px;text-align:center;min-width:36px">${m}</th>`);
   html+='</tr>';
   years.forEach(y=>{
@@ -2021,11 +2058,13 @@ function renderSaisonGlobal(){
       else if(v>=hiThr){bg=`rgba(16,185,129,${(0.2+ratio*.75).toFixed(2)})`;txt=ratio>.5?'#fff':'var(--text)';}
       else if(v<=loThr){bg=`rgba(239,68,68,${(0.15+ratio*.5).toFixed(2)})`;txt=ratio>.5?'#fff':'var(--text)';}
       else{bg=`rgba(59,130,246,${(0.15+ratio*.7).toFixed(2)})`;txt=ratio>.5?'#fff':'var(--text)';}
-      html+=`<td style="text-align:center;padding:5px 2px;border-radius:5px;background:${bg};color:${v>0?txt:'var(--dim)'};font-family:'JetBrains Mono',monospace;font-weight:600;font-size:10px">${v||''}</td>`;
+      const nature=v===0?'aucune action':v>=hiThr?'mois chargé (≥ 115 % du mois moyen)':v<=loThr?'mois creux (≤ 85 % du mois moyen)':'dans la moyenne';
+      const bulle=`${MONTH_FR[parseInt(m)-1]} ${y} : ${v} action${v>1?'s':''} — ${nature}`;
+      html+=`<td class="hm-b" title="${bulle}" data-tip="${bulle}" style="text-align:center;padding:5px 2px;border-radius:5px;background:${bg};color:${v>0?txt:'var(--dim)'};font-family:'JetBrains Mono',monospace;font-weight:600;font-size:10px">${v||''}</td>`;
     });
     html+='</tr>';
   });
-  html+='</table>';
+  html+='</table>'+legendeHeatmap('saison');
   document.getElementById('heatmap-saison').innerHTML=html;
 }
 
@@ -2469,7 +2508,7 @@ function renderSaisonCms(cms){
   `;
   const allVals=years.flatMap(y=>MO.map(m=>matrix[y]?.[m]||0));
   const maxVal=Math.max(...allVals,1);
-  let html=`<table style="border-collapse:separate;border-spacing:3px;font-size:10px;min-width:520px"><tr><th style="min-width:70px"></th>`;
+  let html=`<table class="hm-anime" style="border-collapse:separate;border-spacing:3px;font-size:10px;min-width:520px"><tr><th style="min-width:70px"></th>`;
   MONTH_FR.forEach(m=>html+=`<th style="font-size:9px;color:var(--muted);font-weight:600;padding:0 2px 6px;text-align:center;min-width:36px">${m}</th>`);
   html+='</tr>';
   years.forEach(y=>{
@@ -2482,11 +2521,13 @@ function renderSaisonCms(cms){
       else if(v>=hiThr){bg=`rgba(16,185,129,${(0.2+ratio*.75).toFixed(2)})`;txt=ratio>.5?'#fff':'var(--text)';}
       else if(v<=loThr){bg=`rgba(239,68,68,${(0.15+ratio*.5).toFixed(2)})`;txt=ratio>.5?'#fff':'var(--text)';}
       else{bg=`rgba(59,130,246,${(0.15+ratio*.7).toFixed(2)})`;txt=ratio>.5?'#fff':'var(--text)';}
-      html+=`<td style="text-align:center;padding:5px 2px;border-radius:5px;background:${bg};color:${v>0?txt:'var(--dim)'};font-family:'JetBrains Mono',monospace;font-weight:600;font-size:10px">${v||''}</td>`;
+      const nature=v===0?'aucune action':v>=hiThr?'mois chargé (≥ 115 % du mois moyen)':v<=loThr?'mois creux (≤ 85 % du mois moyen)':'dans la moyenne';
+      const bulle=`${MONTH_FR[parseInt(m)-1]} ${y} : ${v} action${v>1?'s':''} — ${nature}`;
+      html+=`<td class="hm-b" title="${bulle}" data-tip="${bulle}" style="text-align:center;padding:5px 2px;border-radius:5px;background:${bg};color:${v>0?txt:'var(--dim)'};font-family:'JetBrains Mono',monospace;font-weight:600;font-size:10px">${v||''}</td>`;
     });
     html+='</tr>';
   });
-  html+='</table>';
+  html+='</table>'+legendeHeatmap('saison');
   document.getElementById('heatmap-cms-saison').innerHTML=html;
 }
 
@@ -3995,7 +4036,7 @@ function renderHeatmapAteliers(){
   }
   const displayYearsRev=[...allYears].reverse();
   let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Ateliers réalisés par mois et par lieu réel (date de réalisation) · ← années précédentes à droite</div>`;
-  tbl+=`<div style="overflow-x:auto"><table class="heatmap-table"><thead><tr><th></th>`;
+  tbl+=`<div style="overflow-x:auto"><table class="heatmap-table hm-anime"><thead><tr><th></th>`;
   displayYearsRev.forEach((yr,yi)=>{
     tbl+=`<th colspan="12" style="text-align:center;color:var(--text);font-size:10px;font-weight:700;padding-bottom:4px;letter-spacing:.5px">${yr}</th>`;
     if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
@@ -4012,14 +4053,14 @@ function renderHeatmapAteliers(){
     displayYearsRev.forEach((yr,yi)=>{
       const vals=vol[lieu][yr]||Array(12).fill(0);
       vals.forEach((v,mi)=>{
-        tbl+=`<td class="hm-cell" style="background:${cellColor(v)}" title="${esc(lieu)}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
+        tbl+=`<td class="hm-cell hm-b" style="background:${cellColor(v)}" title="${esc(lieu)}\n${MONTH_FR[mi]} ${yr} : ${v}" data-tip="${esc(lieu)}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
       });
       if(yi<displayYearsRev.length-1)tbl+=`<td style="width:10px"></td>`;
     });
     tbl+=`</tr>`;
   });
   tbl+=`</tbody></table></div>`;
-  container.innerHTML=tbl;
+  container.innerHTML=tbl+legendeHeatmap('ateliers');
 }
 
 // Couleur par CMS dominant
@@ -4334,6 +4375,27 @@ function getCoordsGlobal(nom){
 }
 
 
+// Légende des heatmaps (28/10/2026) : ce que veulent dire les couleurs, sans
+// chiffre calculé — seulement les règles de couleur du code ci-dessous.
+function legendeHeatmap(type){
+  const p=(couleur,texte)=>`<span><span class="hm-pastille" style="background:${couleur}"></span>${texte}</span>`;
+  const deg=(c1,c2)=>`<span class="hm-degrade" style="background:linear-gradient(90deg,${c1},${c2})"></span>`;
+  if(type==='saison')return`<div class="hm-legende">
+    ${p('rgba(16,185,129,.75)','Mois chargé : au moins 15 % au-dessus du mois moyen')}
+    ${p('rgba(59,130,246,.6)','Dans la moyenne')}
+    ${p('rgba(239,68,68,.55)','Mois creux : au moins 15 % en dessous')}
+    ${p('rgba(255,255,255,.03)','Aucune action')}
+    <span>Plus la couleur est foncée, plus le volume est élevé · toutes actions, sans filtre</span></div>`;
+  const quoi=type==='ateliers'?'atelier':'demande';
+  const teinte=type==='ateliers'?'34,211,238':'107,127,160';
+  const couleur=type==='conseiller'?'Couleur : celle du conseiller':type==='cms'?'Couleur : celle du CMS':'';
+  return`<div class="hm-legende">
+    ${couleur?`<span>${couleur}</span>`:''}
+    <span>Peu${deg(`rgba(${teinte},.12)`,`rgba(${teinte},.85)`)}le mois le plus chargé du tableau</span>
+    ${p('var(--s2)',`Case vide : aucun${type==='ateliers'?'':'e'} ${quoi}`)}
+    <span>Toucher ou survoler une case pour son détail</span></div>`;
+}
+
 // ── HEATMAP CHARGE CONSEILLERS ──
 function renderHeatmapConum(){
   const allYears=[...new Set(DATA.map(r=>r.date_demande.slice(0,4)))].filter(yr=>!activeYears.size||activeYears.has(yr)).sort();
@@ -4371,7 +4433,7 @@ function renderHeatmapConum(){
   // Afficher seulement les 2 dernières années par défaut
   const displayYearsRev=[...allYears].reverse();
   let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Nombre d'accompagnements par mois · couleur = intensité relative · ← années précédentes à droite</div>`;
-  tbl+=`<div style="overflow-x:auto"><table class="heatmap-table"><thead><tr><th></th>`;
+  tbl+=`<div style="overflow-x:auto"><table class="heatmap-table hm-anime"><thead><tr><th></th>`;
   displayYearsRev.forEach((yr,yi)=>{
     tbl+=`<th colspan="12" style="text-align:center;color:var(--text);font-size:10px;font-weight:700;padding-bottom:4px;letter-spacing:.5px">${yr}</th>`;
     if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
@@ -4393,14 +4455,14 @@ function renderHeatmapConum(){
       vals.forEach((v,mi)=>{
         const bg=cellColor(v,color);
         const txt=v>0?v:'';
-        tbl+=`<td class="hm-cell" style="background:${bg}" title="${esc(cn)}\n${MONTH_FR[mi]} ${yr} : ${v} demande${v>1?'s':''}">${txt}</td>`;
+        tbl+=`<td class="hm-cell hm-b" style="background:${bg}" title="${esc(cn)}\n${MONTH_FR[mi]} ${yr} : ${v} demande${v>1?'s':''}" data-tip="${esc(cn)}\n${MONTH_FR[mi]} ${yr} : ${v} demande${v>1?'s':''}">${txt}</td>`;
       });
       if(yi<allYears.length-1)tbl+=`<td style="width:10px"></td>`;
     });
     tbl+=`</tr>`;
   });
   tbl+=`</tbody></table></div>`;
-  container.innerHTML=tbl;
+  container.innerHTML=tbl+legendeHeatmap('conseiller');
 }
 
 function renderHeatmapCmsByConum(conum){
@@ -4433,7 +4495,7 @@ function renderHeatmapCmsByConum(conum){
   const col=conumColor(conum)||'#3b82f6';
   const displayYearsRev=[...allYears].reverse();
   let tbl=`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Accompagnements réalisés par mois et par CMS (date de réalisation) · ← années précédentes à droite</div>`;
-  tbl+=`<div style="overflow-x:auto"><table class="heatmap-table"><thead><tr><th></th>`;
+  tbl+=`<div style="overflow-x:auto"><table class="heatmap-table hm-anime"><thead><tr><th></th>`;
   displayYearsRev.forEach((yr,yi)=>{
     tbl+=`<th colspan="12" style="text-align:center;color:var(--text);font-size:10px;font-weight:700;padding-bottom:4px;letter-spacing:.5px">${yr}</th>`;
     if(yi<displayYearsRev.length-1)tbl+=`<th style="width:10px"></th>`;
@@ -4451,14 +4513,14 @@ function renderHeatmapCmsByConum(conum){
       const vals=vol[cms][yr]||Array(12).fill(0);
       vals.forEach((v,mi)=>{
         const bg=cellColor(v,col);
-        tbl+=`<td class="hm-cell" style="background:${bg}" title="${esc(cms)}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
+        tbl+=`<td class="hm-cell hm-b" style="background:${bg}" title="${esc(cms)}\n${MONTH_FR[mi]} ${yr} : ${v}" data-tip="${esc(cms)}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
       });
       if(yi<displayYearsRev.length-1)tbl+=`<td style="width:10px"></td>`;
     });
     tbl+=`</tr>`;
   });
   tbl+=`</tbody></table></div>`;
-  container.innerHTML=tbl;
+  container.innerHTML=tbl+legendeHeatmap('cms');
   const lbl=document.getElementById('heatmap-cms-conum-label');
   if(lbl)lbl.textContent=`— ${conum}`;
 }

@@ -1773,6 +1773,33 @@ test.describe('Animations', () => {
     for (let i = 1; i < c.vu.length; i++) expect(c.vu[i], `Par CMS : tuile ${i} pas après la ${i - 1}`).toBeGreaterThan(c.vu[i - 1]);
   });
 
+  // Heatmaps (28/10/2026) : les briques entrent en vague à l'arrivée à l'écran
+  // et finissent TOUTES visibles ; une légende dit ce que veulent les couleurs.
+  // Le risque est une brique restée à opacité 0 : le test le verrouille.
+  test('les briques de la heatmap entrent en vague et finissent visibles', async ({ page }) => {
+    await preparer(page);
+    const r = await page.evaluate(() => new Promise(res => {
+      const box = document.getElementById('heatmap-saison');
+      window.scrollTo(0, 0);
+      setTimeout(() => {
+        box.scrollIntoView({ block: 'center' });
+        const t0 = performance.now(), cachees = [];
+        const pas = () => {
+          const cs = [...box.querySelectorAll('td.hm-b')];
+          cachees.push(cs.filter(c => +getComputedStyle(c).opacity < 0.5).length);
+          if (performance.now() - t0 < 1800) requestAnimationFrame(pas);
+          else res({ n: cs.length, cachees, legende: !!box.querySelector('.hm-legende'), bulle: !!box.querySelector('td.hm-b[data-tip]') });
+        };
+        requestAnimationFrame(pas);
+      }, 300);
+    }));
+    expect(r.n, 'heatmap vide').toBeGreaterThan(5);
+    expect(Math.max(...r.cachees), 'les briques n\'ont jamais été cachées : pas de vague').toBeGreaterThan(0);
+    expect(r.cachees[r.cachees.length - 1], 'des briques restent invisibles').toBe(0);
+    expect(r.legende).toBe(true);
+    expect(r.bulle).toBe(true);
+  });
+
   test('en mouvement réduit, aucun graphe ne s\'anime, même à sa création', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await preparer(page);
