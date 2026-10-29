@@ -39,7 +39,7 @@
   --border:rgba(255,255,255,.07);
   --border2:rgba(255,255,255,.13);
   /* Text */
-  --text:#eef2ff;--muted:rgba(238,242,255,.38);--dim:rgba(238,242,255,.14);
+  --text:#eef2ff;--muted:rgba(238,242,255,.64);--dim:rgba(238,242,255,.34);
   /* Electric palette */
   --blue:#4d9fff;--cyan:#00d9c8;--orange:#ff6b35;
   --green:#00e5a0;--purple:#a78bfa;--red:#ff3b5c;--yellow:#fbbf24;
@@ -54,7 +54,7 @@ body.light-mode{
   --s3:rgba(0,0,0,.05);
   --sidebar-bg:#000003;
   --border:rgba(0,0,0,.08);--border2:rgba(0,0,0,.14);
-  --text:#0d1220;--muted:rgba(13,18,32,.45);--dim:rgba(13,18,32,.2);
+  --text:#0d1220;--muted:rgba(13,18,32,.66);--dim:rgba(13,18,32,.4);
   --sh1:0 1px 4px rgba(0,0,0,.1);
   --sh2:0 8px 24px rgba(0,0,0,.1);
 }
@@ -93,7 +93,7 @@ body{
 .sb-footer{margin-top:auto;flex-shrink:0;padding:14px 14px;border-top:1px solid rgba(255,255,255,.04);display:flex;align-items:center;justify-content:space-between}
 .sb-theme-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.35);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;transition:all .15s}
 .sb-theme-btn:hover{color:rgba(255,255,255,.8);background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15)}
-.sb-version{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,.15);letter-spacing:.5px}
+.sb-version{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,.5);letter-spacing:.5px}
 .sb-data-badge{margin:0 8px 8px;padding:6px 10px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;text-align:center}
 .sb-data-badge.embedded{background:rgba(255,255,255,.03);color:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.05)}
 .sb-data-badge.imported{background:rgba(0,229,160,.08);color:var(--green);border:1px solid rgba(0,229,160,.2)}
@@ -187,7 +187,7 @@ body.light-mode #dr-insight-tip{background:#ffffff;color:#0d1220}
 .bar-fill.cyan{background:linear-gradient(90deg,var(--cyan),var(--green))}
 .bar-fill.yellow{background:linear-gradient(90deg,var(--yellow),var(--orange))}
 .tbl{width:100%;border-collapse:collapse;font-size:12px}
-.tbl th{text-align:left;padding:8px 14px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:rgba(238,242,255,.28);border-bottom:1px solid rgba(255,255,255,.06)}
+.tbl th{text-align:left;padding:8px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:rgba(238,242,255,.7);border-bottom:1px solid rgba(255,255,255,.06)}
 .tbl td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top}
 .tbl tr:last-child td{border-bottom:none}
 .tbl tr:hover td{background:rgba(255,255,255,.025)}
@@ -239,7 +239,7 @@ canvas{display:block;width:100%!important;max-height:240px}
 .cs-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .alert-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:7px;padding:8px 12px;font-size:11px;color:var(--red);margin-bottom:10px}
 .info-box{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:7px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:10px}
-.btn-print{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px}
+.btn-print{background:var(--blue);color:#031126;border:none;border-radius:8px;padding:7px 16px;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px}
 .btn-print:hover{opacity:.85}
 .empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
 .empty-icon{font-size:36px;margin-bottom:12px}
@@ -247,7 +247,7 @@ canvas{display:block;width:100%!important;max-height:240px}
 .delta-up{color:var(--green);font-size:10px}.delta-dn{color:var(--red);font-size:10px}.delta-na{color:var(--dim);font-size:10px}
 .sortable th{cursor:pointer;user-select:none;white-space:nowrap}
 .sortable th:hover{color:var(--text)}
-.sort-icon{font-size:10px;margin-left:4px;opacity:.35;transition:all .15s}
+.sort-icon{font-size:10px;margin-left:4px;opacity:.6;transition:all .15s}
 .sort-icon.asc{opacity:1;color:var(--cyan);font-weight:700}
 .sort-icon.desc{opacity:1;color:var(--cyan);font-weight:700}
 @media(max-width:780px){
@@ -725,7 +725,7 @@ table.hm-joue td.hm-b{animation:hm-brique .35s cubic-bezier(.33,1,.68,1) both;an
   </div>
   <div class="g2">
     <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span><span id="tt-cms-global">Accompagnements</span> par CMS (hors DSIAN)</div><div id="bar-cms-global" class="bar-list"></div></div>
-    <div class="card"><div class="card-title"><span class="dot" style="background:var(--purple)"></span>Types d'action (hors Réservation)<span style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">tous types · ignore le filtre de type</span></div><canvas id="ch-types"></canvas></div>
+    <div class="card"><div class="card-title"><span class="dot" style="background:var(--purple)"></span>Types d'action (hors Réservation)<span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:6px">tous types · ignore le filtre de type</span></div><canvas id="ch-types"></canvas></div>
   </div>
   <div class="g2">
     <div class="card"><div class="card-title"><span class="dot" style="background:var(--cyan)"></span>État des demandes</div><canvas id="ch-etat"></canvas></div>
@@ -785,7 +785,7 @@ table.hm-joue td.hm-b{animation:hm-brique .35s cubic-bezier(.33,1,.68,1) both;an
     </div>
     <div class="g2">
       <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Volume par CMS — mensuel (top 6)</div><canvas id="ch-cms-monthly" style="max-height:220px"></canvas></div>
-      <div class="card"><div class="card-title"><span class="dot" style="background:var(--orange)"></span>Types d'action — évolution mensuelle<span style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">tous types · ignore le filtre de type</span></div><canvas id="ch-type-monthly" style="max-height:220px"></canvas></div>
+      <div class="card"><div class="card-title"><span class="dot" style="background:var(--orange)"></span>Types d'action — évolution mensuelle<span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:6px">tous types · ignore le filtre de type</span></div><canvas id="ch-type-monthly" style="max-height:220px"></canvas></div>
     </div>
     <div class="card g1">
       <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Tableau mensuel détaillé</div>
@@ -819,14 +819,14 @@ table.hm-joue td.hm-b{animation:hm-brique .35s cubic-bezier(.33,1,.68,1) both;an
     </div>
     <div class="card g1">
       <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Saisonnalité — ce CMS — toutes données
-        <span style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">Indépendant des filtres actifs</span>
+        <span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:6px">Indépendant des filtres actifs</span>
       </div>
       <div id="cms-saison-note" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;align-items:center"></div>
       <canvas id="ch-cms-saison" style="max-height:200px"></canvas>
     </div>
     <div class="card g1">
       <div class="card-title"><span class="dot" style="background:var(--cyan)"></span>Heatmap mois × année — ce CMS — données complètes
-        <span style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">intensité par volume</span>
+        <span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:6px">intensité par volume</span>
       </div>
       <div id="heatmap-cms-saison" style="overflow-x:auto;margin-top:4px"></div>
     </div>
@@ -849,11 +849,11 @@ table.hm-joue td.hm-b{animation:hm-brique .35s cubic-bezier(.33,1,.68,1) both;an
       <tbody id="tbl-conum-all"></tbody></table>
     </div>
     <div class="card g1" id="card-heatmap-conum">
-      <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Charge mensuelle — tous conseillers <span style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">intensité par volume</span></div>
+      <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Charge mensuelle — tous conseillers <span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:6px">intensité par volume</span></div>
       <div class="heatmap-wrap"><div id="heatmap-conum-container"></div></div>
     </div>
     <div class="card g1" id="card-heatmap-cms-conum">
-      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Charge mensuelle par CMS <span id="heatmap-cms-conum-label" style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">intensité par volume</span></div>
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Charge mensuelle par CMS <span id="heatmap-cms-conum-label" style="font-size:10px;color:var(--muted);font-weight:400;margin-left:6px">intensité par volume</span></div>
       <div class="heatmap-wrap"><div id="heatmap-cms-conum-container"></div></div>
     </div>
   </div>
@@ -941,7 +941,7 @@ table.hm-joue td.hm-b{animation:hm-brique .35s cubic-bezier(.33,1,.68,1) both;an
     <div id="rpt-content" style="display:none">
       <div id="kpi-rpt" class="g4"></div>
       <div class="card g1"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>Évolution mensuelle</div><canvas id="ch-rpt-evol"></canvas></div>
-      <div class="card g1"><div class="card-title"><span class="dot" style="background:var(--yellow)"></span><span id="tt-rpt-yoy">Accompagnements</span> — N / N-1 / N-2 <span style="font-size:9px;color:var(--dim);font-weight:400;margin-left:6px">par mois calendaire</span></div><canvas id="ch-rpt-yoy-main" style="max-height:220px"></canvas></div>
+      <div class="card g1"><div class="card-title"><span class="dot" style="background:var(--yellow)"></span><span id="tt-rpt-yoy">Accompagnements</span> — N / N-1 / N-2 <span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:6px">par mois calendaire</span></div><canvas id="ch-rpt-yoy-main" style="max-height:220px"></canvas></div>
       <div class="g2">
         <div class="card"><div class="card-title"><span class="dot" style="background:var(--green)"></span>Orienteurs actifs dans ce CMS</div><div id="bar-rpt-ori" class="bar-list"></div></div>
         <div class="card"><div class="card-title"><span class="dot" style="background:var(--purple)"></span>Activité CN : ce CMS vs autres structures</div><canvas id="ch-rpt-comp"></canvas></div>
@@ -2115,9 +2115,9 @@ function renderSaisonGlobal(){
       // Gradient bleu froid (creux) → bleu chaud → vert (chargé)
       let bg,txt='var(--text)';
       if(v===0){bg='rgba(255,255,255,.03)';txt='var(--dim)';}
-      else if(v>=hiThr){bg=`rgba(16,185,129,${(0.35+ratio*.6).toFixed(2)})`;txt=ratio>.5?'#fff':'var(--text)';}
-      else if(v<=loThr){bg=`rgba(239,68,68,${(0.35+ratio*.4).toFixed(2)})`;txt=ratio>.5?'#fff':'var(--text)';}
-      else{bg=`rgba(59,130,246,${(0.35+ratio*.55).toFixed(2)})`;txt=ratio>.5?'#fff':'var(--text)';}
+      else if(v>=hiThr){bg=`rgba(16,185,129,${(0.35+ratio*.6).toFixed(2)})`;txt=texteSurCellule(bg);}
+      else if(v<=loThr){bg=`rgba(239,68,68,${(0.35+ratio*.4).toFixed(2)})`;txt=texteSurCellule(bg);}
+      else{bg=`rgba(59,130,246,${(0.35+ratio*.55).toFixed(2)})`;txt=texteSurCellule(bg);}
       const nature=v===0?'aucune action':v>=hiThr?'mois chargé (≥ 115 % du mois moyen)':v<=loThr?'mois creux (≤ 85 % du mois moyen)':'dans la moyenne';
       const bulle=`${MONTH_FR[parseInt(m)-1]} ${y} : ${v} action${v>1?'s':''} — ${nature}`;
       html+=`<td class="hm-b" title="${bulle}" data-tip="${bulle}" style="text-align:center;padding:5px 2px;border-radius:5px;background:${bg};color:${v>0?txt:'var(--dim)'};font-family:'JetBrains Mono',monospace;font-weight:600;font-size:10px">${v||''}</td>`;
@@ -2578,9 +2578,9 @@ function renderSaisonCms(cms){
       const ratio=v/maxVal;
       let bg,txt='var(--text)';
       if(v===0){bg='rgba(255,255,255,.03)';txt='var(--dim)';}
-      else if(v>=hiThr){bg=`rgba(16,185,129,${(0.35+ratio*.6).toFixed(2)})`;txt=ratio>.5?'#fff':'var(--text)';}
-      else if(v<=loThr){bg=`rgba(239,68,68,${(0.35+ratio*.4).toFixed(2)})`;txt=ratio>.5?'#fff':'var(--text)';}
-      else{bg=`rgba(59,130,246,${(0.35+ratio*.55).toFixed(2)})`;txt=ratio>.5?'#fff':'var(--text)';}
+      else if(v>=hiThr){bg=`rgba(16,185,129,${(0.35+ratio*.6).toFixed(2)})`;txt=texteSurCellule(bg);}
+      else if(v<=loThr){bg=`rgba(239,68,68,${(0.35+ratio*.4).toFixed(2)})`;txt=texteSurCellule(bg);}
+      else{bg=`rgba(59,130,246,${(0.35+ratio*.55).toFixed(2)})`;txt=texteSurCellule(bg);}
       const nature=v===0?'aucune action':v>=hiThr?'mois chargé (≥ 115 % du mois moyen)':v<=loThr?'mois creux (≤ 85 % du mois moyen)':'dans la moyenne';
       const bulle=`${MONTH_FR[parseInt(m)-1]} ${y} : ${v} action${v>1?'s':''} — ${nature}`;
       html+=`<td class="hm-b" title="${bulle}" data-tip="${bulle}" style="text-align:center;padding:5px 2px;border-radius:5px;background:${bg};color:${v>0?txt:'var(--dim)'};font-family:'JetBrains Mono',monospace;font-weight:600;font-size:10px">${v||''}</td>`;
@@ -4070,7 +4070,7 @@ function renderHeatmapAteliers(){
     displayYearsRev.forEach((yr,yi)=>{
       const vals=vol[lieu][yr]||Array(12).fill(0);
       vals.forEach((v,mi)=>{
-        tbl+=`<td class="hm-cell hm-b" style="background:${cellColor(v)}" title="${esc(lieu)}\n${MONTH_FR[mi]} ${yr} : ${v}" data-tip="${esc(lieu)}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
+        tbl+=`<td class="hm-cell hm-b" style="background:${cellColor(v)};color:${texteSurCellule(cellColor(v))}" title="${esc(lieu)}\n${MONTH_FR[mi]} ${yr} : ${v}" data-tip="${esc(lieu)}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
       });
       if(yi<displayYearsRev.length-1)tbl+=`<td style="width:10px"></td>`;
     });
@@ -4472,7 +4472,7 @@ function renderHeatmapConum(){
       vals.forEach((v,mi)=>{
         const bg=cellColor(v,color);
         const txt=v>0?v:'';
-        tbl+=`<td class="hm-cell hm-b" style="background:${bg}" title="${esc(cn)}\n${MONTH_FR[mi]} ${yr} : ${v} demande${v>1?'s':''}" data-tip="${esc(cn)}\n${MONTH_FR[mi]} ${yr} : ${v} demande${v>1?'s':''}">${txt}</td>`;
+        tbl+=`<td class="hm-cell hm-b" style="background:${bg};color:${texteSurCellule(bg)}" title="${esc(cn)}\n${MONTH_FR[mi]} ${yr} : ${v} demande${v>1?'s':''}" data-tip="${esc(cn)}\n${MONTH_FR[mi]} ${yr} : ${v} demande${v>1?'s':''}">${txt}</td>`;
       });
       if(yi<allYears.length-1)tbl+=`<td style="width:10px"></td>`;
     });
@@ -4530,7 +4530,7 @@ function renderHeatmapCmsByConum(conum){
       const vals=vol[cms][yr]||Array(12).fill(0);
       vals.forEach((v,mi)=>{
         const bg=cellColor(v,col);
-        tbl+=`<td class="hm-cell hm-b" style="background:${bg}" title="${esc(cms)}\n${MONTH_FR[mi]} ${yr} : ${v}" data-tip="${esc(cms)}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
+        tbl+=`<td class="hm-cell hm-b" style="background:${bg};color:${texteSurCellule(bg)}" title="${esc(cms)}\n${MONTH_FR[mi]} ${yr} : ${v}" data-tip="${esc(cms)}\n${MONTH_FR[mi]} ${yr} : ${v}">${v>0?v:''}</td>`;
       });
       if(yi<displayYearsRev.length-1)tbl+=`<td style="width:10px"></td>`;
     });
@@ -4572,6 +4572,16 @@ function buildAnomalyReport(records, rawLines){
 
 // ── Helper : résoudre les CSS vars pour Chart.js ──
 function cssVar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+// Texte lisible sur une cellule de heatmap : foncé ou clair selon la luminosité réelle du fond
+// (rgba composé sur le fond sombre de la page).
+function texteSurCellule(bg){
+  const m=String(bg).match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)/);
+  if(!m)return 'var(--text)';
+  const al=m[4]===undefined?1:parseFloat(m[4]),f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4);};
+  const c=[m[1],m[2],m[3]].map((v,i)=>parseFloat(v)*al+[3,5,7][i]*(1-al));
+  const L=.2126*f(c[0])+.7152*f(c[1])+.0722*f(c[2]);
+  return L>.2?'#031126':'#eef2ff';
+}
 function legendColor(){return document.body.classList.contains('light-mode')?'#1a2235':'#dde6f5';}
 function gridColor(){return document.body.classList.contains('light-mode')?'rgba(200,210,225,.8)':'#1a2235';}
 function applyChartTheme(){
