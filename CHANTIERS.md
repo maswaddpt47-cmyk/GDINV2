@@ -26,7 +26,7 @@ session et de compte) :
    Codex a répondu le 29/10 (`8da3b86`, amendé : cinq mécanismes confirmés, un sixième
    libellé faux, « Évol. trim. », `index.html:5192`). Les cinq définitions sont
    tranchées et **corrigées le 29/10/2026** (`46b6528`…`f09f964`, + sélecteur d'année
-   plus lisible). **À faire** : faire relire les corrections par Codex (bloc AG-008) avant toute
+   plus lisible). **À faire** : Codex a relu les corrections le 29/10 (`7440ab2`, amendé, sous AG-004 ; AG-008 y renvoie) : **cas oubliés à corriger** avant toute
    diffusion, **retrouver les 12 lignes** de l'ancien écart 412/400, relever d'autres
    couples (d'abord ceux à forte part déduite). Procédure complète :
    `GDINV2-BACKUP/releves/GDIN_Procedure-controle-chiffres_V0.1_2026-10-29.docx`.
