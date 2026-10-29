@@ -13,8 +13,10 @@ sont retirés. Texte complet : `git log -p CHANTIERS.md`.
    `A-LIRE-AVANT-D-OUVRIR.txt` corrigés) **déposé sur Nextcloud le 29/10**
    (*déclaré par l'utilisateur, non vérifié*). Reste : chaque agent
    retélécharge, extrait au même endroit, Ctrl+F5 ; la consigne V0.2 (avec la raison du retrait du JSON,
-   29/10) est à déposer à côté du dossier ; le dossier DSI (V3, synthèse) n'est pas
-   encore remis.
+   29/10) est à déposer à côté du dossier ; le dossier DSI : **la V2 et la synthèse du 28/10 sont
+   dans un dossier partagé du cloud** (vu le 29/10) ; à remplacer par la V3 et la
+   synthèse du 29/10 après relecture de l'utilisateur, et vérifier qui a accès à
+   ce dossier (documents de sécurité, pas pour les agents).
 2. **Trancher l'origine partagée** (voir « À trancher ») : options expliquées le
    29/10 (fermer la version en ligne, recommandé et voulu par le DSI, ou autre
    domaine) ; **choix de l'utilisateur**, pas encore fait.
