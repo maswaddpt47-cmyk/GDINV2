@@ -1444,7 +1444,11 @@ function mentionAttribution(records){
 // avant de basculer, pour que le clic fasse ce que la coche montre (AG-004, relecture
 // de Codex du 29/10/2026). Rend un nouveau Set ; un clic sur la dernière année est ignoré.
 function basculerAnnee(selection,toutes,annee){
-  const sel=new Set(selection&&selection.size?[...selection]:(toutes||[]));
+  // On ne garde que les années réellement proposées : une année mémorisée mais absente des
+  // choix (couple sans historique cette année-là) faisait croire qu'une année restait cochée.
+  const propos=new Set(toutes||[]);
+  const gardees=[...(selection||[])].filter(a=>propos.has(a));
+  const sel=new Set(gardees.length?gardees:propos);
   if(sel.has(annee)){
     if(sel.size===1)return sel;
     sel.delete(annee);

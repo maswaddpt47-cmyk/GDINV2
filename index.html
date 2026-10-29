@@ -5279,7 +5279,10 @@ function startDiapoRapport(){
   drCms=document.getElementById('sel-rpt-cms').value;
   if(!drConum||!drCms)return;
 
-  drYears=activeYears.size?new Set([...activeYears]):new Set();
+  // Années du couple seulement : le sélecteur n'affiche que celles-là, la sélection mémorisée
+  // doit donc s'y limiter (relecture de Codex, AG-009). Vide = toutes.
+  const anneesCouple=new Set(DATA.filter(r=>r.conum===drConum&&r.cms===drCms).map(r=>r.date_demande.slice(0,4)));
+  drYears=new Set([...activeYears].filter(a=>anneesCouple.has(a)));
   drActive=true;
   drIdx=0;
 

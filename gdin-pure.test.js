@@ -1019,6 +1019,14 @@ describe('basculerAnnee — sélecteur d\'année du Diapo (AG-004)', () => {
   it('décocher une année parmi plusieurs la retire', () => {
     assert.deepEqual([...basculerAnnee(new Set(['2024', '2025']), toutes, '2024')], ['2025']);
   });
+  it('une année mémorisée mais absente des choix ne compte pas comme cochée', () => {
+    // le couple n'a que 2025 ; la sélection globale mémorisait 2024 et 2025
+    const e = basculerAnnee(new Set(['2024', '2025']), ['2025'], '2025');
+    assert.deepEqual([...e], ['2025']);
+  });
+  it('sélection mémorisée entièrement hors des choix : toutes les années du couple', () => {
+    assert.deepEqual([...basculerAnnee(new Set(['2024']), ['2025', '2026'], '2025')], ['2026']);
+  });
   it('ne modifie pas la sélection reçue', () => {
     const sel = new Set(['2025']);
     basculerAnnee(sel, toutes, '2024');
