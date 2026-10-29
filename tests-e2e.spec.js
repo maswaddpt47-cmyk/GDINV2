@@ -1923,3 +1923,74 @@ test.describe('Animations', () => {
     expect(anime).toEqual(fixe);
   });
 });
+
+// ── Cas relevés par la relecture de Codex du 29/10/2026 (AG-009) ─────────────
+// Chacun rejoue un parcours qui avait échappé aux tests unitaires.
+test.describe('AG-009 — cas relevés par la relecture', () => {
+  const rec = (o) => ({
+    id_demande: o.id, date_demande: o.date, date_action: o.date, type_action: ['Accompagnement'],
+    lieu_raw: o.lieu, conum: o.conum, commune: 'Marmande', themas: ['Logement'],
+    orienteur: o.ori || 'CAF', etat: 'Réalisée', date_realisation: o.date, ...o.plus,
+  });
+
+  test('sélecteur d\'année : un couple qui n\'a qu\'une année garde toujours sa coche visible', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    // Deux couples aux historiques différents : A seulement en 2025, B seulement en 2024.
+    await importerRecords(page, [
+      rec({ id: '1', date: '2025-03-10', lieu: 'Centre Médico-Social de Marmande', conum: 'NOM-A Prenom' }),
+      rec({ id: '2', date: '2025-04-11', lieu: 'Centre Médico-Social de Marmande', conum: 'NOM-A Prenom' }),
+      rec({ id: '3', date: '2025-05-12', lieu: 'Centre Médico-Social de Marmande', conum: 'NOM-A Prenom' }),
+      rec({ id: '4', date: '2024-03-10', lieu: 'CMS Nérac', conum: 'NOM-B Prenom' }),
+    ], 'deux-couples.xlsx');
+    const ouverture = await page.evaluate(() => {
+      document.getElementById('sel-rpt-conum').value = 'NOM-A Prenom'; onRptConumChange();
+      document.getElementById('sel-rpt-cms').value = 'CMS Marmande';
+      startDiapoRapport();
+      return { actif: drActive, global: [...activeYears].sort(), couple: [...drYears].sort(),
+        pastilles: [...document.querySelectorAll('#dr-year-chips span')].map(s => s.textContent.trim()) };
+    });
+    // Garde : le Diapo est bien ouvert sur le bon couple, les deux années globales sont cochées.
+    expect(ouverture.actif).toBe(true);
+    expect(ouverture.global).toEqual(['2024', '2025']);
+    expect(ouverture.pastilles).toEqual(['✓ 2025']);
+    expect(ouverture.couple).toEqual(['2025']);
+    // Cliquer l'unique coche visible ne la retire pas, et le bilan garde ses trois lignes.
+    const apres = await page.evaluate(() => {
+      drToggleYear('2025');
+      return { couple: [...drYears].sort(), lignes: drData().length,
+        pastilles: [...document.querySelectorAll('#dr-year-chips span')].map(s => s.textContent.trim()) };
+    });
+    expect(apres.couple).toEqual(['2025']);
+    expect(apres.lignes).toBe(3);
+    expect(apres.pastilles).toEqual(['✓ 2025']);
+  });
+
+  test('orienteurs d\'une ancienne base : un nom suivi d\'un espace garde ses détails (CMS, conseiller, thématique)', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    await importerRecords(page, [
+      rec({ id: '1', date: '2025-03-10', lieu: 'Centre Médico-Social de Marmande', conum: 'NOM-A Prenom', ori: 'Externe fictif' }),
+      rec({ id: '2', date: '2025-04-11', lieu: 'Centre Médico-Social de Marmande', conum: 'NOM-A Prenom', ori: 'Externe fictif' }),
+      rec({ id: '3', date: '2025-05-12', lieu: 'Centre Médico-Social de Marmande', conum: 'NOM-A Prenom', ori: 'Externe autre' }),
+    ], 'ancienne-base.xlsx');
+    // Une base enregistrée par une version antérieure garde des espaces que le parseur actuel retire.
+    const tab = await page.evaluate(() => {
+      DATA.filter(r => r.id_demande === '1' || r.id_demande === '2').forEach(r => { r.orienteur = 'Externe fictif '; });
+      document.querySelector(`[onclick*="'orienteurs'"]`).click(); renderOrienteurs();
+      const lignes = [...document.querySelectorAll('#tbl-ori tr')].map(tr => [...tr.cells].map(c => c.textContent.trim()));
+      document.getElementById('sel-cms').value = 'CMS Marmande'; renderCms();
+      const parCms = [...document.querySelectorAll('#tbl-cms-ori tr')].map(tr => [...tr.cells].map(c => c.textContent.trim()));
+      return { lignes, parCms };
+    });
+    // Garde : les deux orienteurs sont bien affichés, l'effectif regroupé les deux graphies.
+    const fictif = tab.lignes.find(l => l[0] === 'Externe fictif');
+    expect(fictif, 'ligne « Externe fictif » absente de l\'onglet Orienteurs').toBeTruthy();
+    expect(fictif[2]).toBe('2');
+    // Les détails retrouvent les lignes des deux graphies : ni « — » pour le CMS, le conseiller, la thématique.
+    expect(fictif[1]).toBe('CMS Marmande');
+    expect(fictif[3]).toBe('NOM-A Prenom');
+    expect(fictif[4]).toBe('Logement');
+    const fictifCms = tab.parCms.find(l => l[1] === 'Externe fictif');
+    expect(fictifCms, 'ligne « Externe fictif » absente du tableau Par CMS').toBeTruthy();
+    expect(fictifCms[4]).toBe('NOM-A Prenom');
+  });
+});
