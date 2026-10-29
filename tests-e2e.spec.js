@@ -1953,16 +1953,44 @@ test.describe('AG-009 — cas relevés par la relecture', () => {
     expect(ouverture.actif).toBe(true);
     expect(ouverture.global).toEqual(['2024', '2025']);
     expect(ouverture.pastilles).toEqual(['✓ 2025']);
-    expect(ouverture.couple).toEqual(['2025']);
+    expect(ouverture.couple).toEqual(['2024', '2025']);   // périmètre du CR, conservé
     // Cliquer l'unique coche visible ne la retire pas, et le bilan garde ses trois lignes.
     const apres = await page.evaluate(() => {
       drToggleYear('2025');
       return { couple: [...drYears].sort(), lignes: drData().length,
         pastilles: [...document.querySelectorAll('#dr-year-chips span')].map(s => s.textContent.trim()) };
     });
-    expect(apres.couple).toEqual(['2025']);
+    expect(apres.couple).toEqual(['2024', '2025']);   // le clic sur la dernière année visible ne change rien
     expect(apres.lignes).toBe(3);
     expect(apres.pastilles).toEqual(['✓ 2025']);
+  });
+
+  test('même conseiller dans deux CMS, deux historiques : le Diapo s\'ouvre avec le périmètre du CR', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    // Trois accompagnements à Marmande en 2025, quatre à Nérac en 2024 : 3 / 7 = 43 %.
+    await importerRecords(page, [
+      rec({ id: '1', date: '2025-03-10', lieu: 'Centre Médico-Social de Marmande', conum: 'NOM-A Prenom' }),
+      rec({ id: '2', date: '2025-04-11', lieu: 'Centre Médico-Social de Marmande', conum: 'NOM-A Prenom' }),
+      rec({ id: '3', date: '2025-05-12', lieu: 'Centre Médico-Social de Marmande', conum: 'NOM-A Prenom' }),
+      rec({ id: '4', date: '2024-03-10', lieu: 'CMS Nérac', conum: 'NOM-A Prenom' }),
+      rec({ id: '5', date: '2024-04-10', lieu: 'CMS Nérac', conum: 'NOM-A Prenom' }),
+      rec({ id: '6', date: '2024-05-10', lieu: 'CMS Nérac', conum: 'NOM-A Prenom' }),
+      rec({ id: '7', date: '2024-06-10', lieu: 'CMS Nérac', conum: 'NOM-A Prenom' }),
+    ], 'un-conseiller-deux-cms.xlsx');
+    const vu = await page.evaluate(() => {
+      document.getElementById('sel-rpt-conum').value = 'NOM-A Prenom'; onRptConumChange();
+      document.getElementById('sel-rpt-cms').value = 'CMS Marmande';
+      startDiapoRapport();
+      const texte = id => { drGoTo(DR_SLIDES.findIndex(s => s.id === id)); return document.getElementById('dr-content').innerText.replace(/\s+/g, ' '); };
+      return { actif: drActive, annees: [...drYears].sort(), kpis: texte('kpis'), comparaison: texte('comparaison') };
+    });
+    // Garde : Diapo ouvert, périmètre = années globales, pas de clic local.
+    expect(vu.actif).toBe(true);
+    expect(vu.annees).toEqual(['2024', '2025']);
+    // La part d'activité et le rang portent sur les DEUX CMS du conseiller, comme le CR : 3 sur 7, rang 2 sur 2.
+    expect(vu.kpis).toMatch(/43\s?% activité CN/);
+    expect(vu.comparaison).toMatch(/2\s*\/\s*2/);
+    expect(vu.comparaison).toMatch(/43\s?%/);
   });
 
   test('orienteurs d\'une ancienne base : un nom suivi d\'un espace garde ses détails (CMS, conseiller, thématique)', async ({ page }) => {
