@@ -161,6 +161,31 @@ autrement.
 
 ## Blocs ouverts
 
+## AG-009 — Les cinq corrections faites après la relecture de Codex sont-elles justes ? — ouvert le 29/10/2026
+**Auteur** : session Claude — lu sur `53c70b3`. Ces corrections répondent à la relecture de Codex du
+29/10/2026 (`7440ab2`, sous AG-004, verdict amendé) ; elles ont été écrites par la même session que les
+précédentes : aucune relecture indépendante n'a eu lieu.
+**Proposition** : relire cinq commits, un par cas relevé par Codex :
+`427bd8c` (sélecteur d'année du Diapo : une année reste cochée, `basculerAnnee`),
+`84e89d3` (mention de déduction : seuil sur le quotient non arrondi, origine inconnue distinguée),
+`da8a7f8` (mention de période : années cochées, dates du filtre et bornes de la base séparées,
+`bornesBase`), `d192796` (contrôle de fiabilité : même critère de type que le filtre),
+`53c70b3` (orienteurs : une liste normalisée, `orienteursExternes`).
+**Critère déclencheur** : n° 7 (calcul ou chiffre affiché). Contradicteur : Codex.
+**Ce que ça engage** : la V1.4 du zip cloud et toute diffusion de chiffres aux élus (règle 33).
+**Question précise** : chaque commit corrige-t-il le cas que Codex avait démontré, sans en créer un
+autre ? Les écrans concernés restent-ils alignés (CR, couverture, Bilan, diapo TS, PDF) ? Le cas
+d'ancienne base (espaces en trop, origine « inconnu ») est-il bien rejoué ?
+**Non vérifié par l'auteur** : l'effet sur un export réel ; le rendu à l'écran du sélecteur d'année, des
+mentions de période et de déduction ; aucun **test navigateur** nouveau (seulement des tests unitaires de
+`gdin-pure.js` : 354 verts, et les 95 tests navigateur existants, verts) ; les anciennes bases n'ont pas
+été rejouées dans un navigateur par l'auteur.
+**Si personne ne répond, je fais quoi ?** Pas de V1.4 déposée sur le cloud ni de bilan diffusé aux élus
+tant que ce bloc est sans réponse ; la V1.3 reste celle des agents.
+**Où regarder** : `gdin-pure.js` (`basculerAnnee`, `mentionAttribution`, `mentionRevisabilite`,
+`indicateursFiabilite`, `orienteursExternes`, `compterOrienteursExternes`), `index.html` (`drToggleYear`,
+`drBuildYearChips`, `bornesBase`, `mentionCourante`, tuiles et diapo « Orienteurs »), `gdin-pure.test.js`.
+
 ## AG-008 — Les corrections d'AG-004 du 29/10/2026 sont-elles justes et complètes ? — ouvert le 29/10/2026
 **Auteur** : session Claude — lu sur `802f99c`. Les corrections ci-dessous ont été écrites par la
 même session : elles n'ont donc pas été relues par une autre IA (règle de MD-LIB `agora.md` §12).
