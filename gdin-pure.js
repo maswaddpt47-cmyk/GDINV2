@@ -701,10 +701,20 @@ function dateFr(iso){
 function mentionRevisabilite(opts){
   const o=opts||{};
   const d=dateFr(o.debut), f=dateFr(o.fin);
-  const periode = d&&f ? `Période du ${d} au ${f}`
+  let periode = d&&f ? `Période du ${d} au ${f}`
     : d ? `Période depuis le ${d}`
     : f ? `Période jusqu'au ${f}`
     : 'Toutes périodes';
+  // Années cochées : quand la sélection est un sous-ensemble des années de la base,
+  // la mention la nomme et relègue les bornes de la base entre parenthèses. Annoncer
+  // « du 11/02/2022 au 29/10/2026 » sous un bilan 2025 décrivait la base, pas le
+  // bilan (AG-004, décision 4).
+  const sel=(o.annees||[]).map(String).filter(Boolean).sort();
+  const baseA=(o.anneesBase||[]).map(String);
+  if(sel.length&&baseA.length&&sel.length<baseA.length){
+    const lib=sel.length===1?`Année ${sel[0]}`:`Années ${sel.join(', ')}`;
+    periode=d&&f?`${lib} (base du ${d} au ${f})`:lib;
+  }
   const imp=o.dateImport?`données importées le ${String(o.dateImport)}`:'source non datée';
   return `${periode} · ${imp} · chiffres susceptibles d'être révisés`;
 }

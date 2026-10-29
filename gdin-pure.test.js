@@ -1467,6 +1467,21 @@ describe('dateFr', () => {
 });
 
 describe('mentionRevisabilite', () => {
+  it('une seule année cochée : la mention nomme l\'année et relègue les bornes de la base', () => {
+    assert.equal(
+      mentionRevisabilite({ debut: '2022-02-11', fin: '2026-10-29', dateImport: '29/10/2026', annees: ['2025'], anneesBase: ['2023', '2024', '2025', '2026'] }),
+      "Année 2025 (base du 11/02/2022 au 29/10/2026) · données importées le 29/10/2026 · chiffres susceptibles d'être révisés");
+  });
+  it('années non contiguës : toutes sont nommées, jamais un minimum et un maximum', () => {
+    assert.match(
+      mentionRevisabilite({ debut: '2022-02-11', fin: '2026-10-29', annees: ['2025', '2023'], anneesBase: ['2023', '2024', '2025', '2026'] }),
+      /^Années 2023, 2025 \(base du /);
+  });
+  it('toutes les années cochées : libellé d\'origine, bornes de la période', () => {
+    assert.match(
+      mentionRevisabilite({ debut: '2022-02-11', fin: '2026-10-29', annees: ['2023', '2024'], anneesBase: ['2023', '2024'] }),
+      /^Période du 11\/02\/2022 au 29\/10\/2026 · /);
+  });
   it('les deux bornes et la date d\'import', () => {
     assert.equal(
       mentionRevisabilite({ debut: '2024-01-01', fin: '2026-10-21', dateImport: '22/10/2026' }),

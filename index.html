@@ -1783,8 +1783,9 @@ function toggleYear(yr,idx){
 // UTILS
 // Mention de révisabilité (AG-002) : lit les filtres et le dernier import.
 // Le calcul du libellé est dans gdin-pure.js (mentionRevisabilite), testé.
-function mentionCourante(){
+function mentionCourante(annees){
   return mentionRevisabilite({
+    annees:annees||[...activeYears],anneesBase:ALL_YEARS,
     debut:(document.getElementById('dFrom')||{}).value,
     fin:(document.getElementById('dTo')||{}).value,
     dateImport:(dataSource==='imported'&&importMeta)?importMeta.date:null
@@ -4696,7 +4697,7 @@ function drSlideCover(c,data){
         <div style="width:1px;background:var(--border)"></div>
         <div style="text-align:center"><div style="font-size:32px;font-weight:700;color:var(--orange);font-family:'JetBrains Mono',monospace">${fin}</div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px">Fin période</div></div>
       </div>
-      <div style="font-size:10px;color:var(--dim);margin-top:20px;line-height:1.6">Généré le ${new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}<br>${esc(mentionCourante())}</div>
+      <div style="font-size:10px;color:var(--dim);margin-top:20px;line-height:1.6">Généré le ${new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}<br>${esc(mentionCourante(years?years.split(', '):undefined))}</div>
     </div>`;
 }
 
