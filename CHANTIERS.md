@@ -10,7 +10,9 @@ sont retirés. Texte complet : `git log -p CHANTIERS.md`.
 1. **Copies à remplacer** : l'utilisateur ne fabrique **aucune archive** (précisé
    le 29/10) : il téléverse sur Nextcloud les derniers fichiers (`index.html`,
    `gdin-pure.js`, `vendor/`), et le ZIP n'est qu'un effet du téléchargement du
-   dossier par Nextcloud. À faire : redéposer la version du 29/10/2026, puis
+   dossier par Nextcloud. Zip `GDIN_2026-10-29.zip` (commit `b9d0998`, fichiers de
+   l'appli + `A-LIRE-AVANT-D-OUVRIR.txt` corrigé, sans `LISEZ-MOI.txt` que nous
+   n'avons pas vu) remis à l'utilisateur le 29/10, **pas encore déposé**. À faire : le déposer, puis
    chaque agent retélécharge, extrait au même endroit et fait Ctrl+F5.
 2. **Trancher l'origine partagée** (voir « À trancher ») : options expliquées le
    29/10 (fermer la version en ligne, recommandé et voulu par le DSI, ou autre
