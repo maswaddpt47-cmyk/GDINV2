@@ -2044,9 +2044,7 @@ function renderGlobal(){
 
   // Top orienteurs (horizontal bar)
   {
-    const oriMap={};
-    data.forEach(r=>{const o=(r.orienteur||'').trim();if(o&&!ORI_EXCL.has(o))oriMap[o]=(oriMap[o]||0)+1;});
-    const oriEntries=Object.entries(oriMap).sort((a,b)=>b[1]-a[1]).slice(0,15);
+    const oriEntries=orienteursExternes(data,ORI_EXCL).slice(0,15);
     destroyChart('ch-ori-global');
     charts['ch-ori-global']=new Chart(document.getElementById('ch-ori-global'),{
       type:'bar',
@@ -4647,7 +4645,9 @@ function drBuildYearChips(){
 
 function drToggleYear(y){
   const toutes=[...new Set(DATA.filter(r=>r.conum===drConum&&r.cms===drCms).map(r=>r.date_demande.slice(0,4)))];
-  drYears=basculerAnnee(drYears,toutes,y);
+  const suivant=basculerAnnee(drYears,toutes,y);
+  if(suivant.size===drYears.size&&[...suivant].every(a=>drYears.has(a)))return;   // clic sans effet (dernière année visible)
+  drYears=suivant;
   drBuildYearChips();
   drGoTo(drIdx);
 }
@@ -4694,7 +4694,10 @@ function drSlideCover(c,data){
   const dates=data.map(r=>r.date_demande).sort();
   const debut=dates[0]?.slice(0,7).replace('-','/')||'—';
   const fin=dates[dates.length-1]?.slice(0,7).replace('-','/')||'—';
-  const years=drYears.size?[...drYears].sort().join(', '):[...new Set(data.map(r=>r.date_demande.slice(0,4)))].sort().join(', ');
+  // Années réellement présentées : celles des lignes du couple, pas la sélection mémorisée (qui peut
+  // contenir des années où ce couple n'a rien).
+  const anneesData=[...new Set(data.map(r=>r.date_demande.slice(0,4)))].sort();
+  const years=anneesData.length?anneesData.join(', '):(drYears.size?[...drYears].sort().join(', '):'');
   const cnCover=formatConumName(drConum);
   const cnCoverColor=conumColor(drConum);
   c.innerHTML=`
@@ -5279,10 +5282,9 @@ function startDiapoRapport(){
   drCms=document.getElementById('sel-rpt-cms').value;
   if(!drConum||!drCms)return;
 
-  // Années du couple seulement : le sélecteur n'affiche que celles-là, la sélection mémorisée
-  // doit donc s'y limiter (relecture de Codex, AG-009). Vide = toutes.
-  const anneesCouple=new Set(DATA.filter(r=>r.conum===drConum&&r.cms===drCms).map(r=>r.date_demande.slice(0,4)));
-  drYears=new Set([...activeYears].filter(a=>anneesCouple.has(a)));
+  // Périmètre d'ouverture = celui du CR (années globales cochées), même pour un conseiller dont les
+  // autres CMS ont des années que ce couple n'a pas : les comparaisons entre CMS en dépendent.
+  drYears=activeYears.size?new Set([...activeYears]):new Set();
   drActive=true;
   drIdx=0;
 

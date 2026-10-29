@@ -1005,7 +1005,7 @@ describe('mentionAttribution (AG-004, décision 5)', () => {
   it('jeu vide : rien', () => assert.equal(mentionAttribution([]), ''));
 });
 
-describe('basculerAnnee — sélecteur d\'année du Diapo (AG-004)', () => {
+describe('basculerAnnee — sélecteur d\'année du Diapo (AG-004, AG-009)', () => {
   const toutes = ['2024', '2025', '2026'];
   it('cliquer l\'année seule cochée est ignoré : une année reste toujours cochée', () => {
     assert.deepEqual([...basculerAnnee(new Set(['2025']), toutes, '2025')], ['2025']);
@@ -1019,18 +1019,18 @@ describe('basculerAnnee — sélecteur d\'année du Diapo (AG-004)', () => {
   it('décocher une année parmi plusieurs la retire', () => {
     assert.deepEqual([...basculerAnnee(new Set(['2024', '2025']), toutes, '2024')], ['2025']);
   });
-  it('une année mémorisée mais absente des choix ne compte pas comme cochée', () => {
-    // le couple n'a que 2025 ; la sélection globale mémorisait 2024 et 2025
-    const e = basculerAnnee(new Set(['2024', '2025']), ['2025'], '2025');
-    assert.deepEqual([...e], ['2025']);
-  });
-  it('sélection mémorisée entièrement hors des choix : toutes les années du couple', () => {
-    assert.deepEqual([...basculerAnnee(new Set(['2024']), ['2025', '2026'], '2025')], ['2026']);
-  });
   it('ne modifie pas la sélection reçue', () => {
     const sel = new Set(['2025']);
     basculerAnnee(sel, toutes, '2024');
     assert.deepEqual([...sel], ['2025']);
+  });
+  it('une année hors du couple reste dans le périmètre : le clic sur la dernière année visible ne change rien', () => {
+    // le couple n'a que 2025, le périmètre du conseiller couvre 2024 et 2025
+    assert.deepEqual([...basculerAnnee(new Set(['2024', '2025']), ['2025'], '2025')].sort(), ['2024', '2025']);
+  });
+  it('décocher une année du couple garde les années hors couple du périmètre', () => {
+    const e = basculerAnnee(new Set(['2024', '2025', '2026']), ['2025', '2026'], '2025');
+    assert.deepEqual([...e].sort(), ['2024', '2026']);
   });
 });
 

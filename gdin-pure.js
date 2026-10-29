@@ -1451,18 +1451,18 @@ function mentionAttribution(records){
   return mentions.join(' · ');
 }
 
-// Sélecteur d'année du Diapo rapport : même règle que le sélecteur global, une année au
-// moins reste cochée. `selection` vide = « toutes » (état d'ouverture) : on l'explicite
-// avant de basculer, pour que le clic fasse ce que la coche montre (AG-004, relecture
-// de Codex du 29/10/2026). Rend un nouveau Set ; un clic sur la dernière année est ignoré.
-function basculerAnnee(selection,toutes,annee){
-  // On ne garde que les années réellement proposées : une année mémorisée mais absente des
-  // choix (couple sans historique cette année-là) faisait croire qu'une année restait cochée.
-  const propos=new Set(toutes||[]);
-  const gardees=[...(selection||[])].filter(a=>propos.has(a));
-  const sel=new Set(gardees.length?gardees:propos);
+// Sélecteur d'année du Diapo rapport. `selection` = périmètre local du Diapo (années de TOUT le
+// conseiller : le CR, les comparaisons entre CMS) ; `propose` = les années que le sélecteur montre,
+// celles du couple. Règle : la dernière année VISIBLE ne se décoche pas, comme au sélecteur global ;
+// une année hors du couple n'est jamais retirée du périmètre par un clic sur le sélecteur (sinon la
+// comparaison entre CMS perdait les lignes des autres structures, relecture de Codex, AG-009).
+// `selection` vide = toutes les années proposées. Rend un nouveau Set.
+function basculerAnnee(selection,propose,annee){
+  const prop=new Set(propose||[]);
+  const sel=new Set(selection&&selection.size?[...selection]:[...prop]);
   if(sel.has(annee)){
-    if(sel.size===1)return sel;
+    const visibles=[...sel].filter(a=>prop.has(a));
+    if(prop.has(annee)&&visibles.length<=1)return sel;
     sel.delete(annee);
   }else sel.add(annee);
   return sel;
