@@ -27,7 +27,7 @@ session et de compte) :
    libellé faux, « Évol. trim. », `index.html:5192`). Les cinq définitions sont
    tranchées et **corrigées le 29/10/2026** (`46b6528`…`f09f964`, + sélecteur d'année
    plus lisible). **À faire** : Codex a relu les six corrections le 29/10 (`7440ab2`, amendé) ; les cinq cas oubliés sont corrigés (`427bd8c`…`53c70b3`),
-   **relecture à faire : bloc AG-009**, avant la V1.4 et toute diffusion, **retrouver les 12 lignes** de l'ancien écart 412/400, relever d'autres
+   **AG-009** : Codex a relu (amendé, `3df216b`), quatre cas corrigés + deux tests navigateur ; **dernière relecture à faire** avant la V1.4 et toute diffusion, **retrouver les 12 lignes** de l'ancien écart 412/400, relever d'autres
    couples (d'abord ceux à forte part déduite). Procédure complète :
    `GDINV2-BACKUP/releves/GDIN_Procedure-controle-chiffres_V0.1_2026-10-29.docx`.
    Aucun autre couple n'est « vérifié » ; la macro ne vaut pas validation indépendante.
