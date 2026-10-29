@@ -110,8 +110,10 @@ ce que Claude avait manqué. L'utilisateur colle le bloc dans Codex
 le gabarit de AGORA.md, avec fichier:ligne ; ne modifie rien. » La session qui a
 ouvert le bloc inscrit la réponse **telle quelle** sous
 `### Réponse — Codex — JJ/MM/AAAA`, sans la reformuler ni la juger ;
-l'utilisateur tranche. Codex ne modifie jamais le code. Règle complète : MD-LIB
-`agora.md` §12.
+l'utilisateur tranche. Codex ne modifie jamais le code — **sauf demande
+explicite de l'utilisateur** (29/10/2026, retrait du `motif` et de
+l'import/export JSON) : Claude relit alors le diff de Codex avant publication.
+Règle complète : MD-LIB `agora.md` §12.
 
 ## Gabarit
 
