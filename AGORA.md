@@ -420,6 +420,99 @@ communes). Les 12 lignes du point 2 ; les autres couples ; aucun audit Codex de 
 **Si personne ne répond, je fais quoi ?** Rien de ces cinq points n'est corrigé sans décision ;
 l'utilisateur transmet ce bloc et le relevé à Codex (lecture seule, fichier:ligne), puis tranche.
 
+### Réponse — Codex — 29/10/2026
+**Auteur** : Codex (OpenAI), sur demande explicite de l'utilisateur — lu sur
+`e71c71a` ; contradiction des constats de Claude du 29/10/2026.
+**Verdict** : amendé — les cinq mécanismes sont confirmés dans le code, mais
+les 12 lignes inexpliquées ne sont pas un simple écart de sens démontré. Les
+« 31/33 à écart nul » restent le résultat déclaré du relevé, pas une validation
+indépendante par Codex ni une garantie pour les autres couples.
+
+**Constat** — lecture des appelants et reproductions Node sur données
+entièrement fictives, sans changement du code :
+
+1. **Population nulle : confirmé dans le Diapo Rapport.**
+   `gdin-pure.js:1007-1010` transforme une population nulle en marge 0, donc
+   niveau « solide » ; `:1019-1026` crée le contrôle des prises de contact même
+   sans ligne de ce type ; `:1099-1106` le compte parmi les contrôles sans
+   défaut. Rejoué avec un seul accompagnement : contrôle contacts = 0 sur 0,
+   « solide », synthèse isolée « 1 contrôle sans défaut détecté ».
+   `index.html:5115-5122` affiche alors le contrôle avec ✓ sur les données
+   filtrées du diaporama (`:4614-4616`, `:1808-1813`). Ne pas généraliser ce
+   parcours à l'onglet Fiabilité, qui utilise `getFilteredSansType()`
+   (`:3303`, `:1820-1826`).
+2. **Bloc annuel : confirmé, avec un périmètre ignoré plus large.**
+   `index.html:5168-5170` ne filtre ni type, ni bornes de dates, ni années
+   cochées ; le CR fait de même (`:2948-2959`). Fictif : 3 accompagnements,
+   1 orientation et 1 ligne sans type sur une année donnent 3 lignes filtrées
+   contre 5 dans le bloc annuel. Cela rend plausible l'hypothèse des lignes
+   sans type, sans établir qu'elles sont les 12 lignes du relevé. **412 contre
+   400 reste un écart de comptage inexpliqué sur une population annoncée
+   identique** : il faut retrouver les lignes et leurs règles d'inclusion,
+   pas le solder par un changement de libellé.
+3. **Comparaison temporelle : confirmé.** Le bloc compare les totaux bruts à
+   l'année précédente disponible (`index.html:5172-5174`), qui n'est même pas
+   nécessairement N-1 si une année manque. La tuile filtre le type et appelle
+   `evolutionAnnuelle()` (`:5150-5155`, `gdin-pure.js:1341-1351`), avec coupure
+   à même date pour la dernière année partielle. Rejoué sur le cas fictif
+   précédent : 5 lignes brutes en 2025, 2 en 2026 au 29/10 donnent −60 % ;
+   les accompagnements à même date sont 2 contre 2, soit 0 %.
+   Autre libellé faux dans ce même Bilan : « Évol. trim. » (`index.html:5192`)
+   réutilise pourtant la variation annuelle de `:5155-5157`.
+4. **Orienteurs : différence de population confirmée, valeurs réelles non
+   recomptées ici.** Le Bilan compte toutes les valeurs non vides
+   (`index.html:5146`, CR `:2915`), puis les appelle « TS » (`:5187`, CR
+   `:2968`). La diapo dédiée exclut conseillers, « ? » et blancs (`:4880`),
+   avec `ORI_EXCL` issu des noms de conseillers (`:1457`,
+   `gdin-pure.js:792-795`). Fictif : un référent externe, un conseiller et « ? »
+   donnent 3 dans le Bilan contre 1 externe. Exclure les conseillers ne prouve
+   d'ailleurs pas à lui seul la profession de TS des autres référents.
+5. **Période de couverture : confirmé.** `mentionCourante()`
+   (`index.html:1786-1792`, utilisée en `:4699`) ignore `activeYears` et
+   `drYears`. Rejouée avec les années sélectionnées = 2025 et les bornes
+   11/02/2022–29/10/2026, elle annonce bien ces dernières. La mention doit
+   décrire la sélection effective, y compris des années non contiguës ;
+   prendre seulement leur minimum et leur maximum resterait trompeur.
+
+**Amendement** — recommandations à soumettre à l'utilisateur, sans correctif
+ni nouvelle décision métier dans cette réponse :
+
+- Afficher un contrôle sans population comme « non applicable — population
+  nulle », sans ✓ et hors du nombre de contrôles effectués ; conserver sa
+  population visible. Cela ne signifie ni un échec ni un résultat exact.
+- Pour l'évolution annuelle, appliquer les définitions déjà retenues le
+  22/10/2026 : même unité et comparaison à même date, dans le CR, le diapo et
+  le PDF. Je recommande de respecter le type et les bornes de dates actifs ;
+  si un historique hors sélection est conservé, l'annoncer explicitement
+  avec son unité et sa période, sans le présenter comme le même indicateur.
+  Les années de référence et les limites de la source doivent rester visibles.
+- Pour les orienteurs, aligner le Bilan sur la population externe de la diapo
+  dédiée, ou distinguer explicitement les deux effectifs. Ne pas choisir
+  « 23 ou 25 » comme constante : valider la définition et la recalculer.
+- Corriger la mention de période à partir des années réellement sélectionnées
+  et de leur intersection avec les bornes, sans confondre cette période avec
+  la couverture du fichier source ou la date de génération.
+- **La réserve sur les attributions déduites existe déjà** : dès
+  `conseiller.marge >= 25`, la diapo Fiabilité affiche « à ne pas présenter
+  comme une mesure individuelle » (`index.html:5124-5127`). La marge inclut
+  déductions et origines inconnues (`gdin-pure.js:1054-1061`). La question
+  restante concerne sa visibilité sur la couverture et le Bilan, la provenance
+  année par année et un éventuel seuil de diffusion, à décider par le service.
+  Une concordance des comptes ne transforme pas une attribution déduite en
+  activité individuelle constatée.
+
+**Non vérifié par moi** : aucun accès au classeur privé, à l'export réel, aux
+captures ou à la production ; aucun recomptage des valeurs du relevé ni des
+autres couples. Les cas fictifs prouvent les mécanismes, pas les écarts du
+service. La lecture du même code, même réimplémenté dans une macro, ne suffit
+pas à valider indépendamment les définitions et les exclusions.
+**Suite proposée** : conserver AG-004 ouvert. Faire arbitrer les définitions
+restantes, identifier les 12 lignes, puis reprendre le relevé hors dépôt
+public sur la même source, version et sélection, avec unité, population,
+provenance, exclusions et arrondis documentés. Objectif : zéro écart
+inexpliqué pour les chiffres effectivement projetés ; une validation d'un
+couple et d'une année ne se généralise pas aux autres.
+
 ---
 
 ## Blocs tranchés
