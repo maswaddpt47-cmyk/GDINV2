@@ -513,6 +513,23 @@ provenance, exclusions et arrondis documentés. Objectif : zéro écart
 inexpliqué pour les chiffres effectivement projetés ; une validation d'un
 couple et d'une année ne se généralise pas aux autres.
 
+### Décision de l'utilisateur — 29/10/2026
+Cinq définitions tranchées, sur les recommandations de Codex et de Claude :
+1. **Contrôle sans population** : affiché « non applicable — aucune ligne de ce type »,
+   sans ✓ et hors du compte des contrôles effectués.
+2. **Évolution annuelle** (Bilan, CR) : accompagnements seuls, historique conservé
+   indépendant des années cochées, année en cours comparée à la même date de l'année
+   précédente (« 2026 au 29/10 ») ; étiquette « Évol. trim. » corrigée.
+3. **Orienteurs : 23**, population externe (hors conseillers numériques et « ? »),
+   la même partout (Chiffres clés, Bilan, CR, diapo TS), libellé « hors conseillers ».
+4. **Période de couverture** : la sélection réelle (années cochées), plus les bornes de la base.
+5. **Lignes déduites** : mention sur la couverture et le Bilan quand la part déduite
+   atteint 25 % (seuil déjà utilisé par la diapo Fiabilité) ; rien en dessous.
+Hors décision, à la demande de l'utilisateur : le sélecteur d'année ne montre pas
+assez qui est coché (rendu seul). **Reste ouvert** : les 12 lignes de l'écart 412 / 400
+(périmètre rendu sans objet pour le bloc, qui ne compte plus que les accompagnements),
+les autres couples, et une relecture par Codex avant toute diffusion de chiffres.
+
 ---
 
 ## Blocs tranchés
