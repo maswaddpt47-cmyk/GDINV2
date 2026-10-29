@@ -22,9 +22,10 @@ session et de compte) :
    NEWGEN, « état réel non vérifié »).
 4. **Règles 53 et 54** de MD-LIB : propagées ici, à NEWGEN et NextStep le 29/10
    (reste PAPPERBOARD, pas dans cette session).
-5. Faire contrôler à l'œil les **correctifs d'AG-004** (`6b77162`), puis établir
-   le **tableau « affiché / recompté / écart »** sur son export : aucun chiffre
-   concerné n'est « vérifié » avant.
+5. **AG-004** : relevé fait le 29/10 sur un couple (31 lignes sur 33 à écart nul) ;
+   cinq défauts de sens inscrits dans le bloc, à **soumettre à Codex** avec le relevé,
+   puis à trancher (cinq définitions). Reste : relever d'autres couples, surtout
+   ceux à forte part de lignes déduites. Aucun autre couple n'est « vérifié ».
 6. **AG-007 clos le 29/10/2026** (livraison `719fd2d` + consigne V0.3 déposées,
    *déclaré*). Reste à mesurer l'effet des doublons sur ton export :
    `npm run audit -- export.xls`, avant le tableau d'AG-004.
@@ -91,16 +92,13 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   dans `AGORA.md`) : réactivité **par demande**, pourcentages de thématiques
   en **part de tous les accompagnements** (sans thématique compris),
   correctifs de libellé appliqués. Reste :
-  - **Contrôle visuel** après Ctrl+F5 : Rapport et Diapo Rapport d'un conseiller ×
-    CMS (réactivité, conclusion, Thématiques, Fiabilité) ; Territoire (« Top 3 »).
-  - **Tableau « affiché / recompté / écart »** : tableau croisé Excel sur
-    l'export source, comparé aux 11 diapositives du Diapo Rapport (période et
-    couple conseiller × CMS projetés). **Modèle prêt** (28/10/2026, 28 chiffres)
-    : dépôt **privé** `GDINV2-BACKUP`, `releves/`, jamais dans ce dépôt public ;
-    à mettre à jour si une définition change. **L'utilisateur veut être guidé
-    pas à pas** (sélection, étape 0 clic par clic, relevé ligne par ligne ; il ne
-    transmet que des nombres et noms de colonnes). C'est la seule preuve
-    d'exactitude ; les correctifs n'en sont pas une (Codex).
+  - **Contrôle visuel** fait le 29/10/2026 sur les 11 diapos d'un couple (relevé).
+  - **Tableau « affiché / recompté / écart »** : fait le 29/10/2026 pour un couple ;
+    relevé et macro de recomptage (V0.2) dans le dépôt **privé** `GDINV2-BACKUP`,
+    `releves/`, jamais dans ce dépôt public. **L'utilisateur veut être guidé pas à
+    pas** (il ne transmet que des nombres et noms de colonnes). C'est la seule preuve
+    d'exactitude ; les correctifs n'en sont pas une (Codex). Défauts de sens
+    inscrits dans le bloc ; reste d'autres couples et l'audit Codex.
   - **Non traité, à proposer** : l'anneau des thématiques du Territoire
     (`ch-terr-thema`) a des parts qui se chevauchent : barres horizontales.
     Réactivité et fiabilité projetées avant `6b77162` : non comparables.

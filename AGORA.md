@@ -352,6 +352,59 @@ contrôles ». **Le bloc reste ouvert** : la proposition elle-même — le table
 « affiché / recompté / écart » sur l'export réel — n'est pas faite. Il se
 tranche quand ce tableau est établi.
 
+### Constats du relevé « affiché / recompté / écart » — 29/10/2026
+**Auteur** : session Claude — lu sur `71e09e7`. Le relevé demandé par ce bloc a été
+fait sur **un seul couple** (un conseiller × CMS de Marmande, année 2025), diapo par
+diapo, sur la version en ligne. Détail chiffré hors dépôt public
+(`GDINV2-BACKUP/releves/GDIN_releve_2026-10-29_Marmande.xlsx`).
+**Critère déclencheur** : n° 7 (chiffres affichés). Contradicteur : Codex.
+
+**Résultat** : 33 lignes relevées, **31 à écart nul** (accompagnements 222, % activité,
+orienteurs 25, communes 31, réactivité 95 % sur 98/103, délai 13 j, thématiques 44/18/12,
+réalisés 150, non réalisés 70, +25 %, rang 2/11…). Deux écarts non nuls, de sens et non
+de calcul. Les 222 incluent 211 lignes constatées, 1 via Référent, 10 déduites du secteur.
+
+**Défauts démontrés** (code lu et capture à l'appui, chiffres projetés) :
+1. **Fiabilité** — une ligne sans population est cochée « sans défaut » :
+   « aucun doublon suspect sur 0 prises de contact » (`gdin-pure.js:1019-1028`, la
+   sélection filtrée sur « Accompagnement » n'a aucune prise de contact), comptée dans
+   « 3 contrôles sans défaut détecté ». Contraire à la réserve de Codex du 22/10/2026.
+2. **Bilan, bloc « Évolution annuelle »** — il compte toutes les lignes du couple, tous
+   types confondus (`index.html:5167-5171`, pas de `filtrerParType`) : 2025 = 412 affiché,
+   400 recomptées tous types, dont 222 accompagnements, alors que la tuile du haut dit 222.
+   Aucune unité n'est écrite. 12 lignes d'écart sur 412 non expliquées (hypothèse : lignes
+   sans type, non comptées par le recomptage).
+3. **Même bloc, année partielle** — 2026 au 29/10 comparée à 2025 entière (« ▼1 % ») ;
+   la tuile « +25 % » du même Bilan compare à la même date (`evolutionAnnuelle`,
+   `gdin-pure.js:1341`). Deux règles différentes dans une diapo.
+4. **« 25 TS orienteurs mobilisés »** (texte de conclusion, `index.html:5146` et `:5187`,
+   aussi dans le CR `:2915`) contre **23 TS actifs** sur la diapo TS orienteurs
+   (`index.html:4877`, hors conseillers) : 25 compte deux conseillers parmi les référents.
+5. **Pied de la couverture** — « Période du 11/02/2022 au 29/10/2026 » pour un bilan 2025 :
+   `mentionCourante()` (`index.html:1786-1792`) lit les bornes de dates, pas les années cochées.
+
+**Remarques, sans défaut démontré** : « 2025 (N-1) » sur les diapos 4 et 8 (N = année la plus
+récente de la base, `index.html:1739`) ; aucune unité sur la diapo Thématiques ; « Tendance
+haussière en fin d'année » = total oct-déc > total janv-mars (`index.html:4766-4768`) ;
+le +25 % rapproche une année à 24,3 % de lignes déduites (2024) d'une année à 4,5 % (2025) ;
+sur d'autres couples la part déduite atteint 53 à 91 % (non relevés).
+
+**Définitions à trancher par l'utilisateur** (aucune décision prise) :
+- Le bloc d'évolution annuelle doit-il compter les accompagnements seuls ou tous les types, et
+  comparer une année partielle à la même date ou à l'année entière ?
+- Quel nombre de TS affiche-t-on dans le Bilan : 23 (hors conseillers) ou 25 ?
+- Un contrôle sans population s'affiche-t-il « non calculable » plutôt que ✓ ?
+- La mention de période sur la couverture reprend-elle les années cochées ?
+- Un bilan individuel dont la majorité des lignes est déduite porte-t-il une mention, ou un
+  seuil ?
+
+**Non vérifié par l'auteur** : le recomptage est fait par macro (lecture du code par la même
+session, donc indépendant dans l'implémentation, pas dans les définitions) ; seuls les
+contrôles manuels dans Excel le sont vraiment (211 constatés, 224 lignes à ce CMS, 222 pour les
+communes). Les 12 lignes du point 2 ; les autres couples ; aucun audit Codex de l'export réel.
+**Si personne ne répond, je fais quoi ?** Rien de ces cinq points n'est corrigé sans décision ;
+l'utilisateur transmet ce bloc et le relevé à Codex (lecture seule, fichier:ligne), puis tranche.
+
 ---
 
 ## Blocs tranchés
