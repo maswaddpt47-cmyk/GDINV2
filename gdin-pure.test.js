@@ -7,7 +7,7 @@ const {
   cleDoublon, compterDoublons,
   estAtelier, cleSessionAtelier, compterSessionsAtelier, statsAteliers,
   numeroterParticipants, cleFusion, numeroterLignes, fusionnerImport, attribuerConum, deriverAttributionCms,
-  neutraliserFormule, celluleCSV, validerSauvegardeJSON, retirerMotifs, baseAncienne, completerRangs,
+  neutraliserFormule, celluleCSV, retirerMotifs, baseAncienne, completerRangs,
   categorieEtat, repartitionEtats, deriverActions, delaisParDemande, reactivite48, dansPeriode, tauxRealisation, filtrerParType, evolutionAnnuelle,
   indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
@@ -1347,54 +1347,6 @@ describe('export CSV : formules neutralisées', () => {
   it('cellule entre guillemets, guillemets doublés', () => {
     assert.equal(celluleCSV('=1+1'), '"\'=1+1"');
     assert.equal(celluleCSV('a"b'), '"a""b"');
-  });
-});
-
-describe('validerSauvegardeJSON', () => {
-  const ok = { date_demande: '2025-01-02', cms: 'CMS Tonneins', themas: ['A'], type_action: ['Accompagnement'], id_demande: 7 };
-  const payload = (data, v = '2') => ({ version: v, type: 'gdin-data', data });
-  it('reconstruit chaque ligne depuis les champs autorisés', () => {
-    const [r] = validerSauvegardeJSON(payload([{ ...ok, nom_beneficiaire: 'X', telephone: '06' }]));
-    assert.equal(r.nom_beneficiaire, undefined);
-    assert.equal(r.telephone, undefined);
-    assert.equal(r.id_demande, '7');
-  });
-  it('accepte les anciens exports en ignorant leur motif', () => {
-    for (const version of [undefined, '1', '2', 1, 2]) {
-      const ancien = payload([{ ...ok, motif: 'texte libre à écarter', conum_origine:'source', rang_ligne:2 }], version);
-      if (version === undefined) delete ancien.version;
-      const [r] = validerSauvegardeJSON(ancien);
-      assert.equal(Object.hasOwn(r, 'motif'), false);
-      assert.equal(r.id_demande, '7');
-      assert.equal(r.conum_origine, 'source');
-      assert.equal(r.rang_ligne, 2);
-    }
-    // Une donnée abandonnée n'est plus interprétée ni validée.
-    const [r] = validerSauvegardeJSON(payload([{ ...ok, motif:{ancien:'contenu'} }]));
-    assert.equal(Object.hasOwn(r, 'motif'), false);
-  });
-  it('rejette une date invalide, un type erroné, une version inconnue', () => {
-    assert.throws(() => validerSauvegardeJSON(payload([{ ...ok, date_demande: '31/02/2025' }])), /date/);
-    assert.throws(() => validerSauvegardeJSON(payload([{ ...ok, themas: 'texte' }])), /liste/);
-    assert.throws(() => validerSauvegardeJSON(payload([ok], '9')), /Version/);
-    assert.throws(() => validerSauvegardeJSON(payload([])), /aucun/);
-    assert.throws(() => validerSauvegardeJSON({ type: 'autre' }), /Format/);
-  });
-  it('une seule ligne invalide rejette tout le fichier', () => {
-    assert.throws(() => validerSauvegardeJSON(payload([ok, { ...ok, cms: 5 }])), /Enregistrement 2/);
-  });
-  it('accepte un export sans numéro de version (anciens fichiers)', () => {
-    const p = payload([ok]); delete p.version;
-    assert.equal(validerSauvegardeJSON(p).length, 1);
-  });
-  it('conserve rangs et provenance', () => {
-    const [r] = validerSauvegardeJSON(payload([{ ...ok, conum: 'A', conum_origine: 'source', rang_ligne: 2 }]));
-    assert.equal(r.conum_origine, 'source');
-    assert.equal(r.rang_ligne, 2);
-  });
-  it('un ancien export : conum_deduit devient une origine', () => {
-    const [r] = validerSauvegardeJSON(payload([{ ...ok, conum: 'A', conum_deduit: true }]));
-    assert.equal(r.conum_origine, 'deduit');
   });
 });
 

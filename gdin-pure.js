@@ -1191,78 +1191,6 @@ function neutraliserFormule(v){
 }
 function celluleCSV(v){return`"${neutraliserFormule(v).replace(/"/g,'""')}"`;}
 
-// ─── Sauvegarde JSON : validation avant remplacement de la base ───────────────
-// Un JSON importé ne doit ni contourner la minimisation (champs nominatifs
-// ajoutés à la main) ni remplacer la base par des données mal formées. Chaque
-// enregistrement est RECONSTRUIT depuis la liste des champs autorisés ; tout
-// le reste est ignoré. Une seule ligne invalide rejette le fichier entier : la
-// base active reste alors intacte. Audit du 20/10/2026, constat 10.
-const RE_DATE_ISO=/^\d{4}-\d{2}-\d{2}$/;
-function dateIsoValide(v){
-  if(!RE_DATE_ISO.test(v))return false;
-  const d=new Date(v+'T00:00:00Z');
-  return !isNaN(d)&&d.toISOString().slice(0,10)===v;
-}
-function validerSauvegardeJSON(payload){
-  if(!payload||typeof payload!=='object'||payload.type!=='gdin-data'||!Array.isArray(payload.data))
-    throw new Error('Format non reconnu — ce fichier n\'est pas un export GDIN');
-  // Les exports d'avant la numérotation de version n'ont pas ce champ : acceptés.
-  if(payload.version!==undefined&&!['1','2',1,2].includes(payload.version))
-    throw new Error('Version d\'export non prise en charge : '+String(payload.version).slice(0,20));
-  if(!payload.data.length)throw new Error('Le fichier JSON ne contient aucun enregistrement');
-  const txt=(v,max,champ,i,obligatoire)=>{
-    if(v==null||v===''){if(obligatoire)throw new Error(`Enregistrement ${i+1} : « ${champ} » manquant`);return'';}
-    if(typeof v!=='string')throw new Error(`Enregistrement ${i+1} : « ${champ} » n'est pas un texte`);
-    return v.slice(0,max);
-  };
-  const date=(v,champ,i,obligatoire)=>{
-    if(v==null||v===''){if(obligatoire)throw new Error(`Enregistrement ${i+1} : « ${champ} » manquante`);return null;}
-    if(typeof v!=='string'||!dateIsoValide(v))throw new Error(`Enregistrement ${i+1} : « ${champ} » n'est pas une date AAAA-MM-JJ valide`);
-    return v;
-  };
-  const liste=(v,champ,i,max)=>{
-    if(v==null)return[];
-    if(!Array.isArray(v)||v.length>20||v.some(x=>typeof x!=='string'))
-      throw new Error(`Enregistrement ${i+1} : « ${champ} » n'est pas une liste de textes`);
-    return v.map(x=>x.slice(0,max));
-  };
-  const entier=(v,champ,i)=>{
-    if(v==null)return undefined;
-    if(!Number.isInteger(v)||v<0||v>1e6)throw new Error(`Enregistrement ${i+1} : « ${champ} » n'est pas un entier valide`);
-    return v;
-  };
-  const records=payload.data.map((r,i)=>{
-    if(!r||typeof r!=='object'||Array.isArray(r))throw new Error(`Enregistrement ${i+1} : objet attendu`);
-    const o={
-      date_demande:date(r.date_demande,'date_demande',i,true),
-      date_action:date(r.date_action,'date_action',i,false),
-      id_demande:txt(r.id_demande==null?'':String(r.id_demande),40,'id_demande',i,false),
-      conum:txt(r.conum,120,'conum',i,false),
-      conum_origine:ORIGINES_CONUM.has(r.conum_origine)?r.conum_origine:'',
-      cms:txt(r.cms,120,'cms',i,true),
-      lieu_raw:txt(r.lieu_raw,300,'lieu_raw',i,false),
-      structure:txt(r.structure,200,'structure',i,false),
-      commune:txt(r.commune,120,'commune',i,false),
-      themas:liste(r.themas,'themas',i,120),
-      type_action:liste(r.type_action,'type_action',i,120),
-      orienteur:txt(r.orienteur,200,'orienteur',i,false),
-      benef_connu:r.benef_connu===true,
-      urgence:r.urgence===true,
-      etat:r.etat==null||r.etat===''?null:txt(r.etat,40,'etat',i,false),
-      date_planifiee:date(r.date_planifiee,'date_planifiee',i,false),
-      date_realisation:date(r.date_realisation,'date_realisation',i,false),
-    };
-    // Une base exportée avant le suivi de provenance n'a pas conum_origine :
-    // conum_deduit, s'il est présent, permet de reconnaître une déduction.
-    if(!o.conum_origine&&r.conum_deduit===true&&o.conum)o.conum_origine='deduit';
-    const ra=entier(r.rang_atelier,'rang_atelier',i),rl=entier(r.rang_ligne,'rang_ligne',i);
-    if(ra!==undefined)o.rang_atelier=ra;
-    if(rl!==undefined)o.rang_ligne=rl;
-    return o;
-  });
-  return records;
-}
-
 // Anciennes bases : supprimer le texte libre sans toucher aux lignes ni à leur
 // identité. Le nettoyage en place laisse intacts rangs, provenance et références.
 function retirerMotifs(records){
@@ -1430,7 +1358,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,validerSauvegardeJSON,retirerMotifs,baseAncienne,completerRangs,dateIsoValide,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,retirerMotifs,baseAncienne,completerRangs,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,lignesAvecThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,dateFr,mentionRevisabilite,decouperNombre,formaterCommeNombre,cleDoublon,compterDoublons,moisDeLaPeriode,libelleLignes,LIBELLE_LIGNES,

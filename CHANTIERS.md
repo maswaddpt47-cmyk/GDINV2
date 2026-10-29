@@ -49,8 +49,7 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   trouvé par lui** parmi 93 `innerHTML` et 1 `insertAdjacentHTML`, sans preuve
   d'absence. **Leçon** : le test hostile doit choisir un conseiller et une
   structure *proposés* (sinon le Diapo rapport ne s'ouvre pas). **Reste** :
-  remplacer les copies applicatives distribuées ; retirer
-  `validerSauvegardeJSON()` (code mort, testé) si l'utilisateur est d'accord.
+  remplacer les copies applicatives distribuées. Code mort `validerSauvegardeJSON()` retiré (29/10/2026).
   Le diagnostic de doublons suspects peut augmenter sans motif ; fusion et
   volumes inchangés.
 
