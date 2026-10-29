@@ -1400,14 +1400,27 @@ function compterOrienteursExternes(records,conseillers){
 
 // Mention d'attribution (AG-004, décision 5) : au-delà de 25 % de lignes dont le
 // conseiller est déduit du CMS (seuil de la diapo Fiabilité), la couverture, le
-// Bilan et le CR le disent ; en dessous, rien. Vide = rien à afficher.
+// Bilan et le CR le disent ; en dessous, rien. Le seuil porte sur le quotient NON
+// arrondi (250 sur 1 001 = 24,975 % ne déclenche rien) ; seul l'affichage arrondit.
+// Une origine « inconnue » (base d'une version antérieure) n'est pas une déduction :
+// elle a sa propre mention, jamais présentée comme venant du CMS (relecture de Codex,
+// 29/10/2026). Vide = rien à afficher.
 const SEUIL_ATTRIBUTION_DEDUITE=25;
 function mentionAttribution(records){
   const base=records||[];
-  if(!base.length)return'';
-  const ind=indicateursFiabilite(base,{}).find(i=>i.cle==='conseiller');
-  if(!ind||ind.marge<SEUIL_ATTRIBUTION_DEDUITE)return'';
-  return`${ind.marge} % des lignes sont rattachées à ce conseiller par déduction depuis le CMS : à ne pas présenter comme une mesure individuelle`;
+  const n=base.length;
+  if(!n)return'';
+  const deduits=base.some(r=>r.conum_deduit!==undefined)
+    ?base.filter(r=>r.conum_deduit).length
+    :base.filter(r=>!r.conum||r.conum==='?').length;
+  const inconnus=base.filter(r=>r.conum_origine==='inconnu').length;
+  const aff=x=>Math.round(x/n*1000)/10;
+  const mentions=[];
+  if(deduits/n*100>=SEUIL_ATTRIBUTION_DEDUITE)
+    mentions.push(`${aff(deduits)} % des lignes sont rattachées à ce conseiller par déduction depuis le CMS : à ne pas présenter comme une mesure individuelle`);
+  if(inconnus/n*100>=SEUIL_ATTRIBUTION_DEDUITE)
+    mentions.push(`${aff(inconnus)} % des lignes ont un conseiller d'origine inconnue (base d'une version antérieure : réimporter l'export source) : à ne pas présenter comme une mesure individuelle`);
+  return mentions.join(' · ');
 }
 
 // Sélecteur d'année du Diapo rapport : même règle que le sélecteur global, une année au

@@ -985,6 +985,23 @@ describe('mentionAttribution (AG-004, décision 5)', () => {
     const recs = [r('A', false), r('A', false), r('A', false), r('A', true)];    // 25 %
     assert.notEqual(mentionAttribution(recs), '');
   });
+  it('le seuil porte sur le quotient non arrondi : 250 sur 1 001 ne déclenche rien', () => {
+    const recs = [...Array(250).fill(0).map(() => r('A', true)), ...Array(751).fill(0).map(() => r('A', false))];
+    assert.equal(recs.length, 1001);
+    assert.equal(mentionAttribution(recs), '');
+  });
+  it('une origine inconnue n\'est pas présentée comme une déduction depuis le CMS', () => {
+    const inc = { conum: 'A', conum_deduit: false, conum_origine: 'inconnu', date_demande: '2025-03-01', type_action: ['Accompagnement'] };
+    const m = mentionAttribution([r('A', false), r('A', false), r('A', false), inc]);   // 1 inconnu sur 4
+    assert.match(m, /origine inconnue/);
+    assert.doesNotMatch(m, /par déduction/);
+  });
+  it('déduction et origine inconnue ensemble : deux mentions distinctes', () => {
+    const inc = { conum: 'A', conum_deduit: false, conum_origine: 'inconnu', date_demande: '2025-03-01', type_action: ['Accompagnement'] };
+    const m = mentionAttribution([r('A', true), inc]);
+    assert.match(m, /par déduction/);
+    assert.match(m, /origine inconnue/);
+  });
   it('jeu vide : rien', () => assert.equal(mentionAttribution([]), ''));
 });
 
