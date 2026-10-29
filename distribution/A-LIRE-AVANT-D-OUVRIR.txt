@@ -1,0 +1,24 @@
+=====================================================
+ EXTRAIRE CE ZIP AVANT D'OUVRIR index.html
+=====================================================
+
+NE PAS double-cliquer sur index.html depuis l'interieur du zip.
+Windows n'extrairait QUE ce fichier, sans le dossier vendor/ ni
+gdin-pure.js : l'application s'ouvrirait avec des erreurs
+"ERR_FILE_NOT_FOUND" et "parseXlsText is not defined".
+
+LA BONNE MANIERE
+----------------
+1. Clic droit sur le fichier .zip
+2. "Extraire tout..."
+3. Choisir la destination sur le disque du poste
+   (par exemple Documents\GDIN)
+4. Ouvrir index.html DANS le dossier GDIN ainsi cree
+
+Pour verifier : l'adresse affichee par le navigateur doit se
+terminer par .../GDIN/index.html et ne contenir ni "Temp" ni
+".zip".
+
+Apres une mise a jour : Ctrl + F5 pour charger la nouvelle version.
+
+Mode d'emploi complet : GDIN/LISEZ-MOI.txt

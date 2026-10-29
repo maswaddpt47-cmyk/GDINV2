@@ -1,0 +1,78 @@
+TABLEAU DE BORD GDIN — version locale
+=====================================
+Version : @VERSION@ — @DATE@
+
+!! LE ZIP DOIT ETRE EXTRAIT, PAS SEULEMENT OUVERT !!
+----------------------------------------------------
+"parseXlsText is not defined" ou des erreurs ERR_FILE_NOT_FOUND
+signifient que index.html a ete ouvert depuis l'interieur du zip.
+Extraire d'abord, puis rouvrir depuis le dossier.
+
+DEUX FACONS DE S'EN SERVIR
+--------------------------
+A. Depuis le disque du poste : extraire le dossier GDIN ou l'on
+   veut (par exemple Documents\GDIN), puis ouvrir index.html.
+B. Depuis le cloud du CD47 (Nextcloud) : telecharger le dossier GDIN
+   (Nextcloud le fournit en zip), l'extraire sur le disque du poste,
+   puis ouvrir index.html depuis ce dossier.
+   Ouvrir le fichier depuis l'interface web du cloud ne fonctionne
+   pas (essai du 28/10/2026) : la page n'y est pas executee et les
+   fichiers voisins (vendor/, gdin-pure.js) ne sont pas trouves.
+   Verification : l'adresse doit commencer par file:///C:/ et non
+   par https://.
+
+APRES CHAQUE MISE A JOUR : Ctrl+F5
+----------------------------------
+Il n'y a pas de serveur pour signaler au navigateur que les
+fichiers ont change. Apres avoir remplace les fichiers (nouveau
+telechargement depuis le cloud), faire Ctrl+F5.
+A ne pas confondre avec un import de donnees : importer un
+fichier n'appelle JAMAIS de rechargement force.
+
+A SAVOIR AVANT DE S'EN SERVIR
+-----------------------------
+1. LES DONNEES NE SONT PAS DANS LE DOSSIER.
+   Elles sont enregistrees par le NAVIGATEUR DU POSTE. Importer
+   sur le poste A puis ouvrir sur le poste B donne une base VIDE,
+   meme si le dossier est partage. Pour retrouver les donnees sur
+   un autre poste : reimporter le fichier source (.xls ou .xlsx)
+   d'origine. L'application ne sait plus exporter de sauvegarde
+   JSON : gardez votre fichier source.
+
+2. NE JAMAIS DEPOSER DE DONNEES DANS LE DOSSIER PARTAGE.
+   Le dossier du cloud contient L'APPLICATION, jamais les
+   donnees. Y placer un fichier source (.xls, .xlsx), un export
+   CSV ou un ancien export JSON rendrait les donnees
+   d'accompagnement lisibles par tous ceux qui ont acces au
+   dossier (les anciens fichiers peuvent contenir le champ
+   « motif »).
+
+3. LA CARTE A BESOIN D'INTERNET.
+   Sans connexion, le fond de carte ne s'affiche pas et une
+   partie des communes ne se place pas. Tout le reste du tableau
+   de bord fonctionne normalement.
+
+4. UNE SEULE COPIE OUVERTE PAR POSTE.
+   Deux copies ouvertes depuis deux emplacements sur le meme
+   poste partageraient le meme stockage et melangeraient les
+   bases.
+
+5. N'IMPORTER QUE DES FICHIERS DONT L'ORIGINE EST SURE.
+   Un fichier piege peut contenir du code ; les defauts connus
+   sont corriges (29/10/2026), pas la certitude qu'il n'en
+   reste aucun.
+
+PROTECTION EMBARQUEE — NE PAS LA RETIRER
+----------------------------------------
+index.html porte une balise
+<meta http-equiv="Content-Security-Policy">. Elle fait refuser par
+le navigateur les requetes (image, fetch, balise, formulaire) vers
+d'autres destinations que les deux services de carte. Elle
+n'empeche pas tout (par exemple un changement de page) : c'est une
+protection complementaire, pas une garantie. Ne pas la modifier.
+
+CONTENU
+-------
+index.html     l'application
+gdin-pure.js   les calculs
+vendor/        bibliotheques et polices
