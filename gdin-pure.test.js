@@ -9,7 +9,7 @@ const {
   numeroterParticipants, cleFusion, numeroterLignes, fusionnerImport, attribuerConum, deriverAttributionCms,
   neutraliserFormule, celluleCSV, retirerMotifs, baseAncienne, completerRangs,
   categorieEtat, repartitionEtats, deriverActions, delaisParDemande, reactivite48, dansPeriode, tauxRealisation, filtrerParType, evolutionAnnuelle,
-  evolutionParAnnee, indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
+  evolutionParAnnee, compterOrienteursExternes, indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
   rattacherCommune, COMMUNES_47,
 } = require('./gdin-pure.js');
@@ -967,6 +967,21 @@ describe('defautsSaisie', () => {
     const d = defautsSaisie([ligneF()], { retenues: 100, cellules_reparees: 100, lues: 120, ecartees: 20 });
     assert.equal(d.find(x => x.libelle.startsWith('Cellules')).part, 100);
     assert.equal(d.find(x => x.libelle.startsWith('Lignes écartées')).part, 16.7);
+  });
+});
+
+describe('compterOrienteursExternes (AG-004, décision 3)', () => {
+  const r = o => ({ orienteur: o });
+  it('exclut les conseillers, « ? » et les blancs', () => {
+    const recs = [r('Externe A'), r('Externe A'), r('Conseiller X'), r('?'), r(''), r('  '), r(undefined), r('Externe B ')];
+    assert.equal(compterOrienteursExternes(recs, new Set(['Conseiller X'])), 2);
+  });
+  it('sans liste de conseillers, ne retire que les valeurs vides', () => {
+    assert.equal(compterOrienteursExternes([r('A'), r('B'), r('?')]), 2);
+  });
+  it('jeu vide ou null', () => {
+    assert.equal(compterOrienteursExternes([], new Set()), 0);
+    assert.equal(compterOrienteursExternes(null), 0);
   });
 });
 

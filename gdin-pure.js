@@ -1374,6 +1374,20 @@ function evolutionParAnnee(records,dateMax){
   return annees.map(a=>evolutionAnnuelle(acc,a,dateMax));
 }
 
+// Orienteurs externes : référents distincts, hors vides, hors « ? », hors conseillers
+// numériques. Une seule définition pour toutes les tuiles « Orienteurs actifs » et
+// le texte « TS orienteurs » (AG-004, décision 3 : 25 comptait deux conseillers,
+// la diapo TS orienteurs en annonçait 23). `conseillers` : Set des noms (ORI_EXCL).
+function compterOrienteursExternes(records,conseillers){
+  const exclus=conseillers||new Set();
+  const vus=new Set();
+  (records||[]).forEach(r=>{
+    const o=String((r&&r.orienteur)||'').trim();
+    if(o&&o!=='?'&&!exclus.has(o))vus.add(o);
+  });
+  return vus.size;
+}
+
 // ─── Demandes distinctes ──────────────────────────────────────────────────────
 // Une demande (N° Demande) génère plusieurs lignes d'action : compter les lignes
 // n'est pas compter les demandes. Couvert par les tests « countDemandes ».
@@ -1384,7 +1398,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,evolutionParAnnee,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,retirerMotifs,baseAncienne,completerRangs,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,evolutionParAnnee,compterOrienteursExternes,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,retirerMotifs,baseAncienne,completerRangs,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,lignesAvecThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,dateFr,mentionRevisabilite,decouperNombre,formaterCommeNombre,cleDoublon,compterDoublons,moisDeLaPeriode,libelleLignes,LIBELLE_LIGNES,
