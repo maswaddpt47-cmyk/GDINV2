@@ -5,25 +5,18 @@ des 27, 28 et 29/10/2026 : ce qui est fait, et ce que dit déjà `CLAUDE.md`,
 sont retirés. Texte complet : `git log -p CHANTIERS.md`.
 
 **À faire en premier, dans cet ordre** (état du 29/10/2026, fin de session) :
-0. **Registre RGPD V0.2** (`GDINV2-BACKUP/rgpd/`) : demandé par l'utilisateur,
-   **en cours**. Le `.docx` V0.2 se génère depuis la V0.1 (motif retiré, JSON
-   retiré, six défauts, origine partagée, décisions 3 et 4) ; il reste à
-   convertir en PDF et en `.md`, ranger la V0.1 dans `rgpd/historique/`, mettre
-   à jour le `README.md` de `GDINV2-BACKUP`, puis pousser. Vérifier avec
-   `git -C GDINV2-BACKUP status` ce qui a déjà été fait.
-0bis. **Répondre à l'utilisateur** (questions posées le 29/10, sans réponse
-   encore) : quelles copies remplacer (copie déposée sur Nextcloud + dossier
-   extrait de chaque agent) ; ce que change un autre domaine (adresse, données
-   du navigateur propres à chaque domaine donc à réimporter ; GitHub reste le
-   dépôt du code). Options : fermer la version en ligne (recommandé, déjà voulu
-   par le DSI) ou un autre domaine ; **c'est son choix**.
-1. **Trancher l'origine partagée** (voir « À trancher ») : l'audit XSS de
-   Codex du 29/10/2026 est fait et ses trois défauts sont corrigés ; reste
-   l'impact d'une XSS sur les autres applications du même domaine GitHub Pages.
-2. Faire contrôler à l'œil par l'utilisateur les **correctifs d'AG-004**
+0. **Registre RGPD V0.2 : fait** (29/10, `GDINV2-BACKUP` `b17afdb`). Reste à
+   valider par le DPO.
+1. **Copies à remplacer** (expliqué à l'utilisateur le 29/10) : la copie déposée
+   sur Nextcloud et le dossier extrait de chaque agent. L'archive n'est
+   fabriquée par aucun script du dépôt : demander comment il la produit.
+2. **Trancher l'origine partagée** (voir « À trancher ») : options expliquées le
+   29/10 (fermer la version en ligne, recommandé et voulu par le DSI, ou autre
+   domaine) ; **choix de l'utilisateur**, pas encore fait.
+3. Faire contrôler à l'œil par l'utilisateur les **correctifs d'AG-004**
    (`6b77162`), puis établir avec lui le **tableau « affiché / recompté /
    écart »** sur son export. Aucun chiffre concerné n'est « vérifié » avant.
-3. Contrôler à l'œil la **mention de révisabilité** (en ligne, voir AG-002).
+4. Contrôler à l'œil la **mention de révisabilité** (en ligne, voir AG-002).
 
 **Hors dépôt, pour l'utilisateur seul** : deux questions au référent archives et
 au DPO (où et combien de temps sont conservés les dossiers de bilan) : elles
