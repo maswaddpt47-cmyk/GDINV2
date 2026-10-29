@@ -7,9 +7,11 @@ sont retirés. Texte complet : `git log -p CHANTIERS.md`.
 **À faire en premier, dans cet ordre** (état du 29/10/2026, fin de session) :
 0. **Registre RGPD V0.2 : fait** (29/10, `GDINV2-BACKUP` `b17afdb`). Reste à
    valider par le DPO.
-1. **Copies à remplacer** (expliqué à l'utilisateur le 29/10) : la copie déposée
-   sur Nextcloud et le dossier extrait de chaque agent. L'archive n'est
-   fabriquée par aucun script du dépôt : demander comment il la produit.
+1. **Copies à remplacer** : l'utilisateur ne fabrique **aucune archive** (précisé
+   le 29/10) : il téléverse sur Nextcloud les derniers fichiers (`index.html`,
+   `gdin-pure.js`, `vendor/`), et le ZIP n'est qu'un effet du téléchargement du
+   dossier par Nextcloud. À faire : redéposer la version du 29/10/2026, puis
+   chaque agent retélécharge, extrait au même endroit et fait Ctrl+F5.
 2. **Trancher l'origine partagée** (voir « À trancher ») : options expliquées le
    29/10 (fermer la version en ligne, recommandé et voulu par le DSI, ou autre
    domaine) ; **choix de l'utilisateur**, pas encore fait.
