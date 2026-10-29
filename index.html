@@ -2781,7 +2781,7 @@ function renderRapport(){
   if(btnDiapoRpt)btnDiapoRpt.style.display='inline-block';
   const f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;
   document.getElementById('rpt-title').textContent=`${conum} — ${cms}`;
-  document.getElementById('rpt-sub').textContent=`${data.length} accompagnements · ${mentionCourante()}`;
+  document.getElementById('rpt-sub').textContent=`${data.length} accompagnements · ${mentionCourante()}${mentionAttribution(data)?` · ⚠ ${mentionAttribution(data)}`:''}`;
   const oriCount=compterOrienteursExternes(data,ORI_EXCL);
   const topThema=Object.keys(countThemas(data))[0]||'—';
   // Délais depuis ACTIONS_DATA
@@ -2968,7 +2968,7 @@ function buildRptBilan(conum,cms,data,dataConum){
   const p2=`Les thématiques principales, en part des accompagnements qui les portent, sont : ${themasStr}. <strong>${txC}%</strong> des accompagnements sont à l'état « Réalisée ».`;
   const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur l'année ${nYear} vs ${nPrevYear}, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Réactivité : <strong style="color:${p48Color}">${p48}%</strong> des demandes calculables (${r48} sur ${t48}) ont reçu un premier contact en 2 jours ouvrés au plus, fériés non retirés${R48.sansContact?` ; ${R48.sansContact} demande${R48.sansContact>1?'s':''} sans contact renseigné ne ${R48.sansContact>1?'sont':'est'} pas comptée${R48.sansContact>1?'s':''}`:''}.`:''}`;
 
-  document.getElementById('rpt-bilan-text').innerHTML=`<p style="margin-bottom:9px">${p1}</p><p style="margin-bottom:9px">${p2}</p><p>${p3}</p>`;
+  document.getElementById('rpt-bilan-text').innerHTML=`<p style="margin-bottom:9px">${p1}</p><p style="margin-bottom:9px">${p2}</p><p>${p3}</p>${mentionAttribution(data)?`<p style="margin-top:9px;color:var(--orange)">⚠ ${esc(mentionAttribution(data))}.</p>`:''}`;
 }
 
 // IMPORT
@@ -4697,7 +4697,7 @@ function drSlideCover(c,data){
         <div style="width:1px;background:var(--border)"></div>
         <div style="text-align:center"><div style="font-size:32px;font-weight:700;color:var(--orange);font-family:'JetBrains Mono',monospace">${fin}</div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px">Fin période</div></div>
       </div>
-      <div style="font-size:10px;color:var(--dim);margin-top:20px;line-height:1.6">Généré le ${new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}<br>${esc(mentionCourante(years?years.split(', '):undefined))}</div>
+      <div style="font-size:10px;color:var(--dim);margin-top:20px;line-height:1.6">Généré le ${new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}<br>${esc(mentionCourante(years?years.split(', '):undefined))}${mentionAttribution(data)?`<br><span style="color:var(--orange)">⚠ ${esc(mentionAttribution(data))}</span>`:''}</div>
     </div>`;
 }
 
@@ -5197,6 +5197,7 @@ function drSlideBilan(c,data,allDataConum){
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:2px">Bilan &amp; Perspectives</div>
       <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px;font-family:'Space Grotesk',sans-serif;font-size:20px">${conumNameHtml(drConum,cnColor)}</div>
       <div style="display:flex;align-items:center;margin-bottom:16px"><span style="font-size:11px;color:var(--muted)">${esc(drCms)} · ${years.join(', ')}</span>${drQ(insightBilan)}</div>
+      ${mentionAttribution(data)?`<div style="font-size:12px;color:var(--orange);margin:-8px 0 14px">⚠ ${esc(mentionAttribution(data))}</div>`:''}
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
         ${[[total,'Accompagnements','var(--blue)'],[txC+'%','Accompagnements réalisés','var(--green)'],[trend,`Évol. ${nYear} / ${nPrevYear}${EVO.partielle?` (au ${EVO.coupure})`:''}`,trendColor],[communes,'Communes couvertes','var(--cyan)'],[orienteurs,'Orienteurs actifs (hors conseillers)','var(--purple)'],[p48!==null?p48+'%':'—',`Réactivité 48h · ${r48}/${t48} demandes calculables${R48.sansContact?` · ${R48.sansContact} sans contact renseigné`:''}`,p48Color]].map(([v,l,col])=>`
           <div style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;border-top:2px solid ${col}">

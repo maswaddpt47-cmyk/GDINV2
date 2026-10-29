@@ -9,7 +9,7 @@ const {
   numeroterParticipants, cleFusion, numeroterLignes, fusionnerImport, attribuerConum, deriverAttributionCms,
   neutraliserFormule, celluleCSV, retirerMotifs, baseAncienne, completerRangs,
   categorieEtat, repartitionEtats, deriverActions, delaisParDemande, reactivite48, dansPeriode, tauxRealisation, filtrerParType, evolutionAnnuelle,
-  evolutionParAnnee, compterOrienteursExternes, indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
+  evolutionParAnnee, compterOrienteursExternes, mentionAttribution, indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
   rattacherCommune, COMMUNES_47,
 } = require('./gdin-pure.js');
@@ -968,6 +968,24 @@ describe('defautsSaisie', () => {
     assert.equal(d.find(x => x.libelle.startsWith('Cellules')).part, 100);
     assert.equal(d.find(x => x.libelle.startsWith('Lignes écartées')).part, 16.7);
   });
+});
+
+describe('mentionAttribution (AG-004, décision 5)', () => {
+  const r = (conum, ded) => ({ conum, conum_deduit: ded, date_demande: '2025-03-01', type_action: ['Accompagnement'], id_demande: '1' });
+  it('rien en dessous de 25 % de lignes déduites', () => {
+    const recs = [...Array(8).fill(0).map(() => r('A', false)), r('A', true)];   // 1 sur 9 = 11,1 %
+    assert.equal(mentionAttribution(recs), '');
+  });
+  it('à partir de 25 % : le pourcentage et la mise en garde', () => {
+    const recs = [r('A', false), r('A', true)];                                  // 50 %
+    assert.match(mentionAttribution(recs), /^50 % des lignes sont rattachées à ce conseiller par déduction/);
+    assert.match(mentionAttribution(recs), /pas présenter comme une mesure individuelle/);
+  });
+  it('le seuil est inclus : 25 % exactement', () => {
+    const recs = [r('A', false), r('A', false), r('A', false), r('A', true)];    // 25 %
+    assert.notEqual(mentionAttribution(recs), '');
+  });
+  it('jeu vide : rien', () => assert.equal(mentionAttribution([]), ''));
 });
 
 describe('compterOrienteursExternes (AG-004, décision 3)', () => {
