@@ -146,6 +146,36 @@ autrement.
 
 ## Blocs ouverts
 
+## AG-007 — Retirer le motif et les fichiers JSON sans perdre l'historique — ouvert le 29/10/2026
+**Auteur** : Codex (OpenAI), session d'implémentation — lu sur `e4d594b` et
+les changements locaux préparés avant la pause demandée par l'utilisateur.
+**Proposition** : appliquer ses choix explicites : ne plus conserver le
+motif, retirer l'import/export de fichiers JSON, garder le stockage interne
+et la reconstruction par fichier source XLS/XLSX.
+**Critère déclencheur** : n° 1 (mapping et contrat de stockage), n° 6
+(retrait d'un champ des anciennes bases), n° 7 (diagnostic de doublons).
+**Ce que ça engage** : les commentaires anciens sont retirés des copies
+du navigateur, sans supprimer les lignes ni changer les clés de fusion,
+rangs et révisions. Les anciens fichiers sur disque restent inchangés.
+Sans numéro de demande ou date d'action, deux lignes auparavant distinguées
+par leur motif peuvent désormais être signalées comme doublons suspects ;
+aucune ligne n'est supprimée par ce diagnostic et les volumes restent égaux.
+Le passage sur un autre poste nécessite une source couvrant tout l'historique.
+**Décision déjà donnée par l'utilisateur** : motif inutile à exclure ;
+JSON non primordial à désactiver ; reprise de l'ensemble demandée le
+29/10/2026. Ce bloc consigne l'effet sur le diagnostic, sans nouvelle règle
+de comptage métier, durée de conservation ou purge automatique.
+**Non vérifié par l'auteur** : aucun export réel ni recomptage des chiffres
+du service ; suite navigateur non exécutée, environnement bloqué. Les tests
+Node et la revue technique de sous-agents ne valent pas réponse AGORA d'une
+autre session indépendante. Aucun changement publié à l'ouverture du bloc.
+**Si personne ne répond, je fais quoi ?** Continuer les choix autorisés et
+leurs contrôles locaux ; conserver le bloc pour contradiction. Ne pas
+annoncer de validation navigateur ni d'exactitude des chiffres réels.
+**Où regarder** : `gdin-pure.js` (`parseRows`, `cleDoublon`, `retirerMotifs`),
+`index.html` (`initData`, `nettoyerMotifsStockes`, `handleAutoImport`,
+`saveToStorage`, `exportCSV`), `stockage.test.js`, `tests-e2e.spec.js`.
+
 ## AG-002 — Un total arrêté à une date n'est pas stable — ouvert le 22/10/2026
 **Auteur** : session A — lu sur `1438398`
 **Proposition** : le dashboard doit dire, à côté de tout total filtré par

@@ -529,7 +529,7 @@ function normHeader(s){return String(s).toLowerCase().replace(/\s+/g,' ').trim()
 function mapColonnes(hdrsRaw){
   const hdrs=(hdrsRaw||[]).map(normHeader);
   const ci=(...hints)=>hdrs.findIndex(h=>hints.some(hint=>h.includes(normHeader(hint))));
-  return {commune:ci('commune'),motif:ci('motif'),type:ci('type action',"type d'action"),
+  return {commune:ci('commune'),type:ci('type action',"type d'action"),
     lieu:ci('lieu / cms','lieu/cms'),dateAct:ci('date action'),
     orienteur:(()=>{const r=ci('referent');return r>=0?r:ci('orienteur','prescripteur');})(),
     dateDem:ci('date demande'),conum:ci('conseiller num'),themas:ci('thematique'),
@@ -597,7 +597,7 @@ function parseRows(rows){
     records.push({date_demande:dd,date_action:da,id_demande:cell(c,I.nDem),conum:conumSource,
       conum_origine:conumSource&&conumSource!=='?'?'source':'',
       cms,lieu_raw:lieuRaw,structure:structureRaw,commune:cell(c,I.commune),themas,type_action:types,
-      orienteur:cell(c,I.orienteur),motif:cell(c,I.motif).slice(0,120),
+      orienteur:cell(c,I.orienteur),
       benef_connu:cell(c,I.benef).toLowerCase()==='oui',urgence:cell(c,I.urgence).toLowerCase()==='oui',
       etat,date_planifiee:excelDate(cell(c,I.datePlanif))||null,
       date_realisation:excelDate(cell(c,I.dateReal))||null});
@@ -754,7 +754,7 @@ function isRealisee(etat){return normEtat(etat)==='realisee';}
 function cleDoublon(r){
   if(r.id_demande&&r.date_action)
     return`id:${r.id_demande}|da:${r.date_action}|${(r.type_action||[]).slice().sort().join('+')}`;
-  return`${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.orienteur||''}|${(r.motif||'').slice(0,30)}`;
+  return`${r.date_demande}|${r.date_action||''}|${r.conum||''}|${r.orienteur||''}`;
 }
 // Les ateliers sont exclus : cleDoublon() donne la même clé à tous les
 // participants d'une séance, puisque le nom du bénéficiaire n'entre pas dans
@@ -1182,8 +1182,8 @@ function moisDeLaPeriode(debut,fin,annees){
 // ─── Export CSV : neutraliser les formules ────────────────────────────────────
 // Entourer un champ de guillemets protège la structure du CSV, pas son
 // interprétation : Excel et LibreOffice évaluent une cellule qui commence par
-// = + - @ (ou une tabulation / un retour chariot) comme une formule. Le motif
-// est du texte libre venu de l'export : un fichier piégé suffit. L'apostrophe
+// = + - @ (ou une tabulation / un retour chariot) comme une formule. Un texte
+// venu d'un fichier piégé suffit. L'apostrophe
 // de tête force le texte. Audit du 20/10/2026, constat 12.
 function neutraliserFormule(v){
   const t=String(v==null?'':v);
@@ -1246,7 +1246,6 @@ function validerSauvegardeJSON(payload){
       themas:liste(r.themas,'themas',i,120),
       type_action:liste(r.type_action,'type_action',i,120),
       orienteur:txt(r.orienteur,200,'orienteur',i,false),
-      motif:txt(r.motif,120,'motif',i,false),
       benef_connu:r.benef_connu===true,
       urgence:r.urgence===true,
       etat:r.etat==null||r.etat===''?null:txt(r.etat,40,'etat',i,false),
@@ -1262,6 +1261,16 @@ function validerSauvegardeJSON(payload){
     return o;
   });
   return records;
+}
+
+// Anciennes bases : supprimer le texte libre sans toucher aux lignes ni à leur
+// identité. Le nettoyage en place laisse intacts rangs, provenance et références.
+function retirerMotifs(records){
+  let n=0;
+  (records||[]).forEach(r=>{
+    if(r&&Object.prototype.hasOwnProperty.call(r,'motif')){delete r.motif;n++;}
+  });
+  return n;
 }
 
 // ─── Bases enregistrées avant l'identité par rang ─────────────────────────────
@@ -1421,7 +1430,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,validerSauvegardeJSON,baseAncienne,completerRangs,dateIsoValide,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,validerSauvegardeJSON,retirerMotifs,baseAncienne,completerRangs,dateIsoValide,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,lignesAvecThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,dateFr,mentionRevisabilite,decouperNombre,formaterCommeNombre,cleDoublon,compterDoublons,moisDeLaPeriode,libelleLignes,LIBELLE_LIGNES,

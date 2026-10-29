@@ -1,6 +1,6 @@
 # Chantiers — GDINV2
 
-État au **28/10/2026** (mesures des audits du 20/10/2026 à leur date). Ménages
+État au **29/10/2026** (mesures des audits du 20/10/2026 à leur date). Ménages
 des 27 et 28/10/2026 : le fait, et ce que dit déjà `CLAUDE.md`, sont retirés ;
 les décisions resserrées. Texte complet : `git log -p CHANTIERS.md`.
 
@@ -38,6 +38,25 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 
 ## Chantiers ouverts
 
+- **Minimisation et fichiers JSON — publiés le 29/10/2026 (AG-007).**
+  Décisions de l'utilisateur : motif exclu du parsing et du CSV ;
+  imports/exports de fichiers JSON retirés (rejet avant toute
+  réinitialisation) ; stockage navigateur conservé. Les anciennes copies
+  localStorage / IndexedDB sont nettoyées de la seule propriété `motif`, sans
+  changer lignes, rangs ni révisions ; un échec est signalé. Fichiers source et
+  exports déjà téléchargés inchangés. Le diagnostic de doublons suspects peut
+  augmenter sans motif (repli sans n° de demande ni date d'action) ; fusion et
+  volumes inchangés. Pas de purge automatique ; cycle DUC/DUA/sort final à fixer
+  au tableau de gestion. Écrit par Codex, relu par Claude (exception `agora.md`
+  §12) : 330 tests Node et suite e2e passées en local ; les tests e2e importent
+  désormais un vrai XLSX (fixture alignée sur le vrai parseur : noms de CMS
+  bruts, thématiques vides au lieu de conseillers vides, car le parseur déduit
+  les conseillers manquants). Ce parcours réaliste a révélé une XSS préexistante
+  dans `renderCms()` (conseiller principal et thématique non échappés),
+  corrigée à part (`e846717`). **Reste** : remplacer les copies applicatives
+  distribuées ; à l'audit XSS, regarder aussi les `setInsightQ` qui écrivent des
+  noms issus du fichier (ex. `index.html:2510`) — non vérifié.
+
 - **CHANGEMENT DE DIFFUSION (27/10/2026, demande du DSI) : deux modes, et
   aucun des deux n'est un serveur web.**
   Le tableau de bord sera déposé sur le **cloud du CD47 — un espace de
@@ -66,8 +85,8 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     depuis un drive arrive souvent en `.zip` — dans ce cas l'extraction est
     obligatoire, sinon les `ERR_FILE_NOT_FOUND` du 27/10/2026 reviennent.
   - **Risque propre au drive, à cadrer** : un espace partagé diffuse ce qu'on
-    y dépose. Si un agent y place un export JSON pour « sauvegarder » ou
-    « partager », les données d'accompagnement — motif en clair compris —
+    y dépose. Si un agent y place un fichier source, un CSV détaillé ou un
+    ancien export JSON pour « sauvegarder » ou « partager », les données
     deviennent lisibles par tous ceux qui ont accès au dossier. Sur une clé le
     risque était la perte ; ici c'est la diffusion silencieuse. **Le dossier
     partagé porte l'application, jamais les données.**
@@ -98,7 +117,8 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   - **La CSP est la seule protection embarquée** hors serveur. Vérifiée en
     `file://` et en production sur Chrome et Edge.
   - **Clé USB** (mesuré le 27/10/2026) : fonctionne, 1,9 Mo ; les données
-    restent dans le navigateur du poste et voyagent par l'export JSON.
+    restent dans le navigateur du poste. Depuis le 29/10/2026, un autre
+    poste doit réimporter un fichier source couvrant l'historique souhaité.
 
 - **AG-004 — correctifs appliqués le 22/10/2026 (`6b77162`), recomptage à
   faire.** Décisions de l'utilisateur sur les propositions de Codex (détail
@@ -146,11 +166,10 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   n'archive rien.
   **Volet B — bloqué sur une question qui n'est pas technique** : reproduire un
   bilan déjà diffusé demande de conserver ses données, ses filtres et sa
-  version de calcul. L'export JSON actuel ne porte ni les filtres de lecture,
-  ni la version (le `?v=<sha>` du workflow n'est lisible par aucune variable
-  JS), ni la date d'import. Avant d'écrire une ligne, deux réponses à obtenir
+  version de calcul. L'ancien export JSON ne portait ni les filtres de lecture,
+  ni la version de calcul, ni la date d'import ; il est retiré. Avant de créer un archivage, deux réponses à obtenir
   auprès du référent archives et du DPO : **où** ces dossiers sont déposés
-  (hors dépôt public, et le `motif` peut contenir un nom malgré la troncature)
+  (hors dépôt public ; des anciens exports peuvent encore contenir le motif)
   et **combien de temps** ils sont conservés — la durée doit figurer au tableau
   de gestion et toute élimination passe par le visa des Archives
   départementales, purge automatique comprise (MD-LIB `archivage-cd47.md`).
@@ -210,9 +229,10 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
 - **Sauvegarde** `gdin_snap_v4` dans localStorage ET IndexedDB, la révision la
   plus récente gagne ; écritures en file invalidées par `_storageEpoch` ; ne
   jamais supprimer l'ancienne copie avant le succès de la nouvelle.
-- **JSON importé** validé en entier (`validerSauvegardeJSON`) : une ligne
-  invalide rejette le fichier ; « Réinitialiser et importer » =
-  `pendingData.reset`, jamais une globale.
+- **Fichiers JSON** : import/export désactivés sur demande de l'utilisateur,
+  y compris glisser-déposer et remplacement ; sérialisation interne du
+  navigateur conservée. « Réinitialiser et importer » = `pendingData.reset`,
+  jamais une globale. Ne pas confondre copie du fichier XLSX et base source.
 - **États** : `categorieEtat()` ; « En cours » normalisé en « En attente ».
 - **Réactivité par demande** (`deriverActions`, `delaisParDemande`, seuil 20
   demandes, AG-004, 22/10/2026) ; sans contact valide = « sans contact ».

@@ -252,7 +252,7 @@ function main() {
       ? '  ✗ ALERTE : ces champs sont importés dans l\'application : ' + fuite.join(', ')
       : '  ✓ Aucune n\'est importée dans l\'application (minimisation respectée).');
   } else console.log('  Aucune colonne nominative détectée dans le fichier source.');
-  console.log('  Rappel : le champ « motif » est du texte libre, relisez-le avant projection.\n');
+  console.log('  Le champ « motif » est écarté du parsing et des données conservées.\n');
 }
 
 main();

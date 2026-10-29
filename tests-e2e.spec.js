@@ -12,7 +12,7 @@ const path = require('path');
 
 const PAGE_URL = `file://${path.resolve(__dirname, 'index.html')}`;
 
-// Données de test minimales au format JSON GDIN
+// Données fictives utilisées pour produire de vrais exports source XLSX.
 const TEST_RECORDS = [
   { date_demande:'2025-03-10', date_action:'2025-03-12', conum:'Dupont Jean',
     cms:'CMS Agen', lieu_raw:'CMS Agen', commune:'Agen', themas:['Numérique de base'],
@@ -30,13 +30,6 @@ const TEST_RECORDS = [
     benef_connu:false, urgence:true, etat:'En attente',
     date_planifiee:null, date_realisation:null, id_demande:'003' },
 ];
-
-const TEST_JSON = JSON.stringify({
-  type: 'gdin-data',
-  version: 1,
-  source_filename: 'test_gdin.xlsx',
-  data: TEST_RECORDS,
-});
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -76,6 +69,36 @@ async function dismissLanding(page) {
   await btn.waitFor({ state: 'visible', timeout: 8000 });
   await btn.click();
   await page.waitForSelector('#landing-overlay', { state: 'hidden', timeout: 5000 });
+}
+
+/** Construit un fichier source avec SheetJS et suit le vrai parcours d'import. */
+async function importerRecords(page, records = TEST_RECORDS, filename = 'test_gdin.xlsx') {
+  const avant = await page.evaluate(({ records, filename }) => {
+    const revision = _derniereRev;
+    const entetes = ['N° Demande', 'Date demande', 'Date action', 'Type Action', 'Lieu / CMS',
+      'Commune', 'Conseiller numérique', 'Thématique(s)', 'Référent', 'Structure orienteur',
+      "Libellé de l'état de l'action", "Date planifiée de l'action", "Date de réalisation de l'action",
+      'Bénéficiaire connu', 'Urgence', 'Motif', 'Nom bénéficiaire', 'Téléphone bénéficiaire',
+      'Email bénéficiaire', 'Observation'];
+    const lignes = records.map(r => [
+      r.id_demande || '', r.date_demande || '', r.date_action || '', (r.type_action || []).join(';'),
+      r.lieu_raw || r.cms || '', r.commune || '', r.conum || '', (r.themas || []).join('/'),
+      r.orienteur || '', r.structure || '', r.etat || '', r.date_planifiee || '', r.date_realisation || '',
+      r.benef_connu ? 'Oui' : 'Non', r.urgence ? 'Oui' : 'Non', r.motif || '',
+      r.nom_beneficiaire || '', r.telephone || '', r.email || '', r.observation || '',
+    ]);
+    const classeur = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(classeur, XLSX.utils.aoa_to_sheet([entetes, ...lignes]), 'GDIN');
+    const contenu = XLSX.write(classeur, { bookType: 'xlsx', type: 'array' });
+    handleAutoImport(new File([contenu], filename,
+      { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    return revision;
+  }, { records, filename });
+  await page.waitForFunction(({ filename, avant }) => dataSource === 'imported' &&
+    importMeta.filename === filename && _derniereRev > avant && pendingData === null &&
+    document.getElementById('cs-label').textContent.includes('Fusion réussie'),
+  { filename, avant }, { timeout: 15000 });
+  await page.evaluate(async () => { await _storageQueue; });
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -163,7 +186,7 @@ test.describe('Données intégrées (sans import)', () => {
 
 });
 
-test.describe('Import JSON → comportement post-import', () => {
+test.describe('Import XLSX → comportement post-import', () => {
 
   test.beforeEach(async ({ page }) => {
     await loadFresh(page);
@@ -174,77 +197,42 @@ test.describe('Import JSON → comportement post-import', () => {
    * C'est le test qui aurait détecté le bug corrigé aujourd'hui :
    * après import, l'app doit naviguer vers Vue globale.
    */
-  test('après import JSON → redirection automatique vers Vue globale', async ({ page }) => {
+  test('après import XLSX → redirection automatique vers Vue globale', async ({ page }) => {
     // Naviguer vers le panel import
     await page.locator('.sb-item[onclick*="import"]').click();
     await expect(page.locator('#panel-import')).toHaveClass(/active/);
 
-    // Injecter directement les données JSON via la fonction d'import
-    await page.evaluate((jsonStr) => {
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const file = new File([blob], 'test_gdin.json', { type: 'application/json' });
-      window.handleAutoImport(file);
-    }, TEST_JSON);
+    // Importer un véritable fichier source XLSX.
+    await importerRecords(page);
 
-    // Après 1,5s (délai import + redirect 400ms), panel-global doit être actif
-    await page.waitForTimeout(1500);
+    // La redirection est différée après la sauvegarde.
     await expect(page.locator('#panel-global')).toHaveClass(/active/, { timeout: 3000 });
   });
 
-  test('après import JSON → KPIs affichent les données importées', async ({ page }) => {
-    await page.evaluate((jsonStr) => {
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const file = new File([blob], 'test_gdin.json', { type: 'application/json' });
-      window.handleAutoImport(file);
-    }, TEST_JSON);
+  test('après import XLSX → KPIs affichent les données importées', async ({ page }) => {
+    await importerRecords(page);
 
-    await page.waitForTimeout(1500);
-
-    // Les KPIs doivent afficher des nombres > 0 (3 enregistrements importés)
-    const kpiValues = page.locator('#kpi-global .kpi-value');
-    const count = await kpiValues.count();
-    expect(count).toBeGreaterThan(0);
-    // Au moins un KPI doit valoir plus de 0
-    let hasNonZero = false;
-    for (let i = 0; i < count; i++) {
-      const txt = await kpiValues.nth(i).textContent();
-      const num = parseInt((txt || '').replace(/\D/g, ''), 10);
-      if (num > 0) { hasNonZero = true; break; }
-    }
-    expect(hasNonZero).toBe(true);
+    expect(await page.evaluate(() => DATA.length)).toBe(TEST_RECORDS.length);
+    // Le filtre par défaut conserve les deux accompagnements parmi les trois lignes.
+    await expect(page.locator('#kpi-global .kpi-value').first()).toHaveText('2');
   });
 
-  test('après import JSON → FAB import disparaît', async ({ page }) => {
-    await page.evaluate((jsonStr) => {
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const file = new File([blob], 'test_gdin.json', { type: 'application/json' });
-      window.handleAutoImport(file);
-    }, TEST_JSON);
+  test('après import XLSX → FAB import disparaît', async ({ page }) => {
+    await importerRecords(page);
 
-    await page.waitForTimeout(1000);
     await expect(page.locator('#fab-import')).toBeHidden();
   });
 
-  test('après import JSON → badge source mis à jour', async ({ page }) => {
-    await page.evaluate((jsonStr) => {
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const file = new File([blob], 'test_gdin.json', { type: 'application/json' });
-      window.handleAutoImport(file);
-    }, TEST_JSON);
+  test('après import XLSX → badge source mis à jour', async ({ page }) => {
+    await importerRecords(page);
 
-    await page.waitForTimeout(1000);
     const badge = page.locator('#data-source-badge');
-    await expect(badge).toContainText('test_gdin.json');
+    await expect(badge).toContainText('test_gdin.xlsx');
   });
 
-  test('après import JSON → bannière démo masquée', async ({ page }) => {
-    await page.evaluate((jsonStr) => {
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const file = new File([blob], 'test_gdin.json', { type: 'application/json' });
-      window.handleAutoImport(file);
-    }, TEST_JSON);
+  test('après import XLSX → bannière démo masquée', async ({ page }) => {
+    await importerRecords(page);
 
-    await page.waitForTimeout(1000);
     await expect(page.locator('#import-banner')).toBeHidden();
   });
 
@@ -307,17 +295,11 @@ test.describe('Classement des communes', () => {
       benef_connu: false, urgence: false, etat: 'Réalisée',
       date_planifiee: '2025-03-10', date_realisation: '2025-03-12', id_demande: 'id' + i,
     }));
-  const JSON_COMMUNES = JSON.stringify({
-    type: 'gdin-data', version: 1, source_filename: 'communes.json', data: RECS,
-  });
 
   test('un libellé numérique ne passe pas devant la commune la plus fréquente', async ({ page }) => {
     await loadFresh(page);
     await dismissLanding(page);
-    await page.evaluate((json) => {
-      const blob = new Blob([json], { type: 'application/json' });
-      window.handleAutoImport(new File([blob], 'communes.json', { type: 'application/json' }));
-    }, JSON_COMMUNES);
+    await importerRecords(page, RECS, 'communes.xlsx');
     await page.waitForFunction(() => typeof DATA !== 'undefined' && DATA.length === 8, { timeout: 10000 });
 
     const classement = await page.evaluate(() => countEntries(DATA, 'commune'));
@@ -328,10 +310,7 @@ test.describe('Classement des communes', () => {
   test('l\'ancien comportement reste reproductible, donc la correction porte', async ({ page }) => {
     await loadFresh(page);
     await dismissLanding(page);
-    await page.evaluate((json) => {
-      const blob = new Blob([json], { type: 'application/json' });
-      window.handleAutoImport(new File([blob], 'communes.json', { type: 'application/json' }));
-    }, JSON_COMMUNES);
+    await importerRecords(page, RECS, 'communes.xlsx');
     await page.waitForFunction(() => typeof DATA !== 'undefined' && DATA.length === 8, { timeout: 10000 });
 
     // count() rend toujours un objet : « 47 » y remonte en tête. C'est
@@ -434,6 +413,9 @@ test.describe('Garde-fous IndexedDB — contre-preuve', () => {
 function jeuDeTest() {
   const rec = [];
   const cms = ['CMS Marmande', 'CMS Agen Tapie', 'CMS Nérac'];
+  // Libellés bruts du fichier source : le parseur ne reconnaît pas « CMS Marmande »
+  // tel quel, il le range en « Autre structure » (CMS_MAP_RAW, gdin-pure.js).
+  const lieuxSource = ['Centre Médico-Social de Marmande', 'Centre Médico-Social Agen Tapie', 'CMS Nérac'];
   const conseillers = ['NOM-A Prenom', 'NOM-B Prenom'];
   const themas = ['Logement', 'Emploi', 'Santé'];
   for (let a = 0; a < 3; a++) {
@@ -449,8 +431,10 @@ function jeuDeTest() {
         date_action: `${annee}-0${(i % 9) + 1}-2${i % 9}`,
         id_demande: `${annee}${i}`,
         conum: conumVide ? '' : conseillers[i % 2],
-        cms: cms[i % 3], lieu_raw: cms[i % 3], structure: '', commune: 'Agen',
-        themas: i % 5 === 0 ? [] : [themas[i % 3]],
+        cms: cms[i % 3], lieu_raw: lieuxSource[i % 3], structure: '', commune: 'Agen',
+        // Le parseur déduit un conseiller manquant : la qualité de saisie qui varie
+        // d'une année à l'autre porte donc sur les thématiques vides.
+        themas: i % (2 + a * 3) === 0 ? [] : [themas[i % 3]],
         type_action: [type], orienteur: 'CAF', motif: '',
         benef_connu: i % 2 === 0, urgence: i % 7 === 0,
         etat: i % 4 === 0 ? 'Non réalisée' : 'Réalisée',
@@ -458,12 +442,11 @@ function jeuDeTest() {
       });
     }
   }
-  return { type: 'gdin-data', data: rec };
+  return rec;
 }
 
 async function importerJeu(page) {
-  await page.evaluate((payload) => { importDataJSON(payload, 'test.json'); }, jeuDeTest());
-  await page.waitForFunction(() => dataSource === 'imported', { timeout: 15000 });
+  await importerRecords(page, jeuDeTest(), 'test.xlsx');
 }
 
 const ONGLETS = ['global', 'evolution', 'par-cms', 'par-conum', 'orienteurs', 'ateliers', 'rapport', 'fiabilite', 'etats'];
@@ -574,10 +557,7 @@ test.describe('Lisibilité des listes déroulantes', () => {
   test('le sélecteur de conseiller est peuplé après import', async ({ page }) => {
     await loadFresh(page);
     await dismissLanding(page);
-    await page.evaluate((json) => {
-      const blob = new Blob([json], { type: 'application/json' });
-      window.handleAutoImport(new File([blob], 'test.json', { type: 'application/json' }));
-    }, TEST_JSON);
+    await importerRecords(page);
     await page.waitForFunction(() => typeof DATA !== 'undefined' && DATA.length > 0, { timeout: 10000 });
     const n = await page.locator('#sel-conum option').count();
     expect(n).toBeGreaterThan(0);
@@ -1211,7 +1191,7 @@ test.describe('Volume par CMS — courbes comparables', () => {
     // Le jeu de test commun ne porte qu'un seul CMS côté accompagnements :
     // il en faut un dédié pour que la propriété soit observable.
     await loadFresh(page); await dismissLanding(page);
-    await page.evaluate(() => {
+    const recs = await page.evaluate(() => {
       const rec = [];
       // Deux CMS aux courbes volontairement inversées d'un mois sur l'autre.
       const plan = { 'CMS Marmande': [9, 2, 9, 2], 'CMS Nérac': [2, 9, 2, 9] };
@@ -1230,9 +1210,9 @@ test.describe('Volume par CMS — courbes comparables', () => {
           }
         });
       });
-      importDataJSON({ type: 'gdin-data', data: rec }, 'croisement.json');
+      return rec;
     });
-    await page.waitForFunction(() => dataSource === 'imported', { timeout: 15000 });
+    await importerRecords(page, recs, 'croisement.xlsx');
     await page.evaluate(() => document.querySelector('[onclick*="\'evolution\'"]').click());
     await page.waitForTimeout(600);
 
@@ -1322,19 +1302,78 @@ test.describe('Parcours complet : réimport, rechargement', () => {
     expect(await page.evaluate(() => DATA.filter(r => r.etat === 'Non réalisée').length)).toBe(0);
   });
 
-  test('le réimport est reconnu aussi après un export JSON puis sa réimportation', async ({ page }) => {
+  test('un XLSX source réimporté après rechargement conserve lignes, rangs et provenance', async ({ page }) => {
     await loadFresh(page); await dismissLanding(page);
-    await importerFichier(page);
-    await page.evaluate(async () => {
-      const payload = JSON.parse(JSON.stringify({ version: '2', type: 'gdin-data', data: DATA }));
-      await importDataJSON(payload, 'sauvegarde.json');
-    });
-    await importerFichier(page);
-    expect(await nbLignes(page)).toBe(7);
+    await importerRecords(page);
+    const avant = await page.evaluate(() => DATA.map(r => ({ id:r.id_demande, rang:r.rang_ligne, origine:r.conum_origine })));
+    await page.reload();
+    await page.waitForFunction(() => typeof DATA !== 'undefined' && dataSource === 'imported' && DATA.length === 3);
+    await dismissLanding(page);
+    await importerRecords(page);
+    expect(await nbLignes(page)).toBe(TEST_RECORDS.length);
+    expect(await page.evaluate(() => DATA.map(r => ({ id:r.id_demande, rang:r.rang_ligne, origine:r.conum_origine })))).toEqual(avant);
   });
 });
 
 test.describe('Sauvegarde et réinitialisation cohérentes', () => {
+
+  test('les anciens motifs disparaissent des quatre copies et de l’export CSV', async ({ page }) => {
+    await loadFresh(page); await dismissLanding(page);
+    const records = TEST_RECORDS.map((r, i) => ({
+      ...r, motif: `MOTIF_PRIVE_TEST_${i}`, conum_origine: 'source', rang_ligne: i + 1,
+    }));
+    const meta = { filename: 'ancien-test.xls', count: records.length, years: ['2025'], date: '28/10/2026' };
+    const nettoyes = records.map(({ motif, ...r }) => r);
+    await page.evaluate(async ({ records, meta }) => {
+      await _storageQueue;
+      localStorage.setItem('gdin_snap_v4', JSON.stringify({ schema: 2, rev: 100, records, meta }));
+      localStorage.setItem('gdin_data_v3', JSON.stringify(records));
+      localStorage.setItem('gdin_meta_v3', JSON.stringify(meta));
+      // Écriture brute : saveToStorage nettoierait déjà les données à amorcer.
+      if (!await _idbPut('gdin_snap_v4', { schema: 2, rev: 200, records, meta }) ||
+          !await _idbPut('gdin_data_v3', records) || !await _idbPut('gdin_meta_v3', meta)) {
+        throw new Error('Amorçage IndexedDB impossible');
+      }
+    }, { records, meta });
+
+    await page.reload();
+    await page.waitForFunction(() => typeof DATA !== 'undefined' && dataSource === 'imported' && DATA.length === 3);
+    const etat = await page.evaluate(async () => {
+      await _storageQueue;
+      return {
+        data: DATA.map(r => ({ id: r.id_demande, rang: r.rang_ligne, origine: r.conum_origine, motifPresent: Object.hasOwn(r, 'motif') })),
+        lsSnap: JSON.parse(localStorage.getItem('gdin_snap_v4')),
+        lsAncien: JSON.parse(localStorage.getItem('gdin_data_v3')),
+        lsMeta: JSON.parse(localStorage.getItem('gdin_meta_v3')),
+        idbSnap: await _idbGet('gdin_snap_v4'),
+        idbAncien: await _idbGet('gdin_data_v3'),
+        idbMeta: await _idbGet('gdin_meta_v3'),
+      };
+    });
+    expect(etat.data).toEqual(records.map(r => ({ id: r.id_demande, rang: r.rang_ligne, origine: 'source', motifPresent: false })));
+    expect(etat.lsSnap).toEqual({ schema: 2, rev: 100, records: nettoyes, meta });
+    expect(etat.idbSnap).toEqual({ schema: 2, rev: 200, records: nettoyes, meta });
+    expect(etat.lsAncien).toEqual(nettoyes);
+    expect(etat.idbAncien).toEqual(nettoyes);
+    expect(etat.lsMeta).toEqual(meta);
+    expect(etat.idbMeta).toEqual(meta);
+
+    await dismissLanding(page);
+    async function telecharger(action) {
+      const evenement = page.waitForEvent('download');
+      await page.evaluate(action);
+      const flux = await (await evenement).createReadStream();
+      const morceaux = [];
+      for await (const morceau of flux) morceaux.push(morceau);
+      return Buffer.concat(morceaux).toString('utf8');
+    }
+    await page.evaluate(() => { document.getElementById('typeFilter').value = ''; });
+    const csv = await telecharger(() => exportCSV());
+    const lignes = csv.replace(/^﻿/, '').trimEnd().split(/\r?\n/);
+    expect(lignes[0].split(';')).not.toContain('motif');
+    expect(lignes).toHaveLength(records.length + 1);
+    expect(csv).not.toContain('MOTIF_PRIVE_TEST_');
+  });
 
   test('quota localStorage dépassé : le nouveau jeu est celui rechargé', async ({ page }) => {
     await loadFresh(page); await dismissLanding(page);
@@ -1393,31 +1432,43 @@ test.describe('Sauvegarde et réinitialisation cohérentes', () => {
   test('« réinitialiser et importer » ne reste pas armé après une erreur', async ({ page }) => {
     await loadFresh(page); await dismissLanding(page);
     await importerFichier(page);
-    await page.evaluate(() => { handleAutoImport({ name: 'illisible.json' }, { reset: true }); });
-    await importerFichier(page);                            // import suivant, sans reset
-    expect(await nbLignes(page)).toBe(7);
+    await page.evaluate(() => {
+      handleAutoImport(new File(['{}'], 'refuse.json', { type:'application/json' }), { reset:true });
+    });
+    await expect(page.locator('#import-error-msg')).toContainText('JSON');
+    // Une ID inédite révèle un reset resté armé : il laisserait 1 ligne au lieu de 8.
+    await importerRecords(page, [{ ...TEST_RECORDS[0], id_demande:'nouvelle-demande' }], 'suivant.xlsx');
+    expect(await nbLignes(page)).toBe(8);
   });
 
-  test('un JSON invalide laisse la base active intacte', async ({ page }) => {
+  test('les JSON valides ou malformés sont refusés sans modifier la base ni le stockage', async ({ page }) => {
     await loadFresh(page); await dismissLanding(page);
     await importerFichier(page);
-    const erreur = await page.evaluate(async () => {
-      try { await importDataJSON({ version: '2', type: 'gdin-data', data: [{ date_demande: 'pas une date', cms: 'X' }] }, 'x.json'); return null; }
-      catch (e) { return e.message; }
-    });
-    expect(erreur).toMatch(/date/);
-    expect(await nbLignes(page)).toBe(7);
+    const avant = await page.evaluate(() => ({ data:JSON.stringify(DATA), snap:localStorage.getItem('gdin_snap_v4') }));
+    for (const fichier of [
+      { nom:'ancien.json', texte:JSON.stringify({ type:'gdin-data', version:'2', data:TEST_RECORDS }) },
+      { nom:'malforme.JSON', texte:'{' },
+    ]) {
+      await page.evaluate(({ nom, texte }) => {
+        handleAutoImport(new File([texte], nom, { type:'application/json' }));
+      }, fichier);
+      await expect(page.locator('#import-error-msg')).toContainText('JSON');
+      expect(await page.evaluate(() => ({ data:JSON.stringify(DATA), snap:localStorage.getItem('gdin_snap_v4') }))).toEqual(avant);
+    }
+    expect(await page.evaluate(() => ({ importer:typeof importDataJSON, exporter:typeof exportDataJSON }))).toEqual({ importer:'undefined', exporter:'undefined' });
+    await expect(page.locator('input[accept*=".json"], [onclick*="exportDataJSON"]')).toHaveCount(0);
   });
 
-  test('un JSON ne conserve aucun champ nominatif ajouté', async ({ page }) => {
+  test('un XLSX ne conserve aucune colonne nominative ni motif', async ({ page }) => {
     await loadFresh(page); await dismissLanding(page);
-    await page.evaluate(async (rec) => {
-      await importDataJSON({ version: '2', type: 'gdin-data', data: [{ ...rec, nom_beneficiaire: 'DUPONT', telephone: '0600000000', email: 'a@b.fr' }] }, 'x.json');
-    }, TEST_RECORDS[0]);
+    await importerRecords(page, [{
+      ...TEST_RECORDS[0], nom_beneficiaire:'BENEFICIAIRE_PRIVE_TEST', telephone:'0600000000',
+      email:'prive@example.invalid', observation:'OBSERVATION_PRIVEE_TEST', motif:'MOTIF_PRIVE_TEST',
+    }], 'minimisation.xlsx');
     const champs = await page.evaluate(() => Object.keys(DATA[0]).join(','));
-    expect(champs).not.toMatch(/nom_beneficiaire|telephone|email/);
+    expect(champs).not.toMatch(/nom_beneficiaire|telephone|email|observation|motif/);
     const stocke = await page.evaluate(() => localStorage.getItem('gdin_snap_v4'));
-    expect(stocke).not.toMatch(/DUPONT|0600000000|a@b\.fr/);
+    expect(stocke).not.toMatch(/BENEFICIAIRE_PRIVE_TEST|0600000000|prive@example\.invalid|OBSERVATION_PRIVEE_TEST|MOTIF_PRIVE_TEST/);
   });
 });
 
@@ -1441,7 +1492,7 @@ test.describe('Contenu importé hostile', () => {
         etat: i % 4 ? 'Réalisée' : `Autre ${H}`, date_planifiee: null, date_realisation: `2025-0${(i % 6) + 1}-2${i % 9}`,
       });
     }
-    await page.evaluate(async (data) => { await importDataJSON({ version: '2', type: 'gdin-data', data }, `fichier ${'<b>x</b>'}.json`); }, recs);
+    await importerRecords(page, recs, 'fichier <b>x</b>.xlsx');
     const resultat = await page.evaluate(async ({ H }) => {
       const erreurs = [];
       const garde = (f) => { try { f(); } catch (e) { erreurs.push(String(e.message || e)); } };

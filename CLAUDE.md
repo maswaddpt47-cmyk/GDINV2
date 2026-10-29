@@ -280,30 +280,34 @@ la pire situation.
 ### RGPD & données personnelles
 
 Le dashboard traite des données d'accompagnement d'usagers d'un service
-public départemental. Trois garde-fous sont **déjà dans le code** — les
-casser est le risque principal du projet :
+public départemental. Les références CD47 canoniques (archivage, IA, charte
+graphique et RGPD/sécurité) sont liées dans `AGENTS.md`. Les garde-fous
+suivants sont **déjà dans le code** — les casser est le risque principal du
+projet :
 
 1. **Minimisation à l'import.** `parseXlsText()` (gdin-pure.js) et
    `parseXlsxBinary()` (dans `index.html`) ne retiennent aucune identité de
    bénéficiaire : ni nom, ni prénom, ni adresse, ni téléphone, ni date de
-   naissance. Champs conservés (relevés dans `parseRows()` le 28/10/2026) :
+   naissance. Champs conservés (relevés dans `parseRows()` le 29/10/2026) :
    n° de demande, dates (demande, action, planifiée, réalisation), commune,
    lieu/CMS et structure orienteur bruts, thématiques, type d'action, conum,
-   orienteur, état, urgence, bénéficiaire connu, motif tronqué à 120
-   caractères. **Le n° de demande renvoie au dossier source : les données
-   sont pseudonymisées, pas anonymes.** Registre RGPD (hors dépôt) : V0.1 du
-   28/10/2026, à valider par le DPO.
+   orienteur, état, urgence, bénéficiaire connu. Le texte libre « motif » est
+   exclu du parsing et du CSV. L'import et l'export de fichiers JSON sont
+   désactivés ; le stockage interne du navigateur reste actif. **Le n° de
+   demande renvoie au dossier source : les données ne sont pas anonymes.**
+   Registre RGPD (hors dépôt) : brouillon mis à jour le 29/10/2026, champs
+   inconnus et durées laissés vides, à valider par le service et le DPD.
    **Ne jamais ajouter de colonne nominative au mapping**, même présente
    dans le fichier source.
 2. **`const EMBEDDED=[]` reste vide.** Le repo est public et déployé sur
    GitHub Pages : y commiter un extrait de données réelles les publie sur
    Internet. Les données réelles n'entrent que par import utilisateur, côté
    navigateur.
-3. **Le `motif` est du texte libre** saisi par un agent : il peut contenir un
-   nom ou une situation personnelle malgré la troncature. Il est stocké en
-   clair dans `localStorage` (`gdin_data_v3`) sur le poste. Acceptable en
-   usage local ; à relire avant toute capture, export ou diapo projeté.
-4. **Captures et fichiers envoyés à Claude** (charte IA du CD47 §4,
+3. **Anciennes bases avec `motif`** : ce champ est retiré au chargement et
+   nettoyé dans les copies localStorage / IndexedDB sans supprimer de ligne
+   ni modifier les rangs ou révisions. Un échec de réécriture reste signalé ;
+   les fichiers source et les exports déjà téléchargés ne sont pas modifiés.
+4. **Captures et fichiers envoyés aux outils d'IA** (charte IA du CD47 §4,
    06/10/2026) : jamais un export réel ni une capture du dashboard chargé de
    données réelles ; fichier de test anonymisé ou capture recadrée. Une
    capture avec des données réelles se signale en une ligne.

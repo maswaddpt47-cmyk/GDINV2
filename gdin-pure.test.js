@@ -7,7 +7,7 @@ const {
   cleDoublon, compterDoublons,
   estAtelier, cleSessionAtelier, compterSessionsAtelier, statsAteliers,
   numeroterParticipants, cleFusion, numeroterLignes, fusionnerImport, attribuerConum, deriverAttributionCms,
-  neutraliserFormule, celluleCSV, validerSauvegardeJSON, baseAncienne, completerRangs,
+  neutraliserFormule, celluleCSV, validerSauvegardeJSON, retirerMotifs, baseAncienne, completerRangs,
   categorieEtat, repartitionEtats, deriverActions, delaisParDemande, reactivite48, dansPeriode, tauxRealisation, filtrerParType, evolutionAnnuelle,
   indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
@@ -256,11 +256,11 @@ describe('parseRows — comptage et motifs d\'exclusion', () => {
 });
 
 // ─── RGPD : la minimisation à l'import est vérifiée, pas seulement écrite ──
-// Le fichier source contient nom, téléphone, email et observations du
+// Le fichier source contient nom, téléphone, email, motif et observations du
 // bénéficiaire. Aucun de ces champs ne doit entrer dans l'application.
 describe('parseRows — minimisation RGPD', () => {
   const INTERDITS = ['nom','prenom','prénom','beneficiaire','bénéficiaire','telephone','téléphone',
-    'tel','email','mail','adresse','naissance','observation','nir','securite_sociale'];
+    'tel','email','mail','adresse','naissance','motif','observation','nir','securite_sociale'];
   it('aucun champ nominatif dans les enregistrements produits', () => {
     const r = parseRows([EN_TETES, ligne()]);
     const champs = Object.keys(r.records[0]).map(k => k.toLowerCase());
@@ -268,10 +268,24 @@ describe('parseRows — minimisation RGPD', () => {
     assert.deepEqual(fautifs, [], 'champs nominatifs importés : ' + fautifs.join(', '));
   });
   it('aucune valeur nominative du fichier source ne se retrouve dans un enregistrement', () => {
-    const r = parseRows([EN_TETES, ligne({nom:'DUPONT Jean', tel:'0612345678', email:'jean@exemple.fr', obs:'situation personnelle'})]);
+    const r = parseRows([EN_TETES, ligne({nom:'DUPONT Jean', tel:'0612345678', email:'jean@exemple.fr', motif:'texte libre à écarter', obs:'situation personnelle'})]);
     const dump = JSON.stringify(r.records[0]);
-    ['DUPONT Jean','0612345678','jean@exemple.fr','situation personnelle']
+    ['DUPONT Jean','0612345678','jean@exemple.fr','texte libre à écarter','situation personnelle']
       .forEach(v => assert.ok(!dump.includes(v), 'donnée personnelle importée : ' + v));
+  });
+  it('ignore le motif sans changer les lignes, leur identité ni le réimport', () => {
+    const lignes = [ligne({motif:'texte A'}), ligne({motif:'texte B'}), ligne({n:'2', type:'Atelier', motif:'texte C'})];
+    const sansColonne = lignes.map(c => c.filter((_, i) => i !== 4));
+    const a = parseRows([EN_TETES, ...lignes]).records;
+    const b = parseRows([EN_TETES.filter((_, i) => i !== 4), ...sansColonne]).records;
+    assert.deepEqual(a, b);
+    assert.ok(a.every(r => !Object.hasOwn(r, 'motif')));
+    assert.equal(a.length, 3);
+    assert.equal(countDemandes(a), 2);
+    assert.equal(new Set(a.map(cleFusion)).size, 3);
+    const base = fusionnerImport([], a).records;
+    assert.equal(base.length, 3);
+    assert.equal(fusionnerImport(base, b).ajoutes, 0);
   });
   it('benef_connu reste un booléen, pas une identité', () => {
     const r = parseRows([EN_TETES, ligne({benef:'Oui'})]);
@@ -712,10 +726,11 @@ describe('compterDoublons', () => {
   }, o);
 
   it('ne compte rien sur des lignes distinctes', () => {
-    assert.equal(compterDoublons([l({ motif: 'a' }), l({ motif: 'b' })]), 0);
+    assert.equal(compterDoublons([l({ date_action: '2025-01-02' }), l({ date_action: '2025-01-03' })]), 0);
   });
   it('compte les occurrences au-delà de la première', () => {
-    assert.equal(compterDoublons([l(), l(), l()]), 2);
+    // Le texte libre des anciennes bases ne distingue plus les suspicions.
+    assert.equal(compterDoublons([l({motif:'a'}), l({motif:'b'}), l()]), 2);
   });
   it('distingue par numéro de demande quand il est présent', () => {
     const a = l({ id_demande: '1' }), b = l({ id_demande: '2' });
@@ -1344,8 +1359,19 @@ describe('validerSauvegardeJSON', () => {
     assert.equal(r.telephone, undefined);
     assert.equal(r.id_demande, '7');
   });
-  it('tronque le motif à 120 caractères', () => {
-    assert.equal(validerSauvegardeJSON(payload([{ ...ok, motif: 'x'.repeat(500) }]))[0].motif.length, 120);
+  it('accepte les anciens exports en ignorant leur motif', () => {
+    for (const version of [undefined, '1', '2', 1, 2]) {
+      const ancien = payload([{ ...ok, motif: 'texte libre à écarter', conum_origine:'source', rang_ligne:2 }], version);
+      if (version === undefined) delete ancien.version;
+      const [r] = validerSauvegardeJSON(ancien);
+      assert.equal(Object.hasOwn(r, 'motif'), false);
+      assert.equal(r.id_demande, '7');
+      assert.equal(r.conum_origine, 'source');
+      assert.equal(r.rang_ligne, 2);
+    }
+    // Une donnée abandonnée n'est plus interprétée ni validée.
+    const [r] = validerSauvegardeJSON(payload([{ ...ok, motif:{ancien:'contenu'} }]));
+    assert.equal(Object.hasOwn(r, 'motif'), false);
   });
   it('rejette une date invalide, un type erroné, une version inconnue', () => {
     assert.throws(() => validerSauvegardeJSON(payload([{ ...ok, date_demande: '31/02/2025' }])), /date/);
@@ -1369,6 +1395,29 @@ describe('validerSauvegardeJSON', () => {
   it('un ancien export : conum_deduit devient une origine', () => {
     const [r] = validerSauvegardeJSON(payload([{ ...ok, conum: 'A', conum_deduit: true }]));
     assert.equal(r.conum_origine, 'deduit');
+  });
+});
+
+describe('retirerMotifs', () => {
+  it('nettoie en place et une seule fois sans modifier lignes, identités ni provenance', () => {
+    const base = [
+      {id_demande:'1',date_action:'2025-01-02',type_action:['Accompagnement'],cms:'CMS Tonneins',conum:'A',conum_origine:'source',rang_ligne:2,motif:'texte libre'},
+      {id_demande:'2',date_action:'2025-01-03',type_action:['Atelier'],conum_origine:'deduit',rang_atelier:3,motif:''},
+      {id_demande:'3',type_action:['Accompagnement'],rang_ligne:1,motif:undefined},
+      {id_demande:'4',type_action:['Accompagnement'],rang_ligne:1},
+    ];
+    const references = base.slice();
+    const attendus = base.map(({motif, ...r}) => r);
+    const cles = base.map(cleFusion);
+    assert.equal(retirerMotifs(base), 3);
+    assert.deepEqual(base, attendus);
+    base.forEach((r,i) => assert.equal(r, references[i]));
+    assert.deepEqual(base.map(cleFusion), cles);
+    assert.equal(retirerMotifs(base), 0);
+    assert.equal(retirerMotifs(null), 0);
+    const herite = Object.create({motif:'propriété héritée'});
+    assert.equal(retirerMotifs([herite]), 0);
+    assert.equal(Object.getPrototypeOf(herite).motif, 'propriété héritée');
   });
 });
 

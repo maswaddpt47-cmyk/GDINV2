@@ -693,6 +693,8 @@ table.hm-joue td.hm-b{animation:hm-brique .35s cubic-bezier(.33,1,.68,1) both;an
     <button class="tabs-nav" id="tabs-next" onclick="scrollTabs(1)">›</button>
   </div><!-- /tabs-wrap -->
 
+  <div id="motif-nettoyage-warning" class="info-box" role="status" style="display:none;margin-bottom:16px"></div>
+
   <!-- VUE GLOBALE -->
   <div id="panel-global" class="panel active">
   <!-- Bannière données démo — masquée une fois des données importées -->
@@ -1058,14 +1060,7 @@ table.hm-joue td.hm-b{animation:hm-brique .35s cubic-bezier(.33,1,.68,1) both;an
         </div>
       </div>
 
-      <!-- Export / Import JSON -->
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
-        <span style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap">⚡ Sauvegarde JSON</span>
-        <button class="btn-sm" onclick="exportDataJSON()" title="Exporter les données actuelles en fichier JSON réimportable">⬇ Exporter</button>
-        <input type="file" id="json-file-input" accept=".json" style="display:none" onchange="handleAutoImport(this.files[0])">
-        <button class="btn-sm" onclick="document.getElementById('json-file-input').click()" title="Importer un export JSON GDIN">⬆ Importer JSON</button>
-        <span style="font-size:10px;color:var(--muted);font-style:italic;flex:1">Chargement instantané — évite de re-parser l'Excel</span>
-      </div>
+      <div class="info-box" style="margin-bottom:14px">Les données sont enregistrées dans ce navigateur. Pour les reconstituer sur un autre poste, importe un fichier source GDIN couvrant toute la période souhaitée.</div>
 
       <!-- Filtre CONUM avant import -->
       <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
@@ -1078,14 +1073,14 @@ table.hm-joue td.hm-b{animation:hm-brique .35s cubic-bezier(.33,1,.68,1) both;an
 
       <!-- Zone de drop unique -->
       <div class="drop-zone g1" id="drop-zone">
-        <input type="file" id="file-input" accept=".xls,.xlsx,.txt,.csv,.json" onchange="handleAutoImport(this.files[0])">
+        <input type="file" id="file-input" accept=".xls,.xlsx,.txt,.csv" onchange="handleAutoImport(this.files[0])">
         <div class="drop-icon">📂</div>
-        <div class="drop-label">Glisse n'importe quel fichier ici</div>
-        <div class="drop-sub">Fichier GDIN (.xls / texte tabulé) — détection automatique</div>
+        <div class="drop-label">Glisse ton fichier source GDIN ici</div>
+        <div class="drop-sub">Fichier GDIN (.xls / .xlsx / texte tabulé) — détection automatique</div>
         <span class="drop-formats">.xls · .xlsx · texte tabulé</span>
       </div>
       <div style="display:flex;justify-content:flex-end;margin-top:8px">
-        <input type="file" id="reset-file-input" accept=".xls,.xlsx,.txt,.csv,.json" style="display:none" onchange="handleResetAndImport(this.files[0]);this.value=''">
+        <input type="file" id="reset-file-input" accept=".xls,.xlsx,.txt,.csv" style="display:none" onchange="handleResetAndImport(this.files[0]);this.value=''">
         <button class="btn-sm" onclick="document.getElementById('reset-file-input').click()" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4);color:#fca5a5" title="Efface toutes les données existantes puis importe le nouveau fichier">🗑 Réinitialiser et importer</button>
       </div>
 
@@ -1579,6 +1574,7 @@ let _storageEpoch=0,_storageQueue=Promise.resolve(),_derniereRev=0;
 function _enfile(fn){const p=_storageQueue.then(fn);_storageQueue=p.catch(()=>{});return p;}
 function _supprimerAnciennesCles(){try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_META);}catch(e){}return _idbDel(LS_KEY,LS_META);}
 async function saveToStorage(records,meta){
+  retirerMotifs(records);
   const epoch=_storageEpoch;
   const rev=Math.max(Date.now(),_derniereRev+1);_derniereRev=rev;
   const snap={schema:SCHEMA_VERSION,rev,records,meta};
@@ -1627,6 +1623,54 @@ function choisirInstantane(candidats){
   candidats.forEach(c=>{if(!best||(c.rev||0)>(best.rev||0))best=c;});
   return best;
 }
+// Les anciennes copies sont nettoyées sans changer leurs lignes ni révisions.
+function nettoyerMotifsStockes(){
+  return _enfile(async()=>{
+    const echecs=[];let champsRetires=0,champsDetectes=0;
+    for(const cle of [LS_SNAP,LS_KEY]){
+      try{
+        const brut=localStorage.getItem(cle);if(brut===null)continue;
+        const valeur=JSON.parse(brut);
+        const records=cle===LS_SNAP?valeur&&valeur.records:valeur;
+        if(!Array.isArray(records)){echecs.push('localStorage:'+cle);continue;}
+        const n=retirerMotifs(records);
+        if(n){champsDetectes+=n;localStorage.setItem(cle,JSON.stringify(valeur));champsRetires+=n;}
+      }catch(e){echecs.push('localStorage:'+cle);}
+    }
+    let db;
+    try{
+      db=await _idbOpen();
+      const n=await new Promise((resolve,reject)=>{
+        const tx=db.transaction('kv','readwrite'),store=tx.objectStore('kv');
+        let retires=0,formesInvalides=false;
+        const timer=setTimeout(()=>{
+          try{tx.abort();}catch(e){}
+          reject(new Error('Nettoyage IndexedDB sans réponse'));
+        },IDB_DELAI_MAX);
+        tx.oncomplete=()=>{
+          clearTimeout(timer);
+          if(formesInvalides)echecs.push('IndexedDB:format');
+          resolve(retires);
+        };
+        tx.onerror=tx.onabort=()=>{clearTimeout(timer);reject(tx.error||new Error('Nettoyage IndexedDB interrompu'));};
+        for(const cle of [LS_SNAP,LS_KEY]){
+          const requete=store.get(cle);
+          requete.onsuccess=()=>{
+            const valeur=requete.result;if(valeur===undefined||valeur===null)return;
+            const records=cle===LS_SNAP?valeur&&valeur.records:valeur;
+            if(!Array.isArray(records)){formesInvalides=true;return;}
+            const k=retirerMotifs(records);
+            if(k){champsDetectes+=k;retires+=k;store.put(valeur,cle);}
+          };
+        }
+      });
+      champsRetires+=n;
+    }catch(e){echecs.push('IndexedDB');}
+    finally{if(db)try{db.close();}catch(e){}}
+    return{ok:echecs.length===0,champsRetires,champsDetectes,echecs};
+  });
+}
+
 // Réinitialisation : invalide les écritures en attente, puis attend la fin
 // réelle des suppressions.
 function clearStorage(){
@@ -1639,7 +1683,9 @@ function clearStorage(){
 
 // INIT
 async function initData(){
-  let stored=choisirInstantane([...loadFromStorage(),...await loadFromIDB()]);
+  const candidats=[...loadFromStorage(),...await loadFromIDB()];
+  const motifsCharges=candidats.reduce((n,c)=>n+retirerMotifs(c.records),0);
+  let stored=choisirInstantane(candidats);
   if(stored){_derniereRev=Math.max(_derniereRev,stored.rev||0);DATA=stored.records;dataSource='imported';importMeta=stored.meta;
     // Base d'avant l'identité par rang : complétée sans rien supprimer, et signalée.
     if(completerRangs(DATA)){importMeta.base_heritee=true;}
@@ -1648,6 +1694,15 @@ async function initData(){
     .filter(r=>r.cms!==null);dataSource='embedded';updateSourceBadge(false,null);}
   applyConumAttrib(DATA);deriveActionsFromData();
   updateAllYears();updateDateRange();updateCurrentSourceInfo();initImportConumSelect();
+  const nettoyage=await nettoyerMotifsStockes();
+  if(!nettoyage.ok){
+    console.warn('[GDIN] Nettoyage des anciens motifs incomplet :',nettoyage.echecs.join(', '));
+    if(motifsCharges||nettoyage.champsDetectes){
+      const message=document.getElementById('motif-nettoyage-warning');
+      message.textContent='Les anciens commentaires ont été retirés des données chargées, mais leur effacement du stockage local n’a pas pu être confirmé. Contactez votre support.';
+      message.style.display='block';
+    }
+  }
 }
 function updateAllYears(){
   const yrs=[...new Set(DATA.map(r=>r.date_demande.slice(0,4)))].sort();
@@ -2942,21 +2997,13 @@ async function handleAutoImport(file,opts){
   if(!file)return;
   // L'intention « réinitialiser puis importer » appartient à CETTE opération :
   // elle voyage dans pendingData, jamais dans une variable globale qu'une
-  // erreur ou un import JSON laisserait armée pour le fichier suivant.
+  // erreur laisserait armée pour le fichier suivant.
   const reinitialiser=!!(opts&&opts.reset);
   document.getElementById('import-error').style.display='none';
-  // Fichier JSON — import instantané
-  if(file.name.toLowerCase().endsWith('.json')){
-    const prog=document.getElementById('parse-progress-box'),bar=document.getElementById('parse-bar'),msg=document.getElementById('parse-msg');
-    prog.style.display='block';bar.style.width='20%';msg.textContent=`Lecture de ${esc(file.name)}…`;
-    const r=new FileReader();
-    r.onload=e=>{bar.style.width='70%';msg.textContent='Validation…';setTimeout(()=>{
-      try{const payload=JSON.parse(e.target.result);bar.style.width='100%';
-        setTimeout(async()=>{prog.style.display='none';try{await importDataJSON(payload,file.name);}catch(err){showImportError(err.message);}},300);
-      }catch(err){prog.style.display='none';showImportError('JSON invalide : '+err.message);}
-    },200);};
-    r.onerror=()=>{prog.style.display='none';showImportError('Impossible de lire le fichier JSON.');};
-    r.readAsText(file,'utf-8');
+  // Refuser aussi le glisser-déposer et le remplacement, avant toute lecture
+  // ou suppression de la base. Le stockage interne du navigateur reste actif.
+  if(file.name.toLowerCase().endsWith('.json')||/^(application|text)\/(?:[\w.-]+\+)?json(?:;|$)/i.test(file.type||'')){
+    showImportError('L’import de fichiers JSON est désactivé. Utilise un fichier source GDIN (.xls, .xlsx ou texte tabulé).');
     return;
   }
   const prog=document.getElementById('parse-progress-box');
@@ -3153,7 +3200,7 @@ async function confirmImport(){
   const resume=formatResumeImport(statsImport);
   const resumeMsg=(resume?`<br><span style="color:var(--muted);font-size:11px">Fichier : ${resume}</span>`:'')+ligneSyntheseFiabilite();
   document.getElementById('cs-label').innerHTML=`<strong style="color:var(--green)">✓ Fusion réussie —</strong> ${fus.ajoutes} nouveaux${fus.misAJour?` · ${fus.misAJour} mis à jour`:''}${fus.identiques?` · ${fus.identiques} déjà connus`:''} · ${DATA.length} total (${years.join(', ')})${dupMsg}${conumFilterLabel}${resumeMsg}`;
-  if(!saved)showImportError('Sauvegarde locale impossible (quota dépassé). Les données seront perdues au prochain rechargement. Utilisez ⬇ Exporter pour sauvegarder manuellement.');
+  if(!saved)showImportError('Sauvegarde locale impossible. Ne supprime pas le fichier source : il sera nécessaire pour réimporter les données au prochain démarrage.');
   /* Redirection automatique vers le dashboard après import */
   setTimeout(()=>{
     const globalBtn=document.querySelector('.sb-item[onclick*="global"]')||document.querySelector('.tab[onclick*="global"]');
@@ -3168,40 +3215,6 @@ async function resetToEmbedded(){
     .filter(r=>r.cms!==null);applyConumAttrib(DATA);deriveActionsFromData();
   dataSource='embedded';importMeta=null;updateSourceBadge(false,null);updateAllYears();updateDateRange();updateCurrentSourceInfo();
   initCmsSelect();initConumSelect();initOriCmsSelect();initRptSelects();refreshAll();
-}
-
-function exportDataJSON(){
-  const payload={version:'2',type:'gdin-data',exported:new Date().toISOString(),
-    source_filename:importMeta?importMeta.filename:'données-intégrées',
-    conum_filter:(document.getElementById('import-conum-filter')||{}).value||null,
-    count:DATA.length,data:DATA};
-  const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download=`gdin-export-${new Date().toISOString().slice(0,10)}.json`;
-  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-}
-
-async function importDataJSON(payload,filename){
-  // Validation COMPLÈTE avant de toucher à la base active : une erreur lève ici
-  // et laisse DATA et le stockage intacts. Les enregistrements sont reconstruits
-  // depuis les seuls champs autorisés (validerSauvegardeJSON, gdin-pure.js).
-  const records=validerSauvegardeJSON(payload);
-  const heritee=completerRangs(records);
-  DATA=records;applyConumAttrib(DATA);deriveActionsFromData();dataSource='imported';
-  const years=[...new Set(records.map(r=>r.date_demande.slice(0,4)))].sort();
-  importMeta={filename,count:DATA.length,years,date:new Date().toLocaleDateString('fr-FR'),source_filename:String(payload.source_filename||filename).slice(0,200),base_heritee:heritee||undefined};
-  const saved=await saveToStorage(DATA,importMeta);
-  updateSourceBadge(true,importMeta);updateAllYears();updateDateRange();updateCurrentSourceInfo();
-  initCmsSelect();initConumSelect();initOriCmsSelect();initRptSelects();refreshAll();
-  const dot=document.getElementById('cs-dot');if(dot)dot.style.background='var(--green)';
-  const label=document.getElementById('cs-label');
-  if(label)label.innerHTML=`<strong style="color:var(--green)">✓ JSON chargé —</strong> ${records.length} enregistrements · ${years.join(', ')}${typeof payload.conum_filter==='string'&&payload.conum_filter?` · <span style="color:var(--cyan)">${esc(payload.conum_filter)}</span>`:''}`;
-  if(!saved)showImportError('Sauvegarde locale impossible (quota dépassé). Les données seront perdues au prochain rechargement. Utilisez ⬇ Exporter pour sauvegarder manuellement.');
-  setTimeout(()=>{
-    const globalBtn=document.querySelector('.sb-item[onclick*="global"]')||document.querySelector('.tab[onclick*="global"]');
-    if(globalBtn)switchTab('global',globalBtn);
-  },400);
 }
 
 // ── PLEIN ÉCRAN CARTE ──
@@ -3392,7 +3405,7 @@ function refreshAll(){
 function exportCSV(){
   const d=getFiltered();
   if(!d.length){alert('Aucune donnée filtrée à exporter.');return;}
-  const cols=['date_demande','date_action','conum','cms','commune','themas','type_action','orienteur','motif'];
+  const cols=['date_demande','date_action','conum','cms','commune','themas','type_action','orienteur'];
   const header=cols.join(';');
   const rows=d.map(r=>[
     r.date_demande||'',
@@ -3402,8 +3415,7 @@ function exportCSV(){
     r.commune||'',
     (r.themas||[]).join('/'),
     (r.type_action||[]).join(';'),
-    r.orienteur||'',
-    (r.motif||'').replace(/;/g,',').replace(/\n/g,' ')
+    r.orienteur||''
   ].map(celluleCSV).join(';'));
   const csv='\uFEFF'+header+'\n'+rows.join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
