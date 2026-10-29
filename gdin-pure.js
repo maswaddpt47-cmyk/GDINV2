@@ -1410,6 +1410,19 @@ function mentionAttribution(records){
   return`${ind.marge} % des lignes sont rattachées à ce conseiller par déduction depuis le CMS : à ne pas présenter comme une mesure individuelle`;
 }
 
+// Sélecteur d'année du Diapo rapport : même règle que le sélecteur global, une année au
+// moins reste cochée. `selection` vide = « toutes » (état d'ouverture) : on l'explicite
+// avant de basculer, pour que le clic fasse ce que la coche montre (AG-004, relecture
+// de Codex du 29/10/2026). Rend un nouveau Set ; un clic sur la dernière année est ignoré.
+function basculerAnnee(selection,toutes,annee){
+  const sel=new Set(selection&&selection.size?[...selection]:(toutes||[]));
+  if(sel.has(annee)){
+    if(sel.size===1)return sel;
+    sel.delete(annee);
+  }else sel.add(annee);
+  return sel;
+}
+
 // ─── Demandes distinctes ──────────────────────────────────────────────────────
 // Une demande (N° Demande) génère plusieurs lignes d'action : compter les lignes
 // n'est pas compter les demandes. Couvert par les tests « countDemandes ».
@@ -1420,7 +1433,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,evolutionParAnnee,compterOrienteursExternes,mentionAttribution,SEUIL_ATTRIBUTION_DEDUITE,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,retirerMotifs,baseAncienne,completerRangs,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,evolutionParAnnee,basculerAnnee,compterOrienteursExternes,mentionAttribution,SEUIL_ATTRIBUTION_DEDUITE,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,retirerMotifs,baseAncienne,completerRangs,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,lignesAvecThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,dateFr,mentionRevisabilite,decouperNombre,formaterCommeNombre,cleDoublon,compterDoublons,moisDeLaPeriode,libelleLignes,LIBELLE_LIGNES,

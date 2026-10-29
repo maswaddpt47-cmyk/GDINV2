@@ -9,7 +9,7 @@ const {
   numeroterParticipants, cleFusion, numeroterLignes, fusionnerImport, attribuerConum, deriverAttributionCms,
   neutraliserFormule, celluleCSV, retirerMotifs, baseAncienne, completerRangs,
   categorieEtat, repartitionEtats, deriverActions, delaisParDemande, reactivite48, dansPeriode, tauxRealisation, filtrerParType, evolutionAnnuelle,
-  evolutionParAnnee, compterOrienteursExternes, mentionAttribution, indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
+  evolutionParAnnee, basculerAnnee, compterOrienteursExternes, mentionAttribution, indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
   rattacherCommune, COMMUNES_47,
 } = require('./gdin-pure.js');
@@ -986,6 +986,27 @@ describe('mentionAttribution (AG-004, décision 5)', () => {
     assert.notEqual(mentionAttribution(recs), '');
   });
   it('jeu vide : rien', () => assert.equal(mentionAttribution([]), ''));
+});
+
+describe('basculerAnnee — sélecteur d\'année du Diapo (AG-004)', () => {
+  const toutes = ['2024', '2025', '2026'];
+  it('cliquer l\'année seule cochée est ignoré : une année reste toujours cochée', () => {
+    assert.deepEqual([...basculerAnnee(new Set(['2025']), toutes, '2025')], ['2025']);
+  });
+  it('cocher une autre année l\'ajoute', () => {
+    assert.deepEqual([...basculerAnnee(new Set(['2025']), toutes, '2024')].sort(), ['2024', '2025']);
+  });
+  it('sélection vide = toutes : cliquer 2025 la décoche et garde les autres', () => {
+    assert.deepEqual([...basculerAnnee(new Set(), toutes, '2025')].sort(), ['2024', '2026']);
+  });
+  it('décocher une année parmi plusieurs la retire', () => {
+    assert.deepEqual([...basculerAnnee(new Set(['2024', '2025']), toutes, '2024')], ['2025']);
+  });
+  it('ne modifie pas la sélection reçue', () => {
+    const sel = new Set(['2025']);
+    basculerAnnee(sel, toutes, '2024');
+    assert.deepEqual([...sel], ['2025']);
+  });
 });
 
 describe('compterOrienteursExternes (AG-004, décision 3)', () => {
