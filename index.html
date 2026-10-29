@@ -1742,13 +1742,23 @@ function yrLabel(yr){
   const diff=parseInt(maxYr)-parseInt(yr);
   return diff===0?`${yr} (N)`:`${yr} (N-${diff})`;
 }
+// Une année cochée : fond plein, trait continu, coche. Une année décochée : fond
+// vide, trait en tirets, texte atténué — l'état se lit sans comparer deux teintes.
+function styleYearChip(chip,actif,col){
+  chip.textContent=(actif?'✓ ':'')+chip.dataset.lbl;
+  chip.setAttribute('aria-pressed',actif?'true':'false');
+  chip.style.borderColor=actif?col:'var(--muted)';
+  chip.style.borderStyle=actif?'solid':'dashed';
+  chip.style.color=actif?'#fff':'var(--muted)';
+  chip.style.background=actif?col+'88':'transparent';
+  chip.style.fontWeight=actif?'700':'500';
+  chip.style.opacity=actif?'1':'.65';
+}
 function makeYearChip(yr,i,onClick){
   const col=YEAR_PALETTE[i%YEAR_PALETTE.length];
   const chip=document.createElement('button');
-  chip.className='year-chip';chip.textContent=yrLabel(yr);chip.dataset.yr=yr;chip.dataset.idx=i;
-  chip.style.borderColor=col;
-  chip.style.color=activeYears.has(yr)?'#fff':'var(--muted)';
-  chip.style.background=activeYears.has(yr)?col+'55':'var(--s2)';
+  chip.className='year-chip';chip.dataset.lbl=yrLabel(yr);chip.dataset.yr=yr;chip.dataset.idx=i;
+  styleYearChip(chip,activeYears.has(yr),col);
   chip.onclick=onClick;
   return chip;
 }
@@ -1768,8 +1778,7 @@ function syncYearChipStyles(){
     el.querySelectorAll('button.year-chip').forEach(chip=>{
       const yr=chip.dataset.yr,i=parseInt(chip.dataset.idx);
       const col=YEAR_PALETTE[i%YEAR_PALETTE.length];
-      chip.style.color=activeYears.has(yr)?'#fff':'var(--muted)';
-      chip.style.background=activeYears.has(yr)?col+'55':'var(--s2)';
+      styleYearChip(chip,activeYears.has(yr),col);
     });
   });
 }
@@ -4622,9 +4631,12 @@ function drDestroyCharts(){Object.values(drCharts).forEach(c=>{try{c.destroy();}
 function drBuildYearChips(){
   const allYears=[...new Set(DATA.filter(r=>r.conum===drConum&&r.cms===drCms).map(r=>r.date_demande.slice(0,4)))].sort();
   const el=document.getElementById('dr-year-chips');
-  el.innerHTML=allYears.map(y=>`
-    <span onclick="drToggleYear('${y}')" id="dr-yr-${y}" style="cursor:pointer;font-size:10px;padding:2px 8px;border-radius:10px;border:1px solid var(--border);background:${drYears.has(y)?'var(--blue)':'var(--s2)'};color:${drYears.has(y)?'#fff':'var(--muted)'};transition:all .15s">${y}</span>
-  `).join('');
+  // Aucune année cochée = toutes les années du couple (drData) : on les montre cochées.
+  const coche=y=>drYears.size===0||drYears.has(y);
+  el.innerHTML=allYears.map(y=>{
+    const a=coche(y);
+    return`<span onclick="drToggleYear('${y}')" id="dr-yr-${y}" role="button" aria-pressed="${a}" style="cursor:pointer;font-size:11px;padding:2px 9px;border-radius:10px;border:1px ${a?'solid var(--blue)':'dashed var(--muted)'};background:${a?'var(--blue)':'transparent'};color:${a?'#fff':'var(--muted)'};font-weight:${a?700:500};opacity:${a?1:.65};transition:all .15s">${a?'✓ ':''}${y}</span>`;
+  }).join('');
 }
 
 function drToggleYear(y){
