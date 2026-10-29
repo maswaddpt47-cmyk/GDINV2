@@ -10,8 +10,10 @@
 <meta property="og:type" content="website">
 <!-- Politique de sécurité du contenu. La ligne qui compte est img-src/connect-src :
      elle énumère les SEULES destinations autorisées. Si une interpolation non
-     échappée réapparaît un jour (cf. AG-005, 27/10/2026), le code injecté ne
-     pourra pas émettre les données vers un tiers — le navigateur refuse la requête.
+     échappée réapparaît un jour (cf. AG-005, 27/10/2026), le navigateur refuse les
+     requêtes (image, fetch, balise, formulaire) vers un tiers. Elle n'empêche NI
+     l'exécution du code injecté, NI le changement de page, NI l'accès à tout ce que
+     contient la même origine (localStorage partagé avec les autres applications).
      'unsafe-inline' reste nécessaire : 2 blocs <script> et 83 onclick= dans ce
      fichier. Mesuré en file:// (Chromium, 27/10/2026) : n'empêche pas le
      chargement local, la version clé USB fonctionne avec.
@@ -2960,7 +2962,7 @@ function buildRptBilan(conum,cms,data,dataConum){
   const p1=`Au sein de la structure <strong style="color:var(--blue)">${esc(cms)}</strong>, ${conumHtml} a réalisé <strong>${total} accompagnement${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
   const themasStr=top3Themas.map(([t,n],i)=>{
     const col=i===0?'var(--orange)':i===1?'var(--cyan)':'var(--purple)';
-    return`<strong style="color:${col}">${t}</strong> (${n} · ${pct(n,total)} %)`;
+    return`<strong style="color:${col}">${esc(t)}</strong> (${n} · ${pct(n,total)} %)`;
   }).join(', ');
   const p2=`Les thématiques principales, en part des accompagnements qui les portent, sont : ${themasStr}. <strong>${txC}%</strong> des accompagnements sont à l'état « Réalisée ».`;
   const p3=`L'activité affiche une évolution de <strong style="color:${trendColor}">${trend}</strong> sur l'année ${nYear} vs ${nPrevYear}, avec <strong>${orienteurs} TS orienteur${orienteurs>1?'s':''}</strong> mobilisé${orienteurs>1?'s':''}.${p48!==null?` Réactivité : <strong style="color:${p48Color}">${p48}%</strong> des demandes calculables (${r48} sur ${t48}) ont reçu un premier contact en 2 jours ouvrés au plus, fériés non retirés${R48.sansContact?` ; ${R48.sansContact} demande${R48.sansContact>1?'s':''} sans contact renseigné ne ${R48.sansContact>1?'sont':'est'} pas comptée${R48.sansContact>1?'s':''}`:''}.`:''}`;
@@ -4836,7 +4838,7 @@ function drSlideThemas(c,data,palette){
   const themasAll=Object.entries(countThemas(data));
   const top1=themasAll[0],tot=data.length;
   const top1Pct=top1?pct(top1[1],tot):0;
-  const top3Str=themasAll.slice(0,3).map(([t,n])=>`<strong>${t}</strong> (${pct(n,tot)}%)`).join(', ');
+  const top3Str=themasAll.slice(0,3).map(([t,n])=>`<strong>${esc(t)}</strong> (${pct(n,tot)}%)`).join(', ');
   const concAlert=top1Pct>=50?`<br>⚠️ Concentration forte : 1 thématique portée par ${top1Pct} % des accompagnements`:'';
   const insightThema=`📋 Top 3, part des accompagnements : ${top3Str}${concAlert}`;
   c.innerHTML=`
@@ -5178,7 +5180,7 @@ function drSlideBilan(c,data,allDataConum){
   // Textes conclusion
   const themasStr=top3.map(([t,n],i)=>{
     const col=i===0?'var(--orange)':i===1?'var(--cyan)':'var(--purple)';
-    return`<strong style="color:${col}">${t}</strong> (${n} · ${pct(n,total)} %)`;
+    return`<strong style="color:${col}">${esc(t)}</strong> (${n} · ${pct(n,total)} %)`;
   }).join(', ');
   const p1=`Au sein de la structure <strong style="color:var(--blue)">${esc(drCms)}</strong>, ${conumNameHtml(drConum,cnColor)} a réalisé <strong>${total} accompagnement${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
   const p2=`Les thématiques principales, en part des accompagnements qui les portent, sont : ${themasStr}. <strong>${txC}%</strong> des accompagnements sont à l'état « Réalisée ».`;

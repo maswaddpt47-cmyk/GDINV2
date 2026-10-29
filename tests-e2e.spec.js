@@ -1505,18 +1505,31 @@ test.describe('Contenu importé hostile', () => {
       for (let i = 0; i < DIAPO_SLIDES.length; i++) garde(() => diapoGoTo(i));
       garde(() => stopDiapo());
       // Diapo rapport
+      // Un conseiller ET une structure réellement proposés : sinon startDiapoRapport()
+      // sort sans rien afficher et le test valide du code vulnérable (bilan et bulle
+      // « Thématiques », trouvés par l'audit Codex du 29/10/2026).
       garde(() => {
-        const sc = document.getElementById('sel-rpt-conum'); sc.value = DATA[0].conum;
-        initRptSelects && 0; document.getElementById('sel-rpt-cms').value = DATA[0].cms;
+        const sc = document.getElementById('sel-rpt-conum'), sm = document.getElementById('sel-rpt-cms');
+        sc.value = [...sc.options].map(o => o.value).filter(Boolean)[0];
+        buildRptCmsChips(sc.value);
+        sm.value = [...sm.options].map(o => o.value).filter(Boolean)[0];
+        renderRapport();
         startDiapoRapport();
       });
-      for (let i = 0; i < DR_SLIDES.length; i++) garde(() => drGoTo(i));
+      const diapoOuvert = drActive;
+      for (let i = 0; i < DR_SLIDES.length; i++) {
+        garde(() => drGoTo(i));
+        garde(() => document.querySelectorAll('#dr-overlay .dr-q').forEach(q => q.click()));
+      }
       // Les textes d'aide des « ? » sont écrits en HTML au clic : un nom du fichier
       // non échappé s'y exécutait (7 aides le 29/10/2026).
       const aides = Object.values(_drIns).filter(t => /<img|<svg/i.test(t)).length;
-      return { erreurs, xss: window.__xss === undefined ? null : window.__xss, aides,
+      return { erreurs, diapoOuvert, bilan: document.getElementById('rpt-bilan-text').innerHTML, xss: window.__xss === undefined ? null : window.__xss, aides,
         injectes: document.querySelectorAll('img[src="x"], svg[onload]').length };
     }, { H });
+    expect(resultat.diapoOuvert, 'le Diapo rapport ne s\'est pas ouvert : le test ne vérifierait rien').toBe(true);
+    expect(resultat.bilan, 'le bilan du Rapport doit être affiché pour être vérifié').toContain('Les thématiques principales');
+    expect(resultat.bilan, 'du HTML injecté dans le bilan du Rapport').not.toMatch(/<img/i);
     expect(resultat.xss, 'un gestionnaire injecté s\'est exécuté').toBeNull();
     expect(resultat.injectes, 'des éléments injectés existent dans le DOM').toBe(0);
     expect(resultat.aides, 'des textes d\'aide « ? » contiennent du HTML injecté').toBe(0);
