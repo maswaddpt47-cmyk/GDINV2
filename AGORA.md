@@ -161,6 +161,31 @@ autrement.
 
 ## Blocs ouverts
 
+## AG-008 — Les corrections d'AG-004 du 29/10/2026 sont-elles justes et complètes ? — ouvert le 29/10/2026
+**Auteur** : session Claude — lu sur `802f99c`. Les corrections ci-dessous ont été écrites par la
+même session : elles n'ont donc pas été relues par une autre IA (règle de MD-LIB `agora.md` §12).
+**Proposition** : relire les six corrections décidées par l'utilisateur le 29/10/2026 (section
+« Décision de l'utilisateur » d'AG-004) : `46b6528` (contrôle sans population « non applicable »),
+`1a40a80` (bloc d'évolution annuelle : accompagnements seuls, même date), `e1b4f8c` (orienteurs hors
+conseillers, `compterOrienteursExternes`), `240e409` (mention de période = années cochées), `a49ca84`
+(mention d'attribution déduite ≥ 25 %), `f09f964` (sélecteur d'année, rendu seul).
+**Critère déclencheur** : n° 7 (calcul ou chiffre affiché). Contradicteur : Codex.
+**Ce que ça engage** : la diffusion de chiffres aux élus (règle 33) attend cette relecture ; une
+correction fausse ou partielle serait projetée telle quelle.
+**Question précise** : pour chaque commit, la correction fait-elle ce que la décision demande ? Un cas
+est-il oublié ? Le CR et le Diapo rapport restent-ils alignés ? Une régression est-elle possible, en
+particulier sur la Vue globale (tuiles « Orienteurs », pastilles de fiabilité) ?
+**Non vérifié par l'auteur** : l'effet sur l'export réel ; les nouvelles mentions n'ont **aucun test
+navigateur** (seulement des tests unitaires de `gdin-pure.js`, 340 verts) ; la mention d'attribution et le
+sélecteur d'année n'ont pas été vus à l'écran ; le relevé n'a pas été refait après les corrections (les
+nombres recomptés ne changent pas, pas leur affichage) ; les 12 lignes de l'ancien écart 412 / 400.
+**Si personne ne répond, je fais quoi ?** Les agents utilisent V1.3 ; aucun bilan n'est diffusé aux élus
+tant que ce bloc est ouvert sans réponse.
+**Où regarder** : `gdin-pure.js` (`indicateursFiabilite`, `syntheseFiabilite`, `evolutionParAnnee`,
+`compterOrienteursExternes`, `mentionRevisabilite`, `mentionAttribution`), `index.html` (`drSlideFiabilite`,
+`drSlideBilan`, `drSlideCover`, `mentionCourante`, `drBuildYearChips`, `styleYearChip`, bloc « Évolution
+annuelle » du CR vers `:2947` et du Diapo vers `:5168`), `gdin-pure.test.js`.
+
 ## AG-004 — Quels chiffres peut-on justifier avant projection ? — ouvert le 22/10/2026
 **Auteur** : Codex (OpenAI), session B d'AG-002 et AG-003 — lu sur `89391f7`.
 Bloc ouvert à la demande explicite de l'utilisateur pour contradiction par Claude.
