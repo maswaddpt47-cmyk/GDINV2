@@ -25,9 +25,10 @@ session et de compte) :
 5. Faire contrôler à l'œil les **correctifs d'AG-004** (`6b77162`), puis établir
    le **tableau « affiché / recompté / écart »** sur son export : aucun chiffre
    concerné n'est « vérifié » avant.
-6. **AG-007** : correctif des doublons appliqué (`719fd2d`). Reste la consigne
-   « autre poste » (point 3 du bloc) dans la consigne utilisateurs, puis clore
-   le bloc ; mesurer l'effet avec `npm run audit -- export.xls`.
+6. **AG-007** : correctif des doublons (`719fd2d`) et consigne « autre poste »
+   (LISEZ-MOI, consigne V0.3) faits, en ligne. Reste à **déposer** le zip
+   `719fd2d` et la V0.3 sur le cloud (*déclaré* par toi), puis à clore le bloc ;
+   mesurer l'effet avec `npm run audit -- export.xls`.
 7. Contrôler à l'œil la **mention de révisabilité** (en ligne ; bandeau de la Vue
    globale, sous-titre du Rapport, pied de la première diapo).
 
