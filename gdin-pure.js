@@ -722,6 +722,11 @@ function mentionRevisabilite(opts){
     const filtre=filtreResserre?` · dates du ${d||'…'} au ${f||'…'}`:'';
     const base=bd&&bf?` (base du ${bd} au ${bf})`:'';
     periode=`${lib}${filtre}${base}`;
+  }else if(d&&f&&o.baseDebut&&o.baseFin){
+    // Toutes les années cochées : on garde le libellé de période, mais les bornes de la base
+    // s'ajoutent quand elles diffèrent du filtre (relecture de Codex, AG-009).
+    const bd=dateFr(o.baseDebut), bf=dateFr(o.baseFin);
+    if(bd&&bf&&(d!==bd||f!==bf))periode=`${periode} (base du ${bd} au ${bf})`;
   }
   const imp=o.dateImport?`données importées le ${String(o.dateImport)}`:'source non datée';
   return `${periode} · ${imp} · chiffres susceptibles d'être révisés`;
