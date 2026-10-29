@@ -35,9 +35,11 @@ A SAVOIR AVANT DE S'EN SERVIR
    Elles sont enregistrees par le NAVIGATEUR DU POSTE. Importer
    sur le poste A puis ouvrir sur le poste B donne une base VIDE,
    meme si le dossier est partage. Pour retrouver les donnees sur
-   un autre poste : reimporter le fichier source (.xls ou .xlsx)
-   d'origine. L'application ne sait plus exporter de sauvegarde
-   JSON : gardez votre fichier source.
+   un autre poste : reimporter les fichiers source (.xls ou .xlsx)
+   d'origine, TOUS et dans l'ordre ou vous les aviez importes (le
+   dernier importe fait foi), ou un seul export qui couvre toute la
+   periode. L'application ne sait plus exporter de sauvegarde
+   JSON : gardez vos fichiers source.
 
 2. NE JAMAIS DEPOSER DE DONNEES DANS LE DOSSIER PARTAGE.
    Le dossier du cloud contient L'APPLICATION, jamais les
