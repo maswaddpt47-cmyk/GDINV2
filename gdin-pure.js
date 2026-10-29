@@ -1044,7 +1044,10 @@ function indicateursFiabilite(records,stats){
   // Types principaux : la marge est le nombre de doublons suspects du type.
   [['accompagnements','Accompagnements','Accompagnement'],
    ['contacts','Prises de contact','Prise de contact']].forEach(([cle,libelle,type])=>{
-    const lignes=base.filter(r=>(r.type_action||[]).includes(type));
+    // Même critère que le filtre de type de l'en-tête (casse, accents, pluriel, préfixe) :
+    // une égalité exacte disait « aucune ligne de ce type » pour « Accompagnements »
+    // alors que le CR en montrait (relecture de Codex, 29/10/2026).
+    const lignes=filtrerParType(base,type);
     const dbl=compterDoublons(lignes);
     const unite=libelle.toLowerCase();
     ajoute(cle,libelle,lignes.length,dbl,

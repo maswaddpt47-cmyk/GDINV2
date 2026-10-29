@@ -1074,6 +1074,13 @@ describe('contrôle sans population (AG-004, 29/10/2026)', () => {
     assert.equal(c.applicable, false);
     assert.match(c.fait, /non applicable/);
   });
+  it('un type écrit au pluriel ou avec un suffixe compte comme accompagnement (même critère que le filtre)', () => {
+    const pl = { ...acc, type_action: ['Accompagnements'] };
+    const ind = { ...acc, type_action: ['Accompagnement individuel'] };
+    const a = indicateursFiabilite([pl, ind], {}).find(i => i.cle === 'accompagnements');
+    assert.notEqual(a.applicable, false);
+    assert.equal(a.sur, 2);
+  });
   it('un contrôle qui a des lignes reste applicable', () => {
     const a = indicateursFiabilite([acc], {}).find(i => i.cle === 'accompagnements');
     assert.notEqual(a.applicable, false);
