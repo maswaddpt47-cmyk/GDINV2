@@ -1004,7 +1004,15 @@ function indicateursFiabilite(records,stats){
   // `sur` = la population contrôlée. Les doublons d'un type se rapportent aux
   // lignes de ce type, pas à toute la base : 1 doublon sur 2 accompagnements
   // affichait 0,5 % parmi 200 lignes, classé « solide » (AG-004).
+  // Population nulle (`sur` = 0) : le contrôle n'a rien examiné. Il ne se range ni
+  // parmi les contrôles sans défaut ni parmi les points de vigilance (AG-004,
+  // décision du 29/10/2026) : `applicable:false`, jamais un ✓.
   const ajoute=(cle,libelle,valeur,ecart,fait,sur)=>{
+    if(sur===0){
+      ind.push({cle,libelle,valeur,ecart:0,sur:0,marge:0,niveau:'solide',applicable:false,
+        fait:'non applicable — aucune ligne de ce type dans la sélection'});
+      return;
+    }
     const pop=sur==null?n:sur;
     const marge=pop?Math.round(ecart/pop*1000)/10:0;
     ind.push({cle,libelle,valeur,ecart,sur:pop,marge,niveau:niveauFiabilite(marge),fait});
@@ -1094,8 +1102,11 @@ function defautsSaisie(records,stats){
 // synthèse sépare donc les contrôles sans défaut détecté de ceux qui en ont
 // peu, annonce les points de vigilance et nomme le plus sensible.
 function syntheseFiabilite(indicateurs){
-  const ind=indicateurs||[];
-  if(!ind.length)return{niveau:'—',solides:0,sansDefaut:0,vigilance:0,plusFaible:null,texte:'aucune donnée'};
+  const tous=indicateurs||[];
+  const ind=tous.filter(i=>i.applicable!==false);
+  const nonApplicables=tous.length-ind.length;
+  if(!ind.length)return{niveau:'—',solides:0,sansDefaut:0,vigilance:0,nonApplicables,plusFaible:null,
+    texte:nonApplicables?`${nonApplicables} contrôle${nonApplicables>1?'s':''} non applicable${nonApplicables>1?'s':''}`:'aucune donnée'};
   const solides=ind.filter(i=>i.niveau==='solide');
   const sansDefaut=solides.filter(i=>!i.ecart).length;
   const peu=solides.length-sansDefaut;
@@ -1105,10 +1116,11 @@ function syntheseFiabilite(indicateurs){
   const pl=(k,mot)=>`${k} ${mot}${k>1?'s':''}`;
   const parts=[`${pl(sansDefaut,'contrôle')} sans défaut détecté`];
   if(peu)parts.push(`${peu} avec moins de 1 % de défauts`);
+  if(nonApplicables)parts.push(`${nonApplicables} non applicable${nonApplicables>1?'s':''} (aucune ligne de ce type)`);
   parts.push(enVigilance.length
     ?`${pl(enVigilance.length,'point')} de vigilance · le plus sensible : ${plusFaible.libelle} (${plusFaible.marge} %)`
     :'aucun point de vigilance');
-  return{niveau:pire,solides:solides.length,sansDefaut,vigilance:enVigilance.length,plusFaible,texte:parts.join(' · ')};
+  return{niveau:pire,solides:solides.length,sansDefaut,vigilance:enVigilance.length,nonApplicables,plusFaible,texte:parts.join(' · ')};
 }
 
 // ─── Libellé des lignes affichées ────────────────────────────────────────────

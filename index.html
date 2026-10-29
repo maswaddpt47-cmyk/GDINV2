@@ -3338,7 +3338,7 @@ function renderFiabilite(){
       ${ind.map(i=>`<tr>
         <td>${esc(i.libelle)}</td>
         <td class="mono">${i.valeur==null?'—':i.valeur}${i.cle==='ateliers'?` <span style="color:var(--muted);font-size:10px">séances · ${i.participations} participations</span>`:''}</td>
-        <td><span style="color:${FIA_COULEUR[i.niveau]};font-weight:600">${FIA_MOT[i.niveau]}</span></td>
+        <td>${i.applicable===false?'<span style="color:var(--muted);font-weight:600">Non applicable</span>':`<span style="color:${FIA_COULEUR[i.niveau]};font-weight:600">${FIA_MOT[i.niveau]}</span>`}</td>
         <td class="mono">${i.marge?i.marge+' %':'—'}</td>
         <td style="font-size:11px;color:var(--muted)">${esc(i.fait)}</td>
       </tr>`).join('')}
@@ -5116,7 +5116,8 @@ function drSlideFiabilite(c,data){
   const syn=syntheseFiabilite(ind);
   const conseiller=ind.find(i=>i.cle==='conseiller');
   const vigilance=ind.filter(i=>i.niveau!=='solide');
-  const solides=ind.filter(i=>i.niveau==='solide');
+  const solides=ind.filter(i=>i.niveau==='solide'&&i.applicable!==false);
+  const nonAppl=ind.filter(i=>i.applicable===false);
   const carte=(titre,corps,couleur)=>`<div style="background:var(--s1);border:1px solid var(--border);border-left:3px solid ${couleur};border-radius:14px;padding:18px 20px">
       <div style="font-size:12px;font-weight:700;color:${couleur};margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px">${titre}</div>${corps}</div>`;
   const listeSolides=solides.length?`<div style="font-size:13px;line-height:1.9;color:var(--text)">${solides.map(i=>`${i.ecart?'<span style="color:var(--green)">●</span>':'✓'} ${esc(i.libelle)} <span style="color:var(--muted)">— ${esc(i.fait)}</span>`).join('<br>')}</div>`:'<div style="font-size:13px;color:var(--muted)">—</div>';
@@ -5132,7 +5133,7 @@ function drSlideFiabilite(c,data){
       <div style="font-size:11px;color:var(--muted);margin-bottom:20px">${esc(drConum)} · ${esc(drCms)} — écarts mesurés sur le fichier importé, aucune marge estimée</div>
       <div style="background:var(--s2);border-radius:12px;padding:14px 18px;margin-bottom:18px;font-size:14px;font-weight:600">${esc(syn.texte)}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        ${carte('Résultats des contrôles',listeSolides,'var(--green)')}
+        ${carte('Résultats des contrôles',listeSolides+(nonAppl.length?`<div style="font-size:13px;line-height:1.9;color:var(--muted);margin-top:6px">${nonAppl.map(i=>`○ ${esc(i.libelle)} — ${esc(i.fait)}`).join('<br>')}</div>`:''),'var(--green)')}
         ${carte('Points de vigilance',listeVigilance,'var(--orange)')}
       </div>
       ${alerte}

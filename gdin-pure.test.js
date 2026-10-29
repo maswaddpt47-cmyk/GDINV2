@@ -970,6 +970,27 @@ describe('defautsSaisie', () => {
   });
 });
 
+describe('contrôle sans population (AG-004, 29/10/2026)', () => {
+  const acc = { id_demande: '1', date_demande: '2025-03-01', type_action: ['Accompagnement'], conum: 'A', themas: ['x'], commune: 'Marmande' };
+  it('prises de contact sans ligne : non applicable, jamais un ✓', () => {
+    const c = indicateursFiabilite([acc], {}).find(i => i.cle === 'contacts');
+    assert.equal(c.applicable, false);
+    assert.match(c.fait, /non applicable/);
+  });
+  it('un contrôle qui a des lignes reste applicable', () => {
+    const a = indicateursFiabilite([acc], {}).find(i => i.cle === 'accompagnements');
+    assert.notEqual(a.applicable, false);
+  });
+  it('la synthèse ne compte pas le contrôle sans population parmi les contrôles sans défaut', () => {
+    const s = syntheseFiabilite(indicateursFiabilite([acc], {}));
+    const appl = indicateursFiabilite([acc], {}).filter(i => i.applicable !== false);
+    const attendu = appl.filter(i => i.niveau === 'solide' && !i.ecart).length;
+    assert.equal(s.sansDefaut, attendu);
+    assert.equal(s.nonApplicables, 1);
+    assert.match(s.texte, /1 non applicable/);
+  });
+});
+
 describe('syntheseFiabilite', () => {
   it('jeu vide', () => assert.equal(syntheseFiabilite([]).texte, 'aucune donnée'));
   it('ne réduit pas l\'ensemble au pire indicateur', () => {
