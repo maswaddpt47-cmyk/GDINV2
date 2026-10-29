@@ -5,17 +5,17 @@ des 27, 28 et 29/10/2026 : ce qui est fait, et ce que dit déjà `CLAUDE.md`,
 sont retirés. Texte complet : `git log -p CHANTIERS.md`.
 
 **À faire en premier, dans cet ordre** :
-1. **Audit XSS par Codex** (consigne dans `ateliers-backups/documents/sources/`,
-   `consigne-audit-codex-gdinv2-xss.md`), maintenant que le retrait du motif et
-   du JSON est en ligne. Voir « XSS » ci-dessous.
+1. **Trancher l'origine partagée** (voir « À trancher ») : l'audit XSS de
+   Codex du 29/10/2026 est fait et ses trois défauts sont corrigés ; reste
+   l'impact d'une XSS sur les autres applications du même domaine GitHub Pages.
 2. Faire contrôler à l'œil par l'utilisateur les **correctifs d'AG-004**
    (`6b77162`), puis établir avec lui le **tableau « affiché / recompté /
    écart »** sur son export. Aucun chiffre concerné n'est « vérifié » avant.
 3. Contrôler à l'œil la **mention de révisabilité** (en ligne, voir AG-002).
 
-**Hors dépôt, pour l'utilisateur seul** : les deux questions au référent
-archives et au DPO — où les dossiers de bilan sont déposés, combien de temps
-ils sont conservés. Elles bloquent le volet B d'AG-002 et rien d'autre.
+**Hors dépôt, pour l'utilisateur seul** : deux questions au référent archives et
+au DPO (où et combien de temps sont conservés les dossiers de bilan) : elles
+bloquent le volet B d'AG-002 et rien d'autre.
 
 **Ce qu'aucune session suivante ne doit refaire** : relancer un audit Codex sur
 AG-003 (clos), ni rouvrir la mise à jour SheetJS (faite, 0.20.3 vendorisée).
@@ -39,15 +39,20 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 
 ## Chantiers ouverts
 
-- **XSS — audit Codex à lancer.** Le retrait du motif et de l'import/export
-  JSON est en ligne (29/10/2026, AG-007, `539f74b`) : l'e2e importe désormais
-  un vrai XLSX. Ce parcours réaliste a révélé deux XSS préexistantes, corrigées
-  le 29/10/2026 : `renderCms()` (`e846717`) et sept textes d'aide « ? »
-  (`setInsightQ`, `8e483a7`), dont le clic exécutait du code. **Ne pas donner
-  ces correctifs à Codex** : il doit retrouver seul ce qui reste.
-  **Reste** : l'audit, puis remplacer les copies applicatives distribuées.
-  Le diagnostic de doublons suspects peut augmenter sans motif (repli sans
-  n° de demande ni date d'action) ; fusion et volumes inchangés.
+- **XSS — six défauts corrigés le 29/10/2026, audit Codex fait.** Retrait du
+  motif et du JSON en ligne (AG-007, `539f74b`). Le test e2e importe un vrai
+  XLSX (`8e483a7`, `e846717` : Par CMS et aides « ? »). L'audit Codex
+  (`audit-codex-gdinv2-xss-2026-10-29.md` dans `ateliers-backups`, rapport tel
+  quel + vérification) a relevé trois défauts de plus, tous des thématiques
+  non échappées (bilan du Rapport, « Bilan & Conclusion », bulle
+  « Thématiques »), reproduits puis corrigés (`46a82c7`). **Aucun autre chemin
+  trouvé par lui** parmi 93 `innerHTML` et 1 `insertAdjacentHTML`, sans preuve
+  d'absence. **Leçon** : le test hostile doit choisir un conseiller et une
+  structure *proposés* (sinon le Diapo rapport ne s'ouvre pas). **Reste** :
+  remplacer les copies applicatives distribuées ; retirer
+  `validerSauvegardeJSON()` (code mort, testé) si l'utilisateur est d'accord.
+  Le diagnostic de doublons suspects peut augmenter sans motif ; fusion et
+  volumes inchangés.
 
 - **CHANGEMENT DE DIFFUSION (27/10/2026, demande du DSI) : deux modes, et
   aucun des deux n'est un serveur web.** Le tableau de bord sera déposé sur le
@@ -65,10 +70,9 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   - **Risque propre au drive** : un espace partagé diffuse ce qu'on y dépose
     (fichier source, CSV détaillé, ancien export JSON). **Le dossier partagé
     porte l'application, jamais les données.**
-  - **Constaté** : `geo.api.gouv.fr` et les tuiles fonctionnent en `file://`
-    (27/10/2026) ; la CSP est la seule protection embarquée ; clé USB : 1,9 Mo,
-    données dans le navigateur du poste, un autre poste réimporte un fichier
-    source.
+  - **Constaté** : `geo.api.gouv.fr` et les tuiles fonctionnent en `file://` ;
+    la CSP est la seule protection embarquée ; clé USB : 1,9 Mo, données dans le
+    navigateur du poste (un autre poste réimporte un fichier source).
   - **Dossier DSI** (hors dépôt public : dépôt privé `GDINV2-BACKUP`,
     `dsi/GDIN-DSI_2026-10-29/`, lire son `SOMMAIRE.txt`) : la note V2 du
     28/10/2026 est **déjà remise** ; la V3 (trois défauts, JSON et motif
@@ -84,23 +88,18 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   - **Contrôle visuel** après Ctrl+F5 : Rapport et Diapo Rapport d'un
     conseiller × CMS (KPI réactivité, phrase de conclusion, diapositives
     Thématiques et Fiabilité) ; onglet Territoire (« Top 3 : X % »).
-  - **Tableau « affiché / recompté / écart »** : tableau croisé dynamique
-    Excel sur l'export source, comparé aux 11 diapositives du Diapo Rapport
-    pour la période et le couple conseiller × CMS projetés. **Modèle prêt**
-    (28/10/2026, 28 chiffres, définition et méthode de recomptage de chacun) :
-    dépôt **privé** `maswaddpt47-cmyk/GDINV2-BACKUP`, dossier `releves/`
-    (Excel et Word). Jamais dans ce dépôt-ci, public. Si une définition change
-    ici, mettre le modèle à jour.
-    **L'utilisateur veut être guidé pas à pas** (28/10/2026) : sélection
-    d'abord, puis étape 0 clic par clic, puis le relevé ligne par ligne ; il
-    ne transmet que des nombres et des noms de colonnes. C'est la seule
-    preuve d'exactitude ; les correctifs n'en sont pas une (Codex).
-  - **Non traité, à proposer** : le graphe en anneau des thématiques du
-    Territoire (`index.html`, `ch-terr-thema`) découpe un cercle en parts
-    qui se chevauchent (une ligne à deux thématiques est dans deux parts) ;
-    un anneau promet un tout. Barres horizontales à proposer à l'utilisateur.
-  - Chiffres de réactivité et de fiabilité projetés avant `6b77162` : non
-    comparables (signalé).
+  - **Tableau « affiché / recompté / écart »** : tableau croisé Excel sur
+    l'export source, comparé aux 11 diapositives du Diapo Rapport (période et
+    couple conseiller × CMS projetés). **Modèle prêt** (28/10/2026, 28 chiffres)
+    : dépôt **privé** `GDINV2-BACKUP`, `releves/`, jamais dans ce dépôt public ;
+    à mettre à jour si une définition change. **L'utilisateur veut être guidé
+    pas à pas** (sélection, étape 0 clic par clic, relevé ligne par ligne ; il ne
+    transmet que des nombres et noms de colonnes). C'est la seule preuve
+    d'exactitude ; les correctifs n'en sont pas une (Codex).
+  - **Non traité, à proposer** : l'anneau des thématiques du Territoire
+    (`ch-terr-thema`) découpe un cercle en parts qui se chevauchent ; un
+    anneau promet un tout. Barres horizontales à proposer. Chiffres de
+    réactivité et de fiabilité projetés avant `6b77162` : non comparables.
 
 - **AG-002 — archivage des bilans diffusés** (volet A fait le 22/10/2026,
   volet B en attente). La mention « chiffres susceptibles d'être révisés »,
@@ -125,6 +124,13 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   Reste aussi non vérifiée : la cause des écarts réels constatés sur l'export
   (7 881 → 8 313 à période identique).
 - **À trancher par l'utilisateur** (ne pas décider seul) :
+  - **Origine partagée (audit Codex, 29/10/2026)** : GDINV2 est servi sous
+    `maswaddpt47-cmyk.github.io`, comme d'autres applications (planification :
+    jeton de session et préférences). Un code exécuté dans GDINV2 peut lire
+    leur `localStorage` ; la CSP ne l'empêche pas (confirmé sur pages
+    fictives, état réel non vérifié). Options : fermer la version en ligne au
+    profit de la copie téléchargée (décision 4 de la synthèse DSI), ou un autre
+    domaine. Une copie ouverte depuis le disque n'a pas cette origine (*supposé*).
   - **103 lignes strictement identiques** sur tous les champs conservés (hors
     ateliers, mesuré le 20/10/2026) : gardées et signalées par le panneau
     qualité ; un doublon de saisie ou deux séances le même jour, la source ne
@@ -133,12 +139,10 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     réalisés (lignes). Un taux par demande demande une règle pour les demandes
     à plusieurs actions.
 - **Validation sur poste** du rendu (badges, États à 9 colonnes, « Autres
-  structures », libellé de réactivité), sur le site déployé.
-- **Bases déjà présentes sur les postes** : conservées, complétées, marquées
-  `base_heritee` (conseiller « inconnu » sauf déduction connue), mais
-  incomplètes (demandes fusionnées à tort). Reconstruction fiable :
-  « Réinitialiser et importer » l'export source, puis comparer les comptes
-  (20 226 pour septembre 2026).
+  structures », libellé de réactivité), sur le site déployé. **Bases déjà
+  présentes** : conservées, marquées `base_heritee`, mais incomplètes ;
+  reconstruction fiable = « Réinitialiser et importer » l'export source, puis
+  comparer les comptes (20 226 pour septembre 2026).
 
 ## À porter aux développeurs de l'outil de saisie
 
@@ -274,11 +278,9 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
 - **Ne pas retirer les contre-preuves** e2e (`Garde-fous IndexedDB`,
   `Classement des communes`).
 - **Harnais** : générateur mulberry32 (pas un LCG en `seed % n`), combinaison
-  du Rapport la plus fournie, *landing* fermé par `.lo-btn` et un seul
-  `.panel.active` avant toute capture.
-- **Ce que l'environnement de développement ne voit pas** : le proxy filtre
-  cdnjs, `geo.api.gouv.fr` et les tuiles ; le rendu de la carte se vérifie sur
-  le site.
+  du Rapport la plus fournie, *landing* fermé par `.lo-btn`, un seul
+  `.panel.active` avant toute capture. Le proxy de développement filtre cdnjs,
+  `geo.api.gouv.fr` et les tuiles : la carte se vérifie sur le site.
 
 **Limites connues, à assumer**
 
@@ -294,6 +296,5 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
 
 ## Pistes d'amélioration
 
-Règle dans `CLAUDE.md` (« Posture de travail ») ; ne pas reproposer une piste
-écartée sans fait nouveau. **Proposées, en attente** : aucune. **Écartées** :
-aucune.
+Règle dans `CLAUDE.md` ; ne pas reproposer une piste écartée sans fait nouveau.
+Proposées : aucune. Écartées : aucune.
