@@ -7,13 +7,13 @@ sont retirés. Texte complet : `git log -p CHANTIERS.md`.
 **À faire en premier, dans cet ordre** (état du 29/10/2026, fin de session) :
 0. **Registre RGPD V0.2 : fait** (29/10, `GDINV2-BACKUP` `b17afdb`). Reste à
    valider par le DPO.
-1. **Copies à remplacer** : l'utilisateur ne fabrique **aucune archive** (précisé
-   le 29/10) : il téléverse sur Nextcloud les derniers fichiers (`index.html`,
-   `gdin-pure.js`, `vendor/`), et le ZIP n'est qu'un effet du téléchargement du
-   dossier par Nextcloud. Zip `GDIN_2026-10-29.zip` (appli `b07a280`, avec
-   `LISEZ-MOI.txt` et `A-LIRE-AVANT-D-OUVRIR.txt` corrigés : plus de JSON, plus de
-   mode « dossier synchronisé » non testé) remis à l'utilisateur le 29/10,
-   **pas encore déposé**. À faire : le déposer, puis chaque agent retélécharge, extrait au même endroit et fait Ctrl+F5.
+1. **Copies à remplacer** : pas d'archive fabriquée (l'utilisateur téléverse les
+   derniers fichiers ; le ZIP vient du téléchargement Nextcloud). Zip
+   `GDIN_2026-10-29.zip` (appli `b07a280`, `LISEZ-MOI.txt` et
+   `A-LIRE-AVANT-D-OUVRIR.txt` corrigés) **déposé sur Nextcloud le 29/10**
+   (*déclaré par l'utilisateur, non vérifié*). Reste : chaque agent
+   retélécharge, extrait au même endroit, Ctrl+F5 ; le dossier DSI (V3,
+   synthèse, consigne V0.2) n'est pas encore remis.
 2. **Trancher l'origine partagée** (voir « À trancher ») : options expliquées le
    29/10 (fermer la version en ligne, recommandé et voulu par le DSI, ou autre
    domaine) ; **choix de l'utilisateur**, pas encore fait.
