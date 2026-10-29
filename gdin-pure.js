@@ -1363,6 +1363,17 @@ function evolutionAnnuelle(records,anneeN,dateMax){
   return{nRec,nPre,delta,partielle,coupure:`${jj}/${mm}`,anneeN,anneeP};
 }
 
+// Évolution annuelle d'un couple : accompagnements seuls, une entrée par année du
+// jeu, chacune comparée à l'année calendaire précédente. La dernière année, si
+// elle est partielle, est comparée à la MÊME date (coupure d'evolutionAnnuelle).
+// Avant le 29/10/2026 le bloc comptait toutes les lignes, tous types, et
+// comparait à l'année précédente du jeu sans coupure (AG-004, décision 2).
+function evolutionParAnnee(records,dateMax){
+  const acc=filtrerParType(records,'Accompagnement');
+  const annees=[...new Set(acc.filter(r=>r.date_demande).map(r=>r.date_demande.slice(0,4)))].sort();
+  return annees.map(a=>evolutionAnnuelle(acc,a,dateMax));
+}
+
 // ─── Demandes distinctes ──────────────────────────────────────────────────────
 // Une demande (N° Demande) génère plusieurs lignes d'action : compter les lignes
 // n'est pas compter les demandes. Couvert par les tests « countDemandes ».
@@ -1373,7 +1384,7 @@ if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
     normKey,normCms,extractDominantCms,
-    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,retirerMotifs,baseAncienne,completerRangs,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
+    esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,evolutionParAnnee,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,retirerMotifs,baseAncienne,completerRangs,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,lignesAvecThemas,countTypes,
     parseDt,dayDiff,bizDays,
     normEtat,isRealisee,countDemandes,dateFr,mentionRevisabilite,decouperNombre,formaterCommeNombre,cleDoublon,compterDoublons,moisDeLaPeriode,libelleLignes,LIBELLE_LIGNES,

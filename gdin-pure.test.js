@@ -9,7 +9,7 @@ const {
   numeroterParticipants, cleFusion, numeroterLignes, fusionnerImport, attribuerConum, deriverAttributionCms,
   neutraliserFormule, celluleCSV, retirerMotifs, baseAncienne, completerRangs,
   categorieEtat, repartitionEtats, deriverActions, delaisParDemande, reactivite48, dansPeriode, tauxRealisation, filtrerParType, evolutionAnnuelle,
-  indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
+  evolutionParAnnee, indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
   rattacherCommune, COMMUNES_47,
 } = require('./gdin-pure.js');
@@ -967,6 +967,32 @@ describe('defautsSaisie', () => {
     const d = defautsSaisie([ligneF()], { retenues: 100, cellules_reparees: 100, lues: 120, ecartees: 20 });
     assert.equal(d.find(x => x.libelle.startsWith('Cellules')).part, 100);
     assert.equal(d.find(x => x.libelle.startsWith('Lignes écartées')).part, 16.7);
+  });
+});
+
+describe('evolutionParAnnee (AG-004, décision 2)', () => {
+  const l = (d, type = ['Accompagnement']) => ({ date_demande: d, type_action: type });
+  it('ne compte que les accompagnements', () => {
+    const recs = [l('2025-02-01'), l('2025-03-01'), l('2025-04-01'),
+      l('2025-05-01', ['Orientation vers un tiers']), l('2025-06-01', [])];
+    const e = evolutionParAnnee(recs, '2025-12-31');
+    assert.equal(e.length, 1);
+    assert.equal(e[0].nRec, 3);
+  });
+  it('année partielle comparée à la même date, pas à l\'année entière', () => {
+    const recs = [l('2025-02-01'), l('2025-03-01'), l('2025-11-15'), l('2025-12-20'),
+      l('2026-02-01'), l('2026-03-01')];
+    const e = evolutionParAnnee(recs, '2026-10-29');
+    const e26 = e.find(x => x.anneeN === '2026');
+    assert.equal(e26.partielle, true);
+    assert.equal(e26.nRec, 2);
+    assert.equal(e26.nPre, 2);          // 2025 jusqu'au 29/10, sans novembre ni décembre
+    assert.equal(e26.delta, 0);
+  });
+  it('une année manquante ne sert pas de référence : pas de flèche', () => {
+    const recs = [l('2023-05-01'), l('2025-05-01'), l('2025-06-01')];
+    const e = evolutionParAnnee(recs, '2025-12-31');
+    assert.equal(e.find(x => x.anneeN === '2025').delta, null);
   });
 });
 

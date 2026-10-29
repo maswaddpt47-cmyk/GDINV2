@@ -2946,17 +2946,17 @@ function buildRptBilan(conum,cms,data,dataConum){
 
   // Évolution annuelle conum × cms — toujours sur DATA brut (indépendant du filtre années)
   const rawCC=DATA.filter(r=>r.conum===conum&&r.cms===cms);
-  const evolYears=[...new Set(rawCC.map(r=>r.date_demande.slice(0,4)))].sort();
-  const evolCounts=evolYears.map(yr=>rawCC.filter(r=>r.date_demande.startsWith(yr)).length);
-  const evolItems=evolYears.map((yr,i)=>{
-    const n=evolCounts[i],prev=i>0?evolCounts[i-1]:null;
-    const diff=prev!==null&&prev>0?Math.round((n-prev)/prev*100):null;
+  const EVA=evolutionParAnnee(rawCC,dateMaxBase());
+  const evolYears=EVA.map(e=>e.anneeN);
+  const evolCounts=EVA.map(e=>e.nRec);
+  const evolItems=EVA.map(e=>{
+    const n=e.nRec,diff=e.delta,yr=e.anneeN;
     const arrow=diff===null?'':(diff>=0?`<span style="color:var(--green);font-size:10px;margin-left:3px">▲${diff}%</span>`:`<span style="color:var(--red);font-size:10px;margin-left:3px">▼${Math.abs(diff)}%</span>`);
     const col=yearColor(yr);
-    return`<div style="text-align:center;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;border-top:2px solid ${col}"><div class="nb-anime" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:${col}">${n}${arrow}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${yr}</div></div>`;
+    return`<div style="text-align:center;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;border-top:2px solid ${col}"><div class="nb-anime" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:${col}">${n}${arrow}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${yr}${e.partielle?` (au ${e.coupure})`:''}</div></div>`;
   }).join('');
   document.getElementById('rpt-bilan-evol').innerHTML=evolYears.length>1
-    ?`<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Évolution annuelle — ${esc(cms)}</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px">${evolItems}</div>`
+    ?`<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Évolution annuelle des accompagnements — ${esc(cms)}</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px">${evolItems}</div>`
     :'';
 
   const p1=`Au sein de la structure <strong style="color:var(--blue)">${esc(cms)}</strong>, ${conumHtml} a réalisé <strong>${total} accompagnement${total>1?'s':''}</strong> sur <strong>${communes} commune${communes>1?'s':''}</strong>, soit <strong style="color:var(--cyan)">${partCN}% de son activité CN totale</strong> sur la période.`;
@@ -5167,14 +5167,14 @@ function drSlideBilan(c,data,allDataConum){
   const p48Color=p48===null?'var(--muted)':p48>=95?'var(--green)':p48>=85?'var(--orange)':'var(--red)';
   // Évolution annuelle — sur DATA brut (indépendant du filtre années)
   const rawCC=DATA.filter(r=>r.conum===drConum&&r.cms===drCms);
-  const evolYears=[...new Set(rawCC.map(r=>r.date_demande.slice(0,4)))].sort();
-  const evolCounts=evolYears.map(yr=>rawCC.filter(r=>r.date_demande.startsWith(yr)).length);
-  const evolItems=evolYears.map((yr,i)=>{
-    const n=evolCounts[i],prev=i>0?evolCounts[i-1]:null;
-    const diff=prev!==null&&prev>0?Math.round((n-prev)/prev*100):null;
+  const EVA=evolutionParAnnee(rawCC,dateMaxBase());
+  const evolYears=EVA.map(e=>e.anneeN);
+  const evolCounts=EVA.map(e=>e.nRec);
+  const evolItems=EVA.map(e=>{
+    const n=e.nRec,diff=e.delta,yr=e.anneeN;
     const arrow=diff===null?'':(diff>=0?`<span style="color:var(--green);font-size:10px;margin-left:3px">▲${diff}%</span>`:`<span style="color:var(--red);font-size:10px;margin-left:3px">▼${Math.abs(diff)}%</span>`);
     const col=yearColor(yr);
-    return`<div style="text-align:center;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;border-top:2px solid ${col}"><div class="nb-anime" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:${col}">${n}${arrow}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${yr}</div></div>`;
+    return`<div style="text-align:center;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;border-top:2px solid ${col}"><div class="nb-anime" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:${col}">${n}${arrow}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${yr}${e.partielle?` (au ${e.coupure})`:''}</div></div>`;
   }).join('');
   const years=drYears.size?[...drYears].sort():[...new Set(data.map(r=>r.date_demande.slice(0,4)))].sort();
   const cnColor=conumColor(drConum);
@@ -5190,7 +5190,7 @@ function drSlideBilan(c,data,allDataConum){
   const bestYearIdx=evolCounts.length?evolCounts.indexOf(Math.max(...evolCounts)):-1;
   const bestYear=evolYears[bestYearIdx];
   const bestYearN=evolCounts[bestYearIdx]||0;
-  const insightBilan=`📊 Total : <strong>${total}</strong> accomp. · <strong>${partCN}%</strong> activité CN<br>🏆 Meilleure année : <strong>${bestYear||'—'}</strong> (${bestYearN} accomp.)<br>📈 Évol. trim. : <strong>${trend}</strong>${p48!==null?`<br>⏱ Réactivité 48h : <strong>${p48}%</strong>`:''}`;
+  const insightBilan=`📊 Total : <strong>${total}</strong> accomp. · <strong>${partCN}%</strong> activité CN<br>🏆 Meilleure année : <strong>${bestYear||'—'}</strong> (${bestYearN} accomp.)<br>📈 Évol. ${nYear} / ${nPrevYear}${EVO.partielle?` (au ${EVO.coupure})`:''} : <strong>${trend}</strong>${p48!==null?`<br>⏱ Réactivité 48h : <strong>${p48}%</strong>`:''}`;
   c.innerHTML=`
     <div style="padding:10px 0">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:2px">Bilan &amp; Perspectives</div>
@@ -5203,7 +5203,7 @@ function drSlideBilan(c,data,allDataConum){
             <div style="font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px">${l}</div>
           </div>`).join('')}
       </div>
-      ${evolYears.length>1?`<div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Évolution annuelle — ${esc(drCms)}</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px">${evolItems}</div></div>`:''}
+      ${evolYears.length>1?`<div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px"><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Évolution annuelle des accompagnements — ${esc(drCms)}</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px">${evolItems}</div></div>`:''}
       <div style="background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(16,185,129,.06));border:1px solid rgba(59,130,246,.2);border-radius:14px;padding:18px 22px;line-height:1.8;font-size:13px;color:var(--text)">
         <p style="margin-bottom:9px">${p1}</p>
         <p style="margin-bottom:9px">${p2}</p>
