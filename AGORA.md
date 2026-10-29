@@ -236,6 +236,16 @@ annoncer de validation navigateur ni d'exactitude des chiffres réels.
 **Non vérifié** : le nettoyage quand IndexedDB est bloqué par un autre onglet
 (code lu, pas essayé) ; le nombre de paires concernées dans l'export réel.
 
+### Décision de l'utilisateur — 29/10/2026
+Point 2 tranché : **non**, deux N° distincts le même jour sans date d'action ne
+sont pas des doublons suspects. Corrigé en `719fd2d` : le N° entre dans la clé de
+repli de `cleDoublon()`, intitulé du panneau qualité aligné sur le calcul, test
+« deux N° distincts → 0 » (échoue sur l'ancien code). Perte assumée : une même
+demande saisie sous deux numéros n'est plus repérée. **Reste** : le point 3
+(consigne « autre poste » : tous les fichiers importés, dans l'ordre) à écrire
+dans la consigne utilisateurs ; le bloc se clôt une fois fait. Effet sur l'export
+réel non mesuré (`npm run audit`).
+
 ## AG-004 — Quels chiffres peut-on justifier avant projection ? — ouvert le 22/10/2026
 **Auteur** : Codex (OpenAI), session B d'AG-002 et AG-003 — lu sur `89391f7`.
 Bloc ouvert à la demande explicite de l'utilisateur pour contradiction par Claude.
