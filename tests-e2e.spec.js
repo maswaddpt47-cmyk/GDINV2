@@ -1511,11 +1511,15 @@ test.describe('Contenu importé hostile', () => {
         startDiapoRapport();
       });
       for (let i = 0; i < DR_SLIDES.length; i++) garde(() => drGoTo(i));
-      return { erreurs, xss: window.__xss === undefined ? null : window.__xss,
+      // Les textes d'aide des « ? » sont écrits en HTML au clic : un nom du fichier
+      // non échappé s'y exécutait (7 aides le 29/10/2026).
+      const aides = Object.values(_drIns).filter(t => /<img|<svg/i.test(t)).length;
+      return { erreurs, xss: window.__xss === undefined ? null : window.__xss, aides,
         injectes: document.querySelectorAll('img[src="x"], svg[onload]').length };
     }, { H });
     expect(resultat.xss, 'un gestionnaire injecté s\'est exécuté').toBeNull();
     expect(resultat.injectes, 'des éléments injectés existent dans le DOM').toBe(0);
+    expect(resultat.aides, 'des textes d\'aide « ? » contiennent du HTML injecté').toBe(0);
   });
 });
 

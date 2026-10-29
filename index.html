@@ -1972,7 +1972,7 @@ function renderGlobal(){
   // additionner comptait des mentions (74 %) et non des actions (65 %).
   const top3Noms=new Set(theEnt.slice(0,3).map(([k])=>k));
   const top3Sh=data.filter(r=>(r.themas||[]).some(t=>top3Noms.has(t))).length;
-  setInsightQ('ch-thema',theEnt[0]?`Thématique dominante : <strong>${theEnt[0][0]}</strong> (${theEnt[0][1]} ${motLignes()}, ${pct(theEnt[0][1],data.length)} %)<br>Les 3 premières couvrent <strong>${pct(top3Sh,data.length)}%</strong> des ${motLignes()} (une ligne comptée une fois).`:'Aucune donnée');
+  setInsightQ('ch-thema',theEnt[0]?`Thématique dominante : <strong>${esc(theEnt[0][0])}</strong> (${theEnt[0][1]} ${motLignes()}, ${pct(theEnt[0][1],data.length)} %)<br>Les 3 premières couvrent <strong>${pct(top3Sh,data.length)}%</strong> des ${motLignes()} (une ligne comptée une fois).`:'Aucune donnée');
   const topCn=conumData[0];const top2Sh=(conumData[0]?.[1]||0)+(conumData[1]?.[1]||0);
   setInsightQ('ch-conum',topCn?`Conseiller le plus actif : <strong>${esc(topCn[0])}</strong> (${topCn[1]} accomp.)<br>Les 2 premiers : <strong>${pct(top2Sh,data.length)}%</strong> de l'activité.`:'Aucune donnée');
   const topCmsG=countEntries(noDsian,'cms').sort((a,b)=>b[1]-a[1])[0];
@@ -2016,7 +2016,7 @@ function renderGlobal(){
       data:{labels:etatEntries.map(e=>e[0]),datasets:[{data:etatEntries.map(e=>e[1]),backgroundColor:etatEntries.map(e=>etatColors[e[0]]||'#8b5cf6'),borderWidth:2,borderColor:'#111827',hoverOffset:6}]},
       options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:8,color:legendColor()}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${pct(ctx.parsed,data.length)}%)`}}}}
     });
-    setInsightQ('ch-etat',etatEntries[0]?`État dominant : <strong>${etatEntries[0][0]}</strong> (${etatEntries[0][1]} — ${pct(etatEntries[0][1],data.length)}%)`:'Aucune donnée');
+    setInsightQ('ch-etat',etatEntries[0]?`État dominant : <strong>${esc(etatEntries[0][0])}</strong> (${etatEntries[0][1]} — ${pct(etatEntries[0][1],data.length)}%)`:'Aucune donnée');
   }
 
   // Top orienteurs (horizontal bar)
@@ -2030,7 +2030,7 @@ function renderGlobal(){
       data:{labels:oriEntries.map(e=>e[0]),datasets:[{data:oriEntries.map(e=>e[1]),backgroundColor:PALETTE.map(c=>c+'cc'),borderColor:PALETTE,borderWidth:1,borderRadius:4,borderSkipped:false}]},
       options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.x} demandes`}}},scales:{x:{grid:{color:gridColor()},beginAtZero:true,ticks:{precision:0,color:'#6b7fa0',font:{size:10}}},y:{grid:{display:false},ticks:{color:'var(--text)',font:{size:10}}}}}
     });
-    setInsightQ('ch-ori-global',oriEntries[0]?`Orienteur principal : <strong>${oriEntries[0][0]}</strong> (${oriEntries[0][1]} dem. — ${pct(oriEntries[0][1],data.length)}%)`:'Aucune donnée');
+    setInsightQ('ch-ori-global',oriEntries[0]?`Orienteur principal : <strong>${esc(oriEntries[0][0])}</strong> (${oriEntries[0][1]} dem. — ${pct(oriEntries[0][1],data.length)}%)`:'Aucune donnée');
   }
 
   renderSaisonGlobal();
@@ -2389,7 +2389,7 @@ function renderEvolution(){
   setInsightQ('ch-evol',peak?`Pic mensuel : <strong>${monthLabel(peak[0])}</strong> (${peak[1]} demandes)<br>Total : <strong>${dataForEvol.length}</strong> accompagnements sur la période.`:'Aucune donnée');
   const cmsCE={};allF.forEach(r=>{if(r.cms)cmsCE[r.cms]=(cmsCE[r.cms]||0)+1;});
   const topCmsE=Object.entries(cmsCE).sort((a,b)=>b[1]-a[1])[0];
-  setInsightQ('ch-cms-monthly',topCmsE?`CMS le plus actif sur la période : <strong>${topCmsE[0].replace(/^Centre Médico-Social(?: de)? /,'CMS ')}</strong><br>${topCmsE[1]} accompagnements (${pct(topCmsE[1],allF.length)}%).`:'Aucune donnée');}
+  setInsightQ('ch-cms-monthly',topCmsE?`CMS le plus actif sur la période : <strong>${esc(topCmsE[0].replace(/^Centre Médico-Social(?: de)? /,'CMS '))}</strong><br>${topCmsE[1]} accompagnements (${pct(topCmsE[1],allF.length)}%).`:'Aucune donnée');}
 }
 
 function renderYoYTable(data,years){
@@ -2505,9 +2505,9 @@ function renderCms(){
   const mCntCms={};data.forEach(r=>{const k=r.date_demande.slice(0,7);mCntCms[k]=(mCntCms[k]||0)+1;});
   const peakCms=mKeysCms.map(k=>[k,mCntCms[k]||0]).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1])[0];
   const cmsShort=cms.replace(/^Centre Médico-Social(?: de)? /,'CMS ');
-  setInsightQ('ch-cms-evol',peakCms?`Pic mensuel <strong>${cmsShort}</strong> : <strong>${monthLabel(peakCms[0])}</strong> (${peakCms[1]} dem.)<br>Complétion globale : <strong>${pct(data.length-data.filter(r=>!r.date_action).length,data.length)}%</strong>.`:'Aucune donnée');
+  setInsightQ('ch-cms-evol',peakCms?`Pic mensuel <strong>${esc(cmsShort)}</strong> : <strong>${monthLabel(peakCms[0])}</strong> (${peakCms[1]} dem.)<br>Complétion globale : <strong>${pct(data.length-data.filter(r=>!r.date_action).length,data.length)}%</strong>.`:'Aucune donnée');
   const topOriCms=countEntries(data,'orienteur').filter(([n])=>n&&n!=='?'&&!ORI_EXCL.has(n.trim())).sort((a,b)=>b[1]-a[1])[0];
-  setInsightQ('ch-cms-cal',topOriCms?`TS le plus orienteur vers ce CMS : <strong>${topOriCms[0]}</strong> (${topOriCms[1]} dem.)<br>Thématique principale : <strong>${Object.keys(countThemas(data))[0]||'—'}</strong>.`:'Aucune donnée');}
+  setInsightQ('ch-cms-cal',topOriCms?`TS le plus orienteur vers ce CMS : <strong>${esc(topOriCms[0])}</strong> (${topOriCms[1]} dem.)<br>Thématique principale : <strong>${esc(Object.keys(countThemas(data))[0]||'—')}</strong>.`:'Aucune donnée');}
   renderSaisonCms(cms);
 }
 function renderSaisonCms(cms){
@@ -2634,10 +2634,10 @@ function renderConum(){
   const mCC={};data.forEach(r=>{const k=r.date_demande.slice(0,7);mCC[k]=(mCC[k]||0)+1;});
   const peakC=mKC.map(k=>[k,mCC[k]||0]).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1])[0];
   const topCmsC=countEntries(data,'cms').map(e=>e[0])[0]||'—';
-  setInsightQ('ch-conum-evol',peakC?`Pic mensuel : <strong>${monthLabel(peakC[0])}</strong> (${peakC[1]} dem.)<br>CMS principal : <strong>${topCmsC.replace(/^Centre Médico-Social(?: de)? /,'CMS ')}</strong>.`:'Aucune donnée');
+  setInsightQ('ch-conum-evol',peakC?`Pic mensuel : <strong>${monthLabel(peakC[0])}</strong> (${peakC[1]} dem.)<br>CMS principal : <strong>${esc(topCmsC.replace(/^Centre Médico-Social(?: de)? /,'CMS '))}</strong>.`:'Aucune donnée');
   const topThemaC=Object.keys(countThemas(data))[0]||'—';
   const shareTop=data.length?pct(countThemas(data)[topThemaC]||0,data.length):0;
-  setInsightQ('ch-conum-types',`Thématique principale : <strong>${topThemaC}</strong> (${countThemas(data)[topThemaC]||0} ${motLignes()}, ${shareTop} % des ${motLignes()})<br>Part de l'activité totale : <strong>${pct(data.length,allData.length)}%</strong>.`);}
+  setInsightQ('ch-conum-types',`Thématique principale : <strong>${esc(topThemaC)}</strong> (${countThemas(data)[topThemaC]||0} ${motLignes()}, ${shareTop} % des ${motLignes()})<br>Part de l'activité totale : <strong>${pct(data.length,allData.length)}%</strong>.`);}
 }
 
 // Unité des lignes affichées, au pluriel minuscule (« accompagnements »,
@@ -2727,7 +2727,7 @@ function renderOrienteurs(){
   const top3ShOri=oriEntries.slice(0,3).reduce((s,[,v])=>s+v,0);
   setInsightQ('ch-ori-bar',topOri?`TS le plus orienteur : <strong>${esc(topOri[0])}</strong> (${topOri[1]} dem.)<br>Top 3 = <strong>${pct(top3ShOri,data.length)}%</strong> des orientations.`:'Aucune donnée');
   const topThemaOri=Object.entries(countThemas(data)).sort((a,b)=>b[1]-a[1])[0];
-  setInsightQ('ch-ori-thema',topThemaOri?`Thématique la plus orientée : <strong>${topThemaOri[0]}</strong> (${topThemaOri[1]} ${motLignes()}, ${pct(topThemaOri[1],data.length)} % des ${motLignes()})<br>${oriEntries.length} orienteurs actifs sur la période.`:'Aucune donnée');}
+  setInsightQ('ch-ori-thema',topThemaOri?`Thématique la plus orientée : <strong>${esc(topThemaOri[0])}</strong> (${topThemaOri[1]} ${motLignes()}, ${pct(topThemaOri[1],data.length)} % des ${motLignes()})<br>${oriEntries.length} orienteurs actifs sur la période.`:'Aucune donnée');}
 }
 
 // RAPPORT
@@ -4382,8 +4382,8 @@ function getCoordsGlobal(nom){
     }
   });
   {const topComm=communes[0];
-  setInsightQ('ch-terr-bar',topComm?`Commune la plus active : <strong>${topComm[0]}</strong> (${topComm[1]} accompagnements)<br>${communes.length} communes représentées dans la sélection.`:'Aucune donnée');
-  setInsightQ('ch-terr-thema',thEntries[0]?`Thématique dominante sur le territoire : <strong>${thEntries[0][0]}</strong> (${thEntries[0][1]} ${motLignes()}, ${pct(thEntries[0][1],topCommData.length)} %)<br>Top 3 : ${pct(lignesAvecThemas(topCommData,thEntries.slice(0,3).map(([k])=>k)),topCommData.length)} % des ${motLignes()} (une ligne comptée une fois).`:'Aucune donnée');}
+  setInsightQ('ch-terr-bar',topComm?`Commune la plus active : <strong>${esc(topComm[0])}</strong> (${topComm[1]} accompagnements)<br>${communes.length} communes représentées dans la sélection.`:'Aucune donnée');
+  setInsightQ('ch-terr-thema',thEntries[0]?`Thématique dominante sur le territoire : <strong>${esc(thEntries[0][0])}</strong> (${thEntries[0][1]} ${motLignes()}, ${pct(thEntries[0][1],topCommData.length)} %)<br>Top 3 : ${pct(lignesAvecThemas(topCommData,thEntries.slice(0,3).map(([k])=>k)),topCommData.length)} % des ${motLignes()} (une ligne comptée une fois).`:'Aucune donnée');}
 }
 
 
