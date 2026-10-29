@@ -23,9 +23,12 @@ session et de compte) :
 4. **Règles 53 et 54** de MD-LIB : propagées ici, à NEWGEN et NextStep le 29/10
    (reste PAPPERBOARD, pas dans cette session).
 5. **AG-004** : relevé fait le 29/10 sur un couple (31 lignes sur 33 à écart nul) ;
-   cinq défauts de sens inscrits dans le bloc, à **soumettre à Codex** avec le relevé,
-   puis à trancher (cinq définitions). Reste : relever d'autres couples, surtout
-   ceux à forte part de lignes déduites. Aucun autre couple n'est « vérifié ».
+   Codex a répondu le 29/10 (`8da3b86`, amendé : cinq mécanismes confirmés, un sixième
+   libellé faux, « Évol. trim. », `index.html:5192`). **À faire** : trancher les
+   définitions (contrôle sans population, évolution annuelle, effectif d'orienteurs,
+   période de couverture, visibilité des lignes déduites), **retrouver les 12 lignes**
+   de l'écart 412/400, puis relever d'autres couples. Aucun autre couple n'est
+   « vérifié » ; la macro ne vaut pas validation indépendante des définitions.
 6. **AG-007 clos le 29/10/2026** (livraison `719fd2d` + consigne V0.3 déposées,
    *déclaré*). Reste à mesurer l'effet des doublons sur ton export :
    `npm run audit -- export.xls`, avant le tableau d'AG-004.
