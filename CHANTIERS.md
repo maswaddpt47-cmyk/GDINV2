@@ -25,11 +25,8 @@ session et de compte) :
 5. Faire contrôler à l'œil les **correctifs d'AG-004** (`6b77162`), puis établir
    le **tableau « affiché / recompté / écart »** sur son export : aucun chiffre
    concerné n'est « vérifié » avant.
-6. Contrôler à l'œil la **mention de révisabilité** (en ligne, voir AG-002).
-
-**Hors dépôt, pour l'utilisateur seul** : deux questions au référent archives et au
-DPO (où, combien de temps pour les dossiers de bilan) : elles bloquent le volet B
-d'AG-002 seulement.
+6. Contrôler à l'œil la **mention de révisabilité** (en ligne ; bandeau de la Vue
+   globale, sous-titre du Rapport, pied de la première diapo).
 
 **Ne pas refaire** : un audit Codex sur AG-003 (clos), la mise à jour SheetJS (0.20.3).
 
@@ -105,28 +102,10 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     (`ch-terr-thema`) a des parts qui se chevauchent : barres horizontales.
     Réactivité et fiabilité projetées avant `6b77162` : non comparables.
 
-- **AG-002 — archivage des bilans diffusés** (volet A fait le 22/10/2026,
-  volet B en attente). La mention « chiffres susceptibles d'être révisés »,
-  avec la période et la date du dernier import, est posée sur la Vue globale,
-  le sous-titre du Rapport et la couverture du Diapo Rapport
-  (`mentionRevisabilite()`, `gdin-pure.js`, 13 tests ; en ligne le 22/10/2026).
-  Elle prévient, elle n'archive rien. **Contrôle à l'œil restant**, après
-  Ctrl+F5 : bandeau gris de la Vue globale, sous-titre du Rapport (conseiller et
-  CMS choisis), pied de la première diapositive du Diapo Rapport. Sur les
-  données de démonstration elle dit « source non datée » : voulu.
-  **Volet B — bloqué sur une question qui n'est pas technique** : reproduire un
-  bilan déjà diffusé demande de conserver ses données, ses filtres et sa
-  version de calcul. L'ancien export JSON ne portait ni les filtres de lecture,
-  ni la version de calcul, ni la date d'import ; il est retiré. Avant de créer un archivage, deux réponses à obtenir
-  auprès du référent archives et du DPO : **où** ces dossiers sont déposés
-  (hors dépôt public ; des anciens exports peuvent encore contenir le motif)
-  et **combien de temps** ils sont conservés — la durée doit figurer au tableau
-  de gestion et toute élimination passe par le visa des Archives
-  départementales, purge automatique comprise (MD-LIB `archivage-cd47.md`).
-  Sans ces réponses, l'archivage créerait un stock de données personnelles non
-  déclaré. Le volet C (mode « arrêté au ») en dépend entièrement.
-  Reste aussi non vérifiée : la cause des écarts réels constatés sur l'export
-  (7 881 → 8 313 à période identique).
+- **AG-002 clos le 29/10/2026** (volets B et C abandonnés, sans réponse du
+  référent archives ni du DPO ; voir « Blocs tranchés » de `AGORA.md`). Reste
+  une cause **non vérifiée** : les écarts constatés sur l'export (7 881 → 8 313 à
+  période identique), à voir avec le tableau d'AG-004.
 - **À trancher par l'utilisateur** (ne pas décider seul) :
   - **Origine partagée (audit Codex, 29/10/2026)** : GDINV2 est servi sous
     `maswaddpt47-cmyk.github.io`, comme d'autres applications (planification :
