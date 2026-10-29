@@ -4,40 +4,40 @@
 des 27, 28 et 29/10/2026 : ce qui est fait, et ce que dit déjà `CLAUDE.md`,
 sont retirés. Texte complet : `git log -p CHANTIERS.md`.
 
-**À faire en premier, dans cet ordre** (état du 29/10/2026, fin de session) :
-0. **Registre RGPD V0.2 : fait** (29/10, `GDINV2-BACKUP` `b17afdb`). Reste à
-   valider par le DPO.
-1. **Copies à remplacer** : le zip se fabrique par `scripts/zip-cloud.sh` (29/10) ;
-   règle de livraison dans `CLAUDE.md`, inventaire dans `GDINV2-BACKUP/INVENTAIRE.md`. Zip
-   `GDIN_2026-10-29.zip` (appli `b07a280`, `LISEZ-MOI.txt` et
-   `A-LIRE-AVANT-D-OUVRIR.txt` corrigés) **déposé sur Nextcloud le 29/10**
-   (*déclaré par l'utilisateur, non vérifié*). Reste : chaque agent
-   retélécharge, extrait au même endroit, Ctrl+F5 ; la consigne V0.2 (avec la raison du retrait du JSON,
-   29/10) est à déposer à côté du dossier ; le dossier DSI : **la V2 et la synthèse du 28/10 sont
-   dans un dossier partagé du cloud** (vu le 29/10) ; à remplacer par la V3 et la
-   synthèse du 29/10 après relecture de l'utilisateur, et vérifier qui a accès à
-   ce dossier (documents de sécurité, pas pour les agents).
-2. **Trancher l'origine partagée** (voir « À trancher ») : options expliquées le
-   29/10 (fermer la version en ligne, recommandé et voulu par le DSI, ou autre
-   domaine) ; **choix de l'utilisateur**, pas encore fait.
-3. Faire contrôler à l'œil par l'utilisateur les **correctifs d'AG-004**
-   (`6b77162`), puis établir avec lui le **tableau « affiché / recompté /
-   écart »** sur son export. Aucun chiffre concerné n'est « vérifié » avant.
-4. Contrôler à l'œil la **mention de révisabilité** (en ligne, voir AG-002).
+**À faire en premier, dans cet ordre** (passation du 29/10/2026, changement de
+session et de compte) :
+1. **Livraison au cloud du CD47** (règle dans `CLAUDE.md`, état dans
+   `GDINV2-BACKUP/INVENTAIRE.md`, à tenir à jour). Zip `GDIN_2026-10-29.zip`
+   (`scripts/zip-cloud.sh`, appli `b07a280`) **déposé le 29/10** (*déclaré, non
+   vérifié*). **Pas confirmé** : consigne utilisateurs V0.2 déposée ; V3 et
+   synthèse du 29/10 à mettre à la place de la V2 et de la synthèse du 28/10, déjà
+   sur le cloud, **après relecture** (décisions 3 et 4) ; vérifier que ce dossier
+   n'est pas ouvert aux agents. Puis prévenir les agents (retélécharger, extraire
+   au même endroit, Ctrl+F5). `LISEZ-MOI.txt` et `A-LIRE` du zip sont ceux de
+   `distribution/`.
+2. **Trancher l'origine partagée** (« À trancher ») : fermer la version en ligne
+   (recommandé, voulu par le DSI) ou autre domaine ; **choix de l'utilisateur**.
+3. **À valider par l'utilisateur** : registre RGPD GDINV2 V0.2 (avec le DPO) ;
+   registre de sécurité V0.9 d'`ateliers-backups` (relire la ligne sur NextStep et
+   NEWGEN, « état réel non vérifié »).
+4. **Règles 53 et 54** de MD-LIB `collaboration.md` : propagation à lui proposer.
+5. Faire contrôler à l'œil les **correctifs d'AG-004** (`6b77162`), puis établir
+   le **tableau « affiché / recompté / écart »** sur son export : aucun chiffre
+   concerné n'est « vérifié » avant.
+6. Contrôler à l'œil la **mention de révisabilité** (en ligne, voir AG-002).
 
-**Hors dépôt, pour l'utilisateur seul** : deux questions au référent archives et
-au DPO (où et combien de temps sont conservés les dossiers de bilan) : elles
-bloquent le volet B d'AG-002 et rien d'autre.
+**Hors dépôt, pour l'utilisateur seul** : deux questions au référent archives et au
+DPO (où, combien de temps pour les dossiers de bilan) : elles bloquent le volet B
+d'AG-002 seulement.
 
-**Ce qu'aucune session suivante ne doit refaire** : relancer un audit Codex sur
-AG-003 (clos), ni rouvrir la mise à jour SheetJS (faite, 0.20.3 vendorisée).
+**Ne pas refaire** : un audit Codex sur AG-003 (clos), la mise à jour SheetJS (0.20.3).
 
 Règles permanentes, et pourquoi ce fichier ne se supprime pas : `CLAUDE.md`.
 
 ## Comment reprendre
 
 ```bash
-npm test                      # 330 tests unitaires · 95 e2e (npx playwright test)
+npm test                      # 323 tests unitaires · 95 e2e (npx playwright test)
 npm run audit -- export.xls [--suivi ../suivi.json]   # parcours réel : lues, exclues, retenues, fusionnées, réimport
 ```
 
@@ -52,18 +52,16 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
 ## Chantiers ouverts
 
 - **XSS — six défauts corrigés le 29/10/2026, audit Codex fait.** Retrait du
-  motif et du JSON en ligne (AG-007, `539f74b`). Le test e2e importe un vrai
-  XLSX (`8e483a7`, `e846717` : Par CMS et aides « ? »). L'audit Codex
-  (`audit-codex-gdinv2-xss-2026-10-29.md` dans `ateliers-backups`, rapport tel
-  quel + vérification) a relevé trois défauts de plus, tous des thématiques
-  non échappées (bilan du Rapport, « Bilan & Conclusion », bulle
-  « Thématiques »), reproduits puis corrigés (`46a82c7`). **Aucun autre chemin
-  trouvé par lui** parmi 93 `innerHTML` et 1 `insertAdjacentHTML`, sans preuve
-  d'absence. **Leçon** : le test hostile doit choisir un conseiller et une
-  structure *proposés* (sinon le Diapo rapport ne s'ouvre pas). **Reste** :
-  remplacer les copies applicatives distribuées. Code mort `validerSauvegardeJSON()` retiré (29/10/2026).
-  Le diagnostic de doublons suspects peut augmenter sans motif ; fusion et
-  volumes inchangés.
+  motif et du JSON en ligne (AG-007, `539f74b` ; `validerSauvegardeJSON` retiré).
+  L'e2e importe un vrai XLSX : Par CMS et aides « ? » (`e846717`, `8e483a7`).
+  Audit Codex (`ateliers-backups/documents/sources/audit-codex-gdinv2-xss-2026-10-29.md`,
+  rapport tel quel + vérification) : trois thématiques non échappées de plus
+  (bilan du Rapport, « Bilan & Conclusion », bulle « Thématiques », `46a82c7`) ;
+  aucun autre chemin trouvé (93 `innerHTML`, 1 `insertAdjacentHTML`), sans preuve
+  d'absence. **Leçon** : le test hostile doit choisir un conseiller et une structure
+  *proposés*, sinon le Diapo rapport ne s'ouvre pas (règle 53 de MD-LIB). Le
+  diagnostic de doublons suspects peut augmenter sans motif ; fusion et volumes
+  inchangés.
 
 - **CHANGEMENT DE DIFFUSION (27/10/2026, demande du DSI) : deux modes, et
   aucun des deux n'est un serveur web.** Le tableau de bord sera déposé sur le
@@ -84,21 +82,16 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   - **Constaté** : `geo.api.gouv.fr` et les tuiles fonctionnent en `file://` ;
     la CSP est la seule protection embarquée ; clé USB : 1,9 Mo, données dans le
     navigateur du poste (un autre poste réimporte un fichier source).
-  - **Dossier DSI** (hors dépôt public : dépôt privé `GDINV2-BACKUP`,
-    `dsi/GDIN-DSI_2026-10-29/`, lire son `SOMMAIRE.txt`) : la note V2 du
-    28/10/2026 est **déjà remise** ; la V3 (trois défauts, JSON et motif
-    retirés), la synthèse du 29/10 et la consigne V0.2 l'annulent et la
-    remplacent, **pas encore remises** (29/10/2026). Pas de statut dans les
-    noms de fichiers (demande de l'utilisateur).
+  - **Dossier DSI** (dépôt privé `GDINV2-BACKUP`, `dsi/GDIN-DSI_2026-10-29/`,
+    `SOMMAIRE.txt`) : V3 à six défauts, synthèse, consigne V0.2 ; état dans `INVENTAIRE.md`.
 
 - **AG-004 — correctifs appliqués le 22/10/2026 (`6b77162`), recomptage à
   faire.** Décisions de l'utilisateur sur les propositions de Codex (détail
   dans `AGORA.md`) : réactivité **par demande**, pourcentages de thématiques
   en **part de tous les accompagnements** (sans thématique compris),
   correctifs de libellé appliqués. Reste :
-  - **Contrôle visuel** après Ctrl+F5 : Rapport et Diapo Rapport d'un
-    conseiller × CMS (KPI réactivité, phrase de conclusion, diapositives
-    Thématiques et Fiabilité) ; onglet Territoire (« Top 3 : X % »).
+  - **Contrôle visuel** après Ctrl+F5 : Rapport et Diapo Rapport d'un conseiller ×
+    CMS (réactivité, conclusion, Thématiques, Fiabilité) ; Territoire (« Top 3 »).
   - **Tableau « affiché / recompté / écart »** : tableau croisé Excel sur
     l'export source, comparé aux 11 diapositives du Diapo Rapport (période et
     couple conseiller × CMS projetés). **Modèle prêt** (28/10/2026, 28 chiffres)
@@ -108,9 +101,8 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     transmet que des nombres et noms de colonnes). C'est la seule preuve
     d'exactitude ; les correctifs n'en sont pas une (Codex).
   - **Non traité, à proposer** : l'anneau des thématiques du Territoire
-    (`ch-terr-thema`) découpe un cercle en parts qui se chevauchent ; un
-    anneau promet un tout. Barres horizontales à proposer. Chiffres de
-    réactivité et de fiabilité projetés avant `6b77162` : non comparables.
+    (`ch-terr-thema`) a des parts qui se chevauchent : barres horizontales.
+    Réactivité et fiabilité projetées avant `6b77162` : non comparables.
 
 - **AG-002 — archivage des bilans diffusés** (volet A fait le 22/10/2026,
   volet B en attente). La mention « chiffres susceptibles d'être révisés »,
@@ -219,17 +211,15 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
 - **Thématiques** (AG-004) : une fois par ligne, % de **toutes** les lignes ;
   un Top 3 se compte en union (`lignesAvecThemas`), jamais en additionnant ;
   jamais « demandes ».
-- **Animations** (validées à l'œil sur téléphone le 28/10/2026 ; limite
-  acceptée : une capture pendant le comptage, moins d'une seconde, peut montrer
-  un chiffre intermédiaire). Un graphe rejoue **toujours** à son arrivée à
-  l'écran ; la fermeture de l'écran d'accueil rejoue la Vue globale ; une barre
-  de liste se vide **sans transition** avant de pousser ; tuiles en cascade
-  (80 ms) (`NombreAnime`, `quandVisible`) ; jamais pendant l'export PDF ni à
-  l'impression (`ANIM.suspendu`, `beforeprint`, contre-preuve e2e) ; la suite
-  e2e tourne en mouvement réduit via `contextOptions`. Un KPI ne glisse que
-  depuis **le même indicateur** (emplacement + libellé + unité : l'emplacement
-  seul a donné 1125 %) ; progression bornée à 0 ; tout chiffre de 18 px et plus
-  est animé (test de balayage).
+- **Animations** (validées à l'œil sur téléphone le 28/10/2026 ; limite acceptée :
+  une capture pendant le comptage peut montrer un chiffre intermédiaire). Un graphe
+  rejoue **toujours** à son arrivée à l'écran ; la fermeture de l'écran d'accueil
+  rejoue la Vue globale ; une barre de liste se vide **sans transition** avant de
+  pousser ; tuiles en cascade (80 ms) (`NombreAnime`, `quandVisible`) ; jamais
+  pendant l'export PDF ni l'impression (`ANIM.suspendu`, contre-preuve e2e) ; e2e
+  en mouvement réduit via `contextOptions`. Un KPI ne glisse que depuis **le même
+  indicateur** (emplacement + libellé + unité : 1125 % sinon) ; tout chiffre de
+  18 px et plus est animé (test de balayage).
 - **Fiabilité** : la marge d'un indicateur porte sur sa propre population ;
   « Solide » = moins de 1 % de défauts *détectés*, jamais « chiffres exacts ».
   La synthèse nomme l'indicateur le plus sensible, ne résume pas au pire.
@@ -307,5 +297,4 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
 
 ## Pistes d'amélioration
 
-Règle dans `CLAUDE.md` ; ne pas reproposer une piste écartée sans fait nouveau.
-Proposées : aucune. Écartées : aucune.
+Règle dans `CLAUDE.md`. Proposées : aucune. Écartées : aucune.
