@@ -410,7 +410,9 @@ faut un pour l'installabilité :
 - Utiliser des dates explicites (JJ/MM/AAAA) plutôt que « hier » ou « la
   semaine dernière ». Toute heure donnée est en **heure de Paris** :
   GitHub, les API et les journaux affichent l'UTC (MD-LIB `collaboration.md`
-  8bis, 02/10/2026).
+  8bis, 02/10/2026). La conversion se fait **par commande**
+  (`TZ=Europe/Paris date`), jamais de tête : le 30/10/2026 (sms-mail-multi),
+  +2 h écrit au lieu de +1 h, l'heure d'hiver ayant commencé le 25/10.
 - En contexte multi-repo, préfixer chaque commande par `cd /chemin/complet &&`.
 - **Avant de décrire un correctif, suivre la valeur sur tout son chemin**
   (MD-LIB `collaboration.md`, règle 27) — `then`/`catch`, appelants, valeurs
@@ -489,6 +491,11 @@ faut un pour l'installabilité :
   a dû demander « on a besoin de tous ces justificatifs ? ».
 - **Un test de sécurité emprunte la vraie voie d'entrée et prouve qu'il est arrivé à l'endroit testé** (MD-LIB `collaboration.md`, règle 53) : importer comme l'utilisateur, choisir des valeurs réellement proposées par l'interface, et ajouter une assertion de garde (écran ouvert, texte affiché) — sans elle, un test qui sort en silence valide du code vulnérable. Constat du 29/10/2026 (GDINV2) : le test « contenu hostile » importait un JSON et choisissait une structure absente de la liste ; trois injections dans le bilan sont passées, relevées ensuite par l'audit Codex.
 - **Un état de remise ou de dépôt s'écrit d'après la déclaration de l'utilisateur, jamais d'après un document** (règle 54) : « remis au DSI », « déposé sur le cloud », « en ligne chez un tiers » se disent *déclaré, non vérifié* ; demander avant de choisir entre corriger sur place (règle 49) et publier une version qui annule la précédente. Constat du 29/10/2026 (GDINV2) : un `SOMMAIRE.txt` écrivait « V2 pas encore remise », elle l'était.
+- **Pas de statut dans un nom de fichier** (MD-LIB `collaboration.md`, règle 48) : le nom dit ce qu'est le document (« Note technique V1 », « Rectificatif »), jamais ce qu'il est devenu (« REMPLACE », « PERIMEE ») ; le statut est porté par le dossier (« Historique — ne pas rediffuser ») et par le sommaire. Constat du 28/10/2026 (dossier DSI) : les suffixes « REMPLACE » ont égaré l'utilisateur.
+- **Un document pas encore remis se corrige sur place** (règle 49) : ni numéro de version supplémentaire, ni mention « mise à jour le… », ni brouillon gardé en historique ; on ne date, ne numérote et n'archive que ce qui a été remis. Demander d'abord « a-t-il déjà été remis ? » (et voir la règle 54 ci-dessus). Constat du 28/10/2026 : une note V2 corrigée avant remise a failli devenir une « V3 ».
+- **Avant d'archiver un document dans un dépôt, vérifier sa visibilité et ce que son déploiement publie** (règle 50) : ce dépôt est **public** et GitHub Pages publie tout le dépôt (`path: '.'`) ; un document pour un tiers va dans `GDINV2-BACKUP` (privé), et jamais une donnée personnelle, même là. Constat du 28/10/2026 : un PDF destiné au DSI y aurait été lisible sur Internet.
+- **Un test ajouté se vérifie par mutation** (règle 55) : le casser volontairement et constater qu'il échoue ; pour un test écrit par script, relire la ligne produite avant de lancer ; pour tout test de calcul, une mutation du code (ou du dénominateur) doit le faire échouer. Constat du 30/10/2026 (sms-mail-multi) : un `//` de fin de ligne a rendu inertes huit assertions pendant cinq commits, la suite restant verte (relevé par Codex).
+- **Après des modifications hors session, « pull » déclenche la mise à jour de `CHANTIERS.md`** (règle 56) : `git pull`, lire `git log` et le diff arrivés depuis la base notée dans l'en-tête, mettre le fichier à jour (en-tête compris) avant toute autre tâche ; ne pas supposer qu'une entrée datée est encore vraie. L'utilisateur dit en une ligne ce qui reste hors dépôt (réglage, donnée, jeton).
 - **Pas de compliment, un constat.** Ne pas ouvrir une réponse en jugeant la
   qualité de ce qui vient d'être dit ou proposé (« bien vu », « excellente
   idée »), même quand c'est vrai : le compliment est le véhicule de la
