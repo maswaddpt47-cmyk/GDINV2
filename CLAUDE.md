@@ -400,6 +400,13 @@ faut un pour l'installabilité :
 - Changement de session annoncé : relever les règles de collaboration nées
   pendant la session et absentes des `.md`, les présenter à l'utilisateur, puis
   les inscrire (MD-LIB `collaboration.md`, règle 32).
+- **Pas plus de 60 secondes sans nouvelles pendant une tâche** (MD-LIB
+  `collaboration.md`, règle 51, 19/10/2026) : un point utile (acquis, obstacle,
+  prochaine action) au moins toutes les minutes, même quand rien ne bloque.
+- **Une attente longue se fait en arrière-plan, la main rendue à
+  l'utilisateur** (règle 52) : CI, déploiement, file d'attente — annoncer la
+  durée attendue, surveiller en arrière-plan, répondre tout de suite, revenir
+  quand c'est fini. Jamais une boucle d'attente de plusieurs minutes au premier plan.
 - Utiliser des dates explicites (JJ/MM/AAAA) plutôt que « hier » ou « la
   semaine dernière ». Toute heure donnée est en **heure de Paris** :
   GitHub, les API et les journaux affichent l'UTC (MD-LIB `collaboration.md`
