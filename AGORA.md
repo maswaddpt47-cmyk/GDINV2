@@ -991,6 +991,51 @@ cas concernés et reprendre le relevé sur la source réelle. Une relecture de
 code et des données fictives ne constituent pas une validation générale des
 chiffres à diffuser.
 
+### Diagnostic des communes — 30/10/2026
+**Auteur** : session Claude — lu sur `705c072`. Même couple (un conseiller × CMS
+de Marmande × 2025, 222 accompagnements). Question : la macro de recomptage donne
+37 graphies brutes et 32 regroupements approximatifs, l'application 31 communes.
+**Critère déclencheur** : n° 7 (chiffre affiché). Aucun compteur modifié.
+
+**Méthode** : `scripts/diag-communes.js` (`705c072`) applique à chaque graphie la
+clé de la macro (`NormCommune`, répliquée), puis les étapes de `parseRows()` :
+`.trim()` de la cellule (`gdin-pure.js:553-557`), `rattacherCommune` au référentiel
+officiel (`:490`), à défaut la graphie canonique de `normCommuneKey`
+(`communesCanoniques`, `:320`; `:609-616`). Entrée : les 35 graphies du tableau
+croisé fourni par l'utilisateur (noms de communes et nombres seuls), 222 lignes.
+
+**Résultat** (recompté par commande) : 32 groupes macro, **31 groupes application**,
+dont **28 rattachés au référentiel** (218 lignes) et **3 libellés non rattachés**
+(4 lignes) : `MARAMNDE` ×2, `FOURQUES` ×1, `MAUROUX` ×1. Ces trois-là forment chacun
+un groupe sans validation officielle ; « 31 communes » est donc 28 communes du
+référentiel plus 3 libellés non validés.
+
+**Regroupement qui explique 32 / 31** — le seul où l'application réunit deux
+groupes de la macro :
+
+| Libellé brut | Lignes | Clé macro | Application |
+|---|---|---|---|
+| `SAINTE-BAZEILLE` | 13 | `sainte bazeille` | Sainte-Bazeille |
+| `STE BAZEILLE` | 2 | `sainte bazeille` | Sainte-Bazeille |
+| `St bazeille` | 1 | `saint bazeille` | Sainte-Bazeille |
+
+La macro remplace `st` par `saint`, qui reste distinct de `sainte` ; l'application
+rattache les trois au référentiel. Dans l'autre sens, aucun groupe de la macro
+n'est séparé par l'application.
+
+**Non vérifié** :
+- l'écart **37 / 35** entre les graphies brutes de la macro (dictionnaire sensible à
+  la casse, cellule non nettoyée) et celles du tableau croisé. Hypothèse : deux
+  graphies ne diffèrent que par la casse et Excel les fusionne. À lever en lançant le
+  script sur la colonne Commune brute, une ligne par accompagnement ;
+- `MARAMNDE` comme faute de frappe de Marmande : hypothèse, l'application ne la
+  corrige pas (distance de saisie admise seulement à partir de 10 caractères,
+  `:502`) ; `FOURQUES` ambigu avec Fourques-sur-Garonne, non rattaché ;
+- les autres couples, et l'export réel.
+**Si personne ne répond, je fais quoi ?** Rien : les 31 groupes affichés restent tels
+quels ; tout rattachement supplémentaire (ex. `MARAMNDE`) serait une définition à
+trancher par l'utilisateur, sous le critère 7.
+
 ---
 
 ## Blocs tranchés
