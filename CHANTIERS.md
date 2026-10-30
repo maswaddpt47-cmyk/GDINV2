@@ -1,6 +1,6 @@
 # Chantiers — GDINV2
 
-État au **29/10/2026** (mesures des audits du 20/10/2026 à leur date). Ménages
+État au **30/10/2026** (mesures des audits du 20/10/2026 à leur date). Ménages
 des 27, 28 et 29/10/2026 : ce qui est fait, et ce que dit déjà `CLAUDE.md`,
 sont retirés. Texte complet : `git log -p CHANTIERS.md`.
 
@@ -22,14 +22,12 @@ session et de compte) :
    NEWGEN, « état réel non vérifié »).
 4. **Règles 53 et 54** de MD-LIB : propagées ici, à NEWGEN et NextStep le 29/10
    (reste PAPPERBOARD, pas dans cette session).
-5. **AG-004** : relevé fait le 29/10 sur un couple (31 lignes sur 33 à écart nul) ;
-   Codex a répondu le 29/10 (`8da3b86`, amendé : cinq mécanismes confirmés, un sixième
-   libellé faux, « Évol. trim. », `index.html:5192`). Les cinq définitions sont
-   tranchées et **corrigées le 29/10/2026** (`46b6528`…`f09f964`, + sélecteur d'année
-   plus lisible). **À faire** : Codex a relu les six corrections le 29/10 (`7440ab2`, amendé) ; les cinq cas oubliés sont corrigés (`427bd8c`…`53c70b3`),
-   **AG-009** : Codex a relu (amendé, `3df216b`), quatre cas corrigés + deux tests navigateur ; seconde relecture faite (`740b68a`, amendé) : régression du sélecteur corrigée, V1.4 prête ; **clôture d'AG-004, AG-008, AG-009 à décider par l'utilisateur**, avec les limites connues, **retrouver les 12 lignes** de l'ancien écart 412/400, relever d'autres
-   couples (d'abord ceux à forte part déduite). Procédure complète :
-   `GDINV2-BACKUP/releves/GDIN_Procedure-controle-chiffres_V0.1_2026-10-29.docx`.
+5. **AG-004, AG-008, AG-009 clos le 30/10/2026 avec réserves** (résumé dans
+   « Blocs tranchés » d'`AGORA.md`). **À faire avant toute diffusion aux élus** :
+   relever d'autres couples (d'abord ceux à forte part déduite), audit Codex de
+   l'export réel, retrouver les 12 lignes de l'ancien écart 412/400, lever l'écart
+   37/35 des graphies de communes (`scripts/diag-communes.js` sur la colonne brute).
+   Procédure : `GDINV2-BACKUP/releves/GDIN_Procedure-controle-chiffres_V0.1_2026-10-29.docx`.
    Aucun autre couple n'est « vérifié » ; la macro ne vaut pas validation indépendante.
 6. **AG-007 clos le 29/10/2026** (livraison `719fd2d` + consigne V0.3 déposées,
    *déclaré*). Reste à mesurer l'effet des doublons sur ton export :
