@@ -181,6 +181,7 @@ statu quo. **Ne jamais bloquer** : le travail continue, rien ne garantit qu'une
 réponse arrive. Le bloc se pousse **directement sur `main`**, immédiatement :
 deux sessions sur deux branches ne se voient pas. C'est l'exception assumée à
 la règle de branche ci-dessus. Gabarit et règles de réponse : `AGORA.md`.
+**Bloc pour Codex : dire « pull » à Codex suffit** (son `AGENTS.md` le fait répondre, MD-LIB `agora.md` §12, 03/11/2026) ; la session qui ouvre le bloc l'annonce quand même à l'utilisateur, en une ligne, dès qu'il est en ligne.
 
 **Sécurité, mots de passe, données personnelles : contradicteur Codex**
 (OpenAI) au lieu d'une session Claude (06/10/2026, mode d'emploi : `AGORA.md`).

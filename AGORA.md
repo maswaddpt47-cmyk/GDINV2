@@ -137,6 +137,7 @@ interdit à Codex.
 **Auteur** : session <libellé donné par l'utilisateur> — lu sur `<sha court>`
 **Proposition** : ce qui est proposé, en 3 lignes maximum.
 **Critère déclencheur** : n° et lequel.
+**Contradicteur** : Codex | session B (Codex répond seul au « pull » de l'utilisateur, `AGENTS.md`)
 **Ce que ça engage** : ce qui serait coûteux à défaire.
 **Non vérifié par l'auteur** : le champ le plus important — où l'auteur est
 faible, pour orienter le contradicteur au lieu de le laisser chercher.
