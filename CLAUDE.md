@@ -168,7 +168,8 @@ moment de l'écrire, dire pourquoi on ouvre un bloc ou non.
 7. le changement touche un calcul ou un chiffre affiché (indicateur, total,
    taux, filtre, définition ; CR, diapo, export) — **systématique, quelle que
    soit sa taille** (MD-LIB `agora.md` critère 7, 26/10/2026). Contradicteur :
-   Codex. Bloc ouvert avant la correction, définitions métier séparées des
+   l'IA de l'autre éditeur (Codex pour un bloc de Claude, Claude pour un bloc de
+   Codex, MD-LIB `agora.md` §12). Bloc ouvert avant la correction, définitions métier séparées des
    défauts démontrés et tranchées par l'utilisateur.
 
 **N'y vont pas** : un changement de rendu pur (cf. « Ce que coûte un test »), un
@@ -181,10 +182,12 @@ statu quo. **Ne jamais bloquer** : le travail continue, rien ne garantit qu'une
 réponse arrive. Le bloc se pousse **directement sur `main`**, immédiatement :
 deux sessions sur deux branches ne se voient pas. C'est l'exception assumée à
 la règle de branche ci-dessus. Gabarit et règles de réponse : `AGORA.md`.
-**Bloc pour Codex : dire « pull » à Codex suffit** (son `AGENTS.md` le fait répondre, MD-LIB `agora.md` §12, 03/11/2026) ; la session qui ouvre le bloc l'annonce quand même à l'utilisateur dès qu'il est en ligne, **sur une ligne à part en tête du message, 🔴 et en gras** : `🔴 **⚖️ AGORA : critère N — <sujet>. Bloc AG-00N commité. → Dis « pull » à Codex.**` (MD-LIB `agora.md` §4, 04/11/2026 : un « pull » noyé dans un compte rendu n'a pas été vu).
+**Bloc pour Codex : dire « pull » à Codex suffit** (son `AGENTS.md` le fait répondre, MD-LIB `agora.md` §12, 03/11/2026) ; la session qui ouvre le bloc l'annonce quand même à l'utilisateur dès qu'il est en ligne, **sur une ligne à part en tête du message, 🔴 et en gras** : `🔴 **⚖️ AGORA : critère N — <sujet>. Bloc AG-00N publié dans maswaddpt47-cmyk/GDINV2. → Dis « pull » à <Codex ou Claude>.**` (MD-LIB `agora.md` §4, 04/11/2026 : un « pull » noyé dans un compte rendu n'a pas été vu).
 
 **Sécurité, mots de passe, données personnelles : contradicteur Codex**
-(OpenAI) au lieu d'une session Claude (06/10/2026, mode d'emploi : `AGORA.md`).
+(OpenAI) au lieu d'une session Claude pour un bloc ouvert par Claude
+(06/10/2026) ; un bloc ouvert par Codex est contredit par Claude, dans une autre
+session (MD-LIB `agora.md` §12, 16/11/2026). Mode d'emploi : `AGORA.md`.
 **Audit Codex** chaque trimestre et après tout changement structurant de
 sécurité, avec le modèle MD-LIB `consigne-audit-externe.md` ; chaque point
 vérifié dans le code avant d'être retenu, rapport hors dépôt public.

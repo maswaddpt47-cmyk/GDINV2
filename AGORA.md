@@ -1,8 +1,10 @@
 # AGORA — GDINV2
 
-Débats soumis à une **autre session Claude** pour contradiction. Une session
-dépose ici une proposition ; une autre, qui n'a pas le même contexte, lit le
-vrai code et répond. Le canal est ce dépôt, pas le compte Claude : deux
+Débats soumis pour contradiction à **l'IA de l'autre éditeur** : Codex pour un
+bloc ouvert par Claude, Claude (dans une autre session) pour un bloc ouvert par
+Codex (MD-LIB `agora.md` §12, 16/11/2026, non requis pour répondre). L'auteur
+dépose ici une proposition ; le contradicteur, qui n'a pas le même contexte, lit
+le vrai code et répond. Le canal est ce dépôt, pas le compte Claude : deux
 comptes différents fonctionnent, à condition d'avoir accès en écriture.
 
 Quand soumettre, et quand ne pas le faire : voir `CLAUDE.md`, section
@@ -16,11 +18,16 @@ mais dit ce que devient un bloc tranché ; la seconde ne se déduit pas du gabar
 
 ## La phrase de relais — elle nomme toujours le dépôt
 
-Après avoir commité un bloc, donner à l'utilisateur cette phrase, à coller
-telle quelle dans l'autre session :
+Après avoir publié un bloc, l'annoncer en tête du message, sur une ligne à part :
+
+> 🔴 **⚖️ AGORA : critère N — <sujet>. Bloc AG-00N publié dans
+> maswaddpt47-cmyk/GDINV2. → Dis « pull » à <Codex ou Claude>.**
+
+« pull » suffit au contradicteur désigné par la ligne **Contradicteur** du bloc.
+Phrase complète, si l'autre session n'a pas ces consignes :
 
 > pull **maswaddpt47-cmyk/GDINV2**, lis son `AGORA.md`, réponds à AG-00N, tu
-> es la session B
+> es <Codex ou Claude, session B>
 
 **Le nom du dépôt n'est pas une politesse.** Chaque projet a son propre
 `AGORA.md` avec sa propre numérotation : deux dépôts peuvent porter un AG-002
@@ -107,8 +114,8 @@ décision, chiffre) ; celui qui n'a rien changé était un « confirmé ».
 
 ## Contradicteur Codex — blocs de sécurité (06/10/2026)
 
-Un bloc qui touche à la sécurité, aux mots de passe ou aux données personnelles
-va à **Codex (OpenAI)**, pas à une session Claude : entre deux Claude, 0
+Un bloc **ouvert par Claude** qui touche à la sécurité, aux mots de passe ou aux
+données personnelles va à **Codex (OpenAI)**, pas à une session Claude : entre deux Claude, 0
 « contredit » sur 23 blocs (ATELIERS_NEWGEN), quand Codex a trouvé en une passe
 ce que Claude avait manqué. L'utilisateur colle le bloc dans Codex
 (autorisations « Lecture seule », réflexion au plus haut) avec : « Réponds selon
@@ -142,7 +149,7 @@ interdit à Codex.
 **Auteur** : session <libellé donné par l'utilisateur> — lu sur `<sha court>`
 **Proposition** : ce qui est proposé, en 3 lignes maximum.
 **Critère déclencheur** : n° et lequel.
-**Contradicteur** : Codex | session B (Codex répond seul au « pull » de l'utilisateur, `AGENTS.md`)
+**Contradicteur** : Codex (bloc de Claude) | Claude (bloc de Codex) — MD-LIB `agora.md` §12
 **Ce que ça engage** : ce qui serait coûteux à défaire.
 **Non vérifié par l'auteur** : le champ le plus important — où l'auteur est
 faible, pour orienter le contradicteur au lieu de le laisser chercher.

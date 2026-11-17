@@ -93,6 +93,10 @@ spécifiques du projet restent applicables.
   le code ; fournir les preuves `fichier:ligne`, scénario ou mesure.
 - Appliquer l’AGORA du projet lorsqu’elle existe ; ne pas répondre à son propre
   bloc. Les constats de sécurité suivent le circuit prévu par le projet.
+- **Relecteur d'un autre éditeur** (MD-LIB `agora.md` §12, 16/11/2026) : Claude
+  auteur → Codex relecteur ; Codex auteur → Claude relecteur. Un bloc ouvert par
+  Codex nomme « Contradicteur : Claude » et s'annonce en tête du message :
+  `🔴 **⚖️ AGORA : critère N — <sujet>. Bloc AG-00N publié dans maswaddpt47-cmyk/GDINV2. → Dis « pull » à Claude.**`
 - Lire les instructions locales des dépôts de sauvegarde avant tout accès aux
   copies. Aucun export, déchiffrement ou changement de visibilité hors demande.
 - Garder les instructions courtes : fusionner les doublons, dater les hypothèses
