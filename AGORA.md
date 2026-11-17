@@ -9,6 +9,11 @@ Quand soumettre, et quand ne pas le faire : voir `CLAUDE.md`, section
 « AGORA ». Ce fichier-ci porte de quoi **ouvrir un bloc et y répondre**, sans
 rien d'autre sous les yeux.
 
+**Écart assumé à MD-LIB `agora.md` §9** (22/09/2026, consigné le 17/11/2026) : ce
+fichier garde la section « Entretien » et la posture « compléter, pas réécrire »,
+que la liste du §9 ne demande pas. La première n'est pas une règle de réponse
+mais dit ce que devient un bloc tranché ; la seconde ne se déduit pas du gabarit.
+
 ## La phrase de relais — elle nomme toujours le dépôt
 
 Après avoir commité un bloc, donner à l'utilisateur cette phrase, à coller
