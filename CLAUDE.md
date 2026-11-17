@@ -205,7 +205,10 @@ défaire sont dans **`CHANTIERS.md`**. Le lire avant d'attaquer quoi que ce
 soit : une session qui démarre sans historique n'a pas d'autre source.
 Ce fichier-ci porte les règles permanentes, `CHANTIERS.md` l'état du moment.
 Le tenir à jour à chaque avancée significative — pas en fin de session, qui
-peut s'interrompre sans préavis.
+peut s'interrompre sans préavis. `scripts/check-chantiers.sh`, lancé au démarrage
+par le hook `.claude/hooks/session-start.sh` (17/11/2026), signale quand le ménage
+est dû (> 300 lignes ou 30 Ko, en-tête de plus de 7 jours, tâches ✅ ou barrées) ;
+il n'échoue jamais.
 
 **Au démarrage, regarder aussi `AGORA.md`** : s'il porte un bloc ouvert sans
 réponse, le signaler à l'utilisateur — sans y répondre soi-même si on l'a
