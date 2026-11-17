@@ -118,7 +118,9 @@ l'utilisateur, chiffres seuls à l'écran.
 - **Avant de pousser, lancer tous les tests que le déploiement exécutera**
   (`.github/workflows/deploy.yml`) : `npm test` (tous les `*.test.js`) et la
   suite Playwright complète (`npx playwright test`), pas seulement ceux du
-  changement (MD-LIB `collaboration.md` règle 60).
+  changement (MD-LIB `collaboration.md` règle 60). Exception du projet
+  (17/11/2026) : un push qui ne touche que des fichiers `.md` part sans relancer
+  les tests en local, la CI les rejoue avant de déployer.
 
 ## Sécurité, audit et instructions
 

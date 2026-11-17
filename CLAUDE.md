@@ -70,6 +70,10 @@ dates, les doublons, les délais aberrants et le contrôle de minimisation
 RGPD. À lancer sur chaque nouvel export avant d'en tirer un rapport.
 
 La CI bloque le déploiement si un test échoue — ne jamais pousser sans avoir lancé les tests localement.
+**Exception (décision de l'utilisateur du 17/11/2026)** : un push qui ne touche que
+des fichiers `.md` part sans relancer les tests en local ; la CI les rejoue de toute
+façon avant de déployer. Un seul fichier d'un autre type dans le diff (`.js`, `.html`,
+`.sh`, `.json`, `.yml`…) et la règle normale s'applique.
 
 - Si un test échoue après une **correction de bug** → corriger le code, pas le test.
 - Si un test échoue après un **changement intentionnel** → mettre à jour le test ET le code dans le même commit.
