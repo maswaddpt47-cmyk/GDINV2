@@ -5,6 +5,28 @@ Cette copie contient les règles essentielles pour démarrer sans dépendre
 d’un accès réseau. Les consignes explicites de la session et les règles
 spécifiques du projet restent applicables.
 
+## Autorisations — accès complet (consigne de l'utilisateur du 04/11/2026)
+
+L'utilisateur autorise tout le travail demandé : lire/éditer les fichiers,
+installer les dépendances déclarées, exécuter les outils utiles, vérifier,
+committer et pousser sur `main`, tenir `CHANTIERS.md`, répondre aux blocs
+AGORA destinés à Codex et corriger ses propres erreurs. Agir puis rendre compte,
+sans redemander une autorisation déjà donnée.
+
+**Exceptions à soumettre avant l'action**, une décision par question :
+
+1. Suppression irréversible de données ou restauration qui écrase (un
+   `localStorage` ou une base IndexedDB d'un poste compris).
+2. Réécriture d'historique publié (`push --force`, reset d'une branche publiée).
+3. Changement de format de stockage/export (`gdin_data_v3`) ou migration.
+4. Écart à la demande : l'utilisateur décide du quoi, Codex choisit le comment.
+
+**Jamais, même avec cette autorisation** : lire un export réel ou une
+sauvegarde d'usagers (charte IA du CD47 §4) ; publier une donnée personnelle
+(ce dépôt est public, GitHub Pages publie tout le dépôt) ; contourner un refus
+de la plateforme. Faire calculer le diagnostic dans l'application de
+l'utilisateur, chiffres seuls à l'écran.
+
 ## Au début de chaque session
 
 1. Vérifier le dépôt, sa branche par défaut, la branche de session et l’état Git.
@@ -34,6 +56,10 @@ spécifiques du projet restent applicables.
   Préférer un connecteur fonctionnel. Ne pas contourner un refus d’accès.
 - Continuer les tâches indépendantes d’une réponse manquante. Respecter les
   autorisations déjà accordées et les limites explicites, dont la lecture seule.
+- **Fin de tâche** (04/11/2026) : après les opérations et revues nécessaires,
+  conclure par une ligne distincte **✅ TÂCHE TERMINÉE**. Si un traitement bloque
+  encore la livraison, dire son état sans annoncer la fin. La tâche est le
+  travail du message, même si l'objectif d'ensemble reste ouvert (13/11/2026).
 
 ## Décisions, preuves et périmètre
 
@@ -60,6 +86,11 @@ spécifiques du projet restent applicables.
   de la plateforme. Ne pas imposer `main` à un dépôt configuré autrement.
 - Un commit conventionnel en français par modification logique. Aucun
   force-push ni écrasement d’un changement concurrent.
+- **Main toujours** (MD-LIB `git-workflow.md` §3) : ce projet publie sur `main`.
+  Publier chaque livraison vérifiée en avance rapide sur `main`, même si une
+  branche de session est imposée, sans attendre la fin de session ni redemander.
+  Actualiser par `git fetch` puis `git merge --ff-only` ; après une attente,
+  publier le SHA testé (`git push origin <sha>:main`), pas un `HEAD` qui a avancé.
 - Juste avant de modifier un fichier partagé, actualiser et relire son état.
   Préserver les modifications des autres sessions et les règles déjà présentes.
 - Mettre `CHANTIERS.md` à jour à chaque avancée significative : état vérifié,
@@ -84,6 +115,10 @@ spécifiques du projet restent applicables.
   « en ligne », vérifier le commit réellement déployé et les étapes de publication.
   Suivre `MD-LIB/deploiement.md` et son vérificateur lorsqu’ils s’appliquent.
 - Ne pas désactiver un contrôle requis pour faire passer une livraison.
+- **Avant de pousser, lancer tous les tests que le déploiement exécutera**
+  (`.github/workflows/deploy.yml`) : `npm test` (tous les `*.test.js`) et la
+  suite Playwright complète (`npx playwright test`), pas seulement ceux du
+  changement (MD-LIB `collaboration.md` règle 60).
 
 ## Sécurité, audit et instructions
 
@@ -97,6 +132,15 @@ spécifiques du projet restent applicables.
   auteur → Codex relecteur ; Codex auteur → Claude relecteur. Un bloc ouvert par
   Codex nomme « Contradicteur : Claude » et s'annonce en tête du message :
   `🔴 **⚖️ AGORA : critère N — <sujet>. Bloc AG-00N publié dans maswaddpt47-cmyk/GDINV2. → Dis « pull » à Claude.**`
+- **Champ de secret** (MD-LIB `collaboration.md` règle 69) : aucun champ de mot de
+  passe ou de jeton dans `index.html` (compté le 17/11/2026). S'il en vient un :
+  vrai `<form autocomplete="on" action="#">`, identifiant fixe `type="text"
+  name="username" autocomplete="username" readonly tabindex="-1"
+  aria-hidden="true"` hors écran par `position:absolute;left:-9999px` (jamais
+  `display:none`), secret `type="password" name="password"
+  autocomplete="current-password"` avec `id` unique, bouton `type="submit"` ;
+  sur `submit`, `preventDefault()`, même enregistrement qu'à la frappe et
+  confirmation visible.
 - Lire les instructions locales des dépôts de sauvegarde avant tout accès aux
   copies. Aucun export, déchiffrement ou changement de visibilité hors demande.
 - Garder les instructions courtes : fusionner les doublons, dater les hypothèses
