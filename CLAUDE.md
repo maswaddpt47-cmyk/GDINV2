@@ -5,9 +5,12 @@
 **Étape 1 — Récupérer les dernières modifications**
 ```bash
 git checkout main
-git fetch origin
-git pull origin main --rebase
+git fetch origin main
+git merge --ff-only origin/main
 ```
+Jamais `git pull` (MD-LIB règle 63, décision de l'utilisateur du 17/11/2026) : il
+peut fusionner sans le dire. Si `--ff-only` refuse, la branche a divergé :
+examiner `git log --oneline --graph main origin/main` avant toute intégration.
 
 **Étape 2 — Modifier le fichier**
 
@@ -404,4 +407,4 @@ faut un pour l'installabilité :
 
 ## Pourquoi ces règles
 
-L'utilisateur modifie régulièrement les fichiers directement sur GitHub entre les sessions. Sans `git pull` au démarrage, les modifications locales écrasent silencieusement son travail. L'historique git sert de filet de sécurité.
+L'utilisateur modifie régulièrement les fichiers directement sur GitHub entre les sessions. Sans actualisation au démarrage (`git fetch` puis `git merge --ff-only`), les modifications locales écrasent silencieusement son travail. L'historique git sert de filet de sécurité.
