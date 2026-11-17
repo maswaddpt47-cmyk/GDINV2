@@ -1,20 +1,21 @@
 # Chantiers — GDINV2
 
-État au **30/10/2026** (mesures des audits du 20/10/2026 à leur date). Ménages
-des 27, 28 et 29/10/2026 : ce qui est fait, et ce que dit déjà `CLAUDE.md`,
-sont retirés. Texte complet : `git log -p CHANTIERS.md`.
+État au **17/11/2026**, base `07cd106` (mesures des audits du 20/10/2026 à leur
+date). Entre le 30/10 et le 17/11 : règles MD-LIB 48 à 62 recopiées dans
+`CLAUDE.md`, « pull » suffit à Codex (`AGENTS.md`, 03/11), annonce AGORA en 🔴
+(04/11) ; aucun changement de code. Ménages des 27, 28 et 29/10/2026 : ce qui est
+fait, et ce que dit déjà `CLAUDE.md`, sont retirés. Texte complet : `git log -p CHANTIERS.md`.
 
 **À faire en premier, dans cet ordre** (passation du 29/10/2026, changement de
 session et de compte) :
 1. **Livraison au cloud du CD47** (règle dans `CLAUDE.md`, état dans
-   `GDINV2-BACKUP/INVENTAIRE.md`, à tenir à jour). Zip `GDIN_2026-10-29.zip`
-   (`scripts/zip-cloud.sh`, appli `b07a280`) **déposé le 29/10** (*déclaré, non
-   vérifié*). **Pas confirmé** : consigne utilisateurs V0.2 déposée ; V3 et
-   synthèse du 29/10 à mettre à la place de la V2 et de la synthèse du 28/10, déjà
-   sur le cloud, **après relecture** (décisions 3 et 4) ; vérifier que ce dossier
-   n'est pas ouvert aux agents. Puis prévenir les agents (retélécharger, extraire
-   au même endroit, Ctrl+F5). `LISEZ-MOI.txt` et `A-LIRE` du zip sont ceux de
-   `distribution/`.
+   `GDINV2-BACKUP/INVENTAIRE.md`, à tenir à jour). **V1.4** (`GDIN_V1.4_2026-10-29_8b135f6.zip`,
+   appli `8b135f6`) **déposée** et consigne utilisateurs **V0.3 déposée** (*déclaré*
+   les 30 et 29/10, non vérifié). **Pas déclaré** : suppression de la V1.3 et des
+   zips nommés `GDIN_2026-10-29.zip` ; synthèse et note V3 du 29/10 à mettre à la
+   place de celles du 28/10 (espace DSI), **après relecture** ; vérifier que ce
+   dossier n'est pas ouvert aux agents. Puis prévenir les agents (retélécharger,
+   extraire au même endroit, Ctrl+F5).
 2. **Trancher l'origine partagée** (« À trancher ») : fermer la version en ligne
    (recommandé, voulu par le DSI) ou autre domaine ; **choix de l'utilisateur**.
 3. **À valider par l'utilisateur** : registre RGPD GDINV2 V0.2 (avec le DPO) ;
@@ -42,7 +43,7 @@ Règles permanentes, et pourquoi ce fichier ne se supprime pas : `CLAUDE.md`.
 ## Comment reprendre
 
 ```bash
-npm test                      # 323 tests unitaires · 95 e2e (npx playwright test)
+npm test                      # 360 tests unitaires · 98 e2e (npx playwright test), comptés le 17/11/2026
 npm run audit -- export.xls [--suivi ../suivi.json]   # parcours réel : lues, exclues, retenues, fusionnées, réimport
 ```
 
