@@ -545,7 +545,7 @@ table.hm-joue td.hm-b{animation:hm-brique .35s cubic-bezier(.33,1,.68,1) both;an
 #landing-overlay .lo-btn:hover{background:#2563eb;transform:translateY(-2px);box-shadow:0 8px 24px rgba(59,130,246,.35)}
 #landing-overlay .lo-arrow{font-size:18px;transition:transform .2s;display:inline-block}
 #landing-overlay .lo-btn:hover .lo-arrow{transform:translateX(4px)}
-#landing-overlay .lo-footer{position:absolute;bottom:20px;font-size:10px;color:#6b7fa0;letter-spacing:.5px;opacity:.4}
+#landing-overlay .lo-footer{position:absolute;bottom:20px;font-size:10px;color:#6b7fa0;letter-spacing:.5px;opacity:1}
 /* Chiffres à chasse fixe : un KPI qui compte ne fait pas danser sa ligne. */
 .kpi-value,.bs-val,.nb-anime{font-variant-numeric:tabular-nums}
 </style>
@@ -615,7 +615,7 @@ table.hm-joue td.hm-b{animation:hm-brique .35s cubic-bezier(.33,1,.68,1) both;an
 
   <div class="sb-footer">
     <button class="btn-theme sb-theme-btn" id="btn-theme" onclick="toggleTheme()" title="Thème clair/sombre">🌙</button>
-    <span class="sb-version">v2 · GDIN</span>
+    <span class="sb-version" data-gdin-version title="Version du paquet et identifiant du code">Source non empaquetée</span>
   </div>
 </aside>
 
@@ -639,7 +639,7 @@ table.hm-joue td.hm-b{animation:hm-brique .35s cubic-bezier(.33,1,.68,1) both;an
   <button class="lo-btn" onclick="document.getElementById('landing-overlay').style.display='none'">
     Accéder au tableau de bord <span class="lo-arrow">→</span>
   </button>
-  <div class="lo-footer">GDIN v2 · CD47 · Sandbox</div>
+  <div class="lo-footer" data-gdin-version>Source non empaquetée</div>
 </div>
 <!-- ── FIN LANDING OVERLAY ── -->
 

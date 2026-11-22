@@ -10,7 +10,7 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 sortie="$(cd "${1:-.}" && pwd)"
-if [ -n "$(git status --porcelain -- index.html gdin-pure.js vendor distribution)" ]; then
+if [ -n "$(git status --porcelain -- index.html gdin-pure.js vendor distribution scripts/zip-cloud.sh scripts/inject-version.js)" ]; then
   echo "❌ Modifications non commitées dans l'application : commitez avant de fabriquer le zip." >&2
   exit 1
 fi
@@ -21,8 +21,9 @@ date_iso="$(TZ=Europe/Paris date +%Y-%m-%d)"
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 mkdir "$tmp/GDIN"
 git archive HEAD index.html gdin-pure.js vendor | tar -x -C "$tmp/GDIN"
+node scripts/inject-version.js "$tmp/GDIN/index.html" "$version"
 cp distribution/A-LIRE-AVANT-D-OUVRIR.txt "$tmp/GDIN/"
-sed "s/@VERSION@/$version/; s#@DATE@#$date_fr#" distribution/LISEZ-MOI.txt > "$tmp/GDIN/LISEZ-MOI.txt"
+sed "s/@VERSION@/$version/; s/@PAQUET@/$num/; s#@DATE@#$date_fr#" distribution/LISEZ-MOI.txt > "$tmp/GDIN/LISEZ-MOI.txt"
 nom="GDIN_${num}_${date_iso}_${version}.zip"
 rm -f "$sortie/$nom"
 (cd "$tmp" && zip -qr "$sortie/$nom" GDIN)

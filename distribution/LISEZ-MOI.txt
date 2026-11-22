@@ -1,6 +1,7 @@
 TABLEAU DE BORD GDIN — version locale
 =====================================
-Version : @VERSION@ — @DATE@
+Paquet : @PAQUET@ — code @VERSION@ — @DATE@
+La meme version est visible en bas du menu et sur l'ecran d'accueil.
 
 !! LE ZIP DOIT ETRE EXTRAIT, PAS SEULEMENT OUVERT !!
 ----------------------------------------------------
