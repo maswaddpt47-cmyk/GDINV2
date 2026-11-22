@@ -1,16 +1,17 @@
 # Chantiers — GDINV2
 
-État au **22/11/2026**, base `985e507` ; actualisation vérifiée via le connecteur
-GitHub (clone local impossible : proxy inaccessible). Journal et diff depuis
-`07cd106` lus : consignes, AGORA et contrôle de CHANTIERS/hook ; aucun changement
-applicatif. Les mesures antérieures restent datées de leur relevé ; les dépôts
-sur le cloud restent déclarés, non vérifiés. Historique : `git log -p CHANTIERS.md`.
+État au **22/11/2026**, application `b425582` (V1.5), reprise sur `f4a3644`.
+Les trois pistes approuvées sont réalisées et testées. ZIP V1.5 fabriqué et lien
+fourni dans la conversation ; téléchargement et dépôt cloud non déclarés.
+AG-010 reste ouvert après prise en compte de l'avis amendé de Claude.
+Les mesures antérieures restent datées de leur relevé. Historique : `git log -p CHANTIERS.md`.
 
 **À faire en premier, dans cet ordre** (passation du 29/10/2026, changement de
 session et de compte) :
 1. **Livraison au cloud du CD47** (règle dans `CLAUDE.md`, état dans
-   `GDINV2-BACKUP/INVENTAIRE.md`, à tenir à jour). **V1.4** (`GDIN_V1.4_2026-10-29_8b135f6.zip`,
-   appli `8b135f6`) **déposée** et consigne utilisateurs **V0.3 déposée** (*déclaré*
+   `GDINV2-BACKUP/INVENTAIRE.md`, à tenir à jour). **V1.5** (`GDIN_V1.5_2026-11-22_b425582.zip`)
+   fournie pour remplacer V1.4 ; **dépôt non déclaré**. Dernier état déclaré :
+   V1.4 (`8b135f6`) déposée et consigne utilisateurs **V0.3 déposée** (*déclaré*
    les 30 et 29/10, non vérifié). **Pas déclaré** : suppression de la V1.3 et des
    zips nommés `GDIN_2026-10-29.zip` ; synthèse et note V3 du 29/10 à mettre à la
    place de celles du 28/10 (espace DSI), **après relecture** ; vérifier que ce
@@ -103,7 +104,6 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     pas** (il ne transmet que des nombres et noms de colonnes). C'est la seule preuve
     d'exactitude ; les correctifs n'en sont pas une (Codex). Défauts de sens
     inscrits dans le bloc ; reste d'autres couples et l'audit Codex.
-  - **Thématiques du Territoire** : proposition de barres dans « Pistes d'amélioration ».
     Réactivité et fiabilité projetées avant `6b77162` : non comparables.
 
 - **AG-002 clos le 29/10/2026** (volets B et C abandonnés, sans réponse du
@@ -111,6 +111,11 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
   une cause **non vérifiée** : les écarts constatés sur l'export (7 881 → 8 313 à
   période identique), à voir avec le tableau d'AG-004.
 - **À trancher par l'utilisateur** (ne pas décider seul) :
+  - **Unité du délai total du Rapport (AG-010, réponse de Claude)** : le KPI utilise
+    les jours ouvrés des actions, puis un repli calendaire. Aucun changement du CR
+    dans ces trois pistes ; le nouveau contrôle garde les jours ouvrés et signale
+    l'indisponibilité plutôt que recopier ce repli. Clôture de cette réserve : choix
+    explicite d'une définition du CR et contrôle fictif couvrant un week-end.
   - **Origine partagée (audit Codex, 29/10/2026)** : GDINV2 est servi sous
     `maswaddpt47-cmyk.github.io`, comme d'autres applications (planification :
     jeton de session et préférences). Un code exécuté dans GDINV2 peut lire
@@ -255,6 +260,19 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
 
 **Divers**
 
+- **Contrôle guidé (AG-010)** : périmètre et unité explicites, composantes des
+  taux comparées avant leur pourcentage ; vide distinct de zéro ; saisies non
+  persistées et effacées à changement de base ou de filtres. Délai ouvré uniquement,
+  sans recopier le repli calendaire du CR. Une différence nulle ne valide rien.
+- **Version du paquet** : source unique `distribution/VERSION.txt`, version et
+  code injectés au ZIP et à Pages ; source brute « Source non empaquetée ».
+  **Thématiques du Territoire** : barres conservant les valeurs et le dénominateur.
+- **Vérifications V1.5, données fictives** : 370 tests unitaires et 100 e2e HTTP
+  passent ; le navigateur local refuse file://, qui reste le mode de la CI.
+  Mesures 390 px et 1280×720, deux thèmes : aucun débordement des nouveaux éléments
+  ni chevauchement de huit libellés longs ; contraste du guide au moins 5,78:1.
+  Mutations détectées des trois nouvelles fonctions et de l'injection de version ;
+  suppression de l'effacement → échec des deux nouveaux parcours. ZIP vérifié.
 - **AGORA** : ne pas réduire `AGORA.md` au gabarit (auto-suffisance éprouvée,
   AG-001).
 - **Fond de carte** : `TUILES_URL` et `TUILES_ATTRIB` partagés par les deux
@@ -281,18 +299,6 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
 
 ## Pistes d'amélioration
 
-**Proposées le 22/11/2026 — en attente du choix de l'utilisateur**, par intérêt décroissant (règle 22). Aucune piste écartée consignée.
-
-- **Contrôle guidé local des chiffres.** Constat : le relevé reste manuel (AG-004) ; Fiabilité et les scripts ont déjà des agrégats, pas de parcours de relevé dans l'interface.
-  Recommandation : dans Fiabilité, montrer population, période, unité, numérateur/dénominateur ; saisir le recomptage de l'utilisateur et afficher l'écart. Bénéfice attendu : moins de manipulations Excel/Node ; **charge moyenne**.
-  Hypothèse : réutiliser les agrégats suffit ; gain non mesuré. Critère : parcours fictif vérifié, puis contrôle utilisateur sur son poste, chiffres seuls communiqués. Ne vaut pas recomptage indépendant ; aucune archive ni validation automatique.
-
-- **Version du paquet visible dans l'application.** Constat : le menu dit « v2 · GDIN » (design), tandis que VERSION.txt et zip-cloud.sh portent la version du paquet et son commit.
-  Recommandation : afficher ces métadonnées, générées à la fabrication du ZIP depuis la source existante. Bénéfice attendu : identifier la copie d'un agent sans chercher ses fichiers ; **charge faible estimée**.
-  Hypothèse : utile pour l'assistance, usage à confirmer. Critère : version et commit affichés identiques à ceux du paquet, ouverture hors ligne conservée, aucun numéro recopié à la main.
-
-- **Barres pour les thématiques du Territoire.** Constat confirmé dans index.html (ch-terr-thema) : un anneau représente encore des catégories qui se chevauchent ; sujet déjà noté à proposer.
-  Recommandation : barres horizontales avec les mêmes valeurs et le même dénominateur. Bénéfice attendu : comparer sans suggérer une partition ; **charge faible estimée**.
-  Hypothèse : le défaut de lecture documenté persiste, gain non mesuré. Critère : mêmes effectifs/filtres, libellés lisibles et sans débordement à 390 px et 1280×720.
-
-Aucune réalisation décidée ni bloc AGORA ouvert pour ces pistes. Si le contrôle guidé est retenu, ouvrir le bloc requis avant tout nouveau calcul (critère 7, contradicteur Claude pour un bloc de Codex).
+Aucune nouvelle piste proposée ou écartée. Les trois pistes approuvées le
+22/11/2026 sont réalisées ; les invariants figurent ci-dessus. AG-010 attend
+la décision de clôture de l'utilisateur ; les réserves des AG-004/008/009 restent.

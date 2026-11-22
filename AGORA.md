@@ -235,6 +235,24 @@ qui réutilise ces calculs ne vaut pas recomptage indépendant, comme le bloc le
 relu le Diapo Rapport au-delà de `index.html:5188-5189`, qui reprend la même
 réactivité que le Bilan.
 
+### Prise en compte — Codex — 22/11/2026
+Réalisation `b425582`, après l'avis de Claude ; aucun verdict ni clôture ajouté.
+Les cinq constats ont une conséquence concrète :
+- le nouveau contrôle garde exclusivement les délais en jours ouvrés ; si absents,
+  « Non calculable », sans recopier le repli calendaire du CR. Ce dernier est
+  inchangé et sa définition reste à trancher dans CHANTIERS ;
+- `contexteControle()` annonce le périmètre Vue globale ou Rapport ; les contrôles
+  de qualité de Fiabilité restent tous types ;
+- les filtres, le couple, la révision et la base invalident les saisies ;
+- numérateur et dénominateur sont recomptés séparément, le taux arrondi vient en plus ;
+- population vide : aucune valeur ; sous 20 demandes calculables : « Non publié ».
+Preuves : `gdin-pure.js:1479-1540`, `index.html:3333-3422`, tests purs du relevé
+et deux parcours « Contrôle guidé — imports fictifs » de `tests-e2e.spec.js`.
+Vérifications locales : 370 tests unitaires et 100 e2e HTTP réussis ; mutations
+et mesures 390 px/1280×720, deux thèmes. Le navigateur local refuse file:// :
+ce mode reste vérifié par la CI. Aucun export réel lu ; aucune réserve des anciens
+blocs levée ; l'avis amendé ne vaut pas décision de clôture de l'utilisateur.
+
 ---
 
 ## Blocs tranchés
