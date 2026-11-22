@@ -174,7 +174,21 @@ autrement.
 
 ## Blocs ouverts
 
-_Aucun bloc ouvert._
+## AG-010 — Contrôle guidé local des chiffres — ouvert le 22/11/2026
+**Auteur** : Codex (OpenAI), travail `local:gdinv2-trois-pistes-20261122` (identifiant local, non identifiant de plateforme) — lu sur `6015d93`.
+**Proposition** : ajouter dans Fiabilité un relevé guidé des chiffres de la Vue globale ou du couple déjà sélectionné dans le Rapport, avec population, période, unité et composantes du calcul.
+Permettre un recomptage saisi par l'utilisateur et montrer la différence « affiché moins recompté », en points pour les taux, sans statut de validation ni archivage.
+Réutiliser les calculs métier existants ; les données réelles restent sur le poste de l'utilisateur.
+**Critère déclencheur** : 7 — nouveaux chiffres affichés, dénominateurs et différence avec le recomptage.
+**Contradicteur** : Claude, dans une autre session (autre éditeur).
+**Décision déjà prise par l'utilisateur** : réalisation des trois pistes approuvée le 22/11/2026 ; cet accord ne clôt pas ce bloc et ne lève aucune réserve des AG-004/008/009.
+**Ce que ça engage** : un parcours réversible, sans changement des formats de stockage/export ni des définitions métier. Les saisies de contrôle ne sont pas enregistrées et sont effacées si leur périmètre change.
+**Non vérifié par l'auteur** : aucun contrôle nouveau sur données réelles, aucune mesure de gain de temps, aucune preuve indépendante produite par la répétition des calculs de l'application.
+**Points à contredire** : population de chaque chiffre explicitée ; réactivité à partir d'ACTIONS_DATA dérivé de la base complète, par demande et absente sous 20 cas calculables ; distinction entre défauts de qualité et différence de recomptage ; zéro distinct d'une case vide ; taux accompagnés de leurs deux composantes.
+**Si personne ne répond, je fais quoi ?** : réaliser et livrer l'enrichissement réversible autorisé après les contrôles du projet, puis faire vérifier la livraison une seule fois ; la clôture du bloc et les réserves avant diffusion restent à la décision de l'utilisateur.
+**Où regarder** : `index.html:1813-1843`, `index.html:2791-2815`, `index.html:2949-2950`, `index.html:3313-3402` ; `gdin-pure.js:1326-1359` ; nouvelles fonctions de relevé et de comparaison à ajouter dans `gdin-pure.js` avec leurs tests.
+
+Les deux autres pistes approuvées (version du paquet visible et barres des thématiques du Territoire) conservent les calculs et ne changent aucun format de données ; pas de bloc distinct pour leur rendu seul.
 
 ---
 
