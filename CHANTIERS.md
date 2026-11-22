@@ -1,10 +1,10 @@
 # Chantiers — GDINV2
 
-État au **17/11/2026**, base `07cd106` (mesures des audits du 20/10/2026 à leur
-date). Entre le 30/10 et le 17/11 : règles MD-LIB 48 à 62 recopiées dans
-`CLAUDE.md`, « pull » suffit à Codex (`AGENTS.md`, 03/11), annonce AGORA en 🔴
-(04/11) ; aucun changement de code. Ménages des 27, 28 et 29/10/2026 : ce qui est
-fait, et ce que dit déjà `CLAUDE.md`, sont retirés. Texte complet : `git log -p CHANTIERS.md`.
+État au **22/11/2026**, base `985e507` ; actualisation vérifiée via le connecteur
+GitHub (clone local impossible : proxy inaccessible). Journal et diff depuis
+`07cd106` lus : consignes, AGORA et contrôle de CHANTIERS/hook ; aucun changement
+applicatif. Les mesures antérieures restent datées de leur relevé ; les dépôts
+sur le cloud restent déclarés, non vérifiés. Historique : `git log -p CHANTIERS.md`.
 
 **À faire en premier, dans cet ordre** (passation du 29/10/2026, changement de
 session et de compte) :
@@ -25,8 +25,8 @@ session et de compte) :
    (reste PAPPERBOARD, pas dans cette session).
 5. **AG-004, AG-008, AG-009 clos le 30/10/2026 avec réserves** (résumé dans
    « Blocs tranchés » d'`AGORA.md`). **À faire avant toute diffusion aux élus** :
-   relever d'autres couples (d'abord ceux à forte part déduite), audit Codex de
-   l'export réel, retrouver les 12 lignes de l'ancien écart 412/400, lever l'écart
+   relever d'autres couples (d'abord ceux à forte part déduite), contrôle de
+   l'export réel dans l'application de l'utilisateur (chiffres seuls communiqués à Codex), retrouver les 12 lignes de l'ancien écart 412/400, lever l'écart
    37/35 des graphies de communes (`scripts/diag-communes.js` sur la colonne brute).
    Procédure : `GDINV2-BACKUP/releves/GDIN_Procedure-controle-chiffres_V0.1_2026-10-29.docx`.
    Aucun autre couple n'est « vérifié » ; la macro ne vaut pas validation indépendante.
@@ -47,9 +47,9 @@ npm test                      # 360 tests unitaires · 98 e2e (npx playwright te
 npm run audit -- export.xls [--suivi ../suivi.json]   # parcours réel : lues, exclues, retenues, fusionnées, réimport
 ```
 
-L'export n'est pas dans le dépôt (données personnelles) : le redemander à
-l'utilisateur. **Seul le dernier export fourni fait foi** — ne pas rouvrir de
-comparaison avec un fichier antérieur. Référence actuelle : septembre 2026,
+L'export réel reste sur le poste de l'utilisateur : ne pas le demander ni le
+lire (AGENTS, règle 59). Les diagnostics s'y exécutent ; seuls les agrégats sont
+communiqués. **Seul son dernier export fait foi** ; pas de comparaison avec un ancien fichier. Référence actuelle : septembre 2026,
 24 410 lignes, 4 184 exclues (cycle Pass), 20 226 retenues, 7 271 demandes
 distinctes, **20 226 en base après fusion** (19 290 avant le 20/10/2026 : 76
 demandes perdues par l'ancienne clé), 5 478 participations d'atelier pour 596
@@ -103,8 +103,7 @@ séances (mesuré le 20/10/2026, `audit-export.js`).
     pas** (il ne transmet que des nombres et noms de colonnes). C'est la seule preuve
     d'exactitude ; les correctifs n'en sont pas une (Codex). Défauts de sens
     inscrits dans le bloc ; reste d'autres couples et l'audit Codex.
-  - **Non traité, à proposer** : l'anneau des thématiques du Territoire
-    (`ch-terr-thema`) a des parts qui se chevauchent : barres horizontales.
+  - **Thématiques du Territoire** : proposition de barres dans « Pistes d'amélioration ».
     Réactivité et fiabilité projetées avant `6b77162` : non comparables.
 
 - **AG-002 clos le 29/10/2026** (volets B et C abandonnés, sans réponse du
@@ -282,4 +281,18 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
 
 ## Pistes d'amélioration
 
-Règle dans `CLAUDE.md`. Proposées : aucune. Écartées : aucune.
+**Proposées le 22/11/2026 — en attente du choix de l'utilisateur**, par intérêt décroissant (règle 22). Aucune piste écartée consignée.
+
+- **Contrôle guidé local des chiffres.** Constat : le relevé reste manuel (AG-004) ; Fiabilité et les scripts ont déjà des agrégats, pas de parcours de relevé dans l'interface.
+  Recommandation : dans Fiabilité, montrer population, période, unité, numérateur/dénominateur ; saisir le recomptage de l'utilisateur et afficher l'écart. Bénéfice attendu : moins de manipulations Excel/Node ; **charge moyenne**.
+  Hypothèse : réutiliser les agrégats suffit ; gain non mesuré. Critère : parcours fictif vérifié, puis contrôle utilisateur sur son poste, chiffres seuls communiqués. Ne vaut pas recomptage indépendant ; aucune archive ni validation automatique.
+
+- **Version du paquet visible dans l'application.** Constat : le menu dit « v2 · GDIN » (design), tandis que VERSION.txt et zip-cloud.sh portent la version du paquet et son commit.
+  Recommandation : afficher ces métadonnées, générées à la fabrication du ZIP depuis la source existante. Bénéfice attendu : identifier la copie d'un agent sans chercher ses fichiers ; **charge faible estimée**.
+  Hypothèse : utile pour l'assistance, usage à confirmer. Critère : version et commit affichés identiques à ceux du paquet, ouverture hors ligne conservée, aucun numéro recopié à la main.
+
+- **Barres pour les thématiques du Territoire.** Constat confirmé dans index.html (ch-terr-thema) : un anneau représente encore des catégories qui se chevauchent ; sujet déjà noté à proposer.
+  Recommandation : barres horizontales avec les mêmes valeurs et le même dénominateur. Bénéfice attendu : comparer sans suggérer une partition ; **charge faible estimée**.
+  Hypothèse : le défaut de lecture documenté persiste, gain non mesuré. Critère : mêmes effectifs/filtres, libellés lisibles et sans débordement à 390 px et 1280×720.
+
+Aucune réalisation décidée ni bloc AGORA ouvert pour ces pistes. Si le contrôle guidé est retenu, ouvrir le bloc requis avant tout nouveau calcul (critère 7, contradicteur Claude pour un bloc de Codex).
