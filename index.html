@@ -550,6 +550,19 @@ table.hm-joue td.hm-b{animation:hm-brique .35s cubic-bezier(.33,1,.68,1) both;an
 #landing-overlay .lo-footer{position:absolute;bottom:20px;font-size:10px;color:#6b7fa0;letter-spacing:.5px;opacity:1}
 /* Chiffres à chasse fixe : un KPI qui compte ne fait pas danser sa ligne. */
 .kpi-value,.bs-val,.nb-anime{font-variant-numeric:tabular-nums}
+.controle-guide{margin-bottom:18px}
+.controle-guide p{font-size:12px;line-height:1.65;color:var(--muted);margin:8px 0}
+.controle-guide label{display:block;font-size:12px;font-weight:600;margin-bottom:6px}
+.controle-guide select,.controle-guide input{box-sizing:border-box;width:100%;max-width:100%;min-width:0;background:var(--s1);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:9px;font:inherit}
+.controle-guide select{font-size:12px}
+.controle-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:16px}
+.controle-mesure{border:1px solid var(--border);border-radius:9px;padding:14px;min-width:0;overflow-wrap:anywhere}
+.controle-affiche{font-size:16px;font-weight:600;font-family:'JetBrains Mono',monospace;margin:8px 0}
+.controle-fraction{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.controle-resultat{font-size:12px;line-height:1.7;margin-top:12px;white-space:pre-line;overflow-wrap:anywhere}
+.controle-notice{font-size:12px;line-height:1.6;color:var(--text);margin:10px 0}
+.controle-guide button{margin-top:10px;white-space:normal}
+@media(max-width:600px){.controle-grid,.controle-fraction{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
@@ -1045,11 +1058,12 @@ table.hm-joue td.hm-b{animation:hm-brique .35s cubic-bezier(.33,1,.68,1) both;an
     <div style="max-width:1100px;margin:0 auto">
       <h2 style="font-size:20px;font-weight:600;margin:0 0 6px">Fiabilité des données</h2>
       <p style="font-size:12px;color:var(--muted);margin:0 0 20px;line-height:1.6;max-width:760px">
-        Tous les écarts ci-dessous sont <strong>mesurés sur le fichier que vous avez importé</strong> —
-        aucune marge n'est estimée. Cette page existe pour que vous puissiez répondre
-        si un chiffre est contesté.
+        Les écarts de qualité sont <strong>mesurés sur les données importées</strong> ;
+        aucune marge n'est estimée. Le contrôle guidé vous aide à comparer les chiffres
+        affichés avec votre propre recomptage, sans les déclarer validés.
       </p>
       <div id="fia-synthese"></div>
+      <div id="fia-controle"></div>
       <div id="fia-indicateurs"></div>
       <div id="fia-defauts"></div>
       <div id="fia-methode"></div>
@@ -3312,11 +3326,100 @@ function trierFiabilite(cle){
   renderFiabilite();
 }
 
+// Le relevé est un outil de préparation : sa saisie temporaire n'est jamais
+// enregistrée dans DATA, localStorage ou IndexedDB, ni utilisée dans les rapports.
+let controleSource='global',controleIndicateur='lignes',controleSaisies={},controleSignature='',controleBase=null,controleNotice='';
+let controleLignes=[];
+function contexteControle(){
+  const debut=document.getElementById('dFrom').value,fin=document.getElementById('dTo').value;
+  const type=document.getElementById('typeFilter').value;
+  const conum=controleSource==='rapport'?document.getElementById('sel-rpt-conum').value:'';
+  const cms=controleSource==='rapport'?document.getElementById('sel-rpt-cms').value:'';
+  const selection=getFiltered();
+  const pret=controleSource!=='rapport'||!!(conum&&cms);
+  const records=controleSource==='rapport'?selection.filter(r=>r.conum===conum&&r.cms===cms):selection;
+  const cmNorm=normCms(cms)||cms;
+  const actions=(ACTIONS_DATA||[]).filter(r=>isRealisee(r.etat)&&(!activeYears.size||activeYears.has(r.year))&&dansPeriode(r.jour,debut,fin)&&
+    (controleSource==='rapport'?r.conum===conum&&(r.cms===cms||r.cms===cmNorm):!diapoCms||r.cms===diapoCms||r.cms===normCms(diapoCms)));
+  const populationConseiller=controleSource==='rapport'?selection.filter(r=>r.conum===conum):null;
+  const signature=JSON.stringify([controleSource,debut,fin,[...activeYears].sort(),type,diapoCms||'',conum,cms,_derniereRev]);
+  return{debut,fin,type,conum,cms,records,actions,populationConseiller,signature,pret};
+}
+function changerSourceControle(valeur){controleSource=valeur;renderControleGuide();}
+function changerIndicateurControle(valeur){controleIndicateur=valeur;renderControleGuide();}
+function effacerRecomptages(){controleSaisies={};controleNotice='Vos saisies de contrôle ont été effacées.';renderControleGuide();}
+function saisirRecompte(champ,valeur){
+  if(!controleSaisies[controleIndicateur])controleSaisies[controleIndicateur]={};
+  controleSaisies[controleIndicateur][champ]=valeur;
+  afficherDifferenceControle();
+}
+function afficherDifferenceControle(){
+  const i=controleLignes.find(r=>r.cle===controleIndicateur),el=document.getElementById('controle-difference');
+  if(!i||!el)return;
+  const s=controleSaisies[i.cle]||{};
+  const formate=v=>v>0?'+'+v:String(v);
+  if(i.unite==='%'){
+    const taux=tauxRecompte(s.numerateur,s.denominateur);
+    if(taux.statut==='absent'){el.textContent='Renseignez les deux composantes de votre recomptage.';return;}
+    if(taux.statut==='invalide'){el.textContent='Entrez des nombres entiers positifs ou nuls ; le numérateur ne peut pas dépasser le dénominateur.';return;}
+    if(taux.statut==='indisponible'){el.textContent='Aucun taux comparable : votre dénominateur est nul.';return;}
+    const n=comparerRecompte(i.numerateur,s.numerateur,{entier:true});
+    const d=comparerRecompte(i.denominateur,s.denominateur,{entier:true});
+    const t=comparerRecompte(i.valeur,taux.valeur);
+    el.textContent=`Votre taux recompté : ${taux.valeur} %.\nDifférence du numérateur : ${formate(n.difference)} ; du dénominateur : ${formate(d.difference)}.\n`+
+      (t.statut==='comparable'?`Différence du taux : ${formate(t.difference)} point(s) de pourcentage.`:'Taux affiché indisponible : comparaison du taux impossible sur cette population.')+
+      '\nUne différence nulle ne valide pas le chiffre : les composantes et la méthode restent à vérifier.';
+  }else{
+    const c=comparerRecompte(i.valeur,s.valeur,{entier:i.cle!=='delai_total'});
+    el.textContent=c.statut==='absent'?'Renseignez votre recomptage ; une case vide ne vaut pas zéro.'
+      :c.statut==='invalide'?(i.cle==='delai_total'?'Entrez un nombre positif ou nul ; la virgule décimale est acceptée.':'Entrez un nombre entier positif ou nul.')
+      :c.statut==='indisponible'?'Valeur affichée indisponible : comparaison impossible sur cette population.'
+      :`Différence affiché − recompté : ${formate(c.difference)} ${i.unite}.\nUne différence nulle ne constitue pas une validation indépendante.`;
+  }
+}
+function renderControleGuide(){
+  const cible=document.getElementById('fia-controle');
+  if(!cible)return;
+  const c=contexteControle();
+  if(controleSignature&&(controleSignature!==c.signature||controleBase!==DATA)){
+    const remplis=Object.values(controleSaisies).some(s=>Object.values(s).some(v=>v!==''));
+    controleSaisies={};
+    if(remplis)controleNotice='Le périmètre ou les données ont changé : vos saisies de contrôle ont été effacées. Recommencez sur la sélection annoncée.';
+  }
+  controleSignature=c.signature;controleBase=DATA;
+  controleLignes=c.pret?releveControle(c.records,{actions:c.actions,conseillers:ORI_EXCL,populationConseiller:c.populationConseiller}):[];
+  if(!controleLignes.some(i=>i.cle===controleIndicateur))controleIndicateur='lignes';
+  const i=controleLignes.find(i=>i.cle===controleIndicateur),s=controleSaisies[controleIndicateur]||{};
+  const contexte=controleSource==='rapport'?`Rapport : ${c.conum||'conseiller non choisi'} · ${c.cms||'structure non choisie'}`:'Vue globale';
+  const periode=`Du ${c.debut?dateFr(c.debut):'début non défini'} au ${c.fin?dateFr(c.fin):'terme non défini'} · années : ${[...activeYears].sort().join(', ')||'toutes'}`;
+  const champ=(nom,label,valeur,inputmode)=>`<div><label for="controle-${nom}">${label}</label><input id="controle-${nom}" type="text" inputmode="${inputmode}" autocomplete="off" value="${esc(valeur||'')}" oninput="saisirRecompte('${nom}',this.value)"></div>`;
+  cible.innerHTML=`<section class="card controle-guide" aria-labelledby="controle-titre">
+      <div class="card-title" id="controle-titre"><span class="dot" style="background:var(--blue)"></span>Contrôle guidé des chiffres</div>
+    <p>Comptez de votre côté, puis comparez avec l'affichage. Les saisies restent temporaires sur ce poste et sont effacées si le périmètre change. Ce relevé ne remplace pas un contrôle indépendant.</p>
+    <label for="controle-source">Écran dont vous contrôlez les chiffres</label>
+    <select id="controle-source" onchange="changerSourceControle(this.value)"><option value="global"${controleSource==='global'?' selected':''}>Vue globale — filtres actuels</option><option value="rapport"${controleSource==='rapport'?' selected':''}>Rapport — conseiller et structure sélectionnés</option></select>
+    <p id="controle-perimetre"><strong>${esc(contexte)}</strong><br>${esc(periode)}<br>Type : ${esc(c.type||'tous types')}${diapoCms?` · structure globale : ${esc(diapoCms)}`:''} · ${c.pret?c.records.length:0} lignes.</p>
+    <p>Ce relevé suit le filtre de type. Les contrôles de qualité de Fiabilité restent sur tous les types de la période. La réactivité et le délai reprennent les accompagnements réalisés, avec les contacts rapprochés sur la base complète.</p>
+    <div class="controle-notice" role="status">${esc(controleNotice)}</div>
+    ${!c.pret?'<p>Choisissez d’abord un conseiller et une structure dans l’onglet Rapport, puis revenez ici. Les filtres existants sont conservés.</p>'
+      :!c.records.length?'<p>Aucune ligne dans cette sélection : aucun chiffre à comparer. Modifiez les filtres existants pour choisir une population.</p>'
+      :`<label for="controle-indicateur">Indicateur à contrôler</label><select id="controle-indicateur" onchange="changerIndicateurControle(this.value)">${controleLignes.map(x=>`<option value="${x.cle}"${x.cle===controleIndicateur?' selected':''}>${esc(x.libelle)}</option>`).join('')}</select>
+      <div class="controle-grid"><div class="controle-mesure"><strong>Affiché</strong><div class="controle-affiche" id="controle-affiche">${i.valeur==null?(i.cle==='reactivite'?'Non publié (< 20 calculables)':'Non calculable'):i.valeur+' '+esc(i.unite)}</div>
+      <p id="controle-formule">${i.denominateur!==null?`${i.numerateur} / ${i.denominateur} · `:''}${esc(i.definition)}</p>
+      <p>Population du calcul : ${i.population} ${i.cle==='reactivite'?'demandes calculables':i.cle==='delai_total'?'délais calculables':'lignes'}.</p></div>
+      <div class="controle-mesure"><strong>Votre recomptage</strong><p>Reprenez la même population, la même unité et la même période. Différence = affiché − recompté.</p>
+      ${i.unite==='%'?`<div class="controle-fraction">${champ('numerateur','Votre numérateur',s.numerateur,'numeric')}${champ('denominateur','Votre dénominateur',s.denominateur,'numeric')}</div>`:champ('valeur',`Votre valeur (${i.unite})`,s.valeur,i.cle==='delai_total'?'decimal':'numeric')}
+      <div id="controle-difference" class="controle-resultat" role="status"></div></div></div>
+      <button class="btn-print" type="button" onclick="effacerRecomptages()">Effacer mes saisies de contrôle</button>`}
+  </section>`;
+  afficherDifferenceControle();
+}
+
 function renderFiabilite(){
-  // Les indicateurs suivent le filtre actif — années, type, période — comme
-  // tous les autres panneaux. Les constats d'import, eux, portent sur le
-  // fichier entier : ils sont annoncés comme tels.
+  // Qualité : années et période, tous types. Le relevé guidé annonce son propre
+  // écran de référence et réutilise les filtres existants, sans les modifier.
   const base=getFilteredSansType();
+  renderControleGuide();
   const stats=(importMeta&&importMeta.stats)||{};
   const filtre=base.length!==(DATA||[]).length;
   const typeActif=(document.getElementById('typeFilter')||{}).value||'';

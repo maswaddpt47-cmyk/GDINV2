@@ -1473,11 +1473,77 @@ function basculerAnnee(selection,propose,annee){
 // n'est pas compter les demandes. Couvert par les tests « countDemandes ».
 function countDemandes(arr){return new Set((arr||[]).map(r=>r&&r.id_demande).filter(Boolean)).size;}
 
+// Relevé de contrôle : les lignes et les actions ont déjà reçu leur périmètre à
+// l'écran. Les contacts ont été rapprochés sur la base complète avant ce filtre.
+// Aucun nom, identifiant ni détail de ligne ne sort de ce relevé agrégé.
+function releveControle(records,{actions=[],conseillers=new Set(),populationConseiller=null}={}){
+  const base=records||[],n=base.length;
+  const lignes=[];
+  const ajoute=(cle,libelle,valeur,unite,numerateur,denominateur,definition,population=n)=>
+    lignes.push({cle,libelle,valeur,unite,numerateur,denominateur,definition,population});
+  const compte=(cle,libelle,valeur,unite,definition)=>
+    ajoute(cle,libelle,n?valeur:null,unite,n?valeur:null,null,definition);
+  compte('lignes','Lignes de la sélection',n,'lignes','Nombre de lignes dans la sélection annoncée.');
+  compte('demandes','Demandes distinctes',countDemandes(base),'demandes',
+    'N° de demande distincts et renseignés ; une demande peut porter plusieurs lignes.');
+  compte('orienteurs','Orienteurs hors conseillers',compterOrienteursExternes(base,conseillers),'orienteurs',
+    'Orienteurs distincts, espaces extérieurs retirés, hors vides, « ? » et conseillers.');
+  compte('communes','Groupes de communes renseignés',new Set(base.map(r=>r.commune).filter(Boolean)).size,'groupes',
+    'Libellés de communes distincts présents dans la sélection, rattachés ou non au référentiel.');
+  const real=tauxRealisation(base);
+  ajoute('realisation','Taux de réalisation',n?real.taux:null,'%',real.realisees,real.total,
+    'Lignes à l’état Réalisée / toutes les lignes de la sélection ; ce ne sont pas des demandes closes.');
+  const act=n?(actions||[]):[];
+  const rea=reactivite48(act);
+  ajoute('reactivite','Réactivité en 2 jours ouvrés',rea.taux,'%',rea.dans48,rea.calculables,
+    'Demandes avec premier contact en 2 jours ouvrés au plus / demandes calculables ; fériés non retirés. '+
+    `Taux absent sous 20 demandes calculables ; ${rea.sansContact} demande(s) sans contact valide.`,rea.calculables);
+  if(populationConseiller!==null){
+    const total=(populationConseiller||[]).length;
+    ajoute('part_conseiller','Part de l’activité du conseiller',n&&total?pct(n,total):null,'%',n,total,
+      'Lignes du couple / lignes de ce conseiller dans toutes ses structures, à période et type identiques.',total);
+  }
+  // Le contrôle garde une unité fixe : les délais dérivés en jours ouvrés.
+  // Il ne reprend pas le repli calendaire du Rapport.
+  const delais=act.map(r=>r.delai_total).filter(v=>typeof v==='number'&&Number.isFinite(v)&&v>=0);
+  const somme=delais.reduce((s,d)=>s+d,0);
+  ajoute('delai_total','Délai total moyen',delais.length?Math.round(somme/delais.length):null,'jours ouvrés',somme,delais.length,
+    delais.length?'Somme des délais orientation → réalisation en jours ouvrés / lignes d’action calculables, moyenne arrondie ; fériés non retirés.'
+      :"Aucun délai en jours ouvrés disponible ; le repli calendaire du Rapport n'est pas repris dans ce contrôle.",delais.length);
+  return lignes;
+}
+
+// Une égalité de nombres n'est pas une validation de leur exactitude. La case
+// vide reste distincte d'un zéro ; la différence est toujours affiché − recompté.
+function comparerRecompte(valeur,saisie,{entier=false}={}){
+  if(saisie==null||typeof saisie==='string'&&!saisie.trim())return{statut:'absent',difference:null};
+  let nombre;
+  if(typeof saisie==='number')nombre=saisie;
+  else if(typeof saisie==='string'&&/^\d+(?:[.,]\d+)?$/.test(saisie.trim()))nombre=Number(saisie.trim().replace(',','.'));
+  else return{statut:'invalide',difference:null};
+  if(!Number.isFinite(nombre)||nombre<0||entier&&!Number.isSafeInteger(nombre))return{statut:'invalide',difference:null};
+  if(typeof valeur!=='number'||!Number.isFinite(valeur))return{statut:'indisponible',difference:null};
+  return{statut:'comparable',difference:Number((valeur-nombre).toFixed(10))};
+}
+
+// Recompter les composantes d'un taux évite que deux fractions différentes
+// passent pour identiques uniquement parce que leur pourcentage est arrondi.
+function tauxRecompte(numerateurSaisi,denominateurSaisi){
+  const n=comparerRecompte(0,numerateurSaisi,{entier:true});
+  const d=comparerRecompte(0,denominateurSaisi,{entier:true});
+  if(n.statut==='invalide'||d.statut==='invalide')return{statut:'invalide',valeur:null};
+  if(n.statut==='absent'||d.statut==='absent')return{statut:'absent',valeur:null};
+  const num=0-n.difference,den=0-d.difference;
+  if(!den)return{statut:'indisponible',valeur:null};
+  if(num>den)return{statut:'invalide',valeur:null};
+  return{statut:'comparable',valeur:pct(num,den)};
+}
+
 // Compatibilité Node.js (tests) ET navigateur (script tag)
 if(typeof module!=='undefined'){
   module.exports={
     MONTH_FR,TYPE_KEYS,TYPE_PALETTE,CMS_MAP_RAW,KEEP_CMS,CMS_MAP,
-    normKey,normCms,extractDominantCms,
+    normKey,normCms,extractDominantCms,releveControle,comparerRecompte,tauxRecompte,
     esc,demojibakeUtf16,normCommuneKey,communesCanoniques,comblerConum,normKeySouple,rattacherCommune,COMMUNES_47,excelDate,parseXlsText,parseRows,mapColonnes,normHeader,formatResumeImport,estAtelier,cleSessionAtelier,compterSessionsAtelier,statsAteliers,numeroterParticipants,numeroterLignes,cleBaseAction,neutraliserFormule,celluleCSV,categorieEtat,repartitionEtats,filtrerParType,evolutionAnnuelle,evolutionParAnnee,basculerAnnee,orienteursExternes,lignesOrienteur,compterOrienteursExternes,mentionAttribution,SEUIL_ATTRIBUTION_DEDUITE,deriverActions,delaisParDemande,reactivite48,dansPeriode,tauxRealisation,retirerMotifs,baseAncienne,completerRangs,fusionnerImport,CHAMPS_MUTABLES,ORIGINES_CONUM,cleFusion,conseillersConnus,deriverAttributionCms,attribuerConum,couleurConum,indicateursFiabilite,defautsSaisie,syntheseFiabilite,niveauFiabilite,TYPE_ATELIER,ETAT_MAP,TYPE_EXCLUS,TYPE_CYCLE_PASS,ECARTER_SANS_CMS,
     typeColor,pct,monthLabel,count,countEntries,countThemas,lignesAvecThemas,countTypes,
     parseDt,dayDiff,bizDays,

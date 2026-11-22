@@ -12,7 +12,109 @@ const {
   evolutionParAnnee, basculerAnnee, orienteursExternes, lignesOrienteur, compterOrienteursExternes, mentionAttribution, indicateursFiabilite, decouperNombre, formaterCommeNombre, defautsSaisie, syntheseFiabilite, niveauFiabilite,
   formatResumeImport, normCommuneKey, comblerConum, normKeySouple, CMS_MAP_RAW,
   rattacherCommune, COMMUNES_47,
+  releveControle, comparerRecompte, tauxRecompte,
 } = require('./gdin-pure.js');
+
+describe('releveControle — contrôle guidé sur données fictives', () => {
+  const jeu=()=>[
+    {id_demande:'FICTIF-1',etat:'Réalisée',commune:'Commune fictive A',orienteur:'Service fictif A',conum_origine:'source'},
+    {id_demande:'FICTIF-1',etat:'Non réalisée',commune:'Commune fictive A',orienteur:' Service fictif A ',conum_origine:'deduit'},
+    {id_demande:'FICTIF-2',etat:'Réalisée',commune:'Graphie fictive non rattachée',orienteur:'Conseiller fictif',conum_origine:'inconnu'},
+    {id_demande:'',etat:'En cours',commune:'',orienteur:'?'},
+  ];
+  const parCle=lignes=>Object.fromEntries(lignes.map(l=>[l.cle,l]));
+  it('distingue lignes, demandes, groupes renseignés et populations, sans détail personnel ni mutation', () => {
+    const base=jeu(),avant=JSON.stringify(base);
+    const lignes=releveControle(base,{conseillers:new Set(['Conseiller fictif']),populationConseiller:Array.from({length:10},()=>({}))});
+    const r=parCle(lignes);
+    assert.deepEqual([r.lignes.valeur,r.demandes.valeur,r.orienteurs.valeur,r.communes.valeur],[4,2,1,2]);
+    assert.deepEqual([r.realisation.valeur,r.realisation.numerateur,r.realisation.denominateur,r.realisation.population],[50,2,4,4]);
+    assert.deepEqual([r.part_conseiller.valeur,r.part_conseiller.numerateur,r.part_conseiller.denominateur],[40,4,10]);
+    assert.match(r.communes.definition,/rattachés ou non/);
+    assert.equal(r.lignes.unite,'lignes');
+    assert.equal(r.demandes.unite,'demandes');
+    assert.equal(r.demandes.denominateur,null,'un effectif distinct ne devient pas une fraction des lignes');
+    assert.equal(JSON.stringify(base),avant,'le relevé ne modifie pas les données');
+    assert.doesNotMatch(JSON.stringify(lignes),/FICTIF-1|Service fictif A|Graphie fictive non rattachée|conum_origine/);
+    const sansProvenance=base.map(({conum_origine,...r})=>r);
+    assert.deepEqual(releveControle(sansProvenance),releveControle(base),'la provenance ne change aucun comptage');
+  });
+  it('garde les zéros réels mais aucune valeur sur une population vide ni sous le seuil de réactivité', () => {
+    const r=parCle(releveControle([{etat:'En attente'}]));
+    assert.equal(r.demandes.valeur,0);
+    assert.equal(r.orienteurs.valeur,0);
+    assert.equal(r.realisation.valeur,0);
+    assert.equal(r.delai_total.valeur,null);
+    assert.equal(r.reactivite.valeur,null);
+    assert.equal(r.part_conseiller,undefined);
+    const vides=releveControle([],{actions:[{id_demande:'FICTIF',delai_total:1,delai_reactivite:1}],populationConseiller:[]});
+    assert.equal(vides.length,8);
+    assert(vides.every(r=>r.valeur===null&&r.population===0),'aucune ancienne valeur sans population');
+  });
+  it('réutilise les demandes uniques pour la réactivité et le seuil de 20 calculables', () => {
+    const actions=Array.from({length:20},(_,i)=>({id_demande:'FICTIF-'+i,delai_reactivite:i<19?1:5}));
+    actions.push(...Array.from({length:10},()=>({...actions[0]})),{id_demande:'FICTIF-sans-contact',delai_reactivite:null});
+    const r=parCle(releveControle(jeu(),{actions})).reactivite;
+    assert.deepEqual([r.valeur,r.numerateur,r.denominateur,r.population],[95,19,20,20]);
+    assert.match(r.definition,/1 demande\(s\) sans contact/);
+    assert.equal(parCle(releveControle(jeu(),{actions:actions.slice(0,19)})).reactivite.valeur,null);
+  });
+  it('garde le délai ouvré dérivé sans reprendre le repli calendaire du Rapport', () => {
+    const base=jeu();
+    base[0].date_demande='2025-01-03';base[0].date_realisation='2025-01-06';
+    base[2].date_demande='2025-01-01';base[2].date_realisation='2025-01-08';
+    base[1].date_demande='2025-01-01';base[1].date_realisation='2025-01-30';
+    const actions=[{delai_total:2},{delai_total:10},{delai_total:null},{delai_total:-4},{delai_total:NaN}];
+    const direct=parCle(releveControle(base,{actions})).delai_total;
+    assert.deepEqual([direct.valeur,direct.numerateur,direct.denominateur],[6,12,2]);
+    assert.equal(direct.unite,'jours ouvrés');
+    assert.match(direct.definition,/jours ouvrés/);
+    for(const sansDelai of [[],actions.slice(2)]){
+      const absent=parCle(releveControle(base,{actions:sansDelai})).delai_total;
+      assert.deepEqual([absent.valeur,absent.numerateur,absent.denominateur,absent.population],[null,0,0,0]);
+      assert.equal(absent.unite,'jours ouvrés');
+      assert.equal(absent.definition,"Aucun délai en jours ouvrés disponible ; le repli calendaire du Rapport n'est pas repris dans ce contrôle.");
+    }
+  });
+});
+
+describe('comparerRecompte — saisie temporaire', () => {
+  it('sépare case vide, indisponibilité et zéro, avec différence affiché moins recompté', () => {
+    for(const saisie of ['', '   ',null,undefined])assert.deepEqual(comparerRecompte(4,saisie),{statut:'absent',difference:null});
+    assert.deepEqual(comparerRecompte(4,'0',{entier:true}),{statut:'comparable',difference:4});
+    assert.deepEqual(comparerRecompte(4,'6',{entier:true}),{statut:'comparable',difference:-2});
+    assert.deepEqual(comparerRecompte(0,0),{statut:'comparable',difference:0});
+    assert.deepEqual(comparerRecompte(null,'0'),{statut:'indisponible',difference:null});
+    assert.deepEqual(comparerRecompte(1.2,' 1,1 '),{statut:'comparable',difference:0.1});
+  });
+  it('refuse saisies négatives ou non finies, fractions de comptage et coercitions inattendues', () => {
+    for(const saisie of ['-1',-1,'Infinity',Infinity,NaN,'1,2,3','4abc',false,{},'0x10']){
+      assert.equal(comparerRecompte(4,saisie).statut,'invalide',String(saisie));
+    }
+    assert.equal(comparerRecompte(4,'1,5',{entier:true}).statut,'invalide');
+    assert.equal(comparerRecompte(NaN,'2').statut,'indisponible');
+    assert.equal(comparerRecompte(Infinity,'2').statut,'indisponible');
+  });
+});
+
+describe('tauxRecompte — composantes manuelles', () => {
+  it('calcule le taux arrondi sans confondre des fractions différentes', () => {
+    assert.deepEqual(tauxRecompte('98','103'),{statut:'comparable',valeur:95});
+    assert.deepEqual(tauxRecompte('19','20'),{statut:'comparable',valeur:95});
+    assert.equal(comparerRecompte(98,'19',{entier:true}).difference,79);
+    assert.equal(comparerRecompte(103,'20',{entier:true}).difference,83);
+    assert.deepEqual(tauxRecompte('0','20'),{statut:'comparable',valeur:0});
+    assert.deepEqual(tauxRecompte('1','3'),{statut:'comparable',valeur:33});
+  });
+  it('refuse fraction incohérente ou incomplète et distingue dénominateur nul', () => {
+    assert.deepEqual(tauxRecompte('','20'),{statut:'absent',valeur:null});
+    assert.deepEqual(tauxRecompte('1',''),{statut:'absent',valeur:null});
+    assert.deepEqual(tauxRecompte('0','0'),{statut:'indisponible',valeur:null});
+    for(const [n,d] of [['21','20'],['1,5','20'],['-1','20'],['1','Infinity']]){
+      assert.deepEqual(tauxRecompte(n,d),{statut:'invalide',valeur:null});
+    }
+  });
+});
 
 // ─── pct ──────────────────────────────────────────────────────────────────
 describe('pct', () => {

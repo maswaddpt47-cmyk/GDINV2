@@ -10,7 +10,10 @@
 const { test, expect } = require('@playwright/test');
 const path = require('path');
 
-const PAGE_URL = `file://${path.resolve(__dirname, 'index.html')}`;
+// La CI vérifie file:// ; un environnement qui interdit ce protocole peut
+// servir les mêmes fichiers localement sans modifier les règles du navigateur.
+const PAGE_URL = process.env.GDIN_TEST_URL || `file://${path.resolve(__dirname, 'index.html')}`;
+const APP_ORIGIN = PAGE_URL.startsWith('file://') ? null : new URL(PAGE_URL).origin;
 
 // Données fictives utilisées pour produire de vrais exports source XLSX.
 const TEST_RECORDS = [
@@ -242,12 +245,13 @@ test.describe('Boot sans réseau externe', () => {
 
   // Les librairies étaient chargées depuis cdnjs : sans accès à ce domaine,
   // Chart n'était jamais défini et la page restait blanche. Ce test coupe
-  // tout ce qui n'est pas file:// et vérifie que le dashboard démarre quand
+  // tout ce qui n'est pas local à l'application et vérifie qu'elle démarre quand
   // même. Le supprimer revient à rouvrir la panne.
   test.beforeEach(async ({ page }) => {
     await page.route('**/*', route => {
       const url = route.request().url();
-      return url.startsWith('file://') ? route.continue() : route.abort();
+      return url.startsWith('file://') || APP_ORIGIN && new URL(url).origin === APP_ORIGIN
+        ? route.continue() : route.abort();
     });
   });
 
@@ -2020,5 +2024,86 @@ test.describe('AG-009 — cas relevés par la relecture', () => {
     const fictifCms = tab.parCms.find(l => l[1] === 'Externe fictif');
     expect(fictifCms, 'ligne « Externe fictif » absente du tableau Par CMS').toBeTruthy();
     expect(fictifCms[4]).toBe('NOM-A Prenom');
+  });
+});
+
+test.describe('Contrôle guidé — imports fictifs', () => {
+  test('garde les contacts et distingue les composantes de taux arrondis identiques', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    const lignes = Array.from({ length: 20 }, (_, k) => {
+      const commun = { ...TEST_RECORDS[0], lieu_raw: 'Centre Médico-Social Agen Tapie', id_demande: `controle-${k}`, orienteur: 'Organisme fictif' };
+      return [
+        { ...commun, type_action: ['Prise de contact'], date_action: '2025-03-11', date_realisation: '2025-03-11' },
+        { ...commun, type_action: ['Accompagnement'], date_action: '2025-03-12', date_realisation: '2025-03-12' },
+      ];
+    }).flat();
+    await importerRecords(page, lignes, 'controle-fictif.xlsx');
+    await page.locator('.sb-item[onclick*="fiabilite"]').click();
+    await expect(page.locator('#panel-fiabilite')).toHaveClass(/active/);
+    await expect(page.locator('#controle-perimetre')).toContainText('20 lignes');
+    await page.getByLabel('Votre valeur (lignes)', { exact: true }).fill('19');
+    await expect(page.locator('#controle-difference')).toContainText('+1 lignes');
+    await page.getByLabel('Indicateur à contrôler', { exact: true }).selectOption('reactivite');
+    await expect(page.locator('#controle-affiche')).toHaveText('100 %');
+    await expect(page.locator('#controle-formule')).toContainText('20 / 20');
+    await page.getByLabel('Votre numérateur', { exact: true }).fill('1');
+    await page.getByLabel('Votre dénominateur', { exact: true }).fill('1');
+    await expect(page.locator('#controle-difference')).toContainText('Différence du taux : 0 point');
+    await expect(page.locator('#controle-difference')).toContainText('Différence du numérateur : +19 ; du dénominateur : +19');
+    await page.locator('#typeFilter').selectOption('Prise de contact');
+    await expect(page.locator('#controle-perimetre')).toContainText('Prise de contact');
+    await expect(page.locator('#controle-perimetre')).toContainText('20 lignes');
+    await expect(page.getByLabel('Votre numérateur', { exact: true })).toHaveValue('');
+    await expect(page.locator('.controle-notice')).toContainText('ont été effacées');
+    await expect(page.locator('#controle-affiche')).toHaveText('100 %');
+  });
+
+  test('reprend le couple du Rapport et efface les saisies après filtre, import et rechargement', async ({ page }) => {
+    await loadFresh(page);
+    await dismissLanding(page);
+    const lignes = [{ ...TEST_RECORDS[0], lieu_raw: 'Centre Médico-Social Agen Tapie' }, TEST_RECORDS[1], TEST_RECORDS[2],
+      { ...TEST_RECORDS[1], lieu_raw: 'Centre Médico-Social de Marmande', id_demande: 'controle-autre-cms', conum: TEST_RECORDS[0].conum }];
+    await importerRecords(page, lignes, 'couple-fictif.xlsx');
+    await page.locator('.sb-item[onclick*="rapport"]').click();
+    await page.locator('#sel-rpt-conum').selectOption(TEST_RECORDS[0].conum);
+    await page.locator('#rpt-cms-chips button').filter({ hasText: 'Agen' }).click();
+    await expect(page.locator('#rpt-content')).toBeVisible();
+    await page.locator('.sb-item[onclick*="fiabilite"]').click();
+    await page.getByLabel('Écran dont vous contrôlez les chiffres', { exact: true }).selectOption('rapport');
+    await expect(page.locator('#controle-perimetre')).toContainText(TEST_RECORDS[0].conum);
+    await expect(page.locator('#controle-perimetre')).toContainText('CMS Agen Tapie');
+    await page.getByLabel('Indicateur à contrôler', { exact: true }).selectOption('reactivite');
+    await expect(page.locator('#controle-affiche')).toHaveText('Non publié (< 20 calculables)');
+    await page.getByLabel('Indicateur à contrôler', { exact: true }).selectOption('part_conseiller');
+    await expect(page.locator('#controle-affiche')).toHaveText('50 %');
+    await expect(page.locator('#controle-formule')).toContainText('1 / 2');
+    await page.getByLabel('Votre numérateur', { exact: true }).fill('1');
+    await page.getByLabel('Votre dénominateur', { exact: true }).fill('2');
+    await page.locator('#dFrom').fill('2025-04-01');
+    await page.locator('#dFrom').dispatchEvent('change');
+    await expect(page.locator('#fia-controle')).toContainText('Aucune ligne');
+    await expect(page.locator('.controle-notice')).toContainText('ont été effacées');
+    await page.locator('#dFrom').fill('2025-03-01');
+    await page.locator('#dFrom').dispatchEvent('change');
+    await expect(page.getByLabel('Votre numérateur', { exact: true })).toHaveValue('');
+    await page.getByLabel('Votre numérateur', { exact: true }).fill('1');
+    await page.getByLabel('Votre dénominateur', { exact: true }).fill('2');
+    await importerRecords(page, [{ ...TEST_RECORDS[0], id_demande: 'controle-nouvelle-ligne' }], 'nouvel-import-fictif.xlsx');
+    // L'import reconstruit les choix proposés du Rapport : repasser par ces
+    // choix réels avant de vérifier les champs du même couple.
+    await page.locator('.sb-item[onclick*="rapport"]').click();
+    await page.locator('#sel-rpt-conum').selectOption(TEST_RECORDS[0].conum);
+    await page.locator('#rpt-cms-chips button').filter({ hasText: 'Agen' }).click();
+    await page.locator('.sb-item[onclick*="fiabilite"]').click();
+    await page.getByLabel('Indicateur à contrôler', { exact: true }).selectOption('part_conseiller');
+    await expect(page.getByLabel('Votre numérateur', { exact: true })).toHaveValue('');
+    await page.getByLabel('Votre numérateur', { exact: true }).fill('2');
+    await page.reload();
+    await page.waitForFunction(() => typeof window.switchTab === 'function' && DATA.length > 0);
+    if (await page.locator('.lo-btn').isVisible()) await dismissLanding(page);
+    await page.locator('.sb-item[onclick*="fiabilite"]').click();
+    await expect(page.locator('#controle-source')).toHaveValue('global');
+    await expect(page.getByLabel('Votre valeur (lignes)', { exact: true })).toHaveValue('');
   });
 });
