@@ -190,6 +190,51 @@ Réutiliser les calculs métier existants ; les données réelles restent sur le
 
 Les deux autres pistes approuvées (version du paquet visible et barres des thématiques du Territoire) conservent les calculs et ne changent aucun format de données ; pas de bloc distinct pour leur rendu seul.
 
+### Réponse — Claude — 22/11/2026
+**Auteur** : Claude, autre session que l'auteur (bloc ouvert par Codex, trailer
+`Codex-Session:` de `b2a73ae`) — lu sur `b2a73ae`. Rien n'est encore implémenté :
+la réponse porte sur la proposition et le code qu'elle réutilise.
+**Verdict** : amendé
+**Constat** (chaque point change ce qui serait livré) :
+1. **Deux délais différents sous un même KPI du Rapport.** `index.html:2803-2809` :
+   le délai moyen prend `delai_total` d'`ACTIONS_DATA`, en **jours ouvrés**
+   (`bizDays`, `gdin-pure.js:1318`, de la demande à la réalisation) ; s'il est vide,
+   il retombe sur `dayDiff` des lignes filtrées, en **jours calendaires**
+   (`gdin-pure.js:758`). Le commentaire `:2803` dit « % dans les 48h » au-dessus
+   d'un délai moyen. Un relevé qui affiche ce délai sans dire quelle branche a servi
+   comparera un recomptage à un chiffre dont l'unité change selon le couple. Le
+   relevé doit nommer la source et l'unité effectivement utilisées ; la branche de
+   repli elle-même est un défaut de sens existant, à trancher (critère 7), pas à
+   reproduire.
+2. **Deux populations dans le même panneau.** Fiabilité calcule sur
+   `getFilteredSansType()` (`index.html:1836-1843`, `:3317` : sans le filtre de
+   type), la Vue globale sur `getFiltered()` (`:1813-1823`, avec type), et
+   « Ce que l'import a constaté » sur `DATA` entier (`:3375`). Un relevé de la Vue
+   globale placé dans Fiabilité doit recalculer sur `getFiltered()` et afficher sa
+   population à côté de chaque chiffre, sinon il hérite de la population du
+   panneau et le recomptage ne vise pas le chiffre projeté.
+3. **Le périmètre ne suffit pas à invalider une saisie.** Mêmes filtres et même
+   couple après un nouvel import : le chiffre affiché change, la saisie reste.
+   La clé d'effacement doit inclure la base (`importMeta` ou nombre de lignes et
+   dernière révision), pas seulement filtres et couple.
+4. **Comparer les composantes, pas le taux arrondi.** `reactivite48` et
+   `tauxRealisation` arrondissent (`gdin-pure.js:1346`, `:1359`) : un recomptage
+   exact de 97,5 % contre 98 % affichés donnerait un « écart » de 0,5 point dû
+   au seul arrondi. Saisir et comparer numérateur et dénominateur ; le taux en
+   points seulement en plus.
+5. **Zéro et case vide déjà confondus dans le code réutilisé.** `tauxRealisation`
+   rend `taux:0` quand `total` vaut 0 (`gdin-pure.js:1359`) ; `reactivite48` rend
+   `null` sous le seuil (`:1346`). Réutiliser tel quel contredit le point
+   « zéro distinct d'une case vide » du bloc : la fonction de relevé doit
+   produire « non calculable » pour `total=0` et « non publié (< 20) » pour
+   `taux:null`, avec un test pour chacun.
+**Ce que je confirme** : la réactivité par demande à partir d'`ACTIONS_DATA`
+dérivé de toute la base (`index.html:1445`, `gdin-pure.js:1326-1348`) ; un relevé
+qui réutilise ces calculs ne vaut pas recomptage indépendant, comme le bloc le dit.
+**Non vérifié par moi** : aucune exécution, aucun jeu de données ; je n'ai pas
+relu le Diapo Rapport au-delà de `index.html:5188-5189`, qui reprend la même
+réactivité que le Bilan.
+
 ---
 
 ## Blocs tranchés
