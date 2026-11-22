@@ -3,7 +3,7 @@
 État au **22/11/2026**, application `b425582` (V1.5), reprise sur `f4a3644`.
 Les trois pistes approuvées sont réalisées et testées. ZIP V1.5 fabriqué et lien
 fourni dans la conversation ; téléchargement et dépôt cloud non déclarés.
-AG-010 reste ouvert après prise en compte de l'avis amendé de Claude.
+AG-010 clos le 22/11/2026 sur décision explicite de l'utilisateur, après avis amendé de Claude.
 Les mesures antérieures restent datées de leur relevé. Historique : `git log -p CHANTIERS.md`.
 
 **À faire en premier, dans cet ordre** (passation du 29/10/2026, changement de
@@ -300,5 +300,5 @@ Une ligne par décision ; le récit et les mesures d'origine sont dans
 ## Pistes d'amélioration
 
 Aucune nouvelle piste proposée ou écartée. Les trois pistes approuvées le
-22/11/2026 sont réalisées ; les invariants figurent ci-dessus. AG-010 attend
-la décision de clôture de l'utilisateur ; les réserves des AG-004/008/009 restent.
+22/11/2026 sont réalisées ; les invariants figurent ci-dessus. AG-010 est clos
+sur décision de l'utilisateur ; les réserves des AG-004/008/009 restent.
