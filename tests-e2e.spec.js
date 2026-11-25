@@ -2107,3 +2107,112 @@ test.describe('Contrôle guidé — imports fictifs', () => {
     await expect(page.getByLabel('Votre valeur (lignes)', { exact: true })).toHaveValue('');
   });
 });
+
+// ── Reprise de bout en bout — jeu FICTIF ──────────────────────────────────────
+// Chaîne : profil vierge → import XLSX → chiffres (Vue globale, CR, diapo
+// Rapport) → rechargement → mêmes chiffres → second profil vierge sans fuite.
+// Les attendus sont recomptés À LA MAIN sur le jeu ci-dessous (aucun appel à
+// gdin-pure.js) et codés en dur. Tout est FICTIF : aucune donnée d'usager.
+test.describe('Reprise de bout en bout — jeu FICTIF', () => {
+
+  // L'import ne reconnaît un CMS que sous son libellé source complet (sinon « Autre structure »).
+  const LIEU = { 'CMS Agen Montanou': 'Centre Médico-Social Agen Montanou', 'CMS Marmande': 'Centre Médico-Social de Marmande' };
+  const R = (id, dem, act, type, cms, commune, conum, themas, orienteur, etat, real, benef, urgence) => ({
+    id_demande: id, date_demande: dem, date_action: act, type_action: [type], cms, lieu_raw: LIEU[cms],
+    commune, conum, themas, orienteur, etat, date_planifiee: dem, date_realisation: real,
+    benef_connu: benef, urgence, motif: '',
+  });
+  const AC = 'Accompagnement', PC = 'Prise de contact';
+  // 9 accompagnements (retenus par le filtre par défaut) + 2 prises de contact (écartées).
+  const JEU_FICTIF = [
+    R('F01', '2025-03-10', '2025-03-12', AC, 'CMS Agen Montanou', 'Agen', 'Fictif Alice', ['Numérique de base'], 'CAF', 'Réalisée', '2025-03-12', false, false),
+    R('F02', '2025-03-17', '2025-03-21', AC, 'CMS Agen Montanou', 'Boé', 'Fictif Alice', ['Santé', 'Numérique de base'], 'Mairie', 'Réalisée', '2025-03-21', true, false),
+    R('F03', '2025-06-02', '2025-06-09', AC, 'CMS Agen Montanou', 'Agen', 'Fictif Alice', ['Emploi'], 'CAF', 'Non réalisée', null, false, false),
+    R('F04', '2025-09-15', '2025-09-16', AC, 'CMS Agen Montanou', 'Agen', 'Fictif Alice', ['Santé'], 'Mairie', 'Réalisée', '2025-09-19', false, false),
+    R('F05', '2026-01-12', '2026-01-14', AC, 'CMS Agen Montanou', 'Boé', 'Fictif Alice', ['Emploi'], 'Pôle Emploi', 'Réalisée', '2026-01-14', true, false),
+    R('F06', '2026-02-02', '2026-02-03', AC, 'CMS Marmande', 'Marmande', 'Fictif Alice', ['Santé'], 'CAF', 'Réalisée', '2026-02-03', false, false),
+    R('F07', '2025-04-07', '2025-04-08', AC, 'CMS Marmande', 'Marmande', 'Fictif Bruno', ['Numérique de base'], 'Mairie', 'Réalisée', '2025-04-08', true, false),
+    R('F08', '2025-11-03', '2025-11-05', AC, 'CMS Marmande', 'Tonneins', 'Fictif Bruno', ['Santé'], 'CAF', 'En attente', null, false, false),
+    R('F09', '2026-03-09', '2026-03-13', AC, 'CMS Marmande', 'Marmande', 'Fictif Bruno', ['Emploi'], 'Pôle Emploi', 'Réalisée', '2026-03-13', false, false),
+    R('F10', '2025-05-05', null, PC, 'CMS Agen Montanou', 'Agen', 'Fictif Alice', ['Emploi'], 'CAF', 'En attente', null, false, true),
+    R('F11', '2026-04-06', null, PC, 'CMS Marmande', 'Marmande', 'Fictif Bruno', ['Santé'], 'Mairie', 'En attente', null, false, false),
+  ];
+  // Recomptage manuel (11 lignes, 9 accompagnements, 2 conseillers, 2 CMS) :
+  //  - Santé : F02, F04, F06, F08 = 4 (dominante) ; Numérique 3 ; Emploi 3.
+  //  - réalisées : F01 F02 F04 F05 F06 F07 F09 = 7 ; bénéficiaires connus : F02 F05 F07 = 3.
+  //  - délai moyen Vue globale (jours ouvrés demande→action) : 2+4+5+1+2+1+1+2+4 = 22 / 9 = 2,4 → 2 j.
+  //  - Alice × Montanou : F01..F05 = 5 sur 6 lignes d'Alice (83 %), orienteurs CAF/Mairie/Pôle Emploi = 3,
+  //    communes Agen/Boé = 2, délai total (jours ouvrés demande→réalisation, réalisées) : (2+4+4+2)/4 = 3 j.
+  const ATTENDU = {
+    global: { 'Accompagnements': '9', 'Demandes distinctes': '9', 'Conseillers actifs': '2', 'Structures couvertes': '2',
+      'Thématique dominante': 'Santé', 'Demandes réalisées': '7', 'Bénéficiaires connus': '3', 'Délai moyen': '2j' },
+    rapport: { titre: 'Fictif Alice — CMS Agen Montanou', 'Accompagnements': '5', 'Orienteurs actifs': '3', 'Délai total': '3j', 'Communes couvertes': '2' },
+    diapo: { 'Accompagnements': '5', 'Orienteurs actifs': '3', 'Communes': '2', 'Délai total': '3j' },
+  };
+
+  const lireGlobal = (page) => page.evaluate(() => {
+    document.querySelector('.sb-item[onclick*="global"]').click();
+    return Object.fromEntries([...document.querySelectorAll('#kpi-global .kpi, #kpi-global2 .kpi')]
+      .map(k => [k.querySelector('.kpi-label').childNodes[0].textContent.trim(), k.querySelector('.kpi-value').textContent.trim()]));
+  });
+  async function lireRapport(page) {
+    await page.locator('.sb-item[onclick*="rapport"]').click();
+    await page.evaluate(() => { const s = document.getElementById('sel-rpt-conum'); s.value = 'Fictif Alice'; s.dispatchEvent(new Event('change')); });
+    await page.waitForFunction(() => [...document.getElementById('sel-rpt-cms').options].some(o => o.value === 'CMS Agen Montanou'));
+    await page.evaluate(() => { const s = document.getElementById('sel-rpt-cms'); s.value = 'CMS Agen Montanou'; s.dispatchEvent(new Event('change')); });
+    await page.waitForFunction(() => document.getElementById('rpt-title').textContent.includes('CMS Agen Montanou'));
+    return page.evaluate(() => ({ titre: document.getElementById('rpt-title').textContent.trim(),
+      ...Object.fromEntries([...document.querySelectorAll('#kpi-rpt .kpi')]
+        .map(k => [k.querySelector('.kpi-label').textContent.trim(), k.querySelector('.kpi-value').textContent.trim()])) }));
+  }
+  const lireDiapo = (page) => page.evaluate(() => {
+    startDiapoRapport(); drGoTo(DR_SLIDES.findIndex(s => s.id === 'kpis'));
+    return Object.fromEntries([...document.querySelectorAll('#dr-content .nb-anime')]
+      .map(v => [v.nextElementSibling.textContent.trim(), v.textContent.trim()]));
+  });
+  // Les trois écrans, relus avec attente de l'état voulu (les compteurs s'animent, règle 55).
+  async function verifierChiffres(page) {
+    expect(await lireGlobal(page)).toMatchObject(ATTENDU.global);
+    expect(await lireRapport(page)).toMatchObject(ATTENDU.rapport);
+    await page.evaluate(() => { startDiapoRapport(); drGoTo(DR_SLIDES.findIndex(s => s.id === 'kpis')); });
+    await expect.poll(() => lireDiapo(page), { timeout: 5000 }).toMatchObject(ATTENDU.diapo);
+  }
+
+  test('jeu FICTIF : profil vierge → import → chiffres → rechargement → second profil sans fuite', async ({ browser }) => {
+    const opts = { viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' };
+    const ctxA = await browser.newContext(opts);
+    const A = await ctxA.newPage();
+    await loadFresh(A);
+    expect(await A.evaluate(() => ({ source: dataSource, nb: DATA.length })), 'profil vierge : pas de données importées').toMatchObject({ source: expect.not.stringMatching(/^imported$/) });
+    await dismissLanding(A);
+    await importerRecords(A, JEU_FICTIF, 'jeu-fictif-reprise.xlsx');
+    expect(await A.evaluate(() => DATA.length)).toBe(JEU_FICTIF.length);
+    await verifierChiffres(A);
+
+    // Rechargement : aucun réimport, mêmes chiffres sur les trois écrans.
+    await A.reload();
+    await A.waitForFunction(() => typeof DATA !== 'undefined' && dataSource === 'imported' && DATA.length === 11, null, { timeout: 15000 });
+    await dismissLanding(A).catch(() => {});
+    await verifierChiffres(A);
+
+    // Second profil vierge, sans loadFresh (qui effacerait le stockage et masquerait une fuite).
+    const ctxB = await browser.newContext(opts);
+    const B = await ctxB.newPage();
+    await B.goto(PAGE_URL);
+    // Fin de boot : bannière démo (profil vierge) ou données importées (si une fuite existait).
+    await B.waitForFunction(() => typeof window.switchTab === 'function' && (document.getElementById('import-banner')?.style.display === 'block' || dataSource === 'imported'), null, { timeout: 15000 });
+    const fuite = await B.evaluate(async () => ({
+      source: dataSource,
+      conseillers: DATA.some(r => String(r.conum || '').includes('Fictif')),
+      ls: JSON.stringify(localStorage).includes('Fictif'),
+      idb: await new Promise(res => { const q = indexedDB.open('gdin_idb_v1'); q.onerror = () => res(false);
+        q.onsuccess = () => { try { const tx = q.result.transaction(q.result.objectStoreNames, 'readonly'); const all = [];
+          [...q.result.objectStoreNames].forEach(n => { const g = tx.objectStore(n).getAll(); g.onsuccess = () => all.push(g.result); });
+          tx.oncomplete = () => res(JSON.stringify(all).includes('Fictif')); } catch (_) { res(false); } }; }),
+    }));
+    expect(fuite, 'le second profil vierge ne doit rien voir du premier').toEqual({ source: expect.not.stringMatching(/^imported$/), conseillers: false, ls: false, idb: false });
+    expect(await A.evaluate(() => DATA.length), 'le premier profil garde ses données').toBe(JEU_FICTIF.length);
+    await ctxA.close(); await ctxB.close();
+  });
+
+});
